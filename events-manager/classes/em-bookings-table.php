@@ -523,21 +523,22 @@ class EM_Bookings_Table extends EM\List_Table {
 		<div class='<?php echo $id; ?> em_obj frontend' id="<?php echo $id; ?>">
 			<form class='bookings-filter' method='post' action='' id="<?php echo $uid; ?>-form">
 				<?php if( $EM_Event !== false ): ?>
-				<input type="hidden" name="event_id" value='<?php echo esc_attr($EM_Event->event_id); ?>' />
+				<input type="hidden" name="event_id" value='<?php echo esc_attr($EM_Event->event_id); ?>' >
 				<?php endif; ?>
 				<?php if( $EM_Ticket !== false ): ?>
-				<input type="hidden" name="ticket_id" value='<?php echo esc_attr($EM_Ticket->ticket_id); ?>' />
+				<input type="hidden" name="ticket_id" value='<?php echo esc_attr($EM_Ticket->ticket_id); ?>' >
 				<?php endif; ?>
 				<?php if( $EM_Person !== false ): ?>
-				<input type="hidden" name="person_id" value='<?php echo esc_attr($EM_Person->ID); ?>' />
+				<input type="hidden" name="person_id" value='<?php echo esc_attr($EM_Person->ID); ?>' >
 				<?php endif; ?>
-				<input type="hidden" name="is_public" value="<?php echo ( !empty($_REQUEST['is_public']) || !is_admin() ) ? 1:0; ?>" />
-				<input type="hidden" name="pno" value='<?php echo esc_attr($this->page); ?>' />
-				<input type="hidden" name="order" value='<?php echo esc_attr($this->order); ?>' />
-				<input type="hidden" name="orderby" value='<?php echo esc_attr($this->orderby); ?>' />
-				<input type="hidden" name="_wpnonce" value="<?php echo ( !empty($_REQUEST['_wpnonce']) ) ? esc_attr($_REQUEST['_wpnonce']):wp_create_nonce('em_bookings_table'); ?>" />
-				<input type="hidden" name="action" value="em_bookings_table" />
-				<input type="hidden" name="cols" value="<?php echo esc_attr(implode(',', $this->cols)); ?>" />
+				<input type="hidden" name="is_public" value="<?php echo ( !empty($_REQUEST['is_public']) || !is_admin() ) ? 1:0; ?>" >
+				<input type="hidden" name="pno" value='<?php echo esc_attr($this->page); ?>' >
+				<input type="hidden" name="order" value='<?php echo esc_attr($this->order); ?>' >
+				<input type="hidden" name="orderby" value='<?php echo esc_attr($this->orderby); ?>' >
+				<input type="hidden" name="_wpnonce" value="<?php echo ( !empty($_REQUEST['_wpnonce']) ) ? esc_attr($_REQUEST['_wpnonce']):wp_create_nonce('em_bookings_table'); ?>" >
+				<input type="hidden" name="action" value="em_bookings_table" >
+				<input type="hidden" name="cols" value="<?php echo esc_attr(implode(',', $this->cols)); ?>" >
+				<input type="hidden" name="table_id" value="<?php echo absint( str_replace($this->id . '-', '', $this->uid) ); ?>">
 				
 				<div class='tablenav'>
 					<?php

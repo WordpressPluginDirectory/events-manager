@@ -51,6 +51,7 @@
 			if( get_option('dbem_attributes_enabled') ){
 				em_options_textarea ( sprintf(__( '%s Attributes', 'events-manager'),__('Event','events-manager')), 'dbem_placeholders_custom', sprintf(__( "You can also add event attributes here, one per line in this format <code>#_ATT{key}</code>. They will not appear on event pages unless you insert them into another template below, but you may want to store extra information about an event for other uses. <a href='%s'>More information on placeholders.</a>", 'events-manager'), EM_ADMIN_URL .'&amp;page=events-manager-help') );
 			}
+			do_action('em_settings_general_events_footer');
 			?>
 			<tr class="em-header">
 				<td colspan="2">
@@ -157,7 +158,8 @@
 				?>
 				<tbody class="form-table em-google-maps-enabled">
 					<?php
-					em_options_input_text(__('Google Maps API Browser Key','events-manager'), 'dbem_google_maps_browser_key', sprintf(__('Google Maps require an API key, please see our %s page for instructions on obtaining one.', 'events-manager'), '<a href="https://wp-events-plugin.com/documentation/google-maps/api-key/?utm_source=plugin&utm_medium=settings&utm_campaign=gmaps-api-key">'.esc_html__('documentation','events-manager').'</a>'));
+					$restrict_warning = '<strong>'. sprintf( esc_html__('WARNING : Restrict your API key to prevent unauthorized use and quota theft. See our %s page for more information.', 'events-manager'), '<a href="https://wp-events-plugin.com/documentation/google-maps/api-key/?utm_source=plugin&utm_medium=settings&utm_campaign=gmaps-api-key">'.esc_html__('documentation','events-manager').'</a>' ) . '</strong>';
+					em_options_input_text(__('Google Maps API Browser Key','events-manager'), 'dbem_google_maps_browser_key', sprintf(__('Google Maps require an API key, please see our %s page for instructions on obtaining one.', 'events-manager'), '<a href="https://wp-events-plugin.com/documentation/google-maps/api-key/?utm_source=plugin&utm_medium=settings&utm_campaign=gmaps-api-key">'.esc_html__('documentation','events-manager').'</a>') . '<br>' . $restrict_warning);
 					$google_map_options = apply_filters('em_settings_google_maps_options', array(
 						'dynamic' => _x('Dynamic', 'Google Map Type', 'events-manager'),
 						'embed' => _x('Embedded', 'Google Map Type', 'events-manager')

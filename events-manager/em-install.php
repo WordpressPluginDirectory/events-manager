@@ -445,21 +445,29 @@ function em_add_options() {
 		'dbem_events_default_limit' => 10,
 		//Event Search Options
 		'dbem_search_form_main' => 1,
+		'dbem_search_form_responsive' => $already_installed ? 'one-line' : 'multi-line',
 		'dbem_search_form_sorting' => !$already_installed,
 		'dbem_search_form_submit' => __('Search','events-manager'),
 		'dbem_search_form_views' => array('list', 'list-grouped', 'grid', 'map', 'calendar'),
 		'dbem_search_form_view' => 'list',
+        'dbem_search_form_saved_searches' => !$already_installed,
 		'dbem_search_form_advanced' => 1,
 		'dbem_search_form_advanced_mode' => 'modal',
+		'dbem_search_form_advanced_style' => $already_installed ? 'accordion' : 'headings',
 		'dbem_search_form_advanced_hidden' => 1,
+        'dbem_search_form_advanced_trigger' => 1,
 		'dbem_search_form_advanced_show' => __('Show Advanced Search','events-manager'),
 		'dbem_search_form_advanced_hide' => __('Hide Advanced Search','events-manager'),
 		'dbem_search_form_text' => 1,
 		'dbem_search_form_text_label' => __('Search','events-manager'),
 		'dbem_search_form_text_advanced' => 1,
 		'dbem_search_form_text_label_advanced' => __('Search','events-manager'),
+		'dbem_search_form_text_hide_s' => false,
+		'dbem_search_form_text_hide_m' => false,
 		'dbem_search_form_geo' => 1,
 		'dbem_search_form_geo_label' => __('Near...','events-manager'),
+		'dbem_search_form_geo_hide_s' => $already_installed,
+		'dbem_search_form_geo_hide_m' => $already_installed,
 		'dbem_search_form_geo_advanced' => 1,
 		'dbem_search_form_geo_label_advanced' => __('Near...','events-manager'),
 		'dbem_search_form_geo_units' => 1,
@@ -469,6 +477,8 @@ function em_add_options() {
 	    'dbem_search_form_geo_distance_options' => '5,10,25,50,100',
 		'dbem_search_form_dates' => 1,
 		'dbem_search_form_dates_label' => __('Dates','events-manager'),
+		'dbem_search_form_dates_hide_s' => $already_installed,
+		'dbem_search_form_dates_hide_m' => $already_installed,
 		'dbem_search_form_dates_separator' => __('and','events-manager'),
 		'dbem_search_form_dates_format' => 'M j',
 		'dbem_search_form_dates_advanced' => 1,
@@ -940,7 +950,7 @@ function em_upgrade_current_installation(){
 		update_site_option('dbem_data', $data);
 	}
 	// temp promo
-	if( time() < 1699682400 &&  version_compare($current_version, '6.4.6', '<')  ) {
+	if( time() < 1710028800 &&  version_compare($current_version, '6.4.7', '<')  ) {
 		if( empty($data['admin-modals']) ) $data['admin-modals'] = array();
 		$data['admin-modals']['promo-popup'] = true;
 		update_site_option('dbem_data', $data);
