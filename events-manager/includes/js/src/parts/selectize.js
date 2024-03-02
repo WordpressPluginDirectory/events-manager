@@ -187,8 +187,8 @@ function em_setup_selectize( container_element ){
 
 	// Sortables - selectize and sorting
 	container.find('.em-bookings-table-modal .em-bookings-table-cols').each( function(){
-		let parent = $(this);
-		let sortables = $(this).find('.em-bookings-cols-sortable');
+		let parent = jQuery(this);
+		let sortables = jQuery(this).find('.em-bookings-cols-sortable');
 		container.find('.em-selectize.always-open').each( function() {
 			//extra behaviour for selectize column picker
 			if ('selectize' in this) {
@@ -200,7 +200,7 @@ function em_setup_selectize( container_element ){
 					let type = option.attr('data-type');
 					col.appendTo(sortables);
 					col.attr('data-type', type);
-					$('<input type="hidden" name="cols[' + value + ']" value="1">').appendTo(col);
+					jQuery('<input type="hidden" name="cols[' + value + ']" value="1">').appendTo(col);
 				});
 				selectize.on('item_remove', function (value) {
 					parent.find('.item[data-value="'+ value +'"]').remove();

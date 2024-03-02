@@ -5,7 +5,7 @@ Tags: events, calendar, tickets, bookings, appointments
 Text Domain: events-manager
 Requires at least: 5.2
 Tested up to: 6.4.3
-Stable tag: 6.4.7
+Stable tag: 6.4.7.1
 Requires PHP: 5.3
 
 Fully featured events calendar, booking registration (RSVP), recurring events, locations management, Google Maps
@@ -14,7 +14,7 @@ Fully featured events calendar, booking registration (RSVP), recurring events, l
 
 Events Manager is a full-featured event calendar, bookings and registration management plugin for WordPress based on the principles of flexibility, reliability and powerful features!
 
-* Limited-Time Offer - Up to 30% our current price plans! [Get Pro Now](https://wp-events-plugin.com/pricing/?utm_source=repo&utm_medium=readme&utm_campaign=promo2024-02) *
+** Limited-Time Offer - Up to 30% our current price plans! [Get Pro Now](https://wp-events-plugin.com/pricing/?utm_source=repo&utm_medium=readme&utm_campaign=promo2024-02) **
 
 * [Demo](https://eventsmanager.site)
 * [Documentation](http://wp-events-plugin.com/documentation/)
@@ -162,6 +162,9 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page, which is upd
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
+= 6.4.7.1 =
+* Fixed JS error preventing customizing columns in bookings admin table
+
 = 6.4.7 =
 * Fixed PHP warning on my-bookings page.
 * Fixed ticket selection dropdown not showing max spaces if `EM_Bookings::$disable_restrictions` is enabled (such as for manual bookings).
