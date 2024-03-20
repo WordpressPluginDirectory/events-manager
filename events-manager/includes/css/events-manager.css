@@ -3477,20 +3477,6 @@
   background-color: #d1e7dd !important;
   border-color: #badbcc !important;
 }
-.em.em-event-booking-form .em-inline-error {
-  color: red;
-  display: block;
-  width: 100%;
-  margin: 8px 0 0;
-}
-.em.em-event-booking-form .em-inline-error .em-icon {
-  background-color: red;
-  -webkit-mask-image: var(--icon-cross-circle);
-  mask-image: var(--icon-cross-circle);
-}
-.em.em-event-booking-form .iti.error {
-  border-color: red;
-}
 .em.em-event-booking-form .em-booking-form {
   border: 1px solid var(--main-border-color);
 }
@@ -4854,6 +4840,46 @@
 .em #em_booking_stats .em-chart {
   margin: 0;
 }
+.em .iti.phone-error {
+  border-color: red;
+}
+.em .iti, .em.pixelbones.input .iti {
+  display: block;
+}
+.em .iti ul, .em.pixelbones.input .iti ul {
+  list-style: none !important;
+}
+.em .iti.invalid-number input[type=tel], .em.pixelbones.input .iti.invalid-number input[type=tel] {
+  border-color: darkred !important;
+}
+.em .iti + .lwa-inline-error, .em.pixelbones.input .iti + .lwa-inline-error {
+  margin: 10px 0;
+  color: darkred;
+}
+.em .iti input[type=tel], .em .iti .iti--allow-dropdown input, .em .iti .iti--allow-dropdown input[type=tel], .em .iti .iti--allow-dropdown input[type=text], .em .iti .iti--separate-dial-code input, .em .iti .iti--separate-dial-code input[type=tel], .em .iti .iti--separate-dial-code input[type=text], .em.pixelbones.input .iti input[type=tel], .em.pixelbones.input .iti .iti--allow-dropdown input, .em.pixelbones.input .iti .iti--allow-dropdown input[type=tel], .em.pixelbones.input .iti .iti--allow-dropdown input[type=text], .em.pixelbones.input .iti .iti--separate-dial-code input, .em.pixelbones.input .iti .iti--separate-dial-code input[type=tel], .em.pixelbones.input .iti .iti--separate-dial-code input[type=text] {
+  padding-right: 6px !important;
+  padding-left: 92px !important;
+  margin-left: 0 !important;
+}
+.em .iti .iti__flag, .em.pixelbones.input .iti .iti__flag {
+  background-image: url("../external/intl-tel-input/img/flags.png");
+}
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .em .iti .iti__flag, .em.pixelbones.input .iti .iti__flag {
+    background-image: url("../external/intl-tel-input/img/flags@2x.png");
+  }
+}
+.em .em .em-inline-error {
+  color: red;
+  display: block;
+  width: 100%;
+  margin: 8px 0 0;
+}
+.em .em .em-inline-error .em-icon {
+  background-color: red;
+  -webkit-mask-image: var(--icon-cross-circle);
+  mask-image: var(--icon-cross-circle);
+}
 .em button.em-clickable {
   cursor: pointer !important;
   justify-self: start !important;
@@ -4956,25 +4982,6 @@
 }
 .em .em-notice.em-notice-thin {
   padding: 10px 15px !important;
-}
-.em .iti, .em.pixelbones .iti {
-  display: block;
-}
-.em .iti.error input[type=tel], .em.pixelbones .iti.error input[type=tel] {
-  border-color: red !important;
-}
-.em .iti input[type=tel], .em .iti .iti--allow-dropdown input, .em .iti .iti--allow-dropdown input[type=tel], .em .iti .iti--allow-dropdown input[type=text], .em .iti .iti--separate-dial-code input, .em .iti .iti--separate-dial-code input[type=tel], .em .iti .iti--separate-dial-code input[type=text], .em.pixelbones .iti input[type=tel], .em.pixelbones .iti .iti--allow-dropdown input, .em.pixelbones .iti .iti--allow-dropdown input[type=tel], .em.pixelbones .iti .iti--allow-dropdown input[type=text], .em.pixelbones .iti .iti--separate-dial-code input, .em.pixelbones .iti .iti--separate-dial-code input[type=tel], .em.pixelbones .iti .iti--separate-dial-code input[type=text] {
-  padding-right: 6px !important;
-  padding-left: 82px !important;
-  margin-left: 0 !important;
-}
-.em .iti .iti__flag, .em.pixelbones .iti .iti__flag {
-  background-image: url("../external/intl-tel-input/img/flags.png");
-}
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .em .iti .iti__flag, .em.pixelbones .iti .iti__flag {
-    background-image: url("../external/intl-tel-input/img/flags@2x.png");
-  }
 }
 
 /* Fix z-index issues for some 3rd party stuff */

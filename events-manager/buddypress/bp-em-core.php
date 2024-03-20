@@ -57,7 +57,7 @@ class BP_EM_Component extends BP_Component {
 		parent::setup_globals( $globals );
 
 		//quick link shortcut - may need to revisit this
-		//$bp->{$this->id}->link = trailingslashit($bp->loggedin_user->domain).BP_EM_SLUG.'/';
+		$bp->{$this->id}->link = trailingslashit($bp->loggedin_user->domain).BP_EM_SLUG.'/';
 	}
 	
 	public function setup_nav( $main_nav = array(), $sub_nav = array() ) {

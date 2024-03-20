@@ -6232,6 +6232,35 @@
     display: block;
   }
 }
+.wp-admin .em .iti.phone-error {
+  border-color: red;
+}
+.wp-admin .em .iti, .wp-admin .em.pixelbones.input .iti {
+  display: block;
+}
+.wp-admin .em .iti ul, .wp-admin .em.pixelbones.input .iti ul {
+  list-style: none !important;
+}
+.wp-admin .em .iti.invalid-number input[type=tel], .wp-admin .em.pixelbones.input .iti.invalid-number input[type=tel] {
+  border-color: darkred !important;
+}
+.wp-admin .em .iti + .lwa-inline-error, .wp-admin .em.pixelbones.input .iti + .lwa-inline-error {
+  margin: 10px 0;
+  color: darkred;
+}
+.wp-admin .em .iti input[type=tel], .wp-admin .em .iti .iti--allow-dropdown input, .wp-admin .em .iti .iti--allow-dropdown input[type=tel], .wp-admin .em .iti .iti--allow-dropdown input[type=text], .wp-admin .em .iti .iti--separate-dial-code input, .wp-admin .em .iti .iti--separate-dial-code input[type=tel], .wp-admin .em .iti .iti--separate-dial-code input[type=text], .wp-admin .em.pixelbones.input .iti input[type=tel], .wp-admin .em.pixelbones.input .iti .iti--allow-dropdown input, .wp-admin .em.pixelbones.input .iti .iti--allow-dropdown input[type=tel], .wp-admin .em.pixelbones.input .iti .iti--allow-dropdown input[type=text], .wp-admin .em.pixelbones.input .iti .iti--separate-dial-code input, .wp-admin .em.pixelbones.input .iti .iti--separate-dial-code input[type=tel], .wp-admin .em.pixelbones.input .iti .iti--separate-dial-code input[type=text] {
+  padding-right: 6px !important;
+  padding-left: 92px !important;
+  margin-left: 0 !important;
+}
+.wp-admin .em .iti .iti__flag, .wp-admin .em.pixelbones.input .iti .iti__flag {
+  background-image: url("../external/intl-tel-input/img/flags.png");
+}
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .wp-admin .em .iti .iti__flag, .wp-admin .em.pixelbones.input .iti .iti__flag {
+    background-image: url("../external/intl-tel-input/img/flags@2x.png");
+  }
+}
 .wp-admin button.input.em-tooltip-ddm {
   background-position: calc(100% - 5px) 50% !important;
   padding-right: 25px !important;

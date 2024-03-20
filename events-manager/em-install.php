@@ -389,6 +389,11 @@ function em_create_tickets_bookings_meta_table() {
 function em_add_options() {
 	global $wp_locale, $wpdb;
 	$already_installed = get_option('dbem_version', false) !== false;
+	if( !$already_installed ) {
+		$advice = sprintf( __("<p>Events Manager is ready to go! It is highly recommended you read the <a href='%s'>Getting Started</a> guide on our site, as well as checking out the <a href='%s'>Settings Page</a></p>", 'events-manager'), 'https://wp-events-plugin.com/documentation/getting-started-guide/?utm_source=em&utm_medium=plugin&utm_content=installationlink&utm_campaign=plugin_links', EM_ADMIN_URL .'&amp;page=events-manager-options');
+		$EM_Admin_Notice = new EM_Admin_Notice(array( 'name' => 'hello', 'who' => 'admin', 'where' => 'all', 'message' => $advice, 'what'=>'success' ));
+		EM_Admin_Notices::add($EM_Admin_Notice, is_multisite());
+	}
 	$decimal_point = !empty($wp_locale->number_format['decimal_point']) ? $wp_locale->number_format['decimal_point']:'.';
 	$thousands_sep = !empty($wp_locale->number_format['thousands_sep']) ? $wp_locale->number_format['thousands_sep']:',';
 	$email_footer = '<br/><br/>-------------------------------<br/>Powered by Events Manager - http://wp-events-plugin.com';
@@ -447,6 +452,7 @@ function em_add_options() {
 		'dbem_search_form_main' => 1,
 		'dbem_search_form_responsive' => $already_installed ? 'one-line' : 'multi-line',
 		'dbem_search_form_sorting' => !$already_installed,
+		'dbem_search_form_cookies' => false, // not in admin yet
 		'dbem_search_form_submit' => __('Search','events-manager'),
 		'dbem_search_form_views' => array('list', 'list-grouped', 'grid', 'map', 'calendar'),
 		'dbem_search_form_view' => 'list',
@@ -816,8 +822,6 @@ function em_add_options() {
 			'dbem_booking_charts_wpdashboard' => true,
 			'dbem_booking_charts_dashboard' => true,
 			'dbem_booking_charts_event' => true,
-		//Flags
-		'dbem_hello_to_user' => 1,
 		//BP Settings
 		'dbem_bp_events_list_format_header' => '<ul class="em-events-list">',
 		'dbem_bp_events_list_format' => '<li>#_EVENTLINK - #_EVENTDATES - #_EVENTTIMES<ul><li>#_LOCATIONLINK - #_LOCATIONADDRESS, #_LOCATIONTOWN</li></ul></li>',
@@ -950,7 +954,7 @@ function em_upgrade_current_installation(){
 		update_site_option('dbem_data', $data);
 	}
 	// temp promo
-	if( time() < 1710028800 &&  version_compare($current_version, '6.4.7', '<')  ) {
+	if( time() < 1711962000 && ( version_compare($current_version, '6.4.7', '<') || !empty($data['admin-modals']['review-nudge']) )  ) {
 		if( empty($data['admin-modals']) ) $data['admin-modals'] = array();
 		$data['admin-modals']['promo-popup'] = true;
 		update_site_option('dbem_data', $data);
@@ -1570,6 +1574,10 @@ function em_upgrade_current_installation(){
 			$settings_page_url = '<a href="'.admin_url('admin.php?page=events-manager-options#general+general').'">'. esc_html__('Settings', 'events-manager').' > '. esc_html__('General','events-manager') .' > '. esc_html__('General Options', 'events-manager') . '</a>' . ' > ' . esc_html__('Enable Event Status?', 'events-manager');
 			$message = 'Welcome to Events Manager 6.4.2! This version introduces event status options including cancellation of an event! Enable this feature in <a href=""><em>'. $settings_page_url .'</em></a>';
 			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'where' => 'plugin', 'message' => $message )), is_multisite());
+		}
+		if( version_compare( $current_version, '6.4.7.2', '<') ){
+			// remove flag for admin notice
+			delete_option('dbem_hello_to_user');
 		}
 	}
 }

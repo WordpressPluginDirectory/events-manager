@@ -684,7 +684,7 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	$search_args['show_advanced'] = get_option('dbem_search_form_advanced') && ( $search_args['search_categories'] || $search_args['search_tags'] || $search_args['search_countries'] || $search_args['search_regions'] || $search_args['search_states'] || $search_args['search_towns']);
 	$search_args['advanced_mode'] = get_option('dbem_search_form_advanced_mode') === 'inline' ? 'inline':'modal';
 	$search_args['advanced_hidden'] = $search_args['show_advanced'] && get_option('dbem_search_form_advanced_hidden');
-	$search_args['advanced_trigger'] = !$search_args['advanced_hidden'] && $search_args['show_advanced'] && get_option('dbem_search_form_advanced_trigger');
+	$search_args['advanced_trigger'] = !( $search_args['advanced_hidden'] && get_option('dbem_search_form_advanced_trigger') && $search_args['advanced_mode'] === 'inline' ) && $search_args['show_advanced'];
 	
 	// disable certain things based on context, can be overriden by $base_args, not necessarily recommended
 	if( $context == 'locations' ){
@@ -1209,16 +1209,25 @@ function em_options_radio_binary($title, $name, $description='', $option_names =
 	<?php
 }
 
-function em_options_select($title, $name, $list, $description='', $default='', $triggers = array()) {
+function em_options_select($title, $name, $list, $description='', $default='', $triggers = array(), $options = array() ) {
 	$option_value = get_option($name, $default);
 	if( $name == 'dbem_events_page' && !is_object(get_page($option_value)) ){
 		$option_value = 0; //Special value
+	}
+	$select_classes = array();
+	if( !empty($triggers) ) $select_classes[] = 'em-trigger';
+	if( !empty($options['selectize']) ) $select_classes[] = 'em-selectize';
+	if( !empty($options['multiple']) ){
+		$name .= '[]';
+		if( !is_array($option_value) ){
+			$option_value = array($option_value);
+		}
 	}
 	?>
    	<tr valign="top" id='<?php echo esc_attr($name);?>_row'>
    		<th scope="row"><?php echo esc_html($title); ?></th>
    		<td>
-			<select name="<?php echo esc_attr($name); ?>" <?php if( !empty($triggers) ) echo 'class="em-trigger"'; ?> >
+			<select name="<?php echo esc_attr($name); ?>" class="<?php echo implode(' ', $select_classes); ?>" <?php if( !empty($options['multiple']) ) echo 'multiple'; ?>>
 				<?php 
 				foreach($list as $key => $value) {
 					if( is_array($value) ){
@@ -1234,8 +1243,13 @@ function em_options_select($title, $name, $list, $description='', $default='', $
 						?></optgroup><?php
 					}else{
 						$trigger = !empty( $triggers[$key] ) ? $triggers[$key] : '';
+						if( !empty($options['multiple']) ) {
+							$selected = in_array($key, $option_value) ? "selected='selected' ":'';
+						} else {
+							$selected = ("$key" == $option_value) ? "selected='selected' " : '';
+						}
 						?>
-		 				<option value='<?php echo esc_attr($key) ?>' <?php echo ("$key" == $option_value) ? "selected='selected' " : ''; ?> data-trigger="<?php echo esc_attr($trigger); ?>">
+		 				<option value='<?php echo esc_attr($key) ?>' <?php echo $selected; ?> data-trigger="<?php echo esc_attr($trigger); ?>">
 		 					<?php echo esc_html($value); ?>
 		 				</option>
 						<?php 

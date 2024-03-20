@@ -600,7 +600,9 @@ jQuery(document).ready( function($){
 			search_advanced.trigger('clear_search');
 			// remove counters, set data counters to 0, hide section and submit form without search settings
 			update_search_totals(true); // in theory, this is 0 and removes everything
-			search_advanced_trigger_click();
+			if( search_advanced.hasClass('em-modal') ) {
+				search_advanced_trigger_click();
+			}
 			search_advanced.append('<input name="clear_search" type="hidden" value="1">');
 			search_advanced.find('button[type="submit"]').trigger('forceclick');
 			update_clear_button_count();

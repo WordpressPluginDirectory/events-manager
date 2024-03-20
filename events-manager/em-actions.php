@@ -434,6 +434,7 @@ function em_init_actions_start() {
 			//TODO user action shouldn't check permission, booking object should.
 		}elseif( array_key_exists($_REQUEST['action'], $booking_allowed_actions) && $EM_Event->can_manage('manage_bookings','manage_others_bookings') ){
 	  		//Event Admin only actions
+			em_verify_nonce($_REQUEST['action'], 'nonce');
 			$action = $booking_allowed_actions[$_REQUEST['action']];
 			//Just do it here, since we may be deleting bookings of different events.
 			if( !empty($_REQUEST['bookings']) && EM_Object::array_is_numeric($_REQUEST['bookings'])){
@@ -507,6 +508,7 @@ function em_init_actions_start() {
 				}	
 			}
 		}elseif( $_REQUEST['action'] == 'booking_set_rsvp_status' ){
+			em_verify_nonce('booking_set_rsvp_status_'.$EM_Booking->booking_id);
 			$status = $_REQUEST['booking_rsvp_status'] === '' ? null : absint($_REQUEST['booking_rsvp_status']);
 			if( $EM_Booking->can_manage('manage_bookings','manage_others_bookings') && $status !== $EM_Booking->booking_rsvp_status ){
 				$result = $EM_Booking->set_rsvp_status($status, false, true);

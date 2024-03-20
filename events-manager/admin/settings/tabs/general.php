@@ -1,6 +1,6 @@
 <?php if( !function_exists('current_user_can') || !current_user_can('manage_options') ) return; ?>
 <!-- GENERAL OPTIONS -->
-<div class="em-menu-general em-menu-group">
+<div class="em-menu-general em-menu-group em">
 	<div  class="postbox " id="em-opt-general"  >
 	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div> <h3><span><?php _e ( 'General Options', 'events-manager'); ?> </span></h3>
 	<div class="inside">
@@ -232,6 +232,51 @@
 		</div> <!-- . inside -->
 	</div> <!-- .postbox -->
 	<?php do_action('em_options_page_event_cancellation_after'); ?>
+
+	<?php if( defined('EM_PHONE_INTL_ENABLED') && EM_PHONE_INTL_ENABLED ) : ?>
+	<div  class="postbox " id="em-opt-automation" >
+		<div class="handlediv" title="<?php esc_attr_e_emp('Click to toggle', 'events-manager'); ?>"><br /></div><h3><?php esc_html_e ( 'Phone Numbers', 'em-pro' ); ?></h3>
+		<div class="inside">
+			<table class='form-table'>
+				<tr class="em-boxheader"><td colspan='2'>
+						<p>
+							<?php
+								esc_html_e( 'Phone numbers can be used for further contact for both those that make bookings and submit events. We offer an advanced international-compatible phone input field with multiple options which standardize and ensure valid/consistent international phone numbers are provided by your users.', 'em-pro' );
+								//You can further customize all these templates, or parts of them by overriding our template files as per our %s.
+							?>
+						</p>
+						<p>
+							<?php
+							echo sprintf( esc_html__('We recommend enabling this feature, as all numbers are stored in the international standard %s. Even if you require national numbers from one country, to ensure compatibility with all phone-related features, otherwise a simple text field is provided for phone input.', 'em-pro'), '<a href="https://wikipedia.org/wiki/E.164">E.164</a>' );
+							?>
+						</p>
+					</td></tr>
+				<?php
+					em_options_radio_binary ( sprintf(_x( 'Enable %s?', 'Enable a feature in settings page', 'em-pro' ), esc_html__('Phone Numbers', 'em-pro')), 'dbem_phone_enabled', esc_html__('When enabled, phone number fields will include special international (or national) formatting and validation.', 'em-pro'), '', '.em-phone-options');
+				?>
+				<tbody class="em-phone-options">
+					<?php
+						$phone_countries = em_get_countries();
+						unset($phone_countries['AQ']); // remove Antarctica, no dialcode
+						em_options_select( esc_html__('Default Country', 'em-pro'), 'dbem_phone_default_country', $phone_countries, '', '', array(), array('selectize' => true) );
+						// phone national number
+						em_options_radio_binary( esc_html__('National Formatting', 'em-pro'), 'dbem_phone_national_format', sprintf(esc_html__('Numbers will be displayed in national format style, such as %s for US numbers.', 'em-pro'), '<code>(201) 555-1325</code>') );
+						em_options_radio_binary( esc_html__('Show Selected Dialcode', 'em-pro'), 'dbem_phone_show_selected_code', esc_html__('The selected country code will also show the dialcode, such as +1 for the US.', 'em-pro') );
+						em_options_radio_binary( esc_html__('Show Flags', 'em-pro'), 'dbem_phone_show_flags', esc_html__('Show the flag of the selected country code and in the country selection list of the phone input field.', 'em-pro') );
+						
+						em_options_radio_binary( esc_html__('Detect User Country', 'em-pro'), 'dbem_phone_detect', esc_html__('We will attempt to detect the location of the user based on their browser timezone and auto-select the corresponding country accordingly.', 'em-pro') );
+						em_options_select( esc_html__('Preferred Countries', 'em-pro'), 'dbem_phone_countries_preferred', $phone_countries, esc_html__('The selected countries will appear at the top of the country selection list.', 'em-pro'), '', array(), array('selectize' => true, 'multiple' => true) );
+						em_options_select( esc_html__('Include Countries', 'em-pro'), 'dbem_phone_countries_include', $phone_countries, esc_html__('Only the selected countries will be included in the country selection list.', 'em-pro'), '', array(), array('selectize' => true, 'multiple' => true) );
+						em_options_select( esc_html__('Exclude Countries', 'em-pro'), 'dbem_phone_countries_exclude', $phone_countries, esc_html__('These countries will be excluded from the country selection list, this takes precedence over included countries.', 'em-pro'), '', array(), array('selectize' => true, 'multiple' => true) );
+					?>
+				</tbody>
+				<?php echo $save_button; ?>
+			</table>
+		</div> <!-- . inside -->
+	</div> <!-- .postbox -->
+	<?php do_action('em_options_page_phone_after'); ?>
+	<?php endif; ?>
+
 
 	<?php do_action('em_options_page_footer'); ?>
 	

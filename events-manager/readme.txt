@@ -5,7 +5,7 @@ Tags: events, calendar, tickets, bookings, appointments
 Text Domain: events-manager
 Requires at least: 5.2
 Tested up to: 6.4.3
-Stable tag: 6.4.7.1
+Stable tag: 6.4.7.2
 Requires PHP: 5.3
 
 Fully featured events calendar, booking registration (RSVP), recurring events, locations management, Google Maps
@@ -138,7 +138,7 @@ For those upgrading from version 4 to 5, please [read these instructions](http:/
 
 == Frequently Asked Questions ==
 
-See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page, which is updated more regularly.
+See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps with Events Manager - Calendar, Bookings, Tickets, and more!
 
 == Screenshots ==
 
@@ -162,6 +162,19 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page, which is upd
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
+= 6.4.7.2 =
+* fixed buddypress menu issue introduced in 6.4.7 by re-adding commented-out line
+* fixed advanced search options not showing up in some inline setting combinations
+* fixed 'hidden' feature in 6.4.7 for saved searches via cookies defaulting to enabled (can now be re-enabled in wp_options -> dbem_search_form_cookies)
+* updated 6.4.7 changelog with some missing changes
+* added selectize options to em_options_select() function
+* alpha feature - added phone field options to settings page if EM_PHONE_INTL_ENABLED is enabled (validation and more options on the way)
+* moved welcome notice option to EM_Admin_Notices
+* removed timthumb admin notice (outdated)
+* fixed minor security vulnerability allowing multisite blog admins to dismiss Events Manager network admin welcome notice (reported by PatchStack)
+* fixed medium security vulnerability allowing unauthorized users to modify booking statuses (reported by WordFence Security)
+* fixed medium security vulnerability allowing stored XSS to be submitted when adding an event (reported by WordFence Security Team)
+
 = 6.4.7.1 =
 * Fixed JS error preventing customizing columns in bookings admin table
 
@@ -174,6 +187,17 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page, which is upd
 * Fixed localized times via #_EVENTDATES_LOCAL not working in AJAX calls such as searches or pagination
 * Fixed cache PHP error in taxonomy objects if accessing a blank taxonomy
 * Fixed 2 vulnerabilities, reported by PatchStack and WordFence
+* added alternative dropdown view/flow for multiple selections on search form options
+* updated selectize.js to 0.15.2
+* fixed JS error preventing admin booking column selection in 6.4.7
+* fixed issues when clearing search criteria on search form
+* added support for counting search criteria using custom fields in search form
+* added multiple actions for search form templates
+* fixed advanced trigger not showing in modal mode if hidden inline mode settings are set to hide trigger
+* added escaping for cookie-set EM notices for security hardening
+* added url escaping (security precaution) for pagination links
+* made improvements to ical permalinks to account for more complex permalink structures (such as date-based),
+* added em_ical_output_content_summary and em_ical_output_content_location filters
 
 = 6.4.6.4 =
 * Fixed issues with multiple bookings and anonymous bookings that could rewrite the user name of the account making the booking with the latest user information.

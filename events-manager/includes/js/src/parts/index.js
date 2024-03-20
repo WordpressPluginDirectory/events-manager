@@ -778,7 +778,7 @@ jQuery(document).ready( function($){
 			diacritics : true,
 			render: {
 				item: function (item, escape) {
-					return "<div>" + item.label + "</div>";
+					return "<div>" + escape(item.label) + "</div>";
 				},
 				option: function (item, escape) {
 					let meta = '';
