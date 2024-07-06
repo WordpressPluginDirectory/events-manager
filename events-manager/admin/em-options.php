@@ -358,6 +358,7 @@ add_action('admin_init', 'em_options_save');
  * @return mixed
  */
 function em_options_save_kses_deep( $string ) {
+	if ( (defined('EM_UNFILTERED_HTML') && EM_UNFILTERED_HTML) || current_user_can('unfiltered_html') ) return $string;
 	if( is_array($string) ) {
 		foreach ( $string as $k => $v ) {
 			$string[$k] = em_options_save_kses_deep( $v );
