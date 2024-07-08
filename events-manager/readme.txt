@@ -163,11 +163,12 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps wit
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
-= 6.4.10.1 (Dev) =
+= 6.4.10.2 (Dev) =
 * added default calendar size option to settings page
 * fixed bug in calendar widget preventing saving/loading on widget area
 * added calendar_size option to calendar widget
 * fixed PHP warning when calendar_size is undefined
+* added shortcode format options due to security implications, see [our docs](http://em.cm/shortcode-security) for more info.
 
 = 6.4.10 =
 * 'fixed' false positive Avast vulnerability alert on browsers, caused by the minified EM js file

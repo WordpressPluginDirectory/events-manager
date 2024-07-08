@@ -9,18 +9,33 @@
  * @since 6.4.7.4
  */
 function em_clean_shortcode_args( $args, $format = '' ) {
+	$supplied_args = $args;
 	$args['ajax'] = isset($args['ajax']) ? $args['ajax']:(!defined('EM_AJAX') || EM_AJAX );
+	if( !get_option('dbem_shortcodes_allow_format_params') ) {
+		unset($args['format'], $args['format_header'], $args['format_footer']);
+	}
 	if( empty($format) && !empty($args['format']) ) {
 		// If supplied via $args in shortcode context, we cannot guarantee the format HTML is safe as it can be invoked by any user. Therefore, we must wp_kses it.
 		// We strongly suggest users to add formats within the shortcode such as [event]format[/event] to avoid this, and header/footer HTML surrounds the shortcode.
 		global $allowedposttags;
-		$args['format'] = html_entity_decode($args['format']); //shorcode doesn't accept html
+		if( get_option('dbem_shortcodes_decode_params') ) {
+			$args['format'] = html_entity_decode($args['format']); //shorcode doesn't accept html
+		}
 		$args['format'] = wp_kses($args['format'], $allowedposttags); //shorcode doesn't accept html
 	} else {
 		// format is empty (default) or defined within shortcode
 		$args['format'] = $format;
+		if( get_option('dbem_shortcodes_decode_content') ) {
+			// If supplied via $args in shortcode context, we cannot guarantee the entity-encoded format HTML is safe as it can be invoked by any user. Therefore, we must wp_kses it after decoding it.
+			// We strongly suggest users to add formats within the shortcode such as [event]format[/event] to avoid this, and header/footer HTML surrounds the shortcode.
+			global $allowedposttags;
+			$args['format'] = html_entity_decode($args['format']); //shorcode doesn't accept html
+			if( get_option('dbem_shortcodes_kses_decoded_content') ) {
+				$args['format'] = wp_kses( $args['format'], $allowedposttags ); //shorcode doesn't accept html
+			}
+		}
 	}
-	return apply_filters('em_clean_shortcode_args', $args, $format);
+	return apply_filters('em_clean_shortcode_args', $args, $format, $supplied_args);
 }
 
 /**
