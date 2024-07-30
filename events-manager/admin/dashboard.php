@@ -9,7 +9,10 @@ class Dashboard {
 	public static function init() {
 		if( get_option('dbem_booking_charts_wpdashboard') ){
 			add_action( 'wp_dashboard_setup', array( get_called_class(), 'wp_dashboard_setup') );
-			add_action( 'admin_print_scripts', array( get_called_class(), 'admin_print_scripts'), 10, 1 );
+			add_action( 'admin_print_scripts', array( get_called_class(), 'enqueue_scripts'), 10, 1 );
+		}
+		if( get_option('dbem_booking_charts_frontend') ){
+			add_action( 'em_enqueue_scripts', array( get_called_class(), 'enqueue_scripts'), 10, 1 );
 		}
 		add_action( 'wp_ajax_em_chart_bookings', array( get_called_class(), 'ajax'), 10, 1 );
 	}
@@ -18,23 +21,29 @@ class Dashboard {
 		wp_add_dashboard_widget('em_booking_stats', __('Events Manager Bookings', 'events-manager'), array( get_called_class(), 'stats_widget'));
 	}
 	
-	public static function admin_print_scripts( $hook_suffix = false ){
-		$screen = get_current_screen();
-		if ( $screen->id == 'dashboard' ) {
+	public static function enqueue_scripts( $hook_suffix = false ){
+		if( is_admin() ) {
+			$screen = get_current_screen();
+			if ( $screen->id == 'dashboard' ) {
+				$min = \EM_Scripts_and_Styles::min_suffix();
+				wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd' . $min . '.js', array(), EM_VERSION );
+				\EM_Scripts_and_Styles::admin_enqueue( true );
+				//wp_enqueue_script( 'chart-js', 'https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.umd.min.js', array(), EM_VERSION);
+				//wp_enqueue_script( 'chart-js-utils', 'https://www.chartjs.org/samples/2.9.4/utils.js', array());
+			} elseif ( !empty( $_REQUEST['page'] ) && $_REQUEST['page'] == 'events-manager-bookings' ) {
+				// we need to call this before enqueue, otherwise it'll get enqueued at footer and possibly dependent EM stuff isn't loaded
+				$min = \EM_Scripts_and_Styles::min_suffix();
+				wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd' . $min . '.js', array( 'moment' ), EM_VERSION );
+			} elseif ( $hook_suffix === true ) {
+				// we need to call this before enqueue, otherwise it'll get enqueued at footer and possibly dependent EM stuff isn't loaded
+				$min = \EM_Scripts_and_Styles::min_suffix();
+				wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd' . $min . '.js', array(), EM_VERSION, true );
+				\EM_Scripts_and_Styles::admin_enqueue( true );
+			}
+		} elseif ( get_option( 'dbem_booking_charts_frontend' ) ) {
+			// we assume it's the bookings admin page if this class was loaded
 			$min = \EM_Scripts_and_Styles::min_suffix();
-			wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd'.$min.'.js', array(), EM_VERSION);
-			\EM_Scripts_and_Styles::admin_enqueue(true);
-			//wp_enqueue_script( 'chart-js', 'https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.umd.min.js', array(), EM_VERSION);
-			//wp_enqueue_script( 'chart-js-utils', 'https://www.chartjs.org/samples/2.9.4/utils.js', array());
-		}elseif( !empty($_REQUEST['page']) && $_REQUEST['page'] == 'events-manager-bookings' ){
-			// we need to call this before enqueue, otherwise it'll get enqueued at footer and possibly dependent EM stuff isn't loaded
-			$min = \EM_Scripts_and_Styles::min_suffix();
-			wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd'.$min.'.js', array('moment'), EM_VERSION);
-		}elseif( $hook_suffix === true ){
-			// we need to call this before enqueue, otherwise it'll get enqueued at footer and possibly dependent EM stuff isn't loaded
-			$min = \EM_Scripts_and_Styles::min_suffix();
-			wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd'.$min.'.js', array(), EM_VERSION, true);
-			\EM_Scripts_and_Styles::admin_enqueue(true);
+			wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd' . $min . '.js', array( 'moment' ), EM_VERSION );
 		}
 	}
 	

@@ -248,7 +248,7 @@
 			background-position-x: calc(100% - 5px) !important;
 			background-size: 20px 20px !important;
 			cursor: pointer !important;
-			vertical-align: middle !important;
+			vertical-align: top !important;
 			&:focus {
 				background-image : url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 15 15'%3E%3Cpath stroke='%23000' stroke-linecap='square' d='m10.5 8.5-3-3-3 3'/%3E%3C/svg%3E") !important;
 			}

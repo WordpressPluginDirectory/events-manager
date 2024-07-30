@@ -54,34 +54,33 @@ function em_bookings_dashboard(){
 	?>
 	<div class='em-bookings-admin-dashboard em-bookings-dashboard <?php em_template_classes('bookings-admin'); ?>'>
 		<div class="input">
-		<?php if( is_admin() ): ?>
-  		<h1><?php esc_html_e('Event Bookings Dashboard', 'events-manager'); ?></h1>
-  		<?php else: echo $EM_Notices; ?>
-  		<?php endif; ?>
-		<?php if( is_admin() && get_option('dbem_booking_charts_dashboard') ): ?>
-		<div class="em-bookings-stats">
-			<div class="inside">
-				<?php \EM\Admin\Dashboard::output('dashboard'); ?>
-			</div>
-		</div>
-		<?php endif; ?>
-  		<div class="em-bookings-recent">
-			<h2><?php esc_html_e('Recent Bookings','events-manager'); ?></h2>
-	  		<?php
-			$EM_Bookings_Table = new EM_Bookings_Table();
-		    if( is_admin() ) {
+			<?php if( is_admin() ): ?>
+		        <h1><?php esc_html_e('Event Bookings Dashboard', 'events-manager'); ?></h1>
+		        <?php else: echo $EM_Notices; ?>
+	        <?php endif; ?>
+			<?php if( get_option('dbem_booking_charts_dashboard') && class_exists('\EM\Admin\Dashboard') ): ?>
+				<div class="em-bookings-stats wrap">
+					<div class="inside">
+						<?php \EM\Admin\Dashboard::output('dashboard'); ?>
+					</div>
+				</div>
+			<?php endif; ?>
+	        <div class="em-bookings-recent wrap">
+				<h2><?php esc_html_e('Recent Bookings','events-manager'); ?></h2>
+		        <?php
+				$EM_Bookings_Table = new EM_Bookings_Table();
 			    $EM_Bookings_Table->display();
-		    }else{
-			    $EM_Bookings_Table->output();
-		    }
-	  		?>
-  		</div>
-  		<br class="clear" />
-  		<div class="em-bookings-events">
-			<h2><?php esc_html_e('Events With Bookings Enabled','events-manager'); ?></h2>
-			<?php em_bookings_events_table(); ?>
+		        ?>
+	        </div>
+	        <br class="clear" />
+	        <div class="em-bookings-events wrap">
+				<h2><?php esc_html_e('Events With Bookings Enabled','events-manager'); ?></h2>
+			    <?php
+				$EM_Events_Table = new EM\List_Table\Events_Bookings();
+				$EM_Events_Table->display();
+				?>
+			</div>
 			<?php do_action('em_bookings_dashboard'); ?>
-		</div>
 		</div>
 	</div>
 	<?php
@@ -142,23 +141,27 @@ function em_bookings_event(){
 				<a class="row-title" href="<?php echo admin_url(); ?>post.php?action=edit&amp;post=<?php echo $EM_Event->get_location()->post_id ?>"><?php echo ($EM_Event->get_location()->location_name); ?></a>
 				<?php endif; ?>
 			</p>
-			<?php if( is_admin() && get_option('dbem_booking_charts_event') ): ?>
+			<?php if( get_option('dbem_booking_charts_event') && class_exists('\EM\Admin\Dashboard') ): ?>
+			<div class="wrap">
 				<div class="em-bookings-stats">
 					<div class="inside">
 						<?php \EM\Admin\Dashboard::output('event', $EM_Event->event_id); ?>
 					</div>
 				</div>
+			</div>
 			<?php endif; ?>
-			<h2><?php esc_html_e('Bookings','events-manager'); ?></h2>
-			<?php
-			$EM_Bookings_Table = new EM_Bookings_Table();
-			$EM_Bookings_Table->status = 'all';
-			if( is_admin() ) {
-				$EM_Bookings_Table->display();
-			}else{
-				$EM_Bookings_Table->output();
-			}
-	        ?>
+			<div class="wrap">
+				<h2><?php esc_html_e('Bookings','events-manager'); ?></h2>
+				<?php
+				$EM_Bookings_Table = new EM_Bookings_Table();
+				$EM_Bookings_Table->status = 'all';
+				if( empty($_REQUEST['legacy']) ) {
+					$EM_Bookings_Table->display();
+				}else{
+					$EM_Bookings_Table->output();
+				}
+	            ?>
+			</div>
 			<?php do_action('em_bookings_event_footer', $EM_Event); ?>
 		</div>
 	</div>
@@ -211,11 +214,7 @@ function em_bookings_ticket(){
 			$EM_Bookings_Table = new EM_Bookings_Table();
 			$EM_Bookings_Table->status = get_option('dbem_bookings_approval') ? 'needs-attention':'confirmed';
 			$EM_Bookings_Table->ticket = $EM_Ticket;
-			if( is_admin() ) {
-				$EM_Bookings_Table->display();
-			}else{
-				$EM_Bookings_Table->output();
-			}
+			$EM_Bookings_Table->display();
 	        ?>
 			<?php do_action('em_bookings_ticket_footer', $EM_Ticket); ?>
 		</div>
@@ -669,11 +668,7 @@ function em_bookings_person(){
 		$EM_Bookings_Table = new EM_Bookings_Table();
 		$EM_Bookings_Table->status = 'all';
 		$EM_Bookings_Table->scope = 'all';
-		if( is_admin() ) {
-			$EM_Bookings_Table->display();
-		}else{
-			$EM_Bookings_Table->output();
-		}
+		$EM_Bookings_Table->display();
   		?>
 		<?php do_action('em_bookings_person_footer', $EM_Person); ?>
 		</div>

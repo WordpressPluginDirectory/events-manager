@@ -185,11 +185,11 @@ function em_setup_selectize( container_element ){
 		}
 	});
 
-	// Sortables - selectize and sorting
-	container.find('.em-bookings-table-modal .em-bookings-table-cols').each( function(){
+	// Sortables - selectize and sorting columns, usually in list tables
+	container.find('.em-list-table-modal .em-list-table-cols').each( function(){
 		let parent = jQuery(this);
-		let sortables = jQuery(this).find('.em-bookings-cols-sortable');
-		container.find('.em-selectize.always-open').each( function() {
+		let sortables = jQuery(this).find('.em-list-table-cols-sortable');
+		parent.find('.em-selectize.always-open').each( function() {
 			//extra behaviour for selectize column picker
 			if ('selectize' in this) {
 				let selectize = this.selectize;
@@ -200,12 +200,15 @@ function em_setup_selectize( container_element ){
 					let type = option.attr('data-type');
 					col.appendTo(sortables);
 					col.attr('data-type', type);
+					if( option.attr('data-header') ) {
+						col.children('span:first-child').text( option.attr('data-header') );
+					}
 					jQuery('<input type="hidden" name="cols[' + value + ']" value="1">').appendTo(col);
 				});
 				selectize.on('item_remove', function (value) {
 					parent.find('.item[data-value="'+ value +'"]').remove();
 				});
-				parent.on('click', '.em-bookings-cols-selected .item .remove', function(){
+				parent.on('click', '.em-list-table-cols-selected .item .remove', function(){
 					let value = this.parentElement.getAttribute('data-value');
 					selectize.removeItem(value, true);
 				});

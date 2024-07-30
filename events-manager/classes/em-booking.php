@@ -1087,6 +1087,7 @@ class EM_Booking extends EM_Object{
 				$this->feedback_message = sprintf(__('%s deleted', 'events-manager'), __('Booking','events-manager'));
 				$wpdb->delete( EM_META_TABLE, array('meta_key'=>'booking-note', 'object_id' => $this->booking_id), array('%s','%d'));
 				$wpdb->delete( EM_BOOKINGS_META_TABLE, array('booking_id'=> $this->booking_id), array('%d'));
+				$this->deleted = true;
 				do_action('em_booking_deleted', $this);
 			}else{
 				$this->add_error(sprintf(__('%s could not be deleted', 'events-manager'), __('Booking','events-manager')));
@@ -1526,6 +1527,9 @@ class EM_Booking extends EM_Object{
 			switch( $result ){
 				case '#_BOOKINGID':
 					$replace = $this->booking_id;
+					break;
+				case '#_BOOKING_UUID':
+					$replace = $this->booking_uuid;
 					break;
 				case '#_RESPNAME' : //deprecated
 				case '#_BOOKINGNAME':

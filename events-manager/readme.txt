@@ -5,7 +5,7 @@ Tags: events, calendar, tickets, bookings, appointments
 Text Domain: events-manager
 Requires at least: 5.2
 Tested up to: 6.6
-Stable tag: 6.4.10.1
+Stable tag: 6.5
 Requires PHP: 5.3
 License: GPLv2
 
@@ -163,7 +163,38 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps wit
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
-= 6.4.10.2 (Dev) =
+= 6.5 =
+* Added multi-array support for EM_Bookings_Table::get_booking_actions() allowing for separate sections of actions
+* Removed em-bookings-action and em-bookings-action-X classes from booking actions links in preference of data- attributes and an em-list-bookings-row-action
+* Added sortable ticket columns to bookings admin tables
+* Improved bookings table search input allowing more search options, including user name and email
+* Fixed bug where em_bookings_get_sql_conditions filter is called twice in EM_Bookings_Table::get_sql_conditions()
+* Changed minimum PHP requirement to 7.0 due to use of shortcut array syntax, null coalescing and ternary operators
+* Added sanitization/decoding options for shortcode format content due to security implications.
+* Fixed bug in calendar widget preventing saving/loading on widget area.
+* Added calendar_size option to calendar widget.
+* Fixed PHP warning when calendar_size is undefined.
+* Added medium calendar size options to widget and settings ddms (in development).
+* Added .em-loading and .em-working (wrapper) classes for more cross-theme compatibility when loading something via AJAX.
+* Moved .em-warning into scss.
+* Removed legacy search form CSS from events_manager.css.
+* Updated and rewritten EM_List_Tables to provide base table functionality for other data tables, support front-end and advanced ordering/searching capabilities.
+* Updated Bookings and Event with Bookings tables to unify front/back-end, added new views (tickets, attendees), sortable columns, responsiveness and much more.
+* Unified/standardized exporting of list tables to support exporting for any EM_List_Table-extended tables.
+* Added #_BOOKING_UUID placeholder.
+* Added EM_Bookings::get(), EM_Ticket_Bookings::get() and EM_Tickets_Bookings::get() search functionality with advanced ordering capabilities.
+* Added EM_Events::get_accepted_fields() for SQL ordering detection.
+* Transitioned out of jQueryUI sortable for booking tables to a vanilla JS alternative - [Sortable 1.15.2](https://github.com/SortableJS/Sortable).
+* Removed all outdated tables in events-manager/admin/bookings folder.
+* Added booking dashboard charts support for front-end with option to specifically enable/disable in settings.
+* Added default calendar size option.
+* Fixed calendar JS errors when switching months.
+* Added custom event for modal opens.
+* Fixed tippy regeneration issues due to uncontained calls to tippy().
+* Fixed tooltips referencing external elements via the data-content attribute not displaying that content accordingly.
+* Fixed privacy nag issues when editing bookings already made in the past before enabling privacy settings.
+
+= 6.4.10.2 =
 * added default calendar size option to settings page
 * fixed bug in calendar widget preventing saving/loading on widget area
 * added calendar_size option to calendar widget

@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Events Manager
-Version: 6.4.10.2
+Version: 6.5
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
@@ -28,8 +28,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // Setting constants
-define('EM_VERSION', '6.4.10.2'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
-define('EM_PRO_MIN_VERSION', '3.0'); //self expanatory
+define('EM_VERSION', '6.5'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_PRO_MIN_VERSION', '3.3'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.0'); //self expanatory
 define('EM_DIR', dirname( __FILE__ )); //an absolute path to this directory
 define('EM_DIR_URI', trailingslashit(plugins_url('',__FILE__))); //an absolute path to this directory
@@ -96,6 +96,7 @@ include( EM_DIR . '/classes/em-list-table.php' );
 include( EM_DIR . '/classes/em-booking.php' );
 include( EM_DIR . '/classes/em-bookings.php' );
 include( EM_DIR . '/classes/em-bookings-table.php' );
+include( EM_DIR . '/classes/em-list-table-events-bookings.php' );
 include( EM_DIR . '/classes/em-calendar.php' );
 include( EM_DIR . '/classes/em-category.php' );
 include( EM_DIR . '/classes/em-categories.php' );
@@ -143,13 +144,6 @@ if( is_admin() ){
 	include( EM_DIR . '/classes/em-taxonomy-admin.php' );
 	include( EM_DIR . '/classes/em-categories-admin.php' );
 	include( EM_DIR . '/classes/em-tags-admin.php' );
-	//bookings folder
-		include( EM_DIR . '/admin/bookings/em-cancelled.php' );
-		include( EM_DIR . '/admin/bookings/em-confirmed.php' );
-		include( EM_DIR . '/admin/bookings/em-events.php' );
-		include( EM_DIR . '/admin/bookings/em-rejected.php' );
-		include( EM_DIR . '/admin/bookings/em-pending.php' );
-		include( EM_DIR . '/admin/bookings/em-person.php' );
 }
 
 /* Only load the component if BuddyPress is loaded and initialized. */
@@ -742,11 +736,17 @@ function em_load_event(){
 		if( isset($_REQUEST['ticket_id']) && is_numeric($_REQUEST['ticket_id']) && !is_object($_REQUEST['ticket_id']) ){
 			$EM_Ticket = new EM_Ticket( absint($_REQUEST['ticket_id']) );
 		}
+		
+		// check if we're on a bookings page, and if so load the dashboard graph
+		if ( is_page( get_option('dbem_edit_bookings_page') ) && get_option('dbem_booking_charts_frontend') ) {
+			include('admin/dashboard.php');
+		}
+		
 		define('EM_LOADED',true);
 	}
 }
 add_action('template_redirect', 'em_load_event', 1);
-if(is_admin()){ add_action('init', 'em_load_event', 2); }
+if( is_admin() ){ add_action('init', 'em_load_event', 2); }
 
 if( is_multisite() ){
 	/**
@@ -917,7 +917,9 @@ function em_get_template_components_classes( $component ){
 			array_unshift($component_classes, 'em-list-widget');
 			break;
 		// Admin Areas
+		case 'list-table':
 		case 'bookings-table':
+		case 'events-bookings-table':
 			$component_classes[] = 'has-filter';
 			$show_theme_class = true;
 			$show_theme_class_admin = 0;

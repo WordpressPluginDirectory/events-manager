@@ -103,6 +103,10 @@ function em_data_privacy_consent_booking_validate( $result, $EM_Booking ){
 		if( !empty($consent_given_already) && get_option('dbem_data_privacy_consent_remember') == 1 ) return $result; //ignore if consent given as per settings
 	}
     if( empty($EM_Booking->booking_meta['consent']) ){
+	    if( !empty($_REQUEST['action']) && !empty($_REQUEST['booking_id']) && !empty($_REQUEST['_wpnonce']) && $_REQUEST['action'] == 'booking_save'  && wp_verify_nonce($_REQUEST['_wpnonce'], 'booking_save_'.$_REQUEST['booking_id']) ) {
+			// we're saving a previously submitted booking here, so we can ignore consent to prevent blocks in editing a booking
+			return $result;
+		}
 	    $EM_Booking->add_error( sprintf(__('You must allow us to collect and store your data in order for us to process your booking.', 'events-manager')) );
 	    $result = false;
     }

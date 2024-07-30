@@ -823,6 +823,7 @@ function em_add_options() {
 			'dbem_booking_charts_wpdashboard' => true,
 			'dbem_booking_charts_dashboard' => true,
 			'dbem_booking_charts_event' => true,
+			'dbem_booking_charts_frontend' => !$already_installed,
 		//BP Settings
 		'dbem_bp_events_list_format_header' => '<ul class="em-events-list">',
 		'dbem_bp_events_list_format' => '<li>#_EVENTLINK - #_EVENTDATES - #_EVENTTIMES<ul><li>#_LOCATIONLINK - #_LOCATIONADDRESS, #_LOCATIONTOWN</li></ul></li>',
@@ -963,7 +964,7 @@ function em_upgrade_current_installation(){
 		update_site_option('dbem_data', $data);
 	}
 	// temp promo
-	if( time() < 1721044800 && ( version_compare($current_version, '6.4.7', '<') || !empty($data['admin-modals']['review-nudge']) )  ) {
+	if( time() < 1723680000 && ( version_compare($current_version, '6.4.7', '<') || !empty($data['admin-modals']['review-nudge']) )  ) {
 		if( empty($data['admin-modals']) ) $data['admin-modals'] = array();
 		$data['admin-modals']['promo-popup'] = true;
 		update_site_option('dbem_data', $data);
@@ -972,6 +973,8 @@ function em_upgrade_current_installation(){
 	// Check EM Pro update min
 	if( defined('EMP_VERSION') && EMP_VERSION < EM_PRO_MIN_VERSION && !defined('EMP_DISABLE_WARNINGS') ) {
 		$message = esc_html__('There is a newer version of Events Manager Pro which is recommended for this current version of Events Manager as new features have been added. Please go to the plugin website and download the latest update.','events-manager');
+		$message .= ' ' . sprintf(__('<a href="%s">Visit our blog</a> for the latest news about recent updates.','events-manager'), 'https://wp-events-plugin.com/blog/');
+		
 		$EM_Admin_Notice = new EM_Admin_Notice(array('name' => 'em-pro-updates', 'who' => 'admin', 'where' => 'all', 'message' => "$message"));
 		EM_Admin_Notices::add($EM_Admin_Notice, is_multisite());
 	}
@@ -1593,10 +1596,72 @@ function em_upgrade_current_installation(){
 			$message = 'Events Manager 6.4.10 automatically disables minified JS files from being loaded, which addresses a false positive security threat from Avast Anti-Virus. For more information, please <a target="_blank" href="https://wp-events-plugin.com/blog/2024/07/03/false-positive-avast-anti-virus-security-threats/">check our blog post</a>';
 			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
 		}
-		if( version_compare( $current_version, '6.4.11', '<') ){
+		if( version_compare( $current_version, '6.4.10', '<') ){
 			// remove flag for admin notice
-			$message = 'Events Manager 6.4.11 introduces some security options related to shortcodes, this is particularly important for sites where untrusted users contribute content via shortcode. Please <a target="_blank" href="https://wp-events-plugin.com/blog/2024/07/06/shortcode-security-updates/">check our blog post</a> for more details on how best to proceed.';
-			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'shortcode-security-update-6-4-11', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
+			$message = 'Events Manager 6.4.10 introduces some security options related to shortcodes, this is particularly important for sites where untrusted users contribute content via shortcode. Please <a target="_blank" href="https://wp-events-plugin.com/blog/2024/07/07/shortcode-security-updates/">check our blog post</a> for more details on how best to proceed.';
+			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'shortcode-security-update-6-4-10', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
+		}
+		if( version_compare( $current_version, '6.5', '<') ){
+			// migrate user booking tables view to new List_Table key format
+			$wpdb->query('UPDATE ' . $wpdb->usermeta . ' SET meta_key = REPLACE(meta_key, "em_bookings_view", "em_bookings_table_settings") WHERE meta_key LIKE "em_bookings_view%"');
+			// merge all user views into one, we're going to assume that 99.9% of cases have a small number of users with saved mata like this and can do it in one run
+			$settings = $wpdb->get_results('SELECT umeta_id, user_id, meta_key, meta_value FROM ' . $wpdb->usermeta . ' WHERE meta_key LIKE "em_bookings_table_settings%" ORDER by meta_key ASC', ARRAY_A);
+			foreach( $settings as $setting ) {
+				// if it's just em_booking_table_settings then we break it down and add it to em_bookings_table_settings, if it's em_bookings_table_settings we convert it to an array and save
+				if( $setting['meta_key'] === 'em_bookings_table_settings' ) {
+					$cols = maybe_unserialize( $setting['meta_value'] );
+					$cols = is_array($cols) ? $cols : array();
+					if( empty($cols['cols']) || !is_array($cols['cols'])) {
+						$new_setting = array(
+							'cols' => $cols
+						);
+						update_user_meta( $setting['user_id'], 'em_bookings_table_settings', $new_setting );
+					}
+				} else {
+					$cols = maybe_unserialize( $setting['meta_value'] );
+					$cols = is_array($cols) ? $cols : array();
+					$context = strtolower( str_replace('em_bookings_table_settings-EM_', '', $setting['meta_key']) );
+					$meta = get_user_meta( $setting['user_id'], 'em_bookings_table_settings', true );
+					// add or update setting
+					if ( empty($meta) ) {
+						$meta = array(
+							'cols' => array(),
+							'contexts' => array(
+								$context => array(
+									'cols' => $cols,
+								),
+							),
+						);
+					} elseif ( !empty($meta['cols']) && is_array($meta['cols']) ) {
+						if ( empty($meta['contexts']) ) {
+							$meta['contexts'] = array(
+								$context => array(
+									'cols' => $cols,
+								),
+							);
+						} else {
+							$meta['contexts'][$context] = array(
+								'cols' => $cols,
+							);
+						}
+					} else {
+						$meta = array(
+							'cols' => $meta,
+							'contexts' => array(
+								$context => array(
+									'cols' => $cols,
+								),
+							),
+						);
+					}
+					update_user_meta( $setting['user_id'], 'em_bookings_table_settings', $meta );
+					// delete the old meta, whilst deleting stuff is never ideal, it's low-risk as it's just a view preference
+					$wpdb->delete( $wpdb->usermeta, array( 'umeta_id' => $setting['umeta_id'] ) );
+				}
+			}
+			wp_cache_flush_group('user');
+			$message = 'Events Manager 6.5 introduces completely revamped booking admin tables, now included in front-end admin areas along with graphs! Enable charts in <em>Events > Settings > Bookings > Chart Options</em>. <a target="_blank" href="https://wp-events-plugin.com/blog/2024/07/29/events-manager-6-5-pro-3-3/">check our blog post</a>';
+			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
 		}
 	}
 }

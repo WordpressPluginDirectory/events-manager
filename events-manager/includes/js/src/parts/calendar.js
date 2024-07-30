@@ -262,7 +262,7 @@ let EM_View_Updater = function( element, html ){
 			element.replaceWith(view);
 		}
 	}
-	em_setup_ui_elements( view );
+	em_setup_ui_elements( view[0] );
 	return view;
 }
 
@@ -283,7 +283,11 @@ let EM_ResizeObserver = function( breakpoints, elements ){
 						for (let breakpoint_name of Object.keys(breakpoints)) {
 							if (breakpoint_name !== name) el.classList.remove('size-' + breakpoint_name);
 						}
-						el.classList.add('size-' + name);
+						// add class and trigger event only once
+						if(	!el.classList.contains('size-' + name) ) {
+							el.classList.add('size-' + name);
+							el.dispatchEvent( new CustomEvent('em_resize') );
+						}
 						break;
 					}
 				}

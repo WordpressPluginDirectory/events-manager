@@ -208,7 +208,7 @@ class EM_Object {
 			if( is_array($defaults[$orderby_arg]) ) $defaults[$orderby_arg] = array_values($defaults[$orderby_arg]); //reset array keys because we want an index 0 present
 		}
 		//TODO should we clean format of malicious code over here and run everything through this?
-		$defaults['array'] = ($defaults['array'] == true);
+		$defaults['array'] = is_array($defaults['array']) ? $defaults['array'] : ($defaults['array'] == true);
 		$defaults['pagination'] = ($defaults['pagination'] == true);
 		$defaults['limit'] = (is_numeric($defaults['limit'])) ? $defaults['limit']:$super_defaults['limit'];
 		$defaults['offset'] = (is_numeric($defaults['offset'])) ? $defaults['offset']:$super_defaults['offset'];
