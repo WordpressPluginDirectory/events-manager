@@ -168,11 +168,15 @@ class EM_Tickets_Bookings extends EM_Object implements Iterator, Countable, Arra
 					$orderby = explode(' ', $orderby); // in case we have order, remove it
 					$orderby_field = $orderby[0];
 					if( in_array($orderby_field, static::$sortable_columns) ) {
-						if( in_array( $orderby_field, ['ticket_id', 'ticket_booking_id', 'ticket_booking_spaces', 'ticket_booking_price']) ) {
+						if( in_array( $orderby_field, ['ticket_id', 'ticket_booking_id', 'ticket_booking_price']) ) {
 							// these fields are located in the tickets_bookings_table and do not require a join
 							$orderbys[$orderby_field] = 'tb.' . $orderby_field;
+						} elseif ( $orderby_field == 'ticket_booking_spaces' ) {
+							// we need to group and sum, not join
+							$fields['ticket_booking_spaces'] = 'SUM(ticket_booking_spaces) AS ticket_booked_spaces';
+							$orderbys[$orderby_field] = 'ticket_booked_spaces';
 						} else {
-							// the rest require a join to the tickets tablejh
+							// the rest require a join to the tickets table
 							$orderbys[$orderby_field] = 't.' . $orderby_field;
 							$joins['tickets'] = 'LEFT JOIN ' . EM_TICKETS_TABLE . ' t ON t.ticket_id = tb.ticket_id';
 						}

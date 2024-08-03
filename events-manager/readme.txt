@@ -5,7 +5,7 @@ Tags: events, calendar, tickets, bookings, appointments
 Text Domain: events-manager
 Requires at least: 5.2
 Tested up to: 6.6
-Stable tag: 6.5
+Stable tag: 6.5.1
 Requires PHP: 5.3
 License: GPLv2
 
@@ -163,6 +163,16 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps wit
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
+= 6.5.1 =
+* Fixed hard-coded naming of bookings table for SQL query affecting list table searches on WP installs with custom DB prefixes.
+* Fixed PHP warning on bookings list tables.
+* Fixed some default settings not saving properly.
+* Added `em_bookings_table_get_item_limits` filter to add/modify custom limits, applicable to other tables such as `em_transactions_table_get_item_limits`.
+* Fixed status filter not working in bookings admin table.
+* Fixed fatal PHP error when grouping events in shortcode (bug introduced in 6.5).
+* Fixed "Ticket Spaces" column not ordered due to naming conflict with `ticket_spaces` db field name.
+* Changed "Ticket Spaces" column key from `ticket_spaces` to `ticket_booking_spaces`, the "Ticket Spaces" column index is now "Ticket Capacity".
+
 = 6.5 =
 * Added multi-array support for EM_Bookings_Table::get_booking_actions() allowing for separate sections of actions
 * Removed em-bookings-action and em-bookings-action-X classes from booking actions links in preference of data- attributes and an em-list-bookings-row-action

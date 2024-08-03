@@ -87,6 +87,8 @@ class EM_Events extends EM_Object {
 				foreach( array('groupby', 'orderby', 'groupby_orderby') as $arg ){
 					if( !is_array($args[$arg]) ) continue; //ignore this argument if set to false
 					//we assume all these arguments are now array thanks to self::get_search_defaults() cleaning it up
+					$EM_Location = new EM_Location();
+					$location_fields = array_intersect($accepted_fields, array_keys($EM_Location->fields));
 					foreach( $args[$arg] as $field_name ){
 						if( in_array($field_name, $location_fields) ){
 							$join_locations = true;

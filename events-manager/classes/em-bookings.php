@@ -704,7 +704,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		$sql_parts['statement']['orderby'] = ( count($sql_parts['data']['orderbys']) > 0 ) ? 'ORDER BY '. implode(', ', $sql_parts['data']['orderbys']) : 'ORDER BY booking_date';
 		//Selectors
 		if( $count ){
-			$sql_parts['data']['selectors'] = 'COUNT(DISTINCT wp_em_bookings.booking_id)';
+			$sql_parts['data']['selectors'] = 'COUNT(DISTINCT '. EM_BOOKINGS_TABLE . '.booking_id)';
 		}elseif( is_array($args['array']) ){
 			$sql_parts['data']['selectors'] = implode(',', $args['array']);
 		}else{

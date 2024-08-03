@@ -358,7 +358,7 @@ namespace EM {
 				$filters = array();
 				foreach ( static::$filter_vars as $filter_key => $filter_var ) {
 					if( is_array($filter_var) ) {
-						$filter_var = $filter_var['request_param']; // allows for further expansion such as special filtering etc.
+						$filter_var = $filter_var['param']; // allows for further expansion such as special filtering etc.
 					} elseif ( is_int($filter_key) ) {
 						$filter_key = $filter_var;
 					}
@@ -422,6 +422,11 @@ namespace EM {
 				}
 			}
 			return $default;
+		}
+		
+		public static function get_item_limits() {
+			$limits = [ 5, 10, 20, 50, 100 ];
+			return apply_filters( static::$basename . '_get_item_limits', $limits );
 		}
 		
 		/* ------------------ Static and AJAX Methods ------------------ */
@@ -830,12 +835,9 @@ namespace EM {
 							<div class="<?php echo $uid; ?>-rows-setting em-list-table-setting">
 								<label for="<?php echo $uid; ?>-rows-setting"><strong><?php esc_html_e('Results per Page', 'events-manager'); ?></strong></label>
 								<select name="limit" class="<?php echo $id; ?>-filter" id="<?php echo $uid; ?>-rows-setting">
-									<option value="<?php echo esc_attr($this->limit) ?>"><?php echo esc_html(sprintf(__('%s Rows','events-manager'),$this->limit)); ?></option>
-									<option value="5">5</option>
-									<option value="10">10</option>
-									<option value="25">25</option>
-									<option value="50">50</option>
-									<option value="100">100</option>
+									<?php foreach ( static::get_item_limits() as $limit ) : ?>
+									<option value="<?php echo esc_attr($limit) ?>" <?php selected($limit, $this->limit); ?>><?php echo esc_html(sprintf(__('%s Rows','events-manager'),$limit)); ?></option>
+									<?php endforeach; ?>
 								</select>
 							</div>
 							<?php do_action( static::$basename . '_settings_options', $this); ?>

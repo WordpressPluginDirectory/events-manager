@@ -10,7 +10,7 @@ use EM\List_Table;
 
 //Builds a table of bookings, still work in progress...
 class EM_Bookings_Table extends EM\List_Table {
-	public static $cols_allowed_html = array('user_login' => 1, 'user_name' => 1, 'event_name' => 1, 'actions' => 1, 'ticket_name' => 0, 'ticket_description' => 0, 'ticket_price' => 0, 'ticket_total' => 0, 'ticket_spaces' => 0, 'ticket_id' => 0);
+	public static $cols_allowed_html = array('user_login' => 1, 'user_name' => 1, 'event_name' => 1, 'actions' => 1, 'ticket_name' => 0, 'ticket_description' => 0, 'ticket_price' => 0, 'ticket_total' => 0, 'ticket_spaces' => 0, 'ticket_booking_spaces' => 0, 'ticket_id' => 0);
 	public static $has_filters = true;
 	public static $filter_vars = [
 		'search' => [
@@ -70,7 +70,6 @@ class EM_Bookings_Table extends EM\List_Table {
 	 * @var array
 	 */
 	public $statuses = array();
-	public $status = 'confirmed';
 	public $show_tickets = false;
 	public $show_attendees = false;
 	/**
@@ -107,7 +106,7 @@ class EM_Bookings_Table extends EM\List_Table {
 			$this->statuses['confirmed']['search'] = array(0,1);
 		}
 		// set default status to search for
-		$this->filter_vars['status']['default'] = get_option('dbem_bookings_approval') ? 'needs-attention':'confirmed';
+		static::$filter_vars['status']['default'] = get_option('dbem_bookings_approval') ? 'needs-attention':'confirmed';
 		
 		// set/translate Attendee column header previd accordingly
 		if ( !defined('EM_BOOKINGS_TABLE_ATTENDEE_PREFIX') || constant('EM_BOOKINGS_TABLE_ATTENDEE_PREFIX') === true ) {
@@ -136,10 +135,10 @@ class EM_Bookings_Table extends EM\List_Table {
 				'label' => __('Tickets','events-manager'),
 				'label_singular' => __('Ticket', 'events_manager'),
 				'limit' => 20,
-				'cols' => array('user_name','event_name', 'event_date', 'event_time','ticket_name', 'ticket_price', 'ticket_total','ticket_spaces','booking_status'),
+				'cols' => array('user_name','event_name', 'event_date', 'event_time','ticket_name', 'ticket_price', 'ticket_total','ticket_booking_spaces','booking_status'),
 				'contexts' => array(
 					'event' => array(
-						'cols' => array('user_name', 'ticket_name', 'booking_status', 'ticket_price', 'ticket_spaces', 'ticket_total'),
+						'cols' => array('user_name', 'ticket_name', 'booking_status', 'ticket_price', 'ticket_booking_spaces', 'ticket_total'),
 					),
 				)
 			),
@@ -215,7 +214,8 @@ class EM_Bookings_Table extends EM\List_Table {
 			),
 		), $this);
 		$this->cols_tickets_template = apply_filters('em_bookings_table_cols_tickets_template', array(
-			'ticket_spaces'=>__('Ticket Spaces','events-manager'),
+			'ticket_spaces'=>__('Ticket Capacity','events-manager'),
+			'ticket_booking_spaces'=>__('Ticket Spaces','events-manager'),
 			'ticket_name'=>__('Ticket Name','events-manager'),
 			'ticket_description'=>__('Ticket Description','events-manager'),
 			'ticket_price'=>__('Ticket Price','events-manager'),
@@ -463,6 +463,18 @@ class EM_Bookings_Table extends EM\List_Table {
 	}
 	
 	/**
+	 * Returns a compatible search arg value for searching bookings by status, which may contain one or more statuses based on name of status, e.g. needs-attention could contain custom statuses.
+	 * @return string|int
+	 */
+	function get_status_search() {
+		$status = $this->filters['status'] ?? false;
+		if ( is_array( $this->statuses[ $status ]['search'] ) ) {
+			return implode( ',', $this->statuses[ $status ]['search'] );
+		}
+		return $this->statuses[ $status ]['search'];
+	}
+	
+	/**
 	 * Gets the bookings for this object instance according to its settings
 	 *
 	 * @return EM_Bookings[]|EM_Ticket_Bookings[]|EM_Ticket_Booking[]
@@ -474,7 +486,7 @@ class EM_Bookings_Table extends EM\List_Table {
 			$EM_Person = $this->get_person();
 			$base_args = array( 'limit'=>$this->limit, 'offset'=>$this->offset );
 			$default_args = array(
-				'status'=> $this->filters['status'],
+				'status'=> $this->get_status_search(),
 				'search' => $this->filters['search'],
 				'order' => $this->order,
 				'orderby'=>$this->orderby,
@@ -860,7 +872,7 @@ class EM_Bookings_Table extends EM\List_Table {
 			$val = $EM_Booking->get_spaces();
 		}elseif( $col == 'booking_id' ){
 			$val = $EM_Booking->booking_id;
-		}elseif( $col == 'ticket_spaces' ){
+		}elseif( $col == 'ticket_booking_spaces' ){
 			static::$cols_allowed_html[$col] = false; // guilty until proven innocent each time
 			if( !empty($EM_Ticket_Bookings) || !empty($EM_Ticket_Booking) ) {
 				$EM_Ticket_Bookings = !empty($EM_Ticket_Bookings) ? $EM_Ticket_Bookings : $EM_Ticket_Booking;
@@ -876,7 +888,7 @@ class EM_Bookings_Table extends EM\List_Table {
 				$val = $this->get_tickets_multiple_col( $tickets_array, $col, $EM_Booking );
 				static::$cols_allowed_html[$col] = true;
 			}
-		}elseif( $col == 'ticket_description' || $col == 'ticket_name' ){
+		}elseif( $col == 'ticket_description' || $col == 'ticket_name' || $col == 'ticket_spaces' ){
 			static::$cols_allowed_html[$col] = false; // guilty until proven innocent each time
 			if( !empty($EM_Ticket_Bookings) || !empty($EM_Ticket_Booking) ) {
 				$EM_Ticket_Bookings = !empty($EM_Ticket_Bookings) ? $EM_Ticket_Bookings : $EM_Ticket_Booking;
@@ -1026,7 +1038,7 @@ class EM_Bookings_Table extends EM\List_Table {
 	 */
 	public function get_tickets_multiple_col( $tickets_array, $col, $EM_Booking ){
 		ob_start();
-		$value = $col === 'ticket_spaces' ? $EM_Booking->get_spaces() : __( 'View', 'events-manager' );
+		$value = $col === 'ticket_booking_spaces' ? $EM_Booking->get_spaces() : __( 'View', 'events-manager' );
 		if( !in_array( $this->format, ['csv', 'xls', 'xlsx'] ) ){
 			$id = $this->uid . '-col-tickets-tooltip-content-' . $EM_Booking->booking_id . '-' . $col;
 			?>
