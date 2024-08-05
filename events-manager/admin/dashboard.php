@@ -8,17 +8,17 @@ class Dashboard {
 	
 	public static function init() {
 		if( get_option('dbem_booking_charts_wpdashboard') ){
-			add_action( 'wp_dashboard_setup', array( get_called_class(), 'wp_dashboard_setup') );
-			add_action( 'admin_print_scripts', array( get_called_class(), 'enqueue_scripts'), 10, 1 );
+			add_action( 'wp_dashboard_setup', array( static::class, 'wp_dashboard_setup') );
+			add_action( 'admin_print_scripts', array( static::class, 'enqueue_scripts'), 10, 1 );
 		}
-		if( get_option('dbem_booking_charts_frontend') ){
-			add_action( 'em_enqueue_scripts', array( get_called_class(), 'enqueue_scripts'), 10, 1 );
+		if( get_option('dbem_booking_charts_frontend') && !is_admin() ){
+			add_action( 'em_enqueue_scripts', array( static::class, 'enqueue_scripts'), 10, 1 );
 		}
-		add_action( 'wp_ajax_em_chart_bookings', array( get_called_class(), 'ajax'), 10, 1 );
+		add_action( 'wp_ajax_em_chart_bookings', array( static::class, 'ajax'), 10, 1 );
 	}
 
 	public static function wp_dashboard_setup() {
-		wp_add_dashboard_widget('em_booking_stats', __('Events Manager Bookings', 'events-manager'), array( get_called_class(), 'stats_widget'));
+		wp_add_dashboard_widget('em_booking_stats', __('Events Manager Bookings', 'events-manager'), array( static::class, 'stats_widget'));
 	}
 	
 	public static function enqueue_scripts( $hook_suffix = false ){
@@ -1093,8 +1093,8 @@ class Dashboard {
 			<?php static::output_chart( $args, $stats ); ?>
 		</div>
 		<?php
-		add_action('wp_footer', array(get_called_class(), 'js_footer'));
-		add_action('admin_footer', array(get_called_class(), 'js_footer'));
+		add_action('wp_footer', array(static::class, 'js_footer'));
+		add_action('admin_footer', array(static::class, 'js_footer'));
 	}
 	
 	public static function output_chart( $args, $stats = null ){

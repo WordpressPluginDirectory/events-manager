@@ -8,7 +8,7 @@ let em_close_other_selectized = function(){
 	});
 }
 
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('events_manager_js_loaded', function(){
 	Selectize.define('multidropdown', function( options ) {
 		if( !this.$input.hasClass('multidropdown') ) return;
 		let s = this;

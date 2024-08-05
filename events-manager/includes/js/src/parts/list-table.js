@@ -92,6 +92,21 @@ const setupListTable = function( listTable ) {
 				somethingSelected ? el.classList.remove('disabled') : el.classList.add('disabled', true);
 			});
 			lastChecked = e.target;
+		} else if ( e.target.closest('tbody td.column-primary') ) {
+			// handle row expand/collapse
+			if ( e.target.matches('a[href],button:not(.toggle-row)') ) return true; // allow links to pass
+			e.preventDefault();
+			let rowExpandTrigger = e.target.closest('td.column-primary');
+			let row = rowExpandTrigger.closest('tr');
+			if( row.classList.contains('expanded') ) {
+				row.classList.remove('expanded');
+				row.classList.add('collapsed');
+				rowExpandTrigger.querySelector('button.toggle-row').classList.remove('expanded');
+			} else {
+				row.classList.add('expanded');
+				row.classList.remove('collapsed');
+				rowExpandTrigger.querySelector('button.toggle-row').classList.add('expanded');
+			}
 		}
 	});
 	// disable filter since no checkboxes initially selected
@@ -169,23 +184,6 @@ const setupListTable = function( listTable ) {
 			}
 		});
 	}
-	// handle row expand/collapse
-	listTable.querySelectorAll('tbody td.column-primary').forEach( function( rowExpandTrigger ){
-		// detect click and add expand class to table, expanded class to trigger
-		rowExpandTrigger.addEventListener('click', function(e){
-			e.preventDefault();
-			let row = rowExpandTrigger.closest('tr');
-			if( row.classList.contains('expanded') ) {
-				row.classList.remove('expanded');
-				row.classList.add('collapsed');
-				rowExpandTrigger.querySelector('button.toggle-row').classList.remove('expanded');
-			} else {
-				row.classList.add('expanded');
-				row.classList.remove('collapsed');
-				rowExpandTrigger.querySelector('button.toggle-row').classList.add('expanded');
-			}
-		});
-	});
 
 	// handle filters when pressing enter, submitting a search
 	listTable.querySelectorAll('.tablenav .actions input[type="text"]').forEach( function (input) {

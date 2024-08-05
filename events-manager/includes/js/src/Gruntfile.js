@@ -13,7 +13,8 @@ module.exports = function(grunt) {
 		'parts/search.js',
 		'parts/calendar.js',
 		'parts/phone.js',
-		'parts/externals.js'
+		'parts/externals.js',
+		'parts/final.js'
 	];
 
 	// Project configuration.

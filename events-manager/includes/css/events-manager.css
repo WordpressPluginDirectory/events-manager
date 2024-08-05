@@ -4566,6 +4566,10 @@
   box-shadow: none !important;
   outline: none !important;
 }
+.em .em-list-table.size-small .wp-list-table tbody td.column-primary button.toggle-row :focus:before, .em .em-list-table.size-xsmall .wp-list-table tbody td.column-primary button.toggle-row :focus:before {
+  box-shadow: none;
+  outline: none;
+}
 .em .em-list-table.size-small .wp-list-table tbody td.column-primary .em-list-table-row-responsive-meta, .em .em-list-table.size-xsmall .wp-list-table tbody td.column-primary .em-list-table-row-responsive-meta {
   float: left;
   clear: left;
@@ -4774,6 +4778,10 @@
 }
 .em .em-bookings-table td.column-actions a:last-of-type {
   margin-right: 0;
+}
+.em .em-bookings-table td.column-actions a :focus {
+  box-shadow: none;
+  outline: none;
 }
 .em .em-bookings-table td.column-actions a[data-row_action=delete] {
   background: var(--icon-trash) no-repeat;

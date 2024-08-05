@@ -5,7 +5,7 @@ Tags: events, calendar, tickets, bookings, appointments
 Text Domain: events-manager
 Requires at least: 5.2
 Tested up to: 6.6
-Stable tag: 6.5.1
+Stable tag: 6.5.2
 Requires PHP: 5.3
 License: GPLv2
 
@@ -163,6 +163,18 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps wit
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
+= 6.5.2 =
+* Fixed fatal error on dashboard with Charts widget enabled.
+* Fixed 'array_key_exists' fatal error (not reproduced) on bookings dashboard in limited cases - pending further confirmation to reproduce/fix potential underlying issue.
+* Fixed JS issues preventing event links from being clicked on the 'events with bookings' list table.
+* Minor CSS fixes showing button outlines when clicked.
+* Fixed rare calendar issue preventing future months from showing events.
+* Removed all unnecessary query string params aside from yr/mo in calendar navigation links.
+* Fixed calendar search trigger not working when default search is set to inline mode.
+* Fixed rare selectize JS issue not being initialized properly due to jQuery firing before DOMContentLoaded.
+* Fixed settings/tags/taxonomies having white as default color as opposed to the settings page default and also defaulting to #80b538 avoiding white-on-white display issues.
+* Added ordering to savable filtering options.
+
 = 6.5.1 =
 * Fixed hard-coded naming of bookings table for SQL query affecting list table searches on WP installs with custom DB prefixes.
 * Fixed PHP warning on bookings list tables.

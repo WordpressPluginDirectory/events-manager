@@ -611,7 +611,7 @@ function em_add_options() {
 		'dbem_category_event_list_order' => 'ASC',
 		'dbem_category_event_single_format' => '#_EVENTLINK - #_EVENTDATES - #_EVENTTIMES',
 		'dbem_category_no_event_message' => __('No events in this category', 'events-manager'),
-		'dbem_category_default_color' => '#a8d144',
+		'dbem_category_default_color' => '#80b538',
 		//Tags page options
 		'dbem_tags_default_limit' => 10,
 		'dbem_tags_default_orderby' => 'name',

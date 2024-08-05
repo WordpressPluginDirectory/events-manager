@@ -704,6 +704,10 @@ $frontend: true !default;
 							box-shadow: none !important;
 							outline: none !important;
 						}
+						:focus:before {
+							box-shadow: none;
+							outline: none;
+						}
 					}
 
 					.em-list-table-row-responsive-meta {
@@ -984,6 +988,10 @@ $frontend: true !default;
 
 			&:last-of-type {
 				margin-right: 0;
+			}
+			:focus {
+				box-shadow: none;
+				outline: none;
 			}
 
 			&[data-row_action="delete"] {
