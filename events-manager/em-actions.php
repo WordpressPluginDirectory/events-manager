@@ -559,6 +559,7 @@ function em_init_actions_start() {
 					$EM_Booking->is_no_user() && $EM_Booking->get_person_post() && 
 			    	$EM_Booking->update_meta('registration', $EM_Booking->booking_meta['registration'])
 				){
+					do_action('em_nouser_booking_details_modified', $EM_Booking);
 					$EM_Notices->add_confirm( $EM_Booking->feedback_message, true );
 					$redirect = !empty($_REQUEST['redirect_to']) ? $_REQUEST['redirect_to'] : em_wp_get_referer();
 					wp_safe_redirect( $redirect );

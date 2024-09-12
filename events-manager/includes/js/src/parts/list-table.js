@@ -229,8 +229,10 @@ const setupListTable = function( listTable ) {
 			if (!listTable.classList.contains('frontend')) {
 				// remove modals as they are supplied again on the backend
 				listTableForm.querySelectorAll('.em-list-table-trigger').forEach(function ( trigger ) {
-					let modal = trigger.rel;
-					modal.remove();
+					let modal = document.querySelector(trigger.rel);
+					if( modal ) {
+						modal.remove();
+					}
 				});
 			}
 			// get new data as DOM object

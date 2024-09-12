@@ -113,9 +113,30 @@ function em_setup_selectize( container_element ){
 
 	container.find('.em-selectize.selectize-control').on( 'click', em_close_other_selectized );
 
+	let optionRender = function (item, escape) {
+		let html = '<div class="option"';
+		if( 'data' in item ){
+			// any key/value object pairs wrapped in a 'data' key within JSON object in the data-data attribute is added automatically as a data-key="value" attribute
+			Object.entries(item.data).forEach( function( item_data ){
+				html += ' data-'+ escape(item_data[0]) + '="'+ escape(item_data[1]) +'"';
+			});
+		}
+		html +=	'>';
+		if( this.$input.hasClass('checkboxes') ){
+			html += item.text.replace(/^(\s+)?/i, '$1<span></span> ');
+		}else{
+			html += item.text;
+		}
+		html += '</div>';
+		return html;
+	};
+
 	// Selectize General
 	container.find('select:not([multiple]).em-selectize, .em-selectize select:not([multiple])').selectize({
 		selectOnTab : false,
+		render: {
+			option: optionRender,
+		},
 	});
 	container.find('select[multiple].em-selectize, .em-selectize select[multiple]').selectize({
 		selectOnTab : false,
@@ -126,23 +147,7 @@ function em_setup_selectize( container_element ){
 			item: function (item, escape) {
 				return '<div class="item"><span>' + item.text.replace(/^\s+/i, '') + '</span></div>';
 			},
-			option : function (item, escape) {
-				let html = '<div class="option"';
-				if( 'data' in item ){
-					// any key/value object pairs wrapped in a 'data' key within JSON object in the data-data attribute is added automatically as a data-key="value" attribute
-					Object.entries(item.data).forEach( function( item_data ){
-						html += ' data-'+ escape(item_data[0]) + '="'+ escape(item_data[1]) +'"';
-					});
-				}
-				html +=	'>';
-				if( this.$input.hasClass('checkboxes') ){
-					html += item.text.replace(/^(\s+)?/i, '$1<span></span> ');
-				}else{
-					html += item.text;
-				}
-				html += '</div>';
-				return html;
-			},
+			option : optionRender,
 			optgroup : function (item, escape) {
 				let html = '<div class="optgroup" data-group="' + escape(item.label) + '"';
 				if( 'data' in item ){

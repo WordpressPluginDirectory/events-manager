@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Events Manager
-Version: 6.5.2
+Version: 6.6.1
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
@@ -28,8 +28,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // Setting constants
-define('EM_VERSION', '6.5.2'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
-define('EM_PRO_MIN_VERSION', '3.3'); //self expanatory
+define('EM_VERSION', '6.6.1'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_PRO_MIN_VERSION', '3.4'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.0'); //self expanatory
 define('EM_DIR', dirname( __FILE__ )); //an absolute path to this directory
 define('EM_DIR_URI', trailingslashit(plugins_url('',__FILE__))); //an absolute path to this directory
@@ -63,6 +63,12 @@ function dbem_debug_mode(){
 }
 //add_action('plugins_loaded', 'dbem_debug_mode');
 
+// do requirements check
+include( EM_DIR . '/classes/requirements-check.php' );
+$requirements = new EM\Requirements_Check();
+if( !$requirements->passes(false) ) return;
+unset($requirements);
+
 // INCLUDES
 //Base classes
 include( EM_DIR . '/classes/em-exception.php' );
@@ -83,7 +89,9 @@ include( EM_DIR . '/em-functions.php' );
 include( EM_DIR . '/em-ical.php' );
 include( EM_DIR . '/em-shortcode.php' );
 include( EM_DIR . '/em-template-tags.php' );
-include( EM_DIR . '/em-data-privacy.php' );
+include( EM_DIR . '/classes/consent/consent.php');
+include( EM_DIR . '/classes/consent/privacy-consent.php');
+include( EM_DIR . '/classes/consent/comms-consent.php');
 include( EM_DIR . '/multilingual/em-ml.php' );
 //Widgets
 include( EM_DIR . '/widgets/em-events.php' );
@@ -121,6 +129,8 @@ include( EM_DIR . '/classes/em-ticket.php' );
 include( EM_DIR . '/classes/em-tickets-bookings.php' );
 include( EM_DIR . '/classes/em-ticket-bookings.php' );
 include( EM_DIR . '/classes/em-tickets.php' );
+include( EM_DIR . '/classes/em-phone.php' );
+
 
 //Admin Files
 if( is_admin() ){
@@ -364,6 +374,8 @@ class EM_Scripts_and_Styles {
 			self::localize_script();
 			if( !empty($_REQUEST['page']) && $_REQUEST['page'] === 'events-manager-options' ){
 				wp_enqueue_code_editor( array( 'type' => 'text/html' ) );
+				$min = static::get_minified_extension_js();
+				wp_enqueue_script('events-manager-settings', plugins_url('includes/js/admin-settings'.$min.'.js',__FILE__), array(), EM_VERSION);
 			}
 		}
 	}
@@ -447,20 +459,20 @@ class EM_Scripts_and_Styles {
 			),
 			'url' => plugins_url('', __FILE__),
 		);
-		// add phone number validation and localization - BETA - add EM_PHONE_INTL_ENABLED constant set to true in wp-config.php to enable
-		if( defined('EM_PHONE_INTL_ENABLED') && EM_PHONE_INTL_ENABLED ) {
+		// add phone number validation and localization
+		if( EM\Phone::is_enabled() ) {
 			$em_localized_js['phone'] = array(
 				'error' => __('Please enter a valid phone number.', 'events-manager'),
 				'detectJS' => get_option('dbem_phone_detect') == true,
 				//'initialCountry' => 'US',
 				'options' => array(
 					'initialCountry' => get_option('dbem_phone_default_country', 'US'),
-					'nationalMode' => get_option('dbem_phone_national_format') == true,
-					'showDialCode' => get_option('dbem_phone_show_selected_code') == true,
+					'separateDialCode' => get_option('dbem_phone_show_selected_code') == true,
 					'showFlags' => get_option('dbem_phone_show_flags') == true,
-					'onlyCountries' => get_option('dbem_phone_countries_include'),
-					'excludeCountries' => get_option('dbem_phone_countries_exclude'),
-					'preferredCountries' => get_option('dbem_phone_countries_preferred'),
+					'onlyCountries' => get_option('dbem_phone_countries_include') ?: array(),
+					'excludeCountries' => get_option('dbem_phone_countries_exclude') ?: array(),
+					//'preferredCountries' => get_option('dbem_phone_countries_preferred'), // not working in 23.x due to search
+					//'nationalMode' => get_option('dbem_phone_national_format') == true,
 				),
 			);
 		}
@@ -1299,4 +1311,9 @@ $v6 = EM_Options::get('v6', null);
 if( $v6 !== null ){
 	include( EM_DIR . '/v6-migrate.php' );
 }
+
+function events_manager_plugin_loaded(){
+	do_action('events_manager_plugin_loaded');
+}
+add_action('plugins_loaded','events_manager_plugin_loaded');
 ?>

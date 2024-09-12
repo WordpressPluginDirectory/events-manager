@@ -117,7 +117,7 @@ namespace EM {
 				'param' => 'em_search',
 				'default' => '',
 			],
-			'scope' => [ 'default' => 'all' ]
+			'scope' => [ 'default' => 'future' ]
 		];
 		/**
 		 * Show or hide filters by default
@@ -168,7 +168,7 @@ namespace EM {
 				$_GET['order'] = strtolower($this->order); // for WP_List_Table
 				$_GET['orderby'] = $this->orderby;
 			}
-			$this->limit = ( !empty($_REQUEST['limit']) && is_numeric($_REQUEST['limit'])) ? $_REQUEST['limit'] : 20;//Default limit
+			$this->limit = ( !empty($_REQUEST['limit']) && is_numeric($_REQUEST['limit'])) ? $_REQUEST['limit'] : $this->limit;//Default limit
 			$this->page = ( !empty($_REQUEST['pno']) && is_numeric($_REQUEST['pno']) ) ? $_REQUEST['pno']:1;
 			$_REQUEST['paged'] = $this->page;
 			$this->offset = ( $this->page > 1 ) ? ($this->page-1)*$this->limit : 0;
@@ -264,16 +264,19 @@ namespace EM {
 			$this->filters = $settings['filters'] ?? $this->filters;
 			$this->orderby = $settings['orderby'] ?? $this->orderby;
 			// set default filters - child classes could set them here or after this parent constructor is called
-			foreach ( static::$filter_vars as $filter_key => $filter_var ) {
+			foreach ( static::$filter_vars as $filter_key => $filter_vars ) {
 				$default = false;
-				if( is_array($filter_var) ) {
-					$filter_var = $filter_var['param'] ?? $filter_key; // allows for further expansion such as special filtering etc.
-					$default = $filter_var['default'] ?? false;
-					if( !empty($filter_var['in_array']) ) {
-						$in_array = $filter_var['in_array'];
+				if( is_array($filter_vars) ) {
+					$filter_var = $filter_vars['param'] ?? $filter_key; // allows for further expansion such as special filtering etc.
+					$default = $filter_vars['default'] ?? false;
+					if( !empty($filter_vars['in_array']) ) {
+						$in_array = $filter_vars['in_array'];
 					}
-				} elseif ( is_int($filter_key) ) {
-					$filter_key = $filter_var;
+				} else {
+					if ( is_int($filter_key) ) {
+						$filter_key = $filter_vars;
+					}
+					$filter_var = $filter_vars;
 				}
 				if( isset($_REQUEST[$filter_var]) ) {
 					static::$show_filters = true;
@@ -359,7 +362,7 @@ namespace EM {
 				$filters = array();
 				foreach ( static::$filter_vars as $filter_key => $filter_var ) {
 					if( is_array($filter_var) ) {
-						$filter_var = $filter_var['param']; // allows for further expansion such as special filtering etc.
+						$filter_var = $filter_var['param'] ?? $filter_key; // allows for further expansion such as special filtering etc.
 					} elseif ( is_int($filter_key) ) {
 						$filter_key = $filter_var;
 					}
@@ -445,8 +448,9 @@ namespace EM {
 			if ( static::$is_exportable ) {
 				add_action( 'wp_loaded', array( static::class, 'export_init' ) );
 			}
+			// determine if we're public or not, can't determine that when doing AJAX
 			if( static::$is_frontend === null ){
-				static::$is_frontend = !is_admin() || !defined('DOING_AJAX') || !empty($_REQUEST['is_public']);
+				static::$is_frontend = !is_admin() || !empty($_REQUEST['is_public']);
 			}
 		}
 		
@@ -460,11 +464,11 @@ namespace EM {
 				$EM_List_Table->display();
 			}else{
 				check_admin_referer(static::$basename);
-				$class_name = static::class;
-				$EM_List_Table = new $class_name();
-				if( !empty($_REQUEST['table_id']) ) { // so modals work linked to the ID
-					$EM_List_Table->uid = $EM_List_Table->id . '-' . absint($_REQUEST['table_id']);
-				}
+			$class_name = static::class;
+			$EM_List_Table = new $class_name();
+			if( !empty($_REQUEST['table_id']) ) { // so modals work linked to the ID
+				$EM_List_Table->uid = $EM_List_Table->id . '-' . absint($_REQUEST['table_id']);
+			}
 				$EM_List_Table->output_table();
 			}
 			exit();
@@ -689,6 +693,7 @@ namespace EM {
 					<input type="hidden" name="_emnonce" value="<?php echo wp_create_nonce(static::$basename); ?>">
 					<input type="hidden" name="save" value="0">
 					<input type="hidden" name="save_filters" value="0">
+					<input type="hidden" name="table_id" value="<?php echo esc_attr( str_replace($this->id . '-', '', $uid)); ?>">
 					<?php
 						$this->display_hidden_input();
 						parent::display();
@@ -1419,18 +1424,21 @@ namespace EM {
 }
 
 namespace {
-	use EM\WP_Screen;
 	function em_list_table_create_funcitions(){
 		// handle convert_to_screen lacking in places
 		if( !function_exists('convert_to_screen')){
 			function convert_to_screen( $hook_name ) {
-				return new WP_Screen;
+				return new \EM\WP_Screen;
 			}
 		}
 		if( !function_exists('get_column_headers') ){
 			function get_column_headers( $screen ) {
 				return array();
 			}
+		}
+		// slightly risky situation... if WP_Screen wasn't loaded but convert_to_screen was defined, we need to make sure WP_Screen exists and hope another plugin isn't adding it later in the page
+		if( !class_exists('WP_Screen') ) {
+			class WP_Screen extends \EM\WP_Screen {}
 		}
 	}
 	include('em-wp-screen.php');

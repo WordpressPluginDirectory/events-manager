@@ -219,7 +219,7 @@ class Dashboard {
 			return array(); // no permissions for bookings, should have not even got here!
 		}elseif( !current_user_can('manage_others_bookings') ) {
 			// get current user bookings
-			$conditions['owner'] = $wpdb->prepare( ' event_id IN (SELECT event_id FROM ' . EM_EVENTS_TABLE . ' WHERE owner_id=%d ', get_current_user_id() );
+			$conditions['owner'] = $wpdb->prepare( ' event_id IN (SELECT event_id FROM ' . EM_EVENTS_TABLE . ' WHERE event_owner=%d )', get_current_user_id() );
 		}
 		if( !empty($args['event']) ){
 			$EM_Event = em_get_event($args['event']);
@@ -236,8 +236,8 @@ class Dashboard {
 		// determine unit of measurement
 		$selectors = array();
 		$averages = array(
-			'spaces' => 'AVG(booking_spaces) AS spaces_avg',
-			'price' => 'AVG(booking_price) AS price_avg',
+			'spaces_avg' => 'AVG(booking_spaces) AS spaces_avg',
+			'price_avg' => 'AVG(booking_price) AS price_avg',
 		);
 		$summaries = array(
 			'spaces' => 'SUM(booking_spaces) AS spaces',
@@ -718,10 +718,15 @@ class Dashboard {
 			$sql = 'SELECT ' . implode( ', ', $summaries) .' , '. implode( ', ', $averages ) . ' FROM ' . EM_BOOKINGS_TABLE . $where;
 			$booking_data = $wpdb->get_row( $sql, ARRAY_A );
 			// clean null data to 0 and add to stats
-			foreach ( $booking_data as $k => $v ) {
-				if( $v === null ) {
-					$booking_data[ $k ] = 0;
+			if( $booking_data ) {
+				foreach ( $booking_data as $k => $v ) {
+					if ( $v === null ) {
+						$booking_data[ $k ] = 0;
+					}
 				}
+			} else {
+				$keys = array_merge( array_keys($summaries), array_keys($averages) );
+				$booking_data = array_combine( $keys, array_fill(0, count($keys), 0)  );
 			}
 			$stats->stats[$stack] = $booking_data;
 		}

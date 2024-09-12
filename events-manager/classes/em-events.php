@@ -76,6 +76,8 @@ class EM_Events extends EM_Object {
 		}
 		
 		//check if we need to join a location table for this search, which is necessary if any location-specific are supplied, or if certain arguments such as orderby contain location fields
+		$EM_Location = new EM_Location();
+		$location_fields = array_intersect($accepted_fields, array_keys($EM_Location->fields));
 		if( !empty($args['groupby']) || (defined('EM_DISABLE_OPTIONAL_JOINS') && EM_DISABLE_OPTIONAL_JOINS) ){
 			$location_specific_args = array('town', 'state', 'country', 'region', 'near', 'geo', 'search');
 			$join_locations = false;
@@ -87,8 +89,6 @@ class EM_Events extends EM_Object {
 				foreach( array('groupby', 'orderby', 'groupby_orderby') as $arg ){
 					if( !is_array($args[$arg]) ) continue; //ignore this argument if set to false
 					//we assume all these arguments are now array thanks to self::get_search_defaults() cleaning it up
-					$EM_Location = new EM_Location();
-					$location_fields = array_intersect($accepted_fields, array_keys($EM_Location->fields));
 					foreach( $args[$arg] as $field_name ){
 						if( in_array($field_name, $location_fields) ){
 							$join_locations = true;

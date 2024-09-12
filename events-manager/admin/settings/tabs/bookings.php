@@ -136,9 +136,9 @@
 				<?php
 				em_options_radio_binary ( __( 'Display free booking summary?', 'events-manager'), 'dbem_bookings_summary_free', __( 'Display the booking summary if the event is free. If there are any available tickets worth more than 0 then the event is not considered free.', 'events-manager') );
 				em_options_input_text ( __( 'Booking summary default text', 'events-manager'), 'dbem_bookings_summary_message', __( 'When no tickets are selected, this text will appear in place of a booking summary, prompting users to select a ticket.', 'events-manager'));
-				em_options_radio_binary ( __( 'Display taxes separately?', 'events-manager'), 'dbem_bookings_summary_taxes_itemized', __( 'Display ticket prices without tax and calculate the tax total separately.', 'events-manager') );
+				em_options_radio_binary ( __( 'Display taxes separately?', 'events-manager'), 'dbem_bookings_summary_taxes_itemized', __( 'Display ticket prices without tax and calculate the tax total separately.', 'events-manager'), '', '#dbem_bookings_summary_subtotal_exc_taxes_row', true );
+				em_options_radio_binary ( __( 'Exclude taxes from subtotal?', 'events-manager'), 'dbem_bookings_summary_subtotal_exc_taxes', __( 'Subtotals will exclude taxes and display taxes separately.', 'events-manager') );
 				em_options_radio_binary ( __( 'Display subsection titles?', 'events-manager'), 'dbem_bookings_summary_subsections', __( 'Display subsection titles above groups of line items, such as taxes, discounts and surcharges.', 'events-manager') );
-				
 				?>
 			</tbody>
 			<tr class="em-header"><td colspan='2'><h4><?php esc_html_e('Booking form section headers','events-manager') ?></h4></td></tr>

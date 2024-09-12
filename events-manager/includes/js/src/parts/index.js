@@ -181,8 +181,7 @@ jQuery(document).ready( function($){
 					this.em_timepicker('remove');
 				}
 			}); //clear all em_timepickers - consequently, also other click/blur/change events, recreate the further down
-			em_setup_datepicker(slot);
-			em_setup_timepicker(slot);
+			em_setup_ui_elements(slot);
 			$('html, body').animate({ scrollTop: slot.offset().top - 30 }); //sends user to form
 			check_ticket_sortability();
 		});
@@ -440,10 +439,6 @@ jQuery(document).ready( function($){
 		em_setup_datepicker('body');
 	}
 	if( load_ui_css ) em_load_jquery_css();
-	// Datepicker - new
-	if( $('.em-datepicker').length > 0 ){
-		em_setup_datepicker('body');
-	}
 
 	//previously in em-admin.php
 	$('#em-wrapper input.select-all').on('change', function(){
@@ -646,15 +641,25 @@ jQuery(document).ready( function($){
 
 /**
  * Sets up external UI libraries and adds them to elements within the supplied container. This can be a jQuery or DOM element, subfunctions will either handle accordingly or this function will ensure it's the right one to pass on..
- * @param container
+ * @param jQuery|DOMElement container
  */
-function em_setup_ui_elements ( container ) {
+function em_setup_ui_elements ( $container ) {
+	let container = ( $container instanceof jQuery ) ? $container[0] : $container;
 	// Selectize
-	em_setup_selectize( container );
+	em_setup_selectize( $container );
 	// Tippy
-	em_setup_tippy( container );
+	em_setup_tippy( $container );
 	// Moment JS
-	em_setup_moment_times( container );
+	em_setup_moment_times( $container );
+	// Date & Time Pickers
+	if( container.querySelector('.em-datepicker') ){
+		em_setup_datepicker( container );
+	}
+	if( container.querySelector(".em-time-input") ){
+		em_setup_timepicker( $container );
+	}
+	// Phone numbers
+	em_setup_phone_inputs( container );
 }
 
 /* Local JS Timezone related placeholders */

@@ -467,9 +467,11 @@ class EM_Bookings_Table extends EM\List_Table {
 	 * @return string|int
 	 */
 	function get_status_search() {
-		$status = $this->filters['status'] ?? false;
-		if ( is_array( $this->statuses[ $status ]['search'] ) ) {
+		$status = $this->filters['status'] ?? 'all';
+		if ( !empty($this->statuses[ $status ]) && is_array( $this->statuses[ $status ]['search'] ) ) {
 			return implode( ',', $this->statuses[ $status ]['search'] );
+		} else {
+			$status = 'all';
 		}
 		return $this->statuses[ $status ]['search'];
 	}
@@ -480,54 +482,50 @@ class EM_Bookings_Table extends EM\List_Table {
 	 * @return EM_Bookings[]|EM_Ticket_Bookings[]|EM_Ticket_Booking[]
 	 */
 	function get_items(){
-		if( empty($this->data) ){
-			$EM_Ticket = $this->get_ticket();
-			$EM_Event = $this->get_event();
-			$EM_Person = $this->get_person();
-			$base_args = array( 'limit'=>$this->limit, 'offset'=>$this->offset );
-			$default_args = array(
-				'status'=> $this->get_status_search(),
-				'search' => $this->filters['search'],
-				'order' => $this->order,
-				'orderby'=>$this->orderby,
-				'scope' => false,
-			);
-			if ( $default_args['orderby'] !== 'booking_date' ) {
-				$default_args['orderby'] .= ', booking_date ASC';
-			}
-			if( $EM_Person !== false ){
-				$args = array( 'person' => $EM_Person->ID, 'scope' => $this->filters['scope'] );
-			}elseif( $EM_Ticket !== false ){
-				//searching bookings with a specific ticket
-				$args = array( 'ticket_id' => $EM_Ticket->ticket_id );
-			}elseif( $EM_Event !== false ){
-				//bookings for an event
-				$args = array( 'event' => $EM_Event->event_id );
-				$args['owner'] = !current_user_can('manage_others_bookings') ? get_current_user_id() : false;
-			}else{
-				//all bookings for a status
-				$args = array( 'scope' => $this->filters['scope'] );
-				$args['owner'] = !current_user_can('manage_others_bookings') ? get_current_user_id() : false;
-			}
-			$count_args = apply_filters('em_bookings_table_get_bookings_args', array_merge( $default_args, $args ), $this);
-			$search_args = array_merge($count_args, $base_args);
-			// decide how to split up results, via bookings, or some other way
-			$items = array();
-			if( $this->view === 'attendees' ) {
-				$this->total_items = EM_Ticket_Bookings::get( $count_args, true );
-				$items = EM_Ticket_Bookings::get( $search_args );
-			} elseif ( $this->view === 'tickets' ) {
-				$this->total_items = EM_Tickets_Bookings::get( $count_args, true );
-				$items = EM_Tickets_Bookings::get( $search_args );
-			} elseif( $this->view === 'bookings' ) {
-				$this->total_items = EM_Bookings::count( $count_args );
-				$items = EM_Bookings::get( $search_args )->load(); // get the bookings only as an array of EM_Bookings via load()
-			}
-			// return items, or allow overriding (for example a different view)
-			return apply_filters( static::$basename . '_get_items', $items, $this, [ 'count_args' => $count_args, 'search_args' => $search_args, 'base_args' => $base_args, 'default_args' => $default_args ] );
-		} else {
-			return $this->data;
+		$EM_Ticket = $this->get_ticket();
+		$EM_Event = $this->get_event();
+		$EM_Person = $this->get_person();
+		$base_args = array( 'limit'=>$this->limit, 'offset'=>$this->offset );
+		$default_args = array(
+			'status'=> $this->get_status_search(),
+			'search' => $this->filters['search'],
+			'order' => $this->order,
+			'orderby'=>$this->orderby,
+			'scope' => false,
+		);
+		if ( $default_args['orderby'] !== 'booking_date' ) {
+			$default_args['orderby'] .= ', booking_date ASC';
 		}
+		if( $EM_Person !== false ){
+			$args = array( 'person' => $EM_Person->ID, 'scope' => $this->filters['scope'] );
+		}elseif( $EM_Ticket !== false ){
+			//searching bookings with a specific ticket
+			$args = array( 'ticket_id' => $EM_Ticket->ticket_id );
+		}elseif( $EM_Event !== false ){
+			//bookings for an event
+			$args = array( 'event' => $EM_Event->event_id );
+			$args['owner'] = !current_user_can('manage_others_bookings') ? get_current_user_id() : false;
+		}else{
+			//all bookings for a status
+			$args = array( 'scope' => $this->filters['scope'] );
+			$args['owner'] = !current_user_can('manage_others_bookings') ? get_current_user_id() : false;
+		}
+		$count_args = apply_filters('em_bookings_table_get_bookings_args', array_merge( $default_args, $args ), $this);
+		$search_args = array_merge($count_args, $base_args);
+		// decide how to split up results, via bookings, or some other way
+		$items = array();
+		if( $this->view === 'attendees' ) {
+			$this->total_items = EM_Ticket_Bookings::get( $count_args, true );
+			$items = EM_Ticket_Bookings::get( $search_args );
+		} elseif ( $this->view === 'tickets' ) {
+			$this->total_items = EM_Tickets_Bookings::get( $count_args, true );
+			$items = EM_Tickets_Bookings::get( $search_args );
+		} elseif( $this->view === 'bookings' ) {
+			$this->total_items = EM_Bookings::count( $count_args );
+			$items = EM_Bookings::get( $search_args )->load(); // get the bookings only as an array of EM_Bookings via load()
+		}
+		// return items, or allow overriding (for example a different view)
+		return apply_filters( static::$basename . '_get_items', $items, $this, [ 'count_args' => $count_args, 'search_args' => $search_args, 'base_args' => $base_args, 'default_args' => $default_args ] );
 	}
 	
 	function get_cols_template(){
@@ -828,7 +826,12 @@ class EM_Bookings_Table extends EM\List_Table {
 				}
 			}
 		}elseif($col == 'dbem_phone'){
-			$val = $EM_Booking->get_person()->phone;
+			if( !in_array( $format, ['csv', 'xls', 'xlsx'] ) && !$EM_Booking->get_person()->phone_validity ) {
+				static::$cols_allowed_html[ $col ] = true;
+				$val = '<span class="em-icon em-icon-warning em-tooltip" aria-label="' . esc_attr__( 'Invalid Number', 'events-manager' ) . '"></span> '. $EM_Booking->get_person()->phone;
+			} else {
+				$val = $EM_Booking->get_person()->phone;
+			}
 		}elseif($col == 'user_name'){
 			if( in_array( $format, ['csv', 'xls', 'xlsx'] ) ){
 				$val = $EM_Booking->get_person()->get_name();

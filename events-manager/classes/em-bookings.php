@@ -689,8 +689,10 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		if( $filter_args ) {
 			$args = self::get_default_search($args);
 		}
-		$sql_parts['statement']['limit'] = ( $args['limit'] && is_numeric($args['limit'])) ? "LIMIT {$args['limit']}" : '';
-		$sql_parts['statement']['offset'] = ( $sql_parts['statement']['limit'] != "" && is_numeric($args['offset']) ) ? "OFFSET {$args['offset']}" : '';
+		if( !$count ) {
+			$sql_parts['statement']['limit'] = ( $args['limit'] && is_numeric($args['limit'])) ? "LIMIT {$args['limit']}" : '';
+			$sql_parts['statement']['offset'] = ( $sql_parts['statement']['limit'] != "" && is_numeric($args['offset']) ) ? "OFFSET {$args['offset']}" : '';
+		}
 		
 		//Get the default conditions
 		$sql_parts['data']['conditions'] = self::build_sql_conditions($args);
@@ -714,7 +716,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		
 		//check if we need to join a location table for this search, which is necessary if any location-specific are supplied, or if certain arguments such as orderby contain location fields
 		$table_joins = array();
-		$required_tables = array();
+		$required_tables = EM_MS_GLOBAL ? array(EM_EVENTS_TABLE) : array(); // we always need to join events table to determine blog id when in MS Global mode
 		$join_check_queue = array_keys($accepted_fields['tables']);
 		do {
 			$table_name = reset($join_check_queue); // rather than current, because we keep shifting things off the beginning on each loop, avoiding pointer issues
@@ -729,7 +731,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 					if( isset($table_data['ignore_args'][$arg]) ){
 						$ignore_arg_values = is_array($table_data['ignore_args'][$arg]) ? $table_data['ignore_args'][$arg] : array($table_data['ignore_args'][$arg]);
 					}
-					if ( !empty($args[$arg]) && !empty($ignore_arg_values) && !in_array( $args[$arg] , $ignore_arg_values ) ) {
+					if ( !empty($args[$arg]) && !in_array( $args[$arg] , $ignore_arg_values ) ) {
 						$join_table = true;
 					}elseif( !empty($table_data['empty_args'][$arg]) && isset($args[$arg]) ) {
 						// it could either be an array of 'legit' empty values vs any empty value meaning this table-specific arg isn't used, therefore no join needed
@@ -827,11 +829,11 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 				$field_key = $accepted_fields['orderby_user_data'][$field]; // this may be different to the orderby key
 				$joins[ 'field.' . $field ] = "
 					LEFT JOIN (
-						SELECT booking_id AS {$field}_bid, {$field} FROM {$bookings_table}
+						SELECT booking_id AS {$field}_bid, {$field_key} FROM {$bookings_table}
                             LEFT JOIN {$wpdb->users} ON ID = person_id
                             WHERE {$field} IS NOT NULL
 						UNION
-						SELECT b.booking_id AS {$field}_bid, meta_value AS {$field} FROM " . EM_BOOKINGS_TABLE . " b
+						SELECT b.booking_id AS {$field}_bid, meta_value AS {$field_key} FROM " . EM_BOOKINGS_TABLE . " b
 							LEFT JOIN " . EM_BOOKINGS_META_TABLE . " bm1 ON bm1.booking_id = b.booking_id AND (bm1.meta_key='_registration_{$field_key}' OR bm1.meta_key='_registration|{$field_key}')
 						WHERE bm1.meta_value IS NOT NULL
 					) {$field} ON {$field}.{$field}_bid = {$bookings_table}.booking_id
@@ -843,12 +845,12 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 				if( !empty($accepted_fields['orderby'][$field]) ) {
 					$joins[ 'field.' . $field ] = "
 						LEFT JOIN (
-							SELECT b.booking_id AS {$field}_bid, meta_value AS {$field} FROM {$bookings_table} b LEFT JOIN (
+							SELECT b.booking_id AS {$field}_bid, meta_value AS {$field_key} FROM {$bookings_table} b LEFT JOIN (
 								SELECT wm1.user_id, meta_value FROM {$wpdb->usermeta} wm1
 								WHERE wm1.meta_key='{$field_key}'
 							) um ON um.user_id = b.person_id WHERE meta_value IS NOT NULL
 							UNION
-							SELECT b.booking_id AS {$field}_bid, meta_value AS {$field} FROM " . EM_BOOKINGS_TABLE . " b
+							SELECT b.booking_id AS {$field}_bid, meta_value AS {$field_key} FROM " . EM_BOOKINGS_TABLE . " b
 								LEFT JOIN " . EM_BOOKINGS_META_TABLE . " bm1 ON bm1.booking_id = b.booking_id AND  (bm1.meta_key='_registration_{$field_key}' OR bm1.meta_key='_registration|{$field_key}')
 							WHERE bm1.meta_value IS NOT NULL
 						) {$field} ON {$field}.{$field}_bid = {$bookings_table}.booking_id
@@ -860,9 +862,11 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 				$field_key = $accepted_fields['orderby_booking_meta'][$field]; // this may be different to the orderby key
 				$joins[ 'field.' . $field ] = "
 					LEFT JOIN (
-						SELECT booking_id AS {$field}_bid, meta_value AS {$field} FROM " . EM_BOOKINGS_META_TABLE . " WHERE meta_key='_booking_{$field_key}' OR meta_key='_booking|{$field_key}'
+						SELECT booking_id AS {$field}_bid, meta_value AS {$field_key} FROM " . EM_BOOKINGS_META_TABLE . " WHERE meta_key='_booking_{$field_key}' OR meta_key='_booking|{$field_key}'
 					) {$field} ON {$field}.{$field}_bid = {$bookings_table}.booking_id
 				";
+			} else {
+				$joins = apply_filters('em_bookings_get_sql_orderby_joins', $joins, [ 'args' => $args, 'count' => $count, 'filter_args' => $filter_args ]);
 			}
 		}
 		// we will also add a group by if not in a count
@@ -873,8 +877,8 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		//plugins can override this optional joining behaviour here in case they add custom WHERE conditions or something like that
 		$sql_parts['data']['joins'] = apply_filters('em_bookings_get_optional_joins', $joins, $args, $accepted_fields);
 		$sql_parts['statement']['join'] = implode("\r\n", $sql_parts['data']['joins']);
-		
-		return $sql_parts;
+		// return SQL parts, we use a different filter name to function because it's already taken in earlier versions
+		return apply_filters('em_bookings_get_sql_parts', $sql_parts, [ 'args' => $args, 'count' => $count, 'filter_args' => $filter_args ]);
 	}
 	
 	/**
@@ -904,12 +908,19 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		
 		//We assume it's either an empty array or array of search arguments to merge with defaults			
 		$args = self::get_default_search($args);
+		
+		//If we're only counting results, remove orderby and avoid complex joins
+		if( $count ){
+			$args['orderby'] = false;
+ 		}
+		
+		// build the SQL
 		$sql_parts = static::get_sql( $args, $count, false );
 		$sql = apply_filters('em_bookings_get_sql', implode("\r\n", $sql_parts['statement']), $args, $sql_parts);
 		
 		//If we're only counting results, return the number of results
 		if( $count ){
-			return apply_filters('em_bookings_get_count', $wpdb->get_var($sql), $args);		
+			return apply_filters('em_bookings_get_count', $wpdb->get_var($sql), $args);
 		}
 		$results = $wpdb->get_results($sql, ARRAY_A);
 
@@ -1176,6 +1187,9 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 				$conditions['ticket'] = EM_BOOKINGS_TABLE.'.booking_id IN (SELECT booking_id FROM '.EM_TICKETS_BOOKINGS_TABLE." WHERE ticket_id='{$args['ticket_id']}')";
 			}
 		}
+		if( !empty($args['booking_id']) && static::array_is_numeric($args['booking_id']) ) {
+			$conditions['ticket'] = EM_BOOKINGS_TABLE.'.booking_id IN ('.implode(',', $args['booking_id']).')';
+		}
 		return apply_filters('em_bookings_build_sql_conditions', $conditions, $args);
 	}
 	
@@ -1195,6 +1209,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			'ticket_id' => false,
 			'array' => false, //returns an array of results if true, if an array or text it's assumed an array of specific table fields or single field name requested
 			'country' => false, // experimeenal, if you see this and want more locatiion booking searches, let us know!
+			'booking_id' => [],
 		);
 		//sort out whether defaults were supplied or just the array of search values
 		if( empty($array) ){
@@ -1203,7 +1218,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			$defaults = array_merge($defaults, $array_or_defaults);
 		}
 		//figure out default owning permissions
-		if( !current_user_can('edit_others_events') ){
+		if( !current_user_can('edit_others_events') || !isset($defaults['owner']) ){
 			$defaults['owner'] = get_current_user_id();
 		}else{
 			$defaults['owner'] = false;
@@ -1249,6 +1264,8 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			}
 			$search_defaults['orderby'] = !empty($clean_orderby) ? $clean_orderby : false;
 		}
+		// allow to filter by booking_id
+		$search_defaults = static::clean_id_atts($search_defaults, ['booking_id']);
 		// return the search defaults
 		return apply_filters('em_bookings_get_default_search', $search_defaults, $array, $defaults);
 	}

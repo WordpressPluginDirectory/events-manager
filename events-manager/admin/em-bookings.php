@@ -631,46 +631,45 @@ function em_bookings_person(){
 		<?php
 		return false;
 	}
-	$header_button_classes = is_admin() ? 'page-title-action':'button add-new-h2';
 	?>
 	<div class='em-bookings-admin-person <?php em_template_classes('bookings-admin'); ?>'>
 		<div class="input">
-		<?php if( is_admin() ): ?><h1 class="wp-heading-inline"><?php else: ?><h2><?php endif; ?>
-  			<?php esc_html_e('Manage Person\'s Booking', 'events-manager'); ?>
-  		<?php if( is_admin() ): ?></h1><?php endif; ?>
-  			<?php if( current_user_can('edit_users') ) : ?>
-  			<a href="<?php echo admin_url('user-edit.php?user_id='.$EM_Person->ID); ?>" class="<?php echo $header_button_classes; ?>"><?php esc_html_e('Edit User','events-manager') ?></a>
-  			<?php endif; ?>
-  			<?php if( current_user_can('delete_users') ) : ?>
-  			<a href="<?php echo wp_nonce_url( admin_url("users.php?action=delete&amp;user=$EM_Person->ID"), 'bulk-users' ); ?>" class="<?php echo $header_button_classes; ?>"><?php esc_html_e('Delete User','events-manager') ?></a>
-  			<?php endif; ?>
-		<?php if( !is_admin() ): ?></h2><?php else: ?><hr class="wp-header-end" /><?php endif; ?>
-  		<?php if( !is_admin() ) echo $EM_Notices; ?>
-		<?php do_action('em_bookings_person_header'); ?>
-  		<div id="poststuff" class="metabox-holder has-right-sidebar">
-	  		<div id="post-body">
-				<div id="post-body-content">
-					<div id="event_name" class="stuffbox">
+			<?php if( is_admin() ): ?><h1 class="wp-heading-inline"><?php else: ?><h2><?php endif; ?>
+					<?php esc_html_e('Manage Person\'s Booking', 'events-manager'); ?>
+			<?php if( !is_admin() ): ?></h2><?php else: ?></h1><?php endif; // inverted to help IDEs ?>
+			<?php if( current_user_can('edit_users') ) : ?>
+				<a href="<?php echo admin_url('user-edit.php?user_id='.$EM_Person->ID); ?>" class="button button-secondary"><?php esc_html_e('Edit User','events-manager') ?></a>
+			<?php endif; ?>
+			<?php if( current_user_can('delete_users') ) : ?>
+				<a href="<?php echo wp_nonce_url( admin_url("users.php?action=delete&amp;user=$EM_Person->ID"), 'bulk-users' ); ?>" class="button button-secondary"><?php esc_html_e('Delete User','events-manager') ?></a>
+			<?php endif; ?>
+			<hr class="wp-header-end">
+			
+	        <?php if( !is_admin() ) echo $EM_Notices; ?>
+			<?php do_action('em_bookings_person_header'); ?>
+	        <div id="poststuff" class="metabox-holder">
+			    <div class="postbox-container" style="width:99.5%">
+					<div id="event_name" class="postbox">
 						<h3>
 							<?php esc_html_e( 'Personal Details', 'events-manager'); ?>
 						</h3>
 						<div class="inside">
 							<?php echo $EM_Person->display_summary(); ?>
 						</div>
-					</div> 
-				</div>
+					</div>
+					<?php do_action('em_bookings_person_body_1'); ?>
+			    </div>
+		    </div>
+			<div class="wrap">
+				<h2><?php esc_html_e('Past And Present Bookings','events-manager'); ?></h2>
+				<?php
+				$EM_Bookings_Table = new EM_Bookings_Table();
+				$EM_Bookings_Table->status = 'all';
+				$EM_Bookings_Table->scope = 'all';
+				$EM_Bookings_Table->display();
+		        ?>
+				<?php do_action('em_bookings_person_footer', $EM_Person); ?>
 			</div>
-		</div>
-		<br style="clear:both;" />
-		<?php do_action('em_bookings_person_body_1'); ?>
-		<h2><?php esc_html_e('Past And Present Bookings','events-manager'); ?></h2>
-		<?php
-		$EM_Bookings_Table = new EM_Bookings_Table();
-		$EM_Bookings_Table->status = 'all';
-		$EM_Bookings_Table->scope = 'all';
-		$EM_Bookings_Table->display();
-  		?>
-		<?php do_action('em_bookings_person_footer', $EM_Person); ?>
 		</div>
 	</div>
 	<?php
