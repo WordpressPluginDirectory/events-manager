@@ -682,7 +682,7 @@ namespace EM {
 			$action_messages = apply_filters( static::$basename . '_action_messages', $action_messages, $this );
 			?>
 			<div class="em-list-table <?php em_template_classes(static::$template_component_name); echo ' ' . implode(' ', $extra_classes); ?>" id="<?php echo $uid; ?>" data-basename="<?php echo static::$basename; ?>" <?php echo implode(' ', $atts); ?>>
-				<form class='<?php echo static::$form_class ?> em-list-table-form' method='post' action='' id="<?php echo $uid; ?>-form" data-action-messages='<?php echo json_encode($action_messages); ?>'>
+				<form class='<?php echo static::$form_class ?> em-list-table-form' method='post' action='' id="<?php echo $uid; ?>-form" data-action-messages='<?php echo esc_attr(json_encode($action_messages)); ?>'>
 					<input type="hidden" name="is_public" value="<?php echo ( static::$is_frontend ) ? 1:0; ?>">
 					<input type="hidden" name="pno" value='<?php echo esc_attr($this->page); ?>'>
 					<input type="hidden" name="order" value='<?php echo esc_attr($this->order); ?>' data-persist>

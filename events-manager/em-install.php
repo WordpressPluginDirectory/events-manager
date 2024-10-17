@@ -985,7 +985,7 @@ function em_upgrade_current_installation(){
 		update_site_option('dbem_data', $data);
 	}
 	// temp promo
-	if( time() < 1726747200 && ( version_compare($current_version, '6.6', '<') || !empty($data['admin-modals']['review-nudge']) )  ) {
+	if( time() < 1729857600 && ( version_compare($current_version, '6.6.3', '<') || !empty($data['admin-modals']['review-nudge']) )  ) {
 		if( empty($data['admin-modals']) ) $data['admin-modals'] = array();
 		$data['admin-modals']['promo-popup'] = true;
 		update_site_option('dbem_data', $data);
@@ -1694,7 +1694,7 @@ function em_upgrade_current_installation(){
 			$wpdb->query('UPDATE ' . EM_BOOKINGS_META_TABLE . ' SET meta_key = "_registration_em_data_privacy_consent" WHERE meta_key = "privacy_consent"');
 			// let's rename all the meta we know doesn't belonw with underscores, registration, attendees, coupon and booking
 			foreach( ['registration', 'attendees', 'coupon', 'booking', 'zoom', 'test', 'discounts', 'surcharges'] as $field ) {
-				$sql = 'UPDATE ' . EM_BOOKINGS_META_TABLE . ' SET meta_key = CONCAT("_'.$field.'|", SUBSTRING(meta_key, '. strlen($field) + 3 .')) WHERE meta_key LIKE "\_' . $field . '\_%"';
+				$sql = 'UPDATE ' . EM_BOOKINGS_META_TABLE . ' SET meta_key = CONCAT("_'.$field.'|", SUBSTRING(meta_key, '. (strlen($field) + 3) .')) WHERE meta_key LIKE "\_' . $field . '\_%"';
 				$wpdb->query($sql);
 			}
 			// change Kosovo to XK instead of KV

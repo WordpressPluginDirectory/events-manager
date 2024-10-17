@@ -8,7 +8,7 @@ class EM_Admin_Modals {
 		add_filter('admin_enqueue_scripts', 'EM_Admin_Modals::admin_enqueue_scripts', 100);
 		add_filter('wp_ajax_em-admin-popup-modal', 'EM_Admin_Modals::ajax');
 		add_filter('em_admin_notice_review-nudge_message', 'EM_Admin_Modals::review_notice');
-		if( time() < 1726747200 ) {
+		if( time() < 1729857600 ) {
 			add_filter( 'em_admin_notice_promo-popup_message', 'EM_Admin_Modals::promo_notice' );
 		}
 		add_filter( 'em_admin_notice_expired-reminder_message', 'EM_Admin_Modals::expired_reminder_notice' );
@@ -49,14 +49,12 @@ class EM_Admin_Modals {
 				}
 			}
 			// promo
-			/*
 			$pro_license_active = defined('EMP_VERSION');
 			if( $pro_license_active ){
 				$key = get_option('dbem_pro_api_key');
 				$pro_license_active = !(empty($key['until']) || $key['until'] > strtotime('+10 months'));
 			}
-			*/
-			if( time() < 1726747200 && !empty($data['admin-modals']['promo-popup']) /*&& !$pro_license_active*/) {
+			if( time() < 1729857600 && !empty($data['admin-modals']['promo-popup']) && !$pro_license_active) {
 				if( $data['admin-modals']['promo-popup'] == 1 || ($data['admin-modals']['promo-popup'] == 2 && ($show_plugin_pages || $show_network_admin) ) ) {
 					// enqueue script and load popup action
 					if( empty($data['admin-modals']['promo-popup-count']) ){
@@ -82,7 +80,7 @@ class EM_Admin_Modals {
 		
 		// EM Pro License Expired Promo & Reminder
 		$pro_license_active = defined('EMP_VERSION');
-		$promo_time = 1726747200;
+		$promo_time = 1729857600;
 		if( $pro_license_active ){
 			$key = get_option('dbem_pro_api_key');
 			// add a promo for license
@@ -217,7 +215,7 @@ class EM_Admin_Modals {
 				<div class="em-modal-content has-image" style="--font-size:16px;">
 					<div>
 						<p>Pardon the interruption.... we'd like to make sure you're aware of some upcoming price plan changes, <a href="https://em.cm/promo2024-09">see our announcement</a>.</p>
-						<p>We are introducing a new add-on soon, and will soon be selling some of our upcoming add-ons separately. We will be introducing a new all-inclusive plan, which you can get now at up to 25% discount.</p>
+						<p>We are introducing a new add-on soon, and will soon be selling some of our upcoming add-ons separately. We will be introducing a new all-inclusive plan, which you can get now at up to 32% discount.</p>
 						<p>We hope you're enjoying the plugin and if you're at all considering going Pro, you still have time to make the best of this limited opportunity!</p>
 					</div>
 					<div class="image">
@@ -248,7 +246,7 @@ class EM_Admin_Modals {
 			<div>
 				<h3>Final Days - Upcoming Price Plan Changes, 30% Off Now!</h3>
 				<p>Pardon the interruption.... we'd like to make sure you're aware of some upcoming price plan changes, <a href="https://em.cm/promo2024-09">see our announcement</a>.</p>
-				<p>We are introducing a new add-on soon, and will soon be selling some of our upcoming add-ons separately. We will be introducing a new all-inclusive plan, which you can get now at up to 33% discount.</p>
+				<p>We are introducing a new add-on soon, and will soon be selling some of our upcoming add-ons separately. We will be introducing a new all-inclusive plan, which you can get now at up to 32% discount.</p>
 				<p>We hope you're enjoying the plugin and if you're at all considering going Pro, you still have time to make the best of this limited opportunity!</p>
 				<a href="https://em.cm/promo2024-03-gopro-n" class="button button-primary input" target="_blank" style="margin-right:10px; --accent-color:#429543; --accent-color-hover:#429543;">Go Pro!</a>
 			</div>

@@ -157,8 +157,10 @@ class EM_Tickets_Bookings extends EM_Object implements Iterator, Countable, Arra
 				$fields[$field] = $field === 'ticket_booking_id' ? 'DISTINCT tb.' . $field : 'tb.' . $field;
 			}
 			// add outer ordering and potentially ordering by ticket data requiring a join
-			foreach ( $sql_parts['data']['orderbys'] as $field ) {
-				$orderbys[$field] = 'b.' . $field;
+			foreach ( $sql_parts['data']['orderbys'] as $orderby ) {
+				$orderby = explode(' ', $orderby); // in case we have order, remove it
+				$orderby_field = $orderby[0];
+				$orderbys[$orderby_field] = 'b.' . $orderby_field;
 			}
 			if( !empty($args['orderby']) ) {
 				if( !is_array($args['orderby']) ) {
@@ -189,7 +191,7 @@ class EM_Tickets_Bookings extends EM_Object implements Iterator, Countable, Arra
 					}
 				}
 			}
-			$orderbys = self::build_sql_orderby($args, $orderbys);
+			$orderbys = self::build_sql_orderby($args, $orderbys, $args['order']);
 			$orderby = !empty($orderbys) ? ' ORDER BY ' . implode( ', ', $orderbys ) : '';
 			// build the SQL
 			$tickets_bookings_sql = static::get_built_sql( $bookings_sql, $fields, $joins, $conditions );
@@ -253,9 +255,15 @@ class EM_Tickets_Bookings extends EM_Object implements Iterator, Countable, Arra
 			}
 			// now, build a unique set of selectors, first finder taking precedence
 			$selector_fields = array('booking_id');
+			// clean orderbys in case some ASC and DESC strings made it here
+			$orderbys_clean = [];
+			foreach( $sql_parts['data']['orderbys'] as $orderby ) {
+				$orderbys_clean[] = str_replace([' ASC', ' DESC', ' asc', ' desc'], '', $orderby);
+			}
+			// add orderby fields to selectors
 			foreach( $fields as $table => $table_fields ){
 				foreach( $table_fields as $field ){
-					if ( in_array($field, $sql_parts['data']['orderbys']) && !in_array($field, $selector_fields) ) {
+					if ( in_array($field, $orderbys_clean) && !in_array($field, $selector_fields) ) {
 						$selector_fields[] = $field;
 						$selectors[] = $table . '.' . $field;
 					}

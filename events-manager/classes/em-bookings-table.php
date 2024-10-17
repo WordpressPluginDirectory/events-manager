@@ -89,21 +89,21 @@ class EM_Bookings_Table extends EM\List_Table {
 	 */
 	public $attendee_header_placeholder = 'Attendee %s'; //translated in __construct
 	
-	function __construct( $args = array() ) {
+	function __construct( $args = [] ) {
 		
 		$this->statuses = array(
-			'all' => array('label'=>__('All','events-manager'), 'search'=>false),
-			'pending' => array('label'=>__('Pending','events-manager'), 'search'=>0),
-			'confirmed' => array('label'=>__('Confirmed','events-manager'), 'search'=>1),
-			'cancelled' => array('label'=>__('Cancelled','events-manager'), 'search'=>3),
-			'rejected' => array('label'=>__('Rejected','events-manager'), 'search'=>2),
-			'needs-attention' => array('label'=>__('Needs Attention','events-manager'), 'search'=>array(0)),
-			'incomplete' => array('label'=>__('Incomplete Bookings','events-manager'), 'search'=>array(0))
+			'all' => ['label'=>__('All','events-manager'), 'search'=> false ],
+			'pending' => [ 'label'=>__('Pending','events-manager'), 'search' => [0] ],
+			'confirmed' => [ 'label'=>__('Confirmed','events-manager'), 'search'=> [1]  ],
+			'cancelled' => [ 'label'=>__('Cancelled','events-manager'), 'search'=> [3]  ],
+			'rejected' => [ 'label'=>__('Rejected','events-manager'), 'search'=> [2]  ],
+			'needs-attention' => [ 'label'=>__('Needs Attention','events-manager'), 'search'=> [0]  ],
+			'incomplete' => [ 'label'=>__('Incomplete Bookings','events-manager'), 'search'=> [0]  ],
 		);
 		if( !get_option('dbem_bookings_approval') ){
 			unset($this->statuses['pending']);
 			unset($this->statuses['incomplete']);
-			$this->statuses['confirmed']['search'] = array(0,1);
+			$this->statuses['confirmed']['search'] = [0,1];
 		}
 		// set default status to search for
 		static::$filter_vars['status']['default'] = get_option('dbem_bookings_approval') ? 'needs-attention':'confirmed';
@@ -119,41 +119,41 @@ class EM_Bookings_Table extends EM\List_Table {
 		}
 		
 		// determine the view
-		$this->views = apply_filters('em_bookings_table_views', array(
-			'bookings' => array(
+		$this->views = apply_filters('em_bookings_table_views', [
+			'bookings' => [
 				'label' => __('Bookings','events-manager'),
 				'label_singular' => __('Booking', 'events_manager'),
 				'limit' => 20,
-				'cols' => array('user_name','event_name', 'event_date', 'event_time', 'booking_spaces','booking_status','booking_price'),
-				'contexts' => array(
-					'event' => array(
-						'cols' => array('user_name','booking_spaces','booking_status','booking_price'),
-					),
-				)
-			),
-			'tickets' => array(
+				'cols' => [ 'user_name','event_name', 'event_date', 'event_time', 'booking_spaces','booking_status','booking_price' ],
+				'contexts' => [
+					'event' => [
+						'cols' => [ 'user_name','booking_spaces','booking_status','booking_price' ],
+					],
+				]
+			],
+			'tickets' => [
 				'label' => __('Tickets','events-manager'),
 				'label_singular' => __('Ticket', 'events_manager'),
 				'limit' => 20,
-				'cols' => array('user_name','event_name', 'event_date', 'event_time','ticket_name', 'ticket_price', 'ticket_total','ticket_booking_spaces','booking_status'),
-				'contexts' => array(
-					'event' => array(
-						'cols' => array('user_name', 'ticket_name', 'booking_status', 'ticket_price', 'ticket_booking_spaces', 'ticket_total'),
-					),
-				)
-			),
-			'attendees' => array(
+				'cols' => [ 'user_name','event_name', 'event_date', 'event_time','ticket_name', 'ticket_price', 'ticket_total','ticket_booking_spaces','booking_status' ],
+				'contexts' => [
+					'event' => [
+						'cols' => [ 'user_name', 'ticket_name', 'booking_status', 'ticket_price', 'ticket_booking_spaces', 'ticket_total' ],
+					],
+				]
+			],
+			'attendees' => [
 				'label' => __('Attendees','events-manager'),
 				'label_singular' => __('Attendee', 'events_manager'),
 				'limit' => 20,
-				'cols' => array('user_name','event_name', 'event_date', 'event_time', 'ticket_name','ticket_price', 'booking_status'),
-				'contexts' => array(
-					'event' => array(
-						'cols' => array('user_name', 'ticket_name', 'booking_status', 'ticket_price'),
-					),
-				)
-			),
-		), $this);
+				'cols' => [ 'user_name','event_name', 'event_date', 'event_time', 'ticket_name','ticket_price', 'booking_status' ],
+				'contexts' => [
+					'event' => [
+						'cols' => [ 'user_name', 'ticket_name', 'booking_status', 'ticket_price' ],
+					],
+				]
+			],
+		], $this);
 		
 		// determine current view
 		if( !empty($args['view']) || !empty($_REQUEST['view']) ) {
@@ -493,9 +493,11 @@ class EM_Bookings_Table extends EM\List_Table {
 			'orderby'=>$this->orderby,
 			'scope' => false,
 		);
-		if ( $default_args['orderby'] !== 'booking_date' ) {
+		// add booking date to ordering in case we have multiple same-value items in order
+		if ( $default_args['orderby'] !== 'booking_date' && $this->view === 'bookings' ) {
 			$default_args['orderby'] .= ', booking_date ASC';
 		}
+		// add bookings scope args e.g. if a person's bookings
 		if( $EM_Person !== false ){
 			$args = array( 'person' => $EM_Person->ID, 'scope' => $this->filters['scope'] );
 		}elseif( $EM_Ticket !== false ){
@@ -588,6 +590,7 @@ class EM_Bookings_Table extends EM\List_Table {
 				$allowed_actions = [];
 				break;
 		}
+		$allowed_actions = apply_filters('em_bookings_table_booking_allowed_actions', $allowed_actions, $EM_Booking, ['table' => $this, 'item' => $EM_Object, 'actions' => $actions]);
 		// create actions array where key in $booking_actions exists in $data
 		foreach( $allowed_actions as $action ){
 			if( !empty($actions[$action]) ) {
@@ -595,7 +598,7 @@ class EM_Bookings_Table extends EM\List_Table {
 			}
 		}
 		// return the data
-		return apply_filters('em_bookings_table_get_booking_allowed_actions', $booking_actions, $this, ['item' => $EM_Object, 'actions' => $actions, 'allowed_actions' => $allowed_actions]);
+		return apply_filters('em_bookings_table_get_booking_allowed_actions', $booking_actions, $this, ['booking' => $EM_Booking, 'item' => $EM_Object, 'actions' => $actions, 'allowed_actions' => $allowed_actions]);
 	}
 	
 	/**
@@ -606,10 +609,10 @@ class EM_Bookings_Table extends EM\List_Table {
 	public function get_action_data_items() {
 		$data_template = array('action' => static::$basename . '_row', 'context' => 'bookings');
 		$actions = array(
-			'approve' => array( 'label' => __('Approve','events-manager'), 'data' => array_merge($data_template, ['row_action' => 'approve'])),
-			'reject' => array( 'label' => __('Reject','events-manager'), 'data' => array_merge($data_template, ['row_action' => 'reject'])),
-			'delete' => array( 'label' => __('Delete','events-manager'), 'data' => array_merge($data_template, ['row_action' => 'delete'])),
-			'unapprove' => array( 'label' => __('Unapprove','events-manager'), 'data' => array_merge($data_template, ['row_action' => 'unapprove'])),
+			'approve' => [ 'label' => __('Approve','events-manager'), 'data' => array_merge($data_template, ['row_action' => 'approve']) ],
+			'reject' => [ 'label' => __('Reject','events-manager'), 'data' => array_merge($data_template, ['row_action' => 'reject']) ],
+			'delete' => [ 'label' => __('Delete','events-manager'), 'data' => array_merge($data_template, ['row_action' => 'delete']) ],
+			'unapprove' => [ 'label' => __('Unapprove','events-manager'), 'data' => array_merge($data_template, ['row_action' => 'unapprove']) ],
 		);
 		$actions = apply_filters( static::$basename . '_get_action_data_items', $actions, $this, ['data_template' => $data_template]);
 		// add upstream context

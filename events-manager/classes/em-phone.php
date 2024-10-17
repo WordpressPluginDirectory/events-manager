@@ -55,10 +55,10 @@ class Phone {
 	 */
 	public static function is_enabled() {
 		$enabled_hardcoded = apply_filters( 'em_phone_intl_enabled', !defined('EM_PHONE_INTL_ENABLED') || EM_PHONE_INTL_ENABLED );
-		if( is_admin() && !empty($_REQUEST['page']) && $_REQUEST['page'] === 'events-manager-options' ) {
+		if( is_admin() && !empty($_REQUEST['page']) && $_REQUEST['page'] === 'events-manager-options' && PHP_VERSION_ID >= 80000 ) {
 			return true;
 		}
-		return $enabled_hardcoded && get_option('dbem_phone_enabled') ;
+		return $enabled_hardcoded && get_option('dbem_phone_enabled') && PHP_VERSION_ID >= 80000;
 	}
 	
 	/**

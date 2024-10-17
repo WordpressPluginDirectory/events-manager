@@ -239,6 +239,13 @@
 		<div class="inside">
 			<table class='form-table'>
 				<tr class="em-boxheader"><td colspan='2'>
+						<?php
+							if( PHP_VERSION_ID < 80000 ) {
+								$warning = 'Phone numbers input fields will be automatically disabled and will not work with PHP versions lower than <code>8.0</code>, you currently are running PHP version <code>'. PHP_VERSION .'</code>. Please update your PHP version to enjoy the best of Events Manager!';
+								echo '<div class="notice notice-warning"><p>'. $warning .'</p></div>';
+								echo '<p style="color:red;">'. $warning .'</p>';
+							}
+						?>
 						<p>
 							<?php
 								esc_html_e( 'Phone numbers can be used for further contact for both those that make bookings and submit events. We offer an advanced international-compatible phone input field with multiple options which standardize and ensure valid/consistent international phone numbers are provided by your users.', 'events-manager' );

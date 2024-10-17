@@ -5,7 +5,7 @@ Tags: events, calendar, tickets, bookings, appointments
 Text Domain: events-manager
 Requires at least: 5.3
 Tested up to: 6.6
-Stable tag: 6.6.1
+Stable tag: 6.6.3
 Requires PHP: 7.0
 License: GPLv2
 
@@ -85,7 +85,7 @@ We have a premium [Pro add-on for Events Manager](http://eventsmanagerpro.com/go
  * Manage bookings on your phone
  * Check In/Out users
 * Waitlists
-* Automation (NEW!) - ultimate flexibility in automation!
+* Automation - ultimate flexibility in automation!
  * Triggers:
   * X time before/after events start
   * When a booking status changes
@@ -93,6 +93,8 @@ We have a premium [Pro add-on for Events Manager](http://eventsmanagerpro.com/go
  * Actions
   * Send Webhook (Zapier, MS Automation and many other services)
   * Send Email
+  * Send WhatsApp, SMS, Telegram notifications
+* WhatsApp, SMS, Telegram integration and interactive flows
 * Coupon Codes
 * Custom booking email per event and gateway
 * Faster support via private Pro forums
@@ -163,6 +165,21 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps wit
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
+= 6.6.3 =
+* Fixed JS error preventing full bookings table admin AJAX functionality in certain languages such as French.
+* Fixed SQL ordering issues causing empty attendee and ticket views in bookings admin area.
+* Added 'booking' array arg to em_bookings_table_get_booking_allowed_actions filter.
+* Fixed WPML error when duplicating an event.
+
+= 6.6.2 =
+* Added aria-label to ticket selection.
+* Disabled phone module for PHP versions 8.0 due to compatibility issues.
+* Fixed consent not passing validation if marked required yet checked.
+* Fixed ordering issues in booking admin tables, including the inability to order booking fields in a ticket view.
+* Fixed general orderby failing to apply if passed with an ASC or DESC definition.
+* Fixed status filtering issues in booking admin tables.
+* Changed some PHP array declarations to bracket shortform.
+
 = 6.6.1 =
 * fixed some initial phone number display issues overlapping country selectors on front-end
 * fixed fatal error in settings page

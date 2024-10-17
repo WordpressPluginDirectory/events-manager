@@ -171,7 +171,7 @@ class Consent {
 				return $result;
 			} //ignore if consent given as per settings
 		}
-		if( empty($EM_Booking->booking_meta['registration'][ static::$prefix ]) && static::$required ){
+		if( empty($EM_Booking->booking_meta['registration'][ static::$options['meta_key'] ]) && static::$required ){
 			if( !empty($_REQUEST['action']) && !empty($_REQUEST['booking_id']) && !empty($_REQUEST['_wpnonce']) && $_REQUEST['action'] == 'booking_save'  && wp_verify_nonce($_REQUEST['_wpnonce'], 'booking_save_'.$_REQUEST['booking_id']) ) {
 				// we're saving a previously submitted booking here, so we can ignore consent to prevent blocks in editing a booking
 				return $result;
