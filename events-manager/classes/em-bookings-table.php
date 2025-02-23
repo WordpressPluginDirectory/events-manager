@@ -499,7 +499,7 @@ class EM_Bookings_Table extends EM\List_Table {
 		}
 		// add bookings scope args e.g. if a person's bookings
 		if( $EM_Person !== false ){
-			$args = array( 'person' => $EM_Person->ID, 'scope' => $this->filters['scope'] );
+			$args = array( 'person' => $EM_Person->ID, 'scope' => $this->filters['scope'], 'owner' => false );
 		}elseif( $EM_Ticket !== false ){
 			//searching bookings with a specific ticket
 			$args = array( 'ticket_id' => $EM_Ticket->ticket_id );
@@ -1269,6 +1269,7 @@ class EM_Bookings_Table extends EM\List_Table {
 		<input type="hidden" name="save_default_view" value='0'>
 		<input type="hidden" name="view" value='<?php echo esc_attr($this->view); ?>' data-setting>
 		<?php
+		do_action('em_bookings_table_display_hidden_input', $this);
 	}
 	
 	public function extra_tablenav_trigger ( $which = '' ) {

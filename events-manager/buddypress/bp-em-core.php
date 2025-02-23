@@ -164,7 +164,7 @@ class BP_EM_Component extends BP_Component {
 		$sub_nav = apply_filters('em_bp_menu_sub_nav', $sub_nav);
 		
 		parent::setup_nav( $main_nav, $sub_nav );
-		add_action( 'bp_init', array(&$this, 'setup_group_nav') );
+		$this->setup_group_nav();
 	}
 	
 	public function setup_admin_bar( $wp_admin_nav = array() ) {
@@ -259,10 +259,13 @@ class BP_EM_Component extends BP_Component {
 	function setup_group_nav(){
 		global $bp;	
 		/* Add some group subnav items */
-		$user_access = false;
-		$group_link = '';
 		if( bp_is_active('groups') && !empty($bp->groups->current_group) ){
-			$group_link = $bp->root_domain . '/' . bp_get_groups_root_slug() . '/' . $bp->groups->current_group->slug . '/';
+			if ( function_exists( 'bp_get_groups_directory_url' )  ) {
+				$group_link = trailingslashit( bp_get_groups_directory_url() ) . $bp->groups->current_group->slug . '/';
+			}
+			else {
+				$group_link = $bp->root_domain . '/' . bp_get_groups_root_slug() . '/' . $bp->groups->current_group->slug . '/';
+			}
 			$user_access = $bp->groups->current_group->user_has_access;
 			if( !empty($bp->current_component) && $bp->current_component == 'groups' ){
 				$count = EM_Events::count(array('group'=>$bp->groups->current_group->id));

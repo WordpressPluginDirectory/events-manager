@@ -2,6 +2,7 @@
 /**
  * phpmailer support
  *
+ * @method static bool send() send( string $subject, string $body, string $receiver, array $attachments, array $args )
  */
 class EM_Mailer {
 	
@@ -15,7 +16,23 @@ class EM_Mailer {
 	 * @var array
 	 */
 	public static $attachments = array();
-	
+
+	// __callStatic intercepts static calls and, if the method exists on an instance, delegates to it.
+	public static function __callStatic($name, $arguments) {
+		if ( $name === 'send' ) {
+			$EM_Mailer = new EM_Mailer();
+			return call_user_func_array([$EM_Mailer, 'send'], $arguments);
+		}
+		trigger_error("Call to undefined static method " . __CLASS__ . "::$name()", E_USER_ERROR);
+	}
+
+	public function __call( $name, $arguments ) {
+		if ( $name === 'send' ) {
+			return call_user_func_array([$this, 'send'], $arguments);
+		}
+		trigger_error("Call to undefined method " . __CLASS__ . "->$name()", E_USER_ERROR);
+	}
+
 	/**
 	 * Send an email via the EM-saved settings.
 	 * @param $subject
@@ -25,7 +42,7 @@ class EM_Mailer {
 	 * @param $args
 	 * @return boolean
 	 */
-	public function send($subject="no title",$body="No message specified", $receiver='', $attachments = array(), $args = array() ) {
+	protected function send($subject="no title",$body="No message specified", $receiver='', $attachments = array(), $args = array() ) {
 		//TODO add an EM_Error global object, for this sort of error reporting. (@marcus like StatusNotice)
 		$subject = html_entity_decode(wp_kses_data($subject)); //decode entities, but run kses first just in case users use placeholders containing html
 		if( is_array($receiver) ){

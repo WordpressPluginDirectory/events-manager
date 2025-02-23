@@ -15,24 +15,28 @@
 
 	.em-ticket-booking {
 
-		td {
+		& > td {
 			padding: 0;
 			margin: 0;
 		}
 
-		td > div {
+		& > td > div {
 			position: relative;
-			margin: 15px 0 0 40px;
-			padding: 15px 0 0 0;
+			margin: 25px 30px 10px 20px;
+			padding: 15px 20px 0 20px;
 			border-top: 1px solid #dedede;
 		}
 
-		&:first-child td > div {
+		&:first-child > td > div {
 			margin-top: 0;
+			padding-top: 0;
 			border-top: 0;
+			.em-ticket-booking-remove-trigger {
+				top: 0;
+			}
 		}
 
-		&:nth-last-child(2) td > div {
+		&:last-child > td > div {
 			margin-bottom:20px;
 		}
 
@@ -40,9 +44,10 @@
 			font-weight: bold;
 		}
 
-		.em-ticket-booking-remove-trigger {position: absolute;
+		.em-ticket-booking-remove-trigger {
+			position: absolute;
 			cursor: pointer;
-			left: -25px;
+			left: -5px;
 			top: 30px;
 			width: 16px;
 			height: 16px;

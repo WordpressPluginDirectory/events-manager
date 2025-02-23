@@ -1,16 +1,17 @@
 <?php
 /*
 Plugin Name: Events Manager
-Version: 6.6.3
+Version: 6.6.4.4
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
 Author URI: https://pixelite.com
 Text Domain: events-manager
+License: GPLv2
 */
 
 /*
-Copyright (c) 2024, Marcus Sykes
+Copyright (c) 2025, Marcus Sykes
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // Setting constants
-define('EM_VERSION', '6.6.3'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_VERSION', '6.6.4.4'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
 define('EM_PRO_MIN_VERSION', '3.4'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.0'); //self expanatory
 define('EM_DIR', dirname( __FILE__ )); //an absolute path to this directory
@@ -73,12 +74,15 @@ unset($requirements);
 //Base classes
 include( EM_DIR . '/classes/em-exception.php' );
 include( EM_DIR . '/classes/em-options.php' );
+include( EM_DIR . '/classes/em-utils.php' );
 include( EM_DIR . '/classes/em-object.php' );
 include( EM_DIR . '/classes/em-datetimezone.php' );
 include( EM_DIR . '/classes/em-datetime.php' );
 include( EM_DIR . '/classes/em-taxonomy-term.php' );
 include( EM_DIR . '/classes/em-taxonomy-terms.php' );
 include( EM_DIR . '/classes/em-taxonomy-frontend.php' );
+include( EM_DIR . '/classes/uploads/em-uploads-api.php' );
+include( EM_DIR . '/classes/uploads/em-uploads-uploader.php' );
 //set up events as posts
 include( EM_DIR . '/em-posts.php' );
 //Template Tags & Template Logic
@@ -458,7 +462,66 @@ class EM_Scripts_and_Styles {
 				'breakpoints' => array( 'small' => 650, 'medium' => 850, 'full' => false, ) // reorder this array for efficiency if you override it, so smallest is first, largest or false is last
 			),
 			'url' => plugins_url('', __FILE__),
+			// add assets that load JS or CSS based on classes present in a document load
+			// if no absolute url provided, it's assumed to be inside events-manager/includes/external
+			'assets' => [],
 		);
+		// get externals, the externals will be loaded during page init via JS to keep things light
+		$js = static::get_minified_extension_js().'.js';
+		$css = static::get_minified_extension_css().'.css';
+		$js_url = EM_DIR_URI . 'includes/js/';
+		// uploads
+		if( get_option('dbem_uploads_ui') ) {
+			$em_localized_js['assets']['input.em-uploader'] = [
+				// each type has key for id of script/link (prefixed automatically by -css/js) and either url or for JS possible array of url and event fired onload for script, third value can also be a locale
+				'js' => [
+					'em-uploader' => ['url' => $js_url.'em-uploader'.$js, 'required' => true],
+					'filepond-validate-size' => 'filepond/plugins/filepond-plugin-file-validate-size'.$js,
+					'filepond-validate-type' => 'filepond/plugins/filepond-plugin-file-validate-type'.$js,
+					//'filepond-image-preview' => 'filepond/plugins/filepond-plugin-image-preview'.$js, // replaced by our overlay function
+					'filepond-image-validate-size' => 'filepond/plugins/filepond-plugin-image-validate-size'.$js,
+					'filepond-exif-orientation' => 'filepond/plugins/filepond-plugin-image-exif-orientation'.$js,
+					'filepond-get-file' => 'filepond/plugins/filepond-plugin-get-file'.$js,
+					'filepond-plugin-image-overlay' => 'filepond/plugins/filepond-plugin-image-overlay'.$js,
+					'filepond-plugin-image-thumbnail' => 'filepond/plugins/filepond-plugin-image-thumbnail'.$js,
+					'filepond-plugin-pdf-preview-overlay' => 'filepond/plugins/filepond-plugin-pdf-preview-overlay'.$js,
+					'filepond-plugin-file-icon' => 'filepond/plugins/filepond-plugin-file-icon'.$js,
+					'filepond' => [ 'url' => 'filepond/filepond'.$js, 'event' => 'em_uploader_ready', 'locale' => preg_match('/^en/i', EM_ML::$wplang) ? '' : strtolower(str_replace('_', '-', EM_ML::$wplang)) ],
+					//'cropperjs' => 'cropper/cropper'.$js
+				],
+				'css' => [
+					'em-filepond' => 'filepond/em-filepond'.$css,
+					'filepond-preview' => 'filepond/plugins/filepond-plugin-image-preview'.$css,
+					'filepond-plugin-image-overlay' => 'filepond/plugins/filepond-plugin-image-overlay'.$css,
+					'filepond-get-file' => 'filepond/plugins/filepond-plugin-get-file'.$css,
+					//'cropperjs' => 'cropper/cropper'.$css,
+				],
+			];
+			$em_localized_js['uploads'] = [
+				'endpoint' => rest_url('events-manager/v1/uploads'),
+				'nonce' => wp_create_nonce('em_image_upload'),
+				'delete_confirm' => esc_html__('Are you sure you want to delete this file? It will be deleted upon submission.', 'events-manager'),
+				'images' => [
+					'max_file_size'    => EM\Uploads\Uploader::$default_options['max_file_size'],
+					'image_max_width'  => EM\Uploads\Uploader::$default_options['image_max_width'],
+					'image_max_height' => EM\Uploads\Uploader::$default_options['image_max_height'],
+					'image_min_width'  => EM\Uploads\Uploader::$default_options['image_min_width'],
+					'image_min_height' => EM\Uploads\Uploader::$default_options['image_min_height'],
+				],
+				'files' => [
+					'max_file_size'    => EM\Uploads\Uploader::$default_options['max_file_size'],
+					'types' => EM\Uploads\Uploader::get_accepted_mime_types(),
+				]
+			];
+			$em_localized_js['api_nonce'] = wp_create_nonce('wp_rest');
+		} else {
+			$em_localized_js['assets']['input.em-uploader'] = [
+				// each type has key for id of script/link (prefixed automatically by -css/js) and either url or for JS possible array of url and event fired onload for script, third value can also be a locale
+				'js' => [ 'em-uploader' => ['url' => $js_url.'em-uploader'.$js, 'required' => true, 'event' => 'em_uploader_ready'] ],
+			];
+		}
+		// add locales to externals
+		
 		// add phone number validation and localization
 		if( EM\Phone::is_enabled() ) {
 			$em_localized_js['phone'] = array(

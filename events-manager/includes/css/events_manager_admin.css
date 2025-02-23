@@ -92,15 +92,16 @@ div:not(.em) > .em-booking-form  { position:relative; clear:left; max-width:1200
 div:not(.em) > .em-booking-form .em-booking-form-details  { padding:10px; width:360px; float:left; }
 div:not(.em) > .em-booking-form .em-booking-form-details input.input, .em-booking-form-details textarea { width:250px; }
 div:not(.em) > .em-booking-form p { clear:left; }
-div:not(.em) > .em-booking-form label { display:block; float:left; }
+div:not(.em) > .em-booking-form label:not([for^="filepond--"]) { display:block; float:left; }
 div:not(.em) > .em-booking-form span.input-group input { margin-left:-20px; }
 div:not(.em) > .em-booking-form span.input-group { display:block; margin-left:120px; }
-div:not(.em) > .em-booking-form label  { display:inline-block; width:100px; }
+div:not(.em) > .em-booking-form label:not([for^="filepond--"])  { display:inline-block; width:100px; }
 div:not(.em) > .em-booking-form p.input-field-data_privacy_consent label { display:block; width:100%; }
 div:not(.em) > .em-booking-form-details .em-booking-submit { width:auto; }
 /* Admin single booking view overrides */
-#em-bookings-admin-booking .em-booking-form .em-form-fields th { max-width:300px; padding:10px 0 0; vertical-align: top; }
-#em-bookings-admin-booking .em-booking-form .em-form-fields td { text-align:left; padding:10px 0 0 20px; }
+#em-bookings-admin-booking .em-booking-form .em-form-fields { width: 100%; table-layout: fixed; }
+#em-bookings-admin-booking .em-booking-form .em-form-fields th { width:20%; padding:10px 0 0; vertical-align: top; }
+#em-bookings-admin-booking .em-booking-form .em-form-fields td { width:80%; text-align:left; padding:10px 0 0 20px; }
 #em-bookings-admin-booking .em-booking-form .em-form-fields span.input-group { display:block; margin-left:0; }
 #em-bookings-admin-booking .em-booking-form .em-form-fields span.input-group input { margin-left:0; }
 /* Tickets */

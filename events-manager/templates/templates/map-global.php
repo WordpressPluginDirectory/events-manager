@@ -31,12 +31,12 @@ if (get_option('dbem_gmap_is_active') == '1') {
 				</svg>
 			</div>
 		</div>
-		<div class='em-locations-map-coords' id='em-locations-map-coords-<?php echo $id; ?>' style="display:none; visibility:hidden;"><?php echo esc_html(EM_Object::json_encode($args)); ?></div>
-		<?php if( !empty($map_json_style) ): ?>
+		<script type="application/json" class='em-locations-map-coords' id='em-locations-map-coords-<?php echo $id; ?>' style="display:none; visibility:hidden;"><?php echo EM_Object::json_encode($args, true); ?></script>
+		<?php if( !empty($args['map_style']) ): ?>
 		<script type="text/javascript">
 			if( typeof EM == 'object'){
 				if( typeof EM.google_map_id_styles != 'object' ) EM.google_map_id_styles = [];
-				EM.google_map_id_styles['<?php echo $id; ?>'] = <?php echo $map_json_style; ?>;
+				EM.google_map_id_styles['<?php echo $id; ?>'] = <?php echo $args['map_style']; ?>;
 			}
 		</script>
 		<?php endif; ?>

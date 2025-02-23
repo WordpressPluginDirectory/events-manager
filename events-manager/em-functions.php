@@ -19,32 +19,37 @@ function em_paginate($link, $total, $limit, $page=1, $data=array(), $ajax = null
 		$base_link = $url_parts[0];
 		$base_querystring = '';
 		$data_atts = '';
-    	//Get querystring for first page without page
-    	if( count($url_parts) > 0 ){
-	    	$query_arr = array();
-	    	parse_str($url_parts[1], $query_arr);
-	    	//if $data was passed, strip any of these vars from both the $query_arr and $link for inclusion in the data-em-ajax attribute
-	    	if( !empty($data) && is_array($data) && (!defined('EM_USE_DATA_ATTS') || EM_USE_DATA_ATTS) ){
-	    		//remove the data attributes from $query_arr
-	    		foreach( $data as $key => $value ){
-	    			if( array_key_exists($key, $query_arr) ){
-	    				unset($query_arr[$key]);
-	    			}
-					$data[$key] = urlencode($value);
-	    		}
-	    		//rebuild the master link, without these data attributes
-	    		if( count($query_arr) > 0 ){
-	    			$link = $base_link .'?'. build_query($query_arr);
-	    		}else{
-	    			$link = $base_link;
-	    		}
-	    		$data_atts = 'data-em-ajax="'.esc_attr(build_query($data)).'"'; //for inclusion later on
-	    	}
-	    	//proceed to build the base querystring without pagination arguments
-	    	unset($query_arr['page']); unset($query_arr['pno']);
-	    	$base_querystring = esc_attr(build_query($query_arr));
-	    	if( !empty($base_querystring) ) $base_querystring = '?'.$base_querystring;
-    	}
+        //Get querystring for first page without page
+        if( count($url_parts) > 0 ) {
+	        $query_arr = array();
+	        parse_str( $url_parts[1], $query_arr );
+	        //if $data was passed, strip any of these vars from both the $query_arr and $link for inclusion in the data-em-ajax attribute
+	        if ( !empty( $data ) && is_array( $data ) && ( !defined( 'EM_USE_DATA_ATTS' ) || EM_USE_DATA_ATTS ) ) {
+		        //remove the data attributes from $query_arr
+		        foreach ( $data as $key => $value ) {
+			        if ( array_key_exists( $key, $query_arr ) ) {
+						if ( $ajax || empty($_REQUEST['action']) || in_array( $key, ['action', 'id'] ) ) {
+							unset( $query_arr[ $key ] );
+						}
+			        }
+			        $data[ $key ] = urlencode( $value );
+		        }
+		        //rebuild the master link, without these data attributes
+		        if ( count( $query_arr ) > 0 ) {
+			        $link = $base_link . '?' . build_query( $query_arr );
+		        } else {
+			        $link = $base_link;
+		        }
+		        $data_atts = 'data-em-ajax="' . esc_attr( build_query( $data ) ) . '"'; //for inclusion later on
+	        }
+	        //proceed to build the base querystring without pagination arguments
+	        unset( $query_arr['page'] );
+	        unset( $query_arr['pno'] );
+	        $base_querystring = esc_attr( build_query( $query_arr ) );
+	        if ( !empty( $base_querystring ) ) {
+		        $base_querystring = '?' . $base_querystring;
+	        }
+        }
     	//calculate pages to show, totals etc.
 		$maxPages = ceil($total/$limit); //Total number of pages, i.e. also the last page to show
 		if( $centered ){
@@ -57,9 +62,9 @@ function em_paginate($link, $total, $limit, $page=1, $data=array(), $ajax = null
 		$link = str_replace('%PAGE%', $placeholder, esc_url($link)); //To avoid url encoded/non encoded placeholders
 	    //Add the back and first buttons
 		    $string = ($page>1 && $startPage != 1) ? '<a class="prev first page-numbers" href="'.str_replace($placeholder,1,$link).'" title="1">&lt;&lt;</a> ' : '';
-		    if($page == 2){
+		    if ( $page == 2 ) {
 		    	$string .= ' <a class="prev page-numbers" href="'.esc_url($base_link.$base_querystring).'" title="2">&lt;</a> ';
-		    }elseif($page > 2){
+		    } elseif ( $page > 2 ) {
 		    	$string .= ' <a class="prev page-numbers" href="'.str_replace($placeholder,$page-1,$link).'" title="'.($page-1).'">&lt;</a> ';
 		    }
 		//Loop each page and create a link or just a bold number if its the current page
@@ -207,15 +212,16 @@ function em_get_countries($add_blank = false, $sort = true){
 			$em_countries_array = $countries['en'];
 		}
 	}
-	if($sort){ asort($em_countries_array); }
-	if($add_blank !== false){
+	$countries = $em_countries_array;
+	if($sort){ asort($countries); }
+	if( $add_blank !== false ){
 		if(is_array($add_blank)){
-			$em_countries_array = $add_blank + $em_countries_array;
+			$countries = $add_blank + $countries;
 		}else{
-		    $em_countries_array = array(0 => $add_blank) + $em_countries_array;
+			$countries = array(0 => $add_blank) + $countries;
 		}
 	}
-	return apply_filters('em_get_countries', $em_countries_array);
+	return apply_filters('em_get_countries', $countries);
 }
 
 /**
@@ -586,7 +592,7 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	if (!is_array($base_args)) $base_args = array();
 	$search_args = array();
 	$search_args['ajax'] = EM_AJAX_SEARCH;
-	$search_args['id'] = rand();
+	$search_args['id'] = !empty($base_args['id']) ? $base_args['id'] : rand(100, getrandmax());
 	$search_args['css'] = get_option('dbem_css_search'); // deprecated
 	$search_args['search_action'] = 'search_events';
 	$search_args['search_advanced_text'] = get_option('dbem_search_form_advanced_show');
@@ -754,7 +760,6 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 		$args['css_classes'][] = $args['advanced_hidden'] ? 'advanced-hidden':'advanced-visible';
 		$args['css_classes'][] = $args['advanced_trigger'] ? 'has-advanced-trigger' : 'no-advanced-trigger';
 	}
-
 	if( isset($args['show_search']) && !$args['show_search'] ){
 		$args['css_classes'][] = 'is-hidden';
 	}
@@ -770,7 +775,9 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	if( isset($_REQUEST['geo']) ) $args['geo'] = sanitize_text_field($_REQUEST['geo']);
 	if( isset($_REQUEST['near']) ) $args['near'] = sanitize_text_field(wp_unslash($_REQUEST['near']));
 	if( isset($_REQUEST['em_search']) ) $args['search'] = sanitize_text_field(wp_unslash($_REQUEST['em_search']));
-	if( isset($_REQUEST['category']) ) $args['category'] = sanitize_text_field($_REQUEST['category']);
+	if( isset($_REQUEST['category']) ) {
+		$args['category'] = is_array($_REQUEST['category']) ? sanitize_text_field( implode(', ', $_REQUEST['category']) ) : sanitize_text_field( $_REQUEST['category'] );
+	}
 	if( isset($_REQUEST['country']) ) $args['country'] = sanitize_text_field(wp_unslash($_REQUEST['country']));
 	if( isset($_REQUEST['region']) ) $args['region'] = sanitize_text_field(wp_unslash($_REQUEST['region']));
 	if( isset($_REQUEST['state']) ) $args['state'] = sanitize_text_field(wp_unslash($_REQUEST['state']));
@@ -804,6 +811,24 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 			}
 		}
 	}
+	
+	// deal with no-ajax situations such as custom placeholders
+	if( empty($args['ajax']) ) {
+		$args['css_classes'][] = 'no-ajax';
+		// get URL without pno
+		$url = add_query_arg( ['pno' => null] );
+		$url_parts = explode('?', $url);
+		// remove any of these search args from url params
+		if ( !empty($url_parts[1]) ) {
+			$query_arr = [];
+			parse_str( $url_parts[1], $query_arr );
+			unset( $query_arr['em_search'] ); // do this manually due to interchanging with 'search' param for compatabaility
+			$url = $url_parts[0] . '?' . build_query( array_diff_assoc( $query_arr, $args) );
+		}
+		// rebuild URL for output
+		$args['search_url'] = $url;
+	}
+	
 	return apply_filters('em_get_search_form_defaults', $args, $base_args, $context);
 }
 
@@ -898,6 +923,22 @@ function em_output_events_view( $args, $view = null ){
 		$view = empty($args['view']) ? get_option('dbem_search_form_view') : $args['view'];
 	}
     do_action('em_output_events_view_header', $args, $view);
+	
+	if ( !empty($args['has_search']) ) {
+		// get the default args for this list of events, so it's defaulted into the search form
+		$default_args = EM_Events::get_default_search( $args );
+		$search_args = em_get_search_form_defaults($default_args);
+		$search_args['has_view'] = true;
+		$search_args['view'] = $view;
+		if ( isset($args['views']) ) {
+			$search_args['views'] = $args['views'];
+		}
+		em_locate_template('templates/events-search.php', true, array('args'=>$search_args));
+		if ( empty($args['ajax']) ) {
+			$args = array_merge( $args, $default_args, $search_args );
+		}
+	}
+	
 	switch( $view ){
 		case 'list-grouped':
 			if( empty($args['date_format']) ){
@@ -922,9 +963,12 @@ function em_output_events_view( $args, $view = null ){
 			em_locate_template('templates/events-grid.php', true, array('args'=>$args)); //if successful, this template overrides the settings and defaults, including search
 			break;
 		case 'map':
-			$args['width'] = '100%';
-			$args['height'] = 0;
-			echo em_get_events_map_shortcode( $args );
+			$args['width'] = !empty($args['width']) ? $args['width'] : '100%';
+			$args['height'] = !empty($args['height']) ? $args['height'] : 0;
+			$args['em_ajax'] = true;
+			$args['query'] = 'GlobalEventsMapData';
+			$args = em_parse_map_args( $args );
+			em_locate_template('templates/map-global.php',true, array('args'=>$args, 'map_json_style' => !empty($args['map_style']) ? $args['map_style'] : ''));
 			break;
 		case 'calendar':
 			$args['has_search'] = false; // prevent view and search getting output again
@@ -940,6 +984,31 @@ function em_output_events_view( $args, $view = null ){
 			break;
 	}
 	do_action('em_output_events_view_footer', $args, $view);
+}
+
+function em_parse_map_args( $args ) {
+	//get dimensions with px or % added in
+	$width = (isset($args['width'])) ? $args['width']:get_option('dbem_map_default_width','400px');
+	$width = preg_match('/(px)|%/', $width) ? $width:$width.'px';
+	if( $width == 0 || $width == '0px' || $width == '0%' ) $width = 0;
+	$height = (isset($args['height'])) ? $args['height']:get_option('dbem_map_default_height','300px');
+	$height = preg_match('/(px)|%/', $height) ? $height:$height.'px';
+	if( $height == 0 || $height == '0px' || $height == '0%' ) $height = 0;
+	$args['width'] = $width;
+	$args['height'] = $height;
+	//assign random number for element id reference
+	if( empty($args['id']) ) $args['id'] = rand(100, getrandmax());
+	//add JSON style to map
+	if( !empty($args['map_style']) ){
+		$style= wp_kses_data(base64_decode($args['map_style']));
+		$style_json= json_decode($style);
+		if( is_array($style_json) || is_object($style_json) ){
+			$args['map_style'] = preg_replace('/[\r\n\t\s]/', '', $style);
+		}else{
+			$args['map_style'] = '';
+		}
+	}
+	return $args;
 }
 
 function em_get_location_search_views(){
@@ -966,6 +1035,23 @@ function em_output_locations_view( $args, $view = null ){
 			$view = $args['view'];
 		}
 	}
+	
+	// add search form if needed
+	if ( !empty($args['has_search']) ) {
+		// get the default args for this list of events, so it's defaulted into the search form
+		$default_args = EM_Locations::get_default_search( $args );
+		$search_args = em_get_search_form_defaults( $default_args, 'locations' );
+		$search_args['has_view'] = true;
+		$search_args['view'] = $view;
+		if ( isset( $args['views'] ) ) {
+			$search_args['views'] = $args['views'];
+		}
+		em_locate_template( 'templates/locations-search.php', true, array( 'args' => $search_args ) );
+		if ( empty( $args['ajax'] ) ) {
+			$args = array_merge( $args, $default_args, $search_args );
+		}
+	}
+	
 	$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_locations_default_limit');
 	switch( $view ){
 		case 'list':
@@ -985,10 +1071,12 @@ function em_output_locations_view( $args, $view = null ){
 			em_locate_template('templates/locations-grid.php', true, array('args'=>$args)); //if successful, this template overrides the settings and defaults, including search
 			break;
 		case 'map':
-			$args['width'] = '100%';
-			$args['height'] = 0;
-			$args['limit'] = 0;
-			echo em_get_locations_map_shortcode( $args );
+			$args['width'] = !empty($args['width']) ? $args['width'] : '100%';
+			$args['height'] = !empty($args['height']) ? $args['height'] : 0;
+			$args['em_ajax'] = true;
+			$args['query'] = 'GlobalMapData';
+			$args = em_parse_map_args( $args );
+			em_locate_template('templates/map-global.php',true, array('args'=>$args, 'map_json_style' => !empty($args['map_style']) ? $args['map_style'] : ''));
 			break;
 		default:
 			if( has_action('em_locations_search_view_'.$view) ){

@@ -91,14 +91,14 @@ class EM_Object {
 		//TODO decide on search defaults shared across all objects and then validate here
 		$defaults = array_merge($super_defaults, $defaults);
 		
-		if(is_array($array)){
+		if( is_array($array) ){
 			//We are still dealing with recurrence_id, location_id, category_id in some place, so we do a quick replace here just in case
 			if( array_key_exists('recurrence_id', $array) && !array_key_exists('recurrence', $array) ) { $array['recurrence'] = $array['recurrence_id']; }
 			if( array_key_exists('location_id', $array) && !array_key_exists('location', $array) ) { $array['location'] = $array['location_id']; }
 			if( array_key_exists('category_id', $array) && !array_key_exists('category', $array) ) { $array['category'] = $array['category_id']; }
 		
 			//Clean all id lists
-			$clean_ids_array = array('location', 'event', 'post_id');
+			$clean_ids_array = array('location', 'event', 'post_id', 'active_status');
 			if( !empty($array['owner']) && $array['owner'] != 'me') $clean_ids_array[] = 'owner'; //clean owner attribute if not 'me'
 			$array = self::clean_id_atts($array, $clean_ids_array);
 
@@ -1122,7 +1122,7 @@ class EM_Object {
 		}
 		if( !empty($unique_args['search']) ){ 
 			$unique_args['em_search'] = $unique_args['search']; //special case, since em_search is used in links rather than search, which we remove below
-			unset($unique_args['search']);
+			unset($unique_args['search'], $default_pag_args['search']);
 		}
 		//build general page link with all arguments
 		$pag_args = array_merge($unique_args, $default_pag_args);
@@ -1494,10 +1494,23 @@ class EM_Object {
 	}
 	
 	/**
-	 * Adds an error to the object
+	 * Adds an error to the object, if $errors is an array then multiple error strings can be added, WP_Error object will also add all messages.
+	 *
+	 * @param string|array|WP_Error|EM_Exception $errors
+	 *
+	 * @return void
 	 */
 	function add_error($errors){
-		if(!is_array($errors)){ $errors = array($errors); } //make errors var an array if it isn't already
+		if( !is_array($errors) ) {
+			//make errors var an array if it isn't already
+			if ( is_wp_error($errors) ) {
+				$errors = $errors->get_error_messages();
+			} elseif ( $errors instanceof EM_Exception ) {
+				$errors = $errors->get_messages();
+			} else {
+				$errors = array($errors);
+			}
+		}
 		if(!is_array($this->errors)){ $this->errors = array(); } //create empty array if this isn't an array
 		foreach($errors as $key => $error){			
 			if( !in_array($error, $this->errors) ){
@@ -1655,104 +1668,59 @@ class EM_Object {
 		return apply_filters('em_object_get_image_url', $image_url, $this);
 	}
 	
-	function image_delete($force_delete=true) {
-		$type = $this->get_image_type();
-		if( $type ){
-            $this->image_url = '';
-			if( $this->get_image_url() == '' ){
-				$result = true;
-			}else{
-				$post_thumbnail_id = get_post_thumbnail_id( $this->post_id );
-				//check that this image isn't being used by another CPT
-                global $wpdb;
-                $sql = $wpdb->prepare('SELECT count(*) FROM '.$wpdb->postmeta." WHERE meta_key='_thumbnail_id' AND meta_value=%d", array($post_thumbnail_id));
-				if( $wpdb->get_var($sql) <= 1 ){
-				    //not used by any other CPT, so just delete the image entirely (would usually only be used via front-end which has no media manager)
-				    //@todo add setting option to delete images from filesystem/media if not used by other posts
-    				$delete_attachment = wp_delete_attachment($post_thumbnail_id, $force_delete);
-    				if( false === $delete_attachment ){
-    					//check legacy image
-    					$type_id_name = $type.'_id';
-    					$file_name= EM_IMAGE_UPLOAD_DIR.$this->get_image_type(true)."-".$this->$type_id_name;
-    					$result = false;
-    					foreach($this->mime_types as $mime_type) { 
-    						if (file_exists($file_name.".".$mime_type)){
-    					  		$result = unlink($file_name.".".$mime_type);
-    						}
-    					}
-    				}else{
-    				    $result = true;
-    				}
-				}else{
-				    //just delete image association
-				    delete_post_meta($this->post_id, '_thumbnail_id');
-				}
-			}
-		}
-		return apply_filters('em_object_get_image_url', $result, $this);
+	/**
+	 * @param $force_delete
+	 *
+	 * @return mixed|null
+	 * @uses EM\Uploads\Uploader::post_image_delete()
+	 * @deprecated use EM\Uploads\Uploader::post_image_delete() sinstead.
+	 */
+	function image_delete( $force_delete=true ) {
+		return apply_filters('em_object_get_image_url', EM\Uploads\Uploader::post_image_delete( $this->post_id, $force_delete ), $this);
 	}
 	
+	/**
+	 * Handles uploading event and location images
+	 *
+	 * @return mixed|null
+	 * @deprecated use EM\Uploads\Uploader::post_image_upload() sinstead.
+	 * @uses EM\Uploads\Uploader::post_image_upload()
+	 */
 	function image_upload(){
 		$type = $this->get_image_type();
-		//Handle the attachment as a WP Post
-		$attachment = '';
-		$user_to_check = ( !is_user_logged_in() && get_option('dbem_events_anonymous_submissions') ) ? get_option('dbem_events_anonymous_user'):false;		
-		if ( !empty($_FILES[$type.'_image']['size']) && file_exists($_FILES[$type.'_image']['tmp_name']) && $this->image_validate() && $this->can_manage('upload_event_images','upload_event_images', $user_to_check) ) {
-			require_once(ABSPATH . "wp-admin" . '/includes/file.php');					
-			require_once(ABSPATH . "wp-admin" . '/includes/image.php');
-        	require_once( ABSPATH . 'wp-admin/includes/media.php' );
-					
-			$attachment_id = media_handle_upload( $type.'_image', $this->post_id );
-			
-			/* Attach file to item */
-			if ( !is_wp_error($attachment_id) ){
-				//delete the old attachment
-				$this->image_delete();
-				update_post_meta($this->post_id, '_thumbnail_id', $attachment_id);
-				return apply_filters('em_object_image_upload', true, $this);
-			}else{
-			    //error uploading, pass error message on and return false
-			    $error_string = __('There was an error uploading the image.','events-manager');
-			    if( current_user_can('edit_others_events') && !empty($attachment_id->errors['upload_error']) ){
-    			    $error_string .= ' <em>('. implode(' ', $attachment_id->errors['upload_error']) .')</em>';
-			    }
-			    $this->add_error( $error_string );
-			    return apply_filters('em_object_image_upload', false, $this);
+		$user_to_check = ( !is_user_logged_in() && get_option('dbem_events_anonymous_submissions') ) ? get_option('dbem_events_anonymous_user'):false;
+		if ( $this->can_manage('upload_event_images','upload_event_images', $user_to_check) ) {
+			// proceed with upload
+			try {
+				EM\Uploads\Uploader::post_image_upload( $type . '_image', $this->post_id );
+				return apply_filters( 'em_object_image_upload', true, $this );
+			} catch ( EM_Exception $e ) {
+				$this->add_error( $e );
 			}
-		}elseif( !empty($_REQUEST[$type.'_image_delete']) ){
-			$this->image_delete();
 		}
-		return apply_filters('em_object_image_upload', false, $this);
+		return apply_filters( 'em_object_image_upload', false, $this );
 	}
 	
+	/**
+	 * Handles uploading event and location images
+	 *
+	 * @return mixed|null
+	 * @deprecated use EM\Uploads\Uploader::validate() sinstead.
+	 * @uses EM\Uploads\Uploader::validate()
+	 */
 	function image_validate(){
 		$type = $this->get_image_type();
-		if( $type ){
-			if ( !empty($_FILES[$type.'_image']) && $_FILES[$type.'_image']['size'] > 0 ) { 
-				if (is_uploaded_file($_FILES[$type.'_image']['tmp_name'])) {
-			  		list($width, $height, $mime_type, $attr) = getimagesize($_FILES[$type.'_image']['tmp_name']);
-					$maximum_size = get_option('dbem_image_max_size'); 
-					if ($_FILES[$type.'_image']['size'] > $maximum_size){ 
-				     	$this->add_error( __('The image file is too big! Maximum size:', 'events-manager')." $maximum_size");
-					}
-					$maximum_width = get_option('dbem_image_max_width'); 
-					$maximum_height = get_option('dbem_image_max_height');
-					$minimum_width = get_option('dbem_image_min_width'); 
-					$minimum_height = get_option('dbem_image_min_height');  
-				  	if (($width > $maximum_width) || ($height > $maximum_height)) { 
-						$this->add_error( __('The image is too big! Maximum size allowed:','events-manager')." $maximum_width x $maximum_height");
-				  	}
-				  	if (($width < $minimum_width) || ($height < $minimum_height)) { 
-						$this->add_error( __('The image is too small! Minimum size allowed:','events-manager')." $minimum_width x $minimum_height");
-				  	}
-				  	if ( empty($mime_type) || !array_key_exists($mime_type, $this->mime_types) ){ 
-						$this->add_error(__('The image is in a wrong format!','events-manager'));
-				  	}
-		  		}
-			}
+		try {
+			EM\Uploads\Uploader::prepare( $type . '_image' );
+			$max_filesize = get_option('dbem_image_max_size') > wp_max_upload_size() ? wp_max_upload_size() : get_option('dbem_image_max_size');
+			$result = EM\Uploads\Uploader::validate( $type . '_image', ['type' => 'image', 'max_file_size' => $max_filesize] ) !== false; // no false returned, error thrown if not true/null
+		} catch ( EM_Exception $e ) {
+			$this->add_error( $e );
+			$result = false;
 		}
-		return apply_filters('em_object_image_validate', count($this->errors) == 0, $this);
+		return apply_filters('em_object_image_validate', $result, $this, $result);
 	}
+	
 	/*
 	 * END IMAGE UPlOAD FUNCTIONS
 	 */
@@ -1837,7 +1805,7 @@ class EM_Object {
 		foreach( $raw_meta as $meta ){
 			$meta_value = maybe_unserialize($meta['meta_value']);
 			$meta_key = $meta['meta_key'];
-			if( preg_match('/^_([a-zA-Z\-0-9 _]+)\|([a-zA-Z\-0-9 _]+)?$/', $meta_key, $match) || preg_match('/^_([a-zA-Z\-0-9 _]+)_([^_]+)$/', $meta_key, $match) ){
+			if( preg_match('/^_([a-zA-Z\-0-9 _]+)\|([^\|]+)?$/', $meta_key, $match) || preg_match('/^_([a-zA-Z\-0-9]+)_(.+)$/', $meta_key, $match) ){
 				$key = $match[1];
 				if( empty($processed_meta[$key]) ) $processed_meta[$key] = array();
 				$subkey = isset($match[2]) ? $match[2] : count($processed_meta[$key]); // allows for storing arrays without a key, such as _beverage_choice| can be stored multiple times in a row if key is not relevant

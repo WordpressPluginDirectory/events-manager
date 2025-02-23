@@ -216,7 +216,7 @@ class Consent {
 	public static function cpt_get_post($result, $EM_Object ){
 		if( !empty($_REQUEST[ static::$options['param'] ]) ){
 			if( get_class($EM_Object) == 'EM_Event' ){
-				$EM_Object->event_attributes['_' . static::$prefix . '_given'] = 1;
+				$EM_Object->event_attributes['_' . static::$options['meta_key']] = 1;
 				$EM_Object->get_location()->location_attributes[ '_' . static::$options['meta_key'] ] = 1;
 			}else{
 				$EM_Object->location_attributes[ '_' . static::$options['meta_key'] ] = 1;
@@ -239,7 +239,7 @@ class Consent {
 			if( !empty($consent_given_already) && get_option( static::$options['remember'] ) == 1 ) return $result; //ignore if consent given as per settings
 		}
 		$attributes = get_class($EM_Object) == 'EM_Event' ? 'event_attributes':'location_attributes';
-		if( empty($EM_Object->{$attributes}['registration'][ static::$options['meta_key'] ]) && static::$required ){
+		if( empty($EM_Object->{$attributes}[ '_' . static::$options['meta_key'] ]) && static::$required ){
 			$EM_Object->add_error( static::get_error_cpt() );
 			$result = false;
 		}
@@ -254,7 +254,7 @@ class Consent {
 	 */
 	public static function cpt_save( $result, $EM_Object ){
 		$attributes = get_class($EM_Object) == 'EM_Event' ? 'event_attributes':'location_attributes';
-		if( $result && !empty($EM_Object->{$attributes}['_' . static::$prefix . '_given'])){
+		if( $result && !empty($EM_Object->{$attributes}['_' . static::$prefix])){
 			if( !get_option('dbem_events_anonymous_submissions') || $EM_Object->post_author != get_option('dbem_events_anonymous_user') ){
 				update_user_meta( $EM_Object->post_author, static::$options['meta_key'], current_time( 'mysql', true ) );
 			}

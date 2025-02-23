@@ -380,7 +380,7 @@ jQuery(document).ready( function($){
 				// select geo from main if it exists, so we keep counts synced
 				text = search.find('input.em-search-text');
 			}
-			text.val('').trigger('change');
+			text.val('').attr('value', null).trigger('change'); // value attr removed as well due to compat issues in Chrome (possibly more)
 		});
 		/* Not sure we should be calculating this... since it's always set to something.
 		search_advanced.on('change', 'select.em-search-geo-unit, select.em-search-geo-distance', function( e ){
@@ -633,6 +633,9 @@ jQuery(document).ready( function($){
 		});
 
 		search.on('submit forcesubmit', '.em-search-form', function(e){
+			if ( search.hasClass('no-ajax') ) {
+				return true;
+			}
 			e.preventDefault();
 			let form = $(this);
 			let submit_buttons = form.find('button[type="submit"]');

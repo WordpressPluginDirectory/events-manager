@@ -660,6 +660,8 @@ function em_setup_ui_elements ( $container ) {
 	}
 	// Phone numbers
 	em_setup_phone_inputs( container );
+	// let other things hook in
+	document.dispatchEvent( new CustomEvent( 'em_setup_ui_elements', { detail: { container : container } } ) );
 }
 
 /* Local JS Timezone related placeholders */
@@ -750,3 +752,58 @@ var em_ajaxify = function(url){
 	}
 	return url;
 };
+
+// load externals after DOM load, supplied by EM.assets, only if selector matches
+document.addEventListener('DOMContentLoaded', function(){
+	if( EM && 'assets' in EM ) {
+		let baseURL = EM.url + '/includes/external/';
+		for ( const [selector, assets] of Object.entries(EM.assets) ) {
+			// load scripts if one element exists for selector
+			let els = document.querySelector('.em ' + selector);
+			if (els) {
+				if ('css' in assets) {
+					// Iterate through assets.css object and add stylesheet to head
+					for (const [id, value] of Object.entries(assets.css)) {
+						// Check if the stylesheet with the given ID already exists
+						if (!document.getElementById(id)) {
+							// Create a new link element for the stylesheet
+							const link = document.createElement('link');
+							link.id = id + '-css';
+							link.rel = 'stylesheet';
+							link.href = value.match(/^http/) ? value : baseURL + value;
+
+							// Append the stylesheet to the document head
+							document.head.appendChild(link);
+						}
+					}
+				}
+				if ('js' in assets) {
+					// Iterate through assets.js object and add script to head
+					for (const [id, value] of Object.entries(assets.js)) {
+						// Check if the script with the given ID already exists
+						if (!document.getElementById(id)) {
+							// Create a new script element for the JavaScript file
+							const script = document.createElement('script');
+							script.id = id + '-js';
+							script.async = true;
+							if ( typeof value === 'object' ) {
+								if( 'event' in value ) {
+									script.onload = function() { document.dispatchEvent( new CustomEvent(value.event) ) };
+								}
+								if ( 'locale' in value && value.locale ) {
+									script.dataset.locale = value.locale;
+								}
+								script.src = value.url.match(/^http/g) ? value.url : baseURL + value.url;
+							} else {
+								script.src = value.match(/^http/g) ? value : baseURL + value;
+							}
+
+							// Append the script to the document head
+							document.head.appendChild(script);
+						}
+					}
+				}
+			}
+		}
+	}
+});

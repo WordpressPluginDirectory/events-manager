@@ -67,33 +67,10 @@ add_shortcode('events_gcal', 'em_get_gcal_shortcode');
  */
 function em_get_locations_map_shortcode($args){
 	$args = em_clean_shortcode_args( (array) $args );
-	$args['em_ajax'] = true;
-	$args['query'] = 'GlobalMapData';
-	//get dimensions with px or % added in
-	$width = (isset($args['width'])) ? $args['width']:get_option('dbem_map_default_width','400px');
-	$width = preg_match('/(px)|%/', $width) ? $width:$width.'px';
-	if( $width == 0 || $width == '0px' || $width == '0%' ) $width = 0;
-	$height = (isset($args['height'])) ? $args['height']:get_option('dbem_map_default_height','300px');
-	$height = preg_match('/(px)|%/', $height) ? $height:$height.'px';
-	if( $height == 0 || $height == '0px' || $height == '0%' ) $height = 0;
-	$args['width'] = $width;
-	$args['height'] = $height;
-	//assign random number for element id reference
-	if( !empty($args['id']) ) $args['id'] = rand(100, getrandmax());
-	//add JSON style to map
-	$style = '';
-	if( !empty($args['map_style']) ){
-		$style= wp_kses_data(base64_decode($args['map_style']));
-		$style_json= json_decode($style);
-		if( is_array($style_json) || is_object($style_json) ){
-			$style = preg_replace('/[\r\n\t\s]/', '', $style);
-		}else{
-			$style = '';
-		}
-		unset($args['map_style']);
-	}
+	$args = em_parse_map_args($args);
+	$args['view'] = !empty($args['view']) ? $args['view'] : 'map';
 	ob_start();
-	em_locate_template('templates/map-global.php',true, array('args'=>$args, 'map_json_style' => $style)); 
+	em_output_locations_view( $args, 'map' );
 	return ob_get_clean();
 }
 add_shortcode('locations_map', 'em_get_locations_map_shortcode');
@@ -106,34 +83,11 @@ add_shortcode('locations-map', 'em_get_locations_map_shortcode'); //deprecate th
  * @return string
  */
 function em_get_events_map_shortcode($args){
-	$args = (array) $args;
-	$args['em_ajax'] = true;
-	$args['query'] = 'GlobalEventsMapData';
-	//get dimensions with px or % added in
-	$width = (isset($args['width'])) ? $args['width']:get_option('dbem_map_default_width','400px');
-	$width = preg_match('/(px)|%/', $width) ? $width:$width.'px';
-	if( $width == 0 || $width == '0px' || $width == '0%' ) $width = 0;
-	$height = (isset($args['height'])) ? $args['height']:get_option('dbem_map_default_height','300px');
-	$height = preg_match('/(px)|%/', $height) ? $height:$height.'px';
-	if( $height == 0 || $height == '0px' || $height == '0%' ) $height = 0;
-	$args['width'] = $width;
-	$args['height'] = $height;
-	//assign random number for element id reference
-	if( !empty($args['id']) ) $args['id'] = rand(100, getrandmax());
-	//add JSON style to map
-	$style = '';
-	if( !empty($args['map_style']) ){
-		$style= wp_kses_data(base64_decode($args['map_style']));
-		$style_json= json_decode($style);
-		if( is_array($style_json) || is_object($style_json) ){
-			$style = preg_replace('/[\r\n\t\s]/', '', $style);
-		}else{
-			$style = '';
-		}
-		unset($args['map_style']);
-	}
+	$args = em_clean_shortcode_args( (array) $args );
+	$args = em_parse_map_args($args);
+	$args['view'] = !empty($args['view']) ? $args['view'] : 'map';
 	ob_start();
-	em_locate_template('templates/map-global.php',true, array('args'=>$args, 'map_json_style' => $style));
+	em_output_events_view( $args, 'map' );
 	return ob_get_clean();
 }
 add_shortcode('events_map', 'em_get_events_map_shortcode');
@@ -147,22 +101,17 @@ add_shortcode('events_map', 'em_get_events_map_shortcode');
 function em_get_events_list_shortcode($args, $format='') {
 	$args = em_clean_shortcode_args( (array) $args, $format );
 	$args['limit'] = isset($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
-	if( !empty($args['id']) ) $args['id'] = rand(100, getrandmax());
-	if( empty($args['format']) && empty($args['format_header']) && empty($args['format_footer']) ){
-		ob_start();
-		if( !empty($args['view']) ){
-			em_output_events_view( $args );
-		}else{
-			em_locate_template('templates/events-list.php', true, array('args'=>$args));
-		}
-		$return = ob_get_clean();
-	}else{
+	$args['view'] = !empty($args['view']) ? $args['view'] : 'list';
+	// if AJAX is being used with formats, we can't accept arbitrary HTML via AJAX calls for security reasons, they must be generated server-side
+	if( !empty($args['format']) || !empty($args['format_header']) || !empty($args['format_footer']) ){
+		// manually add page number and remove ajax
 		$args['ajax'] = false;
 		$pno = ( !empty($args['pagination']) && !empty($_GET['pno']) && is_numeric($_GET['pno']) )? $_GET['pno'] : 1;
 		$args['page'] = ( !empty($args['pagination']) && !empty($args['page']) && is_numeric($args['page']) )? $args['page'] : $pno;
-		$return = EM_Events::output( $args );
 	}
-	return $return;
+	ob_start();
+	em_output_events_view( $args );
+	return ob_get_clean();
 }
 add_shortcode ( 'events_list', 'em_get_events_list_shortcode' );
 
@@ -174,20 +123,8 @@ add_shortcode ( 'events_list', 'em_get_events_list_shortcode' );
  * @return string
  */
 function em_get_events_list_grouped_shortcode($args = array(), $format = ''){
-	$args = em_clean_shortcode_args( (array) $args, $format );
-	$args['limit'] = isset($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
-	if( !empty($args['id']) ) $args['id'] = rand(100, getrandmax());
-	if( empty($args['format']) && empty($args['format_header']) && empty($args['format_footer']) ){
-		ob_start();
-		em_locate_template('templates/events-list-grouped.php', true, array('args'=>$args));
-		$return = ob_get_clean();
-	}else{
-		$args['ajax'] = false;
-		$pno = ( !empty($args['pagination']) && !empty($_GET['pno']) && is_numeric($_GET['pno']) )? $_GET['pno'] : 1;
-		$args['page'] = ( !empty($args['pagination']) && !empty($args['page']) && is_numeric($args['page']) )? $args['page'] : $pno;
-		$return = EM_Events::output_grouped( $args );
-	}
-	return $return;
+	$args['view'] = 'list-grouped';
+	return em_get_events_list_shortcode( $args, $format );
 }
 add_shortcode ( 'events_list_grouped', 'em_get_events_list_grouped_shortcode' );
 
@@ -223,21 +160,17 @@ add_shortcode ( 'event', 'em_get_event_shortcode' );
  */
 function em_get_locations_list_shortcode( $args, $format='' ) {
 	$args = em_clean_shortcode_args( (array) $args, $format );
+	$args['view'] = !empty($args['view']) ? $args['view'] : 'list';
 	$args['limit'] = isset($args['limit']) ? $args['limit'] : get_option('dbem_locations_default_limit');
-	if( !empty($args['id']) ) $args['id'] = rand(100, getrandmax());
-	if( empty($args['format']) && empty($args['format_header']) && empty($args['format_footer']) ){
-		ob_start();
-		if( !empty($args['ajax']) ){ echo '<div class="em-search-ajax">'; } //open AJAX wrapper
-		em_locate_template('templates/locations-list.php', true, array('args'=>$args));
-		if( !empty($args['ajax']) ) echo "</div>"; //close AJAX wrapper
-		$return = ob_get_clean();
-	}else{
+	if( !empty($args['format']) || !empty($args['format_header']) || !empty($args['format_footer']) ){
+		// manually add page number and remove ajax
 		$args['ajax'] = false;
-		$args['page'] = ( !empty($args['pagination']) && !empty($args['page']) && is_numeric($args['page']) )? $args['page'] : 1;
-		$args['page'] = ( !empty($args['pagination']) && !empty($_GET['pno']) && is_numeric($_GET['pno']) )? $_GET['pno'] : $args['page'];
-		$return = EM_Locations::output( $args );
+		$pno = ( !empty($args['pagination']) && !empty($_GET['pno']) && is_numeric($_GET['pno']) )? $_GET['pno'] : 1;
+		$args['page'] = ( !empty($args['pagination']) && !empty($args['page']) && is_numeric($args['page']) )? $args['page'] : $pno;
 	}
-	return $return;
+	ob_start();
+	em_output_locations_view( $args );
+	return ob_get_clean();
 }
 add_shortcode('locations_list', 'em_get_locations_list_shortcode');
 
@@ -272,7 +205,7 @@ function em_get_categories_shortcode($args, $format=''){
 	$args['order'] = !empty($args['order']) ? $args['order'] : get_option('dbem_categories_default_order');
 	$args['pagination'] = isset($args['pagination']) ? $args['pagination'] : !isset($args['limit']);
 	$args['limit'] = isset($args['limit']) ? $args['limit'] : get_option('dbem_categories_default_limit');
-	if( !empty($args['id']) ) $args['id'] = rand(100, getrandmax());
+	if( empty($args['id']) ) $args['id'] = rand(100, getrandmax());
 	if( empty($args['format']) && empty($args['format_header']) && empty($args['format_footer']) ){
 		ob_start();
 		if( !empty($args['ajax']) ){ echo '<div class="em-search-ajax">'; } //open AJAX wrapper
@@ -314,7 +247,7 @@ function em_get_tags_shortcode($args, $format=''){
 	$args['order'] = !empty($args['order']) ? $args['order'] : get_option('dbem_tags_default_order');
 	$args['pagination'] = isset($args['pagination']) ? $args['pagination'] : !isset($args['limit']);
 	$args['limit'] = isset($args['limit']) ? $args['limit'] : get_option('dbem_tags_default_limit');
-	if( !empty($args['id']) ) $args['id'] = rand(100, getrandmax());
+	if( empty($args['id']) ) $args['id'] = rand(100, getrandmax());
 	if( empty($args['format']) && empty($args['format_header']) && empty($args['format_footer']) ){
 		ob_start();
 		if( !empty($args['ajax']) ){ echo '<div class="em-search-ajax">'; } //open AJAX wrapper

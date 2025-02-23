@@ -1155,6 +1155,8 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		// person/owner
 		if( is_numeric($args['person']) ){
 			$conditions['person'] = EM_BOOKINGS_TABLE.'.person_id='.$args['person'];
+		} elseif ( EM_Object::array_is_numeric($args['person']) ) {
+			$conditions['person'] = EM_BOOKINGS_TABLE.'.person_id IN (' . implode(',', $args['person']) . ')';
 		}
 		if( EM_MS_GLOBAL && !empty($args['blog']) && is_numeric($args['blog']) ){
 			if( is_main_site($args['blog']) ){

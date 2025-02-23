@@ -1060,6 +1060,7 @@
   --icon-exit: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23ccc" stroke="%23ccc" viewBox="0 0 20 20"><path fill="%23535358" stroke="none" d="M0 1v19h12v-4h-1v3H1V2h10v3h1V1H0zm15 6 3 3H5v1h13l-3 3h1.5l3.5-3.5L16.5 7H15z"/></svg>');
   --icon-undo: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="%23535358" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7h11a5 5 0 0 1 0 10M4 7l3-3M4 7l3 3m1 7h3"/></svg>');
   --icon-phone: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23230000" stroke="%23230000" stroke-width="2.2" viewBox="0 0 48 48"><path fill="none" stroke-linecap="round" stroke-linejoin="round" d="M19.3 12.5a24 24 0 0 1-.9-4.4 3 3 0 0 0-3-2.6H8.7a3 3 0 0 0-3 3.3 37 37 0 0 0 33.6 33.6 3 3 0 0 0 3.3-3v-6.1c0-2.3-1.1-3.6-2.6-3.7a24 24 0 0 1-4.4-1c-1.7-.4-3.6 0-4.8 1.3l-3 3a31.3 31.3 0 0 1-12.6-12.6l3-3a4.9 4.9 0 0 0 1.2-4.8Z"/></svg>');
+  --icon-file: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%23000" viewBox="0 0 64 64"><path d="M44 8v8h8"/><path d="m52 16-8-8H12v48h40V16z"/></svg>');
 }
 .em .em-icon {
   display: inline-block;
@@ -1262,6 +1263,9 @@
 }
 .em .em-icon.em-icon-phone {
   background-image: var(--icon-phone);
+}
+.em .em-icon.em-icon-file {
+  background-image: var(--icon-file);
 }
 .em.em-calendar {
   --nav-color: #777;
@@ -2421,6 +2425,10 @@
 }
 .em.em-search.size-medium.multi-line .em-search-main-bar .em-search-submit button, .em.em-search.size-small.multi-line .em-search-main-bar .em-search-submit button {
   width: 100%;
+}
+.em.em-search.size-medium.multi-line[data-view=calendar] .em-search-main-bar .em-search-field:nth-last-child(2 of .em-search-field), .em.em-search.size-small.multi-line[data-view=calendar] .em-search-main-bar .em-search-field:nth-last-child(2 of .em-search-field) {
+  padding-bottom: 8px;
+  margin-bottom: 18px;
 }
 .em.em-search.size-small .hide-small {
   display: none;
@@ -5185,6 +5193,84 @@
   .em .iti .iti__flag.iti__globe {
     background-image: var(--icon-phone);
   }
+}
+.em .em-input-upload {
+  min-width: 300px;
+  max-width: 800px;
+}
+.em .em-input-upload .em-input-upload-files, .em .em-input-upload .em-input-upload-files-tbd {
+  margin-top: 0;
+  padding-top: 0;
+}
+.em .em-input-upload .em-input-upload-files li, .em .em-input-upload .em-input-upload-files-tbd li {
+  display: block;
+  margin: 0 0 8px !important;
+}
+.em .em-input-upload .em-input-upload-files li:first-child, .em .em-input-upload .em-input-upload-files-tbd li:first-child {
+  margin-bottom: 10px !important;
+}
+.em .em-input-upload .em-input-upload-files li button.em-icon, .em .em-input-upload .em-input-upload-files-tbd li button.em-icon {
+  cursor: pointer !important;
+  margin: 0 10px 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background-color: transparent !important;
+  box-shadow: none;
+  height: 20px !important;
+  width: 20px !important;
+}
+.em .em-input-upload .em-input-upload-files li button.em-icon.em-icon-trash, .em .em-input-upload .em-input-upload-files-tbd li button.em-icon.em-icon-trash {
+  margin: 0 0 0 10px !important;
+}
+.em .em-input-upload .em-input-upload-files li a, .em .em-input-upload .em-input-upload-files-tbd li a {
+  display: inline-block;
+  vertical-align: top;
+}
+.em .em-input-upload .em-input-upload-files li {
+  margin-bottom: 5px;
+}
+.em .em-input-upload .em-input-upload-files li:before {
+  content: "";
+  display: inline-block;
+  margin-right: 10px;
+  /* Height of the list image*/
+  height: 20px;
+  /* Width of the list image*/
+  width: 20px;
+  background-image: var(--icon-file);
+}
+.em .em-input-upload.em-input-upload-post-image > input.em-uploader {
+  margin-top: 15px !important;
+}
+.em .em-input-upload.em-input-upload-post-image .em-input-upload-files li img {
+  display: block;
+  margin-bottom: 10px;
+}
+.em .em-input-upload.em-input-upload-post-image .em-input-upload-files li:before {
+  display: inline;
+  background: none;
+  width: auto;
+  height: auto;
+  margin: 0;
+}
+.em .em-input-upload.em-input-upload-post-image .em-input-upload-files-tbd li img {
+  display: none;
+  visibility: hidden;
+}
+.em .em-input-upload.disabled button.em-icon {
+  display: none !important;
+  visibility: hidden !important;
+}
+.em .em-input-upload:not(.disabled) ul {
+  margin-top: 15px;
+}
+.em .em-input-upload .em-input-upload-files .em-icon-undo, .em .em-input-upload .em-input-upload-files-tbd .em-icon-trash {
+  display: none;
+  visibility: hidden;
+}
+.em .em-input-upload input[disabled] {
+  display: none;
+  visibility: hidden;
 }
 
 .em {

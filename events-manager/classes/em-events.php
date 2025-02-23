@@ -467,7 +467,12 @@ $limit $offset";
 			}
 			//Show the pagination links (unless there's less than $limit events)
 			if( !empty($args['pagination']) && !empty($args['limit']) && $events_count > $args['limit'] ){
-				echo self::get_pagination_links($args, $events_count, 'search_events_grouped');
+				$default_args = self::get_default_search();
+				$default_args['limit'] = get_option('dbem_events_default_limit');
+				$default_args['mode'] = get_option('dbem_event_list_groupby');
+				$default_args['header_format'] = get_option('dbem_event_list_groupby_header_format', '<h2>#s</h2>');
+				$default_args['date_format'] = get_option('dbem_event_list_groupby_format','');
+				echo self::get_pagination_links($args, $events_count, 'search_events', $default_args);
 			}
 		}elseif( $args['no_results_msg'] !== false ){
 			echo !empty($args['no_results_msg']) ? $args['no_results_msg'] : get_option('dbem_no_events_message');
@@ -609,9 +614,9 @@ $limit $offset";
 			$active_status_map = array('active' => 1, 'cancelled' => 0 );
 			foreach ( $active_status_map as $status_opt => $status ){
 				if ( $args[$status_opt] == 1 ) {
-					$active_statuses['include'][] = $status;
+					$active_statuses['include'][] = absint($status);
 				} elseif( $args[$status_opt] !== null ) {
-					$active_statuses['exclude'][] = $status;
+					$active_statuses['exclude'][] = absint($status);
 				}
 			}
 			// get general active status
@@ -619,7 +624,7 @@ $limit $offset";
 				$active_status_array = is_array($args['active_status']) ? $args['active_status'] : explode(',', str_replace(' ', '', $args['active_status']));
 				foreach ( $active_status_array as $status ){
 					if ( $status > 0 ) {
-						$active_statuses['include'][] = $status;
+						$active_statuses['include'][] = absint($status);
 					} else {
 						$active_statuses['exclude'][] = absint($status);
 					}

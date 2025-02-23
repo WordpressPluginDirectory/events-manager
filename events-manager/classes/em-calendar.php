@@ -432,21 +432,23 @@ class EM_Calendar extends EM_Object {
 		}
 		// get request options for display methods:
 		if( !empty($_REQUEST['calendar_preview_mode']) ) {
-			$args['calendar_preview_mode'] = esc_attr($_REQUEST['calendar_preview_mode']);
+			$base_args['calendar_preview_mode'] = esc_attr($_REQUEST['calendar_preview_mode']);
 		}
 		if( !empty($_REQUEST['calendar_preview_mode_date']) ) {
-			$args['calendar_preview_mode_date'] = esc_attr($_REQUEST['calendar_preview_mode_date']);
+			$base_args['calendar_preview_mode_date'] = esc_attr($_REQUEST['calendar_preview_mode_date']);
 		}
 		if( !empty($_REQUEST['calendar_event_style']) ) {
-			$args['calendar_event_style'] = esc_attr($_REQUEST['calendar_event_style']);
+			$base_args['calendar_event_style'] = esc_attr($_REQUEST['calendar_event_style']);
 		}
-		if( isset($_REQUEST['has_advanced_trigger']) ) $args['has_advanced_trigger'] = !empty($_REQUEST['has_advanced_trigger']);
+		if( isset($_REQUEST['has_advanced_trigger']) ) {
+			$base_args['has_advanced_trigger'] = !empty($_REQUEST['has_advanced_trigger']);
+		}
 		
 		// merge default, base and supplied search args and generate search
 		$calendar_array  = self::get($base_args);
 		$args = array_merge( $base_args, $calendar_array['args']);
 		// get any template-specific $_REQUEST info here
-		$args['has_advanced_trigger'] = ($args['has_search'] && !$args['show_search']) || !empty($args['has_advanced_trigger']); // override search trigger option if search is hidden
+		$args['has_advanced_trigger'] = ($args['has_search'] && !$args['show_search']) || !empty($base_args['has_advanced_trigger']); // override search trigger option if search is hidden
 		// output main form
 		ob_start();
 		// do we output a search form first?

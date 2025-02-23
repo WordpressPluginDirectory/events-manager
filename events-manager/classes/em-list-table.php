@@ -614,8 +614,13 @@ namespace EM {
 		
 		public static function sanitize_spreadsheet_cell( $cell ){
 			if ( !empty($cell) || is_numeric($cell) ) {
-				$cell = html_entity_decode( $cell ); //remove things like &amp; which may have been saved to the DB directly
-				return preg_replace( '/^([;=@\+\-])/', "'$1", $cell );
+				if ( is_array($cell) ) {
+					$cell = implode( ',', $cell );
+				}
+				if ( !is_array( $cell ) ) {
+					$cell = html_entity_decode( $cell ); //remove things like &amp; which may have been saved to the DB directly
+					return preg_replace( '/^([;=@\+\-])/', "'$1", $cell );
+				}
 			}
 			return '';
 		}

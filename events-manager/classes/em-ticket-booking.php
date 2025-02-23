@@ -122,7 +122,7 @@ class EM_Ticket_Booking extends EM_Object{
 	}
 	
 	public function get_post(){
-		return array('em_ticket_booking_get_post', true, $this);
+		return apply_filters('em_ticket_booking_get_post', true, $this);
 	}
 	
 	/**
@@ -169,28 +169,7 @@ class EM_Ticket_Booking extends EM_Object{
 			}
 			if( $this->ticket_booking_id ){
 				//Step 2 - Save ticket meta
-				$wpdb->delete(EM_TICKETS_BOOKINGS_META_TABLE, array('ticket_booking_id' => $this->ticket_booking_id));
-				$meta_insert = array();
-				foreach( $this->meta as $meta_key => $meta_value ){
-					if( is_array($meta_value) ){
-						$associative = array_keys($meta_value) !== range(0, count($meta_value) - 1);
-						// we go down one level of array
-						foreach( $meta_value as $kk => $vv ){
-							if( is_array($vv) ) $vv = serialize($vv);
-							if ( $associative ) {
-								$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->ticket_booking_id, '_'.$meta_key.'|'.$kk, $vv);
-							} else {
-								$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->ticket_booking_id, '_'.$meta_key.'|', $vv);
-							}
-						}
-					}else{
-						$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->ticket_booking_id, $meta_key, $meta_value);
-					}
-				}
-				if( !empty($meta_insert) ){
-					
-					$wpdb->query('INSERT INTO '. EM_TICKETS_BOOKINGS_META_TABLE .' (ticket_booking_id, meta_key, meta_value) VALUES '. implode(',', $meta_insert));
-				}
+				$this->save_meta();
 			}
 			$this->compat_keys();
 			return apply_filters('em_ticket_booking_save', ( count($this->errors) == 0 ), $this);
@@ -199,9 +178,90 @@ class EM_Ticket_Booking extends EM_Object{
 			$this->errors[] = __('There was a problem saving the ticket booking.', 'events-manager');
 			return apply_filters('em_ticket_booking_save', false, $this);
 		}
-	}	
+	}
 	
-
+	public function save_meta(){
+		global $wpdb;
+		$wpdb->delete(EM_TICKETS_BOOKINGS_META_TABLE, array('ticket_booking_id' => $this->ticket_booking_id));
+		$meta_insert = array();
+		foreach( $this->meta as $meta_key => $meta_value ){
+			if( is_array($meta_value) ){
+				$associative = array_keys($meta_value) !== range(0, count($meta_value) - 1);
+				// we go down one level of array
+				foreach( $meta_value as $kk => $vv ){
+					if( is_array($vv) ) $vv = serialize($vv);
+					if ( $associative ) {
+						$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->ticket_booking_id, '_'.$meta_key.'|'.$kk, $vv);
+					} else {
+						$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->ticket_booking_id, '_'.$meta_key.'|', $vv);
+					}
+				}
+			}else{
+				$meta_insert[] = $wpdb->prepare('(%d, %s, %s)', $this->ticket_booking_id, $meta_key, $meta_value);
+			}
+		}
+		if( !empty($meta_insert) ){
+			$wpdb->query('INSERT INTO '. EM_TICKETS_BOOKINGS_META_TABLE .' (ticket_booking_id, meta_key, meta_value) VALUES '. implode(',', $meta_insert));
+		}
+	}
+	
+	/**
+	 * Updates ticket booking meta data without deleting existing records wherever possible
+	 * If no $meta_key is passed, updates all meta from $this->meta.
+	 * If a specific $meta_key is provided, updates/inserts only that key.
+	 *
+	 * @param string|null $meta_key Optional. The specific meta key to update.
+	 * @param mixed|null  $meta_value Optional. The value for that meta key.
+	 */
+	function update_meta( $meta_key = null, $meta_value = null ){
+		global $wpdb;
+		
+		if( is_null($meta_key) ){
+			foreach( $this->meta as $key => $value ){
+				$this->update_meta( $key, $value );
+			}
+			return;
+		}
+		
+		if( is_array($meta_value) ){
+			// we go down one level of array
+			$meta_value_keys = array_keys($meta_value);
+			$associative = $meta_value_keys !== range(0, count($meta_value) - 1);
+			// we need to delete keys not in the current array, if not associative we must delete all values to prevent extra values
+			if ( $associative ) {
+				// Build a regex pattern to match strings like '_{meta_key}|(key1|key2|etc)' exactly, so we can neget these from deletion
+				$regex = '^_' . preg_quote($meta_key, '/') . '\\|(' . implode('|', array_map('preg_quote', $meta_value_keys)) . ')$';
+				$sql = $wpdb->prepare("DELETE FROM " . EM_TICKETS_BOOKINGS_META_TABLE . " WHERE ticket_booking_id=%d AND meta_key LIKE %s AND meta_key NOT REGEXP %s", $this->ticket_booking_id, '_' . $meta_key . '|%', $regex);
+				$wpdb->query($sql);
+			} else {
+				// delete all, since we can't tell by key
+				$wpdb->query( $wpdb->prepare('DELETE FROM '. EM_TICKETS_BOOKINGS_META_TABLE .' WHERE ticket_booking_id=%d AND meta_key LIKE %s', $this->ticket_booking_id, '_'.$meta_key.'|%') );
+			}
+			// now add or update
+			foreach( $meta_value as $subkey => $subvalue ){
+				if( is_array($subvalue) ) $subvalue = serialize($subvalue);
+				$full_meta_key = $associative ? '_'.$meta_key.'|'.$subkey : '_'.$meta_key.'|';
+				$existing = $wpdb->get_var( $wpdb->prepare("SELECT meta_value FROM ". EM_TICKETS_BOOKINGS_META_TABLE ." WHERE ticket_booking_id = %d AND meta_key = %s", $this->ticket_booking_id, $full_meta_key) );
+				if( null !== $existing ){
+					$wpdb->update( EM_TICKETS_BOOKINGS_META_TABLE, array( 'meta_value' => $subvalue ), array( 'ticket_booking_id' => $this->ticket_booking_id, 'meta_key' => $full_meta_key ) );
+				}else{
+					$wpdb->insert( EM_TICKETS_BOOKINGS_META_TABLE, array( 'ticket_booking_id' => $this->ticket_booking_id, 'meta_key' => $full_meta_key, 'meta_value' => $subvalue ) );
+				}
+			}
+		}else{
+			// we can just add or update, since there won't be multiple rows/values
+			$existing = $wpdb->get_var( $wpdb->prepare("SELECT meta_value FROM ". EM_TICKETS_BOOKINGS_META_TABLE ." WHERE ticket_booking_id = %d AND meta_key = %s", $this->ticket_booking_id, $meta_key) );
+			if( null !== $existing ){
+				$wpdb->update( EM_TICKETS_BOOKINGS_META_TABLE, array( 'meta_value' => $meta_value ), array( 'ticket_booking_id' => $this->ticket_booking_id, 'meta_key' => $meta_key ) );
+			}else{
+				$wpdb->insert( EM_TICKETS_BOOKINGS_META_TABLE, array( 'ticket_booking_id' => $this->ticket_booking_id, 'meta_key' => $meta_key, 'meta_value' => $meta_value ) );
+			}
+		}
+		do_action('em_ticket_booking_update_meta', $meta_key, $meta_value, $this);
+		do_action('em_ticket_booking_update_meta_'.$meta_key, $meta_key, $meta_value, $this);
+	}
+	
+	
 	/**
 	 * Validates the ticket during a booking
 	 * @return boolean

@@ -259,18 +259,14 @@ class EM_Event_Post {
 	public static function parse_query(){
 	    global $wp_query;
 		//Search Query Filtering
-		if( is_admin() ){
+		if( is_admin() && !empty( $wp_query ) ) {
 		    if( !empty($wp_query->query_vars[EM_TAXONOMY_CATEGORY]) && is_numeric($wp_query->query_vars[EM_TAXONOMY_CATEGORY]) ){
 		        //sorts out filtering admin-side as it searches by id
 		        $term = get_term_by('id', $wp_query->query_vars[EM_TAXONOMY_CATEGORY], EM_TAXONOMY_CATEGORY);
 		        $wp_query->query_vars[EM_TAXONOMY_CATEGORY] = ( $term !== false && !is_wp_error($term) )? $term->slug:0;
 		    }
-			// if we have a fake future status, make sure we don't actually look for this status
-			if ( !empty($_REQUEST['post_status']) && $_REQUEST['post_status'] === 'future' ) {
-				$wp_query->query_vars['post_status'] = 'any';
-			}
 		}
-		//Scoping
+		// Scoping and other filters
 		if( !empty($wp_query->query_vars['post_type']) && ($wp_query->query_vars['post_type'] == EM_POST_TYPE_EVENT || $wp_query->query_vars['post_type'] == 'event-recurring') && (empty($wp_query->query_vars['post_status']) || !in_array($wp_query->query_vars['post_status'],array('trash','pending','draft'))) ) {
 		    $query = array();
 			//Let's deal with the scope - default is future

@@ -31,19 +31,26 @@ jQuery(document).on('em_view_loaded_map', function( e, view, form ){
 		em_maps_load();
 	}else{
 		let map = view.find('div.em-locations-map');
-		em_maps_load_locations( map );
+		em_maps_load_locations( map[0] );
 	}
 });
 //re-usable function to load global location maps
-function em_maps_load_locations(el){
-	var el = jQuery(el);
-	var map_id = el.attr('id').replace('em-locations-map-','');
-	var em_data = jQuery.parseJSON( el.nextAll('.em-locations-map-coords').first().text() );
-	if( em_data == null ){
-		var em_data = jQuery.parseJSON( jQuery('#em-locations-map-coords-'+map_id).text() );
+function em_maps_load_locations( element ){
+	let el = element;
+	let map_id = el.getAttribute('id').replace('em-locations-map-','');
+	let em_data;
+	if ( document.getElementById('em-locations-map-coords-'+map_id) ) {
+		em_data = JSON.parse( document.getElementById('em-locations-map-coords-'+map_id).text );
+	} else {
+		let coords_data = el.parentElement.querySelector('.em-locations-map-coords');
+		if ( coords_data ) {
+			em_data = JSON.parse( coords_data.text );
+		} else {
+			em_data = {};
+		}
 	}
-	jQuery.getJSON(document.URL, em_data , function(data){
-		if(data.length > 0){
+	jQuery.getJSON(document.URL, em_data , function( data ) {
+		if( data.length > 0 ){
 			//define default options and allow option for extension via event triggers
 			var map_options = { mapTypeId: google.maps.MapTypeId.ROADMAP };
 			if( typeof EM.google_map_id_styles == 'object' && typeof EM.google_map_id_styles[map_id] !== 'undefined' ){ console.log(EM.google_map_id_styles[map_id]); map_options.styles = EM.google_map_id_styles[map_id]; }
@@ -52,7 +59,7 @@ function em_maps_load_locations(el){
 			var marker_options = {};
 			jQuery(document).triggerHandler('em_maps_location_marker_options', marker_options);
 
-			maps[map_id] = new google.maps.Map(el[0], map_options);
+			maps[map_id] = new google.maps.Map(el, map_options);
 			maps_markers[map_id] = [];
 
 			var bounds = new google.maps.LatLngBounds();
@@ -80,10 +87,31 @@ function em_maps_load_locations(el){
 			maps[map_id].fitBounds(bounds);
 
 			//Call a hook if exists
-			jQuery(document).triggerHandler('em_maps_locations_hook', [maps[map_id], data, map_id, maps_markers[map_id]]);
-		}else{
-			el.children().first().html('No locations found');
-			jQuery(document).triggerHandler('em_maps_locations_hook_not_found', [el]);
+			if( jQuery ) {
+				jQuery(document).triggerHandler('em_maps_locations_hook', [maps[map_id], data, map_id, maps_markers[map_id]]);
+			}
+			document.dispatchEvent( new CustomEvent('em_maps_locations_hook', {
+				detail: {
+					map : maps[map_id],
+					data : data,
+					id : map_id,
+					markers : maps_markers[map_id],
+					el : el,
+				},
+				cancellable : true,
+			}));
+		} else {
+			el.firstElementChild.innerHTML = 'No locations found';
+			if( jQuery ) {
+				jQuery(document).triggerHandler('em_maps_locations_hook_not_found', [ jQuery(el) ]);
+			}
+			document.dispatchEvent( new CustomEvent('em_maps_locations_hook_not_found', {
+				detail: {
+					id : map_id,
+					el : el
+				},
+				cancellable : true,
+			}));
 		}
 	});
 }

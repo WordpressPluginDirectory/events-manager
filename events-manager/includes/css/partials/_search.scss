@@ -339,6 +339,14 @@
 				}
 			}
 		}
+		&.multi-line[data-view="calendar"] {
+			.em-search-main-bar {
+				.em-search-field:nth-last-child(2 of .em-search-field) {
+					padding-bottom: 8px;
+					margin-bottom: 18px;
+				}
+			}
+		}
 	}
 
 	&.size-small {

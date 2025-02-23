@@ -295,37 +295,38 @@ function em_init_actions_start() {
 			ob_start();
 			if( (!defined('WP_CACHE') || !WP_CACHE) && !isset($GLOBALS["wp_fastest_cache"]) ) em_verify_nonce('booking_add');
 			if( !is_user_logged_in() || get_option('dbem_bookings_double') || !$EM_Event->get_bookings()->has_booking(get_current_user_id()) ){
-			    $EM_Booking->get_post();
-				$post_validation = $EM_Booking->validate();
-				do_action('em_booking_add', $EM_Event, $EM_Booking, $post_validation);
-				if( $post_validation ){
-				    //register the user - or not depending - according to the booking
-				    $registration = em_booking_add_registration($EM_Booking);
-					$EM_Bookings = $EM_Event->get_bookings();
-					if( $registration && $EM_Bookings->add($EM_Booking) ){
-					    if( is_user_logged_in() && is_multisite() && !is_user_member_of_blog(get_current_user_id(), get_current_blog_id()) ){
-					        add_user_to_blog(get_current_blog_id(), get_current_user_id(), get_option('default_role'));
-					    }
-						$result = true;
-						$EM_Notices->add_confirm( $EM_Bookings->feedback_message );		
-						$feedback = $EM_Bookings->feedback_message;
-					}else{
-						$result = false;
-						if(!$registration){
-						    $EM_Notices->add_error( $EM_Booking->get_errors() );
-							$feedback = $EM_Booking->feedback_message;
-						}else{
-						    $EM_Notices->add_error( $EM_Bookings->get_errors() );
+				if ( $EM_Event->event_status != 1 || $EM_Event->event_active_status != 1 ) {
+					$EM_Notices->add_error( __('This event is not available or has been cancelled', 'events-manager') ); // uncommon, not needed for custom error.
+				} else {
+				    $EM_Booking->get_post();
+					$post_validation = $EM_Booking->validate();
+					do_action('em_booking_add', $EM_Event, $EM_Booking, $post_validation);
+					if( $post_validation ){
+					    //register the user - or not depending - according to the booking
+					    $registration = em_booking_add_registration($EM_Booking);
+						$EM_Bookings = $EM_Event->get_bookings();
+						if( $registration && $EM_Bookings->add($EM_Booking) ){
+						    if( is_user_logged_in() && is_multisite() && !is_user_member_of_blog(get_current_user_id(), get_current_blog_id()) ){
+						        add_user_to_blog(get_current_blog_id(), get_current_user_id(), get_option('default_role'));
+						    }
+							$result = true;
+							$EM_Notices->add_confirm( $EM_Bookings->feedback_message );
 							$feedback = $EM_Bookings->feedback_message;
-						}				
+						}else{
+							if(!$registration){
+							    $EM_Notices->add_error( $EM_Booking->get_errors() );
+								$feedback = $EM_Booking->feedback_message;
+							}else{
+							    $EM_Notices->add_error( $EM_Bookings->get_errors() );
+								$feedback = $EM_Bookings->feedback_message;
+							}
+						}
+						global $em_temp_user_data; $em_temp_user_data = false; //delete registered user temp info (if exists)
+					}else{
+						$EM_Notices->add_error( $EM_Booking->get_errors() );
 					}
-					global $em_temp_user_data; $em_temp_user_data = false; //delete registered user temp info (if exists)
-				}else{
-					$result = false;
-					$EM_Notices->add_error( $EM_Booking->get_errors() );
 				}
 			}else{
-				$result = false;
 				$feedback = get_option('dbem_booking_feedback_already_booked');
 				$EM_Notices->add_error( $feedback );
 			}
@@ -333,54 +334,53 @@ function em_init_actions_start() {
 	  	}elseif ( $_REQUEST['action'] == 'booking_add_one' && is_object($EM_Event) && is_user_logged_in() ) {
 			//ADD/EDIT Booking
 			em_verify_nonce('booking_add_one');
-			if( get_option('dbem_bookings_double') || !$EM_Event->get_bookings()->has_booking(get_current_user_id()) ){
-				$EM_Booking = em_get_booking(array('person_id'=>get_current_user_id(), 'event_id'=>$EM_Event->event_id, 'booking_spaces'=>1)); //new booking
-				// get first ticket that's available
-				foreach( $EM_Event->get_bookings()->get_available_tickets() as $EM_Ticket ){
-					if( $EM_Ticket->is_available() ){
-						$ticket_found = true;
-						break;
+			if ( $EM_Event->event_status != 1 || $EM_Event->event_active_status != 1 ) {
+				$EM_Notices->add_error( __('This event is not available or has been cancelled.', 'events-manager') ); // uncommon, not needed for custom error.
+			} else {
+				if( get_option('dbem_bookings_double') || !$EM_Event->get_bookings()->has_booking(get_current_user_id()) ){
+					$EM_Booking = em_get_booking(array('person_id'=>get_current_user_id(), 'event_id'=>$EM_Event->event_id, 'booking_spaces'=>1)); //new booking
+					// get first ticket that's available
+					foreach( $EM_Event->get_bookings()->get_available_tickets() as $EM_Ticket ){
+						if( $EM_Ticket->is_available() ){
+							$ticket_found = true;
+							break;
+						}
 					}
-				}
-				if( !empty($ticket_found) ){
-					//get first ticket in this event and book one place there. similar to getting the form values in EM_Booking::get_post_values()
-					$EM_Ticket_Booking = new EM_Ticket_Booking(array('ticket_id'=>$EM_Ticket->ticket_id, 'booking_id' => $EM_Booking->booking_id, 'booking' => $EM_Booking));
-					$EM_Booking->get_tickets_bookings()->add( $EM_Ticket_Booking );
-					$post_validation = $EM_Booking->validate();
-					do_action('em_booking_add', $EM_Event, $EM_Booking, $post_validation);
-					if( $post_validation ){
-						//Now save booking
-						if( $EM_Event->get_bookings()->add($EM_Booking) ){
-							$result = true;
-							$EM_Notices->add_confirm( $EM_Event->get_bookings()->feedback_message );
-							$feedback = $EM_Event->get_bookings()->feedback_message;
+					if( !empty($ticket_found) ){
+						//get first ticket in this event and book one place there. similar to getting the form values in EM_Booking::get_post_values()
+						$EM_Ticket_Booking = new EM_Ticket_Booking(array('ticket_id'=>$EM_Ticket->ticket_id, 'booking_id' => $EM_Booking->booking_id, 'booking' => $EM_Booking));
+						$EM_Booking->get_tickets_bookings()->add( $EM_Ticket_Booking );
+						$post_validation = $EM_Booking->validate();
+						do_action('em_booking_add', $EM_Event, $EM_Booking, $post_validation);
+						if( $post_validation ){
+							//Now save booking
+							if( $EM_Event->get_bookings()->add($EM_Booking) ){
+								$result = true;
+								$EM_Notices->add_confirm( $EM_Event->get_bookings()->feedback_message );
+								$feedback = $EM_Event->get_bookings()->feedback_message;
+							}else{
+								$EM_Notices->add_error( $EM_Event->get_bookings()->get_errors() );
+								$feedback = $EM_Event->get_bookings()->feedback_message;
+								if( empty($feedback) ) $feedback = implode("\r\n", $EM_Event->get_bookings()->get_errors());
+							}
 						}else{
-							$result = false;
-							$EM_Notices->add_error( $EM_Event->get_bookings()->get_errors() );
+							$EM_Notices->add_error( $EM_Booking->get_errors() );
 							$feedback = $EM_Event->get_bookings()->feedback_message;
-							if( empty($feedback) ) $feedback = implode("\r\n", $EM_Event->get_bookings()->get_errors());
 						}
 					}else{
-						$result = false;
-						$EM_Notices->add_error( $EM_Booking->get_errors() );
-						$feedback = $EM_Event->get_bookings()->feedback_message;
+						$EM_Notices->add_error( get_option('dbem_booking_feedback_full') );
+						$feedback = get_option('dbem_booking_feedback_full');
 					}
 				}else{
-					$result = false;
-					$EM_Notices->add_error( get_option('dbem_booking_feedback_full') );
-					$feedback = get_option('dbem_booking_feedback_full');
+					$feedback = get_option('dbem_booking_feedback_already_booked');
+					$EM_Notices->add_error( $feedback );
 				}
-			}else{
-				$result = false;
-				$feedback = get_option('dbem_booking_feedback_already_booked');
-				$EM_Notices->add_error( $feedback );
 			}
 	  	}elseif ( $_REQUEST['action'] == 'booking_cancel') {
 	  		//Cancel Booking
 			em_verify_nonce('booking_cancel');
 	  		if( $EM_Booking->can_manage() || $EM_Booking->person->ID == get_current_user_id() ){
 				if( !$EM_Booking->can_cancel() ){ // admins also cannot cancel their own bookings this way, only via admin ui
-					$result = false;
 					$feedback = esc_html__('Cancellations are not permitted for this booking.', 'events-manager');
 					$EM_Notices->add_error( $feedback );
 				}else{
@@ -585,10 +585,10 @@ function em_init_actions_start() {
 			$EM_Booking->get_post();
 			// wrap in main tag as we only need what's inside by JS
 			echo '<main>';
-			if( get_option('dbem_bookings_summary') ){
-				em_locate_template('forms/bookingform/summary.php', true, array('EM_Event' => $EM_Event, 'EM_Booking' => $EM_Booking));
-			}
-			echo $EM_Booking->output_intent_html();
+				if( get_option('dbem_bookings_summary') ){
+					em_locate_template('forms/bookingform/summary.php', true, array('EM_Event' => $EM_Event, 'EM_Booking' => $EM_Booking));
+				}
+				echo $EM_Booking->output_intent_html();
 			echo '</main>';
 			exit();
 		}
@@ -783,14 +783,12 @@ function em_ajax_search_and_pagination(){
 			case 'list':
 				$args = EM_Locations::get_post_search($args);
 				$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_locations_default_limit');
-				em_locate_template('templates/locations-list.php', true, array('args'=>$args)); //if successful, this template overrides the settings and defaults, including search
 				break;
 			case 'map':
 				$args = EM_Locations::get_post_search($args);
 				$args['width'] = '100%';
 				$args['height'] = 0;
 				$args['limit'] = 0;
-				echo em_get_locations_map_shortcode( $args );
 				break;
 		}
 		em_output_locations_view($args, $view);

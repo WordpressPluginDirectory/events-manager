@@ -10,7 +10,7 @@
 		<header>
 			<a class="em-close-modal"></a><!-- close modal -->
 			<div class="em-modal-title">
-				<?php echo sprintf(esc_html__('Events on %s'), $EM_DateTime->formatDefault(false)); ?>
+				<?php echo sprintf(esc_html__('Events on %s', 'events-manager'), $EM_DateTime->formatDefault(false)); ?>
 			</div>
 		</header>
 		<div class="em-modal-content <?php em_template_classes('calendar-preview', 'events-widget'); /* we're adding some subcomponent class names not generic 'em' and 'pixelbones' classes */ ?>">

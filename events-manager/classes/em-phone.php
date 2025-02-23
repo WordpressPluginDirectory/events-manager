@@ -91,10 +91,9 @@ class Phone {
 	 */
 	public static function em_registration_errors( $errors, $sanitized_user_login, $user_email, $user_data ) {
 		if( !empty($user_data['dbem_phone']) && !static::validate( $user_data['dbem_phone'] ) ) {
-			$result = false;
 			$errors->add( 'invalid_phone', __('Please provide a valid phone number.', 'events-manager') );
 		}
-		return $result;
+		return $errors;
 	}
 	
 	/**

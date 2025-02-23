@@ -2208,7 +2208,7 @@ class EM_Event extends EM_Object{
 						$show_condition = !empty($this->event_all_day);
 					}elseif ($condition == 'not_all_day'){
 						//is not an all day event
-						$show_condition = !empty($this->event_all_day);
+						$show_condition = empty($this->event_all_day);
 					}elseif ($condition == 'logged_in'){
 						//user is logged in
 						$show_condition = is_user_logged_in();

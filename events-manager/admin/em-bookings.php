@@ -227,6 +227,7 @@ function em_bookings_ticket(){
  */
 function em_bookings_single(){
 	global $EM_Booking, $EM_Notices; /* @var $EM_Booking EM_Booking */
+	$id = rand(0,9999);
 	//check that user can access this page
 	if( is_object($EM_Booking) && !$EM_Booking->can_manage() ){
 		?>
@@ -371,7 +372,7 @@ function em_bookings_single(){
 							</form>
 						</div>
 						<?php endif; ?>
-						<form action="" method="post" class="em-booking-form">
+						<form action="" method="post" class="em-booking-form" id="em-booking-form-<?php echo $id; ?>" data-id="<?php echo $id; ?>" <?php if ( !get_option('dbem_uploads_ui') ) echo ' enctype="multipart/form-data"'; ?>>
 							<table class="em-tickets em-tickets-bookings-table" cellpadding="0" cellspacing="0">
 								<thead>
 									<tr>
@@ -391,6 +392,7 @@ function em_bookings_single(){
 											$tickets_bookings[$ticket_id] = $EM_Tickets_Bookings[$ticket_id];
 										}
 									}
+									$attendee_placeholder = esc_html__('Attendee %d', 'events-manager');
 								?>
 								<?php foreach($tickets_bookings as $ticket_id => $EM_Ticket_Bookings): /* @var $EM_Ticket_Bookings EM_Ticket_Bookings */ ?>
 									<?php
@@ -406,7 +408,7 @@ function em_bookings_single(){
 										<td>
 											<span class="em-booking-single-info"><?php echo $EM_Ticket_Bookings->get_spaces(); ?></span>
 											<div class="em-booking-single-edit">
-												<input name="em_tickets[<?php echo $ticket_id; ?>][spaces]" class="em-ticket-select em-ticket-spaces-<?php echo $ticket_id; ?>" value="<?php echo $EM_Ticket_Bookings->get_spaces(); ?>" data-ticket-id="<?php echo $ticket_id ?>"/>
+												<input type="number" name="em_tickets[<?php echo $ticket_id; ?>][spaces]" class="em-ticket-select em-ticket-spaces-<?php echo $ticket_id; ?>" value="<?php echo $EM_Ticket_Bookings->get_spaces(); ?>" data-ticket-id="<?php echo $ticket_id ?>"/>
 											</div>
 										</td>
 										<td><?php echo $EM_Ticket_Bookings->get_price(true,true); ?></td>
@@ -421,10 +423,10 @@ function em_bookings_single(){
 										?>
 										<?php foreach( $EM_Ticket_Bookings as $ticket_uuid => $EM_Ticket_Booking ): /* @var EM_Ticket_Booking $EM_Ticket_Booking */ ?>
 											<?php do_action('em_bookings_admin_ticket_booking_row_before', $EM_Ticket_Booking, $ticket_attendee_num); ?>
-											<tr class="em-ticket-booking em-ticket-booking-<?php echo absint($EM_Ticket_Booking->ticket_booking_id); ?>"><!-- this will eventually move out into an enveloping element class for all ticket bookings of this ticket -->
+											<tr class="em-ticket-booking em-ticket-booking-<?php echo absint($EM_Ticket_Booking->ticket_booking_id); ?>" data-ticket-id="<?php echo $ticket_id; ?>"><!-- this will eventually move out into an enveloping element class for all ticket bookings of this ticket -->
 												<td colspan="3">
 													<div>
-														<p class="em-ticket-booking-attendee-number"><?php echo sprintf(esc_html__('Attendee %d', 'events-manager'), $ticket_attendee_num); ?></p>
+														<p class="em-ticket-booking-attendee-number" data-placeholder="<?php echo $attendee_placeholder; ?>"><?php echo sprintf(esc_html__('Attendee %d', 'events-manager'), $ticket_attendee_num); ?></p>
 														<span class="em-booking-single-edit em-icon em-icon-close em-ticket-booking-remove-trigger em-tooltip" aria-label="<?php esc_html_e('Remove this ticket booking', 'events-manager'); ?>"></span>
 														<?php
 															// create a consistent naming structure for post vars, others can/should add stuff to the uuid part of each ticket booking
@@ -441,10 +443,11 @@ function em_bookings_single(){
 										<?php
 											do_action('em_bookings_admin_ticket_bookings_rows_after', $EM_Ticket_Bookings); // want $ticket_attendee_num? count the tickets
 										?>
-										<tr class="em-ticket-booking-template">
+										<tr class="em-ticket-booking-template" data-ticket-id="<?php echo $ticket_id; ?>">
 											<td colspan="3">
 												<div>
-													<p class="em-ticket-booking-attendee-number"><?php echo str_replace('%d', '#NUM#', esc_html__('Attendee %d', 'events-manager')); ?></p>
+													<p class="em-ticket-booking-attendee-number" data-placeholder="<?php echo $attendee_placeholder; ?>"><?php echo str_replace('%d', '#NUM#', $attendee_placeholder); ?></p>
+													<span class="em-booking-single-edit em-icon em-icon-close em-ticket-booking-remove-trigger em-tooltip" aria-label="<?php esc_html_e('Remove this ticket booking', 'events-manager'); ?>"></span>
 													<?php do_action('em_bookings_admin_ticket_booking_row_template', $EM_Ticket, $EM_Booking); ?>
 												</div>
 											</td>

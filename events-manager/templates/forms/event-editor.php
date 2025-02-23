@@ -146,4 +146,5 @@ $id = rand(); // not related to searches, so we'll just add an ID for good pract
 			<input type="hidden" name="redirect_to" value="<?php echo esc_attr($_REQUEST['redirect_to']); ?>" >
 			<?php endif; ?>
 		</section>
-</form>
+	</form>
+</div>

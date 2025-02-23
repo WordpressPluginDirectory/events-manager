@@ -63,12 +63,7 @@ function em_content($page_content) {
 						    $args['scope'] = get_option('dbem_events_page_scope');
 						}
 						$args['view'] = get_option('dbem_search_form_view');
-						if( get_option('dbem_events_page_search_form') ){
-							//load the search form and pass on custom arguments (from settings page)
-							$args['has_view'] = true; // prevent search from generating its own view container
-							$search_args = em_get_search_form_defaults($args);
-							em_locate_template('templates/events-search.php', true, array('args'=>$search_args));
-						}
+						$args['has_search'] = get_option('dbem_events_page_search_form');
 						$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
 						em_output_events_view( $args );
 					}
@@ -85,14 +80,7 @@ function em_content($page_content) {
 					if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'search_locations' ){
 						$args = EM_Locations::get_post_search( array_merge($args, $_REQUEST) );
 					}
-					$search_args = em_get_search_form_defaults();
-					if( get_option('dbem_locations_page_search_form') ){
-						//load the search form and pass on custom arguments (from settings page)
-						$args['has_view'] = true; // prevent search from generating its own view container
-						$search_args = em_get_search_form_defaults( $args, 'locations' );
-						//remove date and category
-						em_locate_template('templates/locations-search.php', true, array('args'=>$search_args));
-					}
+					$args['has_search'] = get_option('dbem_locations_page_search_form');
 					em_output_locations_view( $args );
 				}
 			}elseif( $post->ID == $categories_page_id && $categories_page_id != 0 ){
@@ -165,7 +153,8 @@ add_action('template_include', 'add_content_filter_template_include');
  */
 function em_content_page_title($original_content, $id = null) {
 	global $EM_Event, $EM_Location, $EM_Category, $wp_query, $post;
-	if( empty($post) ) return $original_content; //fix for any other plugins calling the_content outside the loop
+	$in_the_loop = !(defined('EM_CHECK_THE_LOOP') && EM_CHECK_THE_LOOP) || in_the_loop(); // check if we're in the loop... since this may break some themes, we're introducing it as a constant for themes that cause issues vs. breaking themes that already work.
+	if( empty($post) || empty($post->ID) || !$in_the_loop ) return $original_content; //fix for any other plugins calling the_content outside the loop
 	if ($id && $id !== $post->ID) return $original_content;
 	
 	$events_page_id = get_option ( 'dbem_events_page' );
@@ -236,7 +225,8 @@ function em_content_page_title($original_content, $id = null) {
 
 function em_content_wp_title($title, $sep = '', $seplocation = ''){
 	global $EM_Location, $post;
-	if( empty($post) ) return $title; //fix for any other plugins calling the_content outside the loop
+	$in_the_loop = !(defined('EM_CHECK_THE_LOOP') && EM_CHECK_THE_LOOP) || in_the_loop(); // check if we're in the loop... since this may break some themes, we're introducing it as a constant for themes that cause issues vs. breaking themes that already work.
+	if( empty($post) || empty($post->ID) || !$in_the_loop ) return $title; //fix for any other plugins calling the_content outside the loop
 	//single event and location page titles get parsed for formats
 	if( is_single() && !empty($post->post_type) ){
 		if( $post->post_type == EM_POST_TYPE_EVENT ){
@@ -297,7 +287,8 @@ add_filter( 'wpseo_title', 'em_content_wpseo_title', 100, 2 ); //WP SEO friendly
  */
 function em_wp_the_title($data, $id = null){
 	global $post, $wp_query, $EM_Location, $EM_Event;
-	if( empty($post) ) return $data; //fix for any other plugins calling the_content outside the loop
+	$in_the_loop = !(defined('EM_CHECK_THE_LOOP') && EM_CHECK_THE_LOOP) || in_the_loop(); // check if we're in the loop... since this may break some themes, we're introducing it as a constant for themes that cause issues vs. breaking themes that already work.
+	if( empty($post) || empty($post->ID) || !$in_the_loop ) return $data; //fix for any other plugins calling the_content outside the loop
 	//because we're only editing the main title of the page here, we make sure we're in the main query
 	if( is_main_query() && $id == $post->ID ){
 	    $events_page_id = get_option ( 'dbem_events_page' );

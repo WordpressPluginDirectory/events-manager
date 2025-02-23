@@ -675,6 +675,13 @@ function em_add_options() {
 		'dbem_smtp_html_br' => 1,
 		'dbem_smtp_encryption' => 'tls',
 		'dbem_smtp_autotls' => true,
+		// Uploads
+		'dbem_uploads_ui' => !$already_installed,
+		'dbem_uploads_max_file_size' => '',
+		'dbem_uploads_max_files' => '',
+		'dbem_uploads_allow_multiple' => true,
+		'dbem_uploads_type' => '',
+		'dbem_uploads_extensions' => '',
 		//Image Manipulation
 		'dbem_image_max_width' => 700,
 		'dbem_image_max_height' => 700,
@@ -1680,7 +1687,9 @@ function em_upgrade_current_installation(){
 					$wpdb->delete( $wpdb->usermeta, array( 'umeta_id' => $setting['umeta_id'] ) );
 				}
 			}
-			wp_cache_flush_group('user');
+			if ( function_exists( 'wp_cache_flush_group' ) ) {
+				wp_cache_flush_group('user');
+			}
 			$message = 'Events Manager 6.5 introduces completely revamped booking admin tables, now included in front-end admin areas along with graphs! Enable charts in <em>Events > Settings > Bookings > Chart Options</em>. <a target="_blank" href="https://wp-events-plugin.com/blog/2024/07/29/events-manager-6-5-pro-3-3/">check our blog post</a>';
 			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
 		}
@@ -1688,7 +1697,7 @@ function em_upgrade_current_installation(){
 			// remove flag for admin notice
 			$message = 'Events Manager 6.6 introduces a new phone number field input with international support and number validation, along with an additional communications consent checkbox! Please <a target="_blank" href="https://em.cm/update-6-6/">check our release post</a> for more details!';
 			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
-			// update all booking meta keys 'consent' to 'privacy_consent' and post meta '_consent_given' to '_privacy_consent_given'
+			// update all booking meta keys 'consent' to 'privacy_consent' and post meta '_consent_given' to '_em_data_privacy_consent'
 			$wpdb->query('UPDATE ' . $wpdb->postmeta . ' SET meta_key = "_em_data_privacy_consent" WHERE meta_key = "_consent_given" AND post_id IN (SELECT post_id FROM '. $wpdb->posts .' WHERE post_type="'. EM_POST_TYPE_EVENT .'")');
 			$wpdb->query('UPDATE ' . EM_BOOKINGS_META_TABLE . ' SET meta_key = "_registration_em_data_privacy_consent" WHERE meta_key = "consent"');
 			$wpdb->query('UPDATE ' . EM_BOOKINGS_META_TABLE . ' SET meta_key = "_registration_em_data_privacy_consent" WHERE meta_key = "privacy_consent"');
@@ -1706,6 +1715,11 @@ function em_upgrade_current_installation(){
 			// change any reference of KV to XK in location and postmeta tables
 			$wpdb->update( EM_LOCATIONS_TABLE, ['location_country' => 'XK'], ['location_country' => 'KV']);
 			$wpdb->update( $wpdb->postmeta, ['meta_value' => 'XK'], ['meta_key' => '_location_country', 'meta_value' => 'KV']);
+		}
+		if( version_compare( $current_version, '6.6.4', '<') ){
+			// remove flag for admin notice
+			$message = 'Events Manager 6.6.4 introduces a completely revamped uploads UI and API! Enable our new visual uploader in <a href="'. EM_ADMIN_URL .'&amp;page=events-manager-options#general+uploads' .'"><em>Events > Settings > Uploads</em></a>';
+			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
 		}
 	}
 }

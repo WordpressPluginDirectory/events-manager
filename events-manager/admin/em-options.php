@@ -10,6 +10,10 @@ function em_options_save(){
 		//Build the array of options here
 		EM_Formats::remove_filters(true); // just in case
 		
+		// fix some known empty issues, such as phone multiselectors
+		if ( !isset($_POST['dbem_phone_countries_include']) ) $_POST['dbem_phone_countries_include'] = [];
+		if ( !isset($_POST['dbem_phone_countries_exclude']) ) $_POST['dbem_phone_countries_exclude'] = [];
+		
 		foreach ($_POST as $postKey => $postValue){
 			if( $postKey != 'dbem_data' && substr($postKey, 0, 5) == 'dbem_' ){
 				//TODO some more validation/reporting
@@ -598,28 +602,77 @@ function em_admin_options_page() {
 }
 
 /**
+ * @depreacted
+ * @use em_admin_option_box_uploads()
+ * @return void
+ */
+function em_admin_option_box_image_sizes() {
+	em_admin_option_box_uploads();
+}
+/**
  * Meta options box for image sizes. Shared in both MS and Normal options page, hence it's own function 
  */
-function em_admin_option_box_image_sizes(){
+function em_admin_option_box_uploads(){
 	global $save_button;
 	?>
-	<div  class="postbox " id="em-opt-image-sizes" >
-	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Image Sizes', 'events-manager'); ?> </span></h3>
-	<div class="inside">
-	    <p class="em-boxheader"><?php _e('These settings will only apply to the image uploading if using our front-end forms. In your WP admin area, images are handled by WordPress.','events-manager'); ?></p>
-		<table class='form-table'>
-			<?php
-			em_options_input_text ( __( 'Maximum width (px)', 'events-manager'), 'dbem_image_max_width', __( 'The maximum allowed width for images uploads', 'events-manager') );
-			em_options_input_text ( __( 'Minimum width (px)', 'events-manager'), 'dbem_image_min_width', __( 'The minimum allowed width for images uploads', 'events-manager') );
-			em_options_input_text ( __( 'Maximum height (px)', 'events-manager'), 'dbem_image_max_height', __( "The maximum allowed height for images uploaded, in pixels", 'events-manager') );
-			em_options_input_text ( __( 'Minimum height (px)', 'events-manager'), 'dbem_image_min_height', __( "The minimum allowed height for images uploaded, in pixels", 'events-manager') );
-			em_options_input_text ( __( 'Maximum size (bytes)', 'events-manager'), 'dbem_image_max_size', __( "The maximum allowed size for images uploaded, in bytes", 'events-manager') );
-			echo $save_button;
-			?>
-		</table>
+	<div class="postbox" id="em-opt-uploads">
+		<div class="handlediv" title="<?php esc_attr_e('Click to toggle', 'events-manager'); ?>"><br></div>
+		<h3><span><?php esc_html_e('Uploads', 'events-manager'); ?></span></h3>
+		<div class="inside">
+
+			<!-- Visual Uploader -->
+			<div class="em-opt-section">
+				<table class="form-table">
+					<?php em_options_radio_binary(__('Enable Visual Uploader', 'events-manager'), 'dbem_uploads_ui', __('Enable a modern visual uploader UI.', 'events-manager')); ?>
+				</table>
+			</div>
+
+			<!-- Upload Limits -->
+			<div class="em-opt-section">
+				<h4><?php esc_html_e('Upload Limits', 'events-manager'); ?></h4>
+				<table class="form-table">
+					<?php
+					em_options_input_text(__('Maximum File Size', 'events-manager'), 'dbem_uploads_max_file_size', __('The maximum size in bytes per uploaded file.', 'events-manager') . ' ' . sprintf(__(' Maximum size permitted by WordPress is %s.', 'events-manager'), '<code>' . wp_max_upload_size() . '</code>'));
+					em_options_input_text(__('Maximum Files Per Upload', 'events-manager'), 'dbem_uploads_max_files', __('The maximum number of files a user can upload at once. Leave blank for unlimited.', 'events-manager'));
+					em_options_radio_binary(__('Allow Multiple Uploads', 'events-manager'), 'dbem_uploads_allow_multiple', __('Enable multiple file uploads by default.', 'events-manager'));
+					em_options_select(
+						__('File Type', 'events-manager'),
+						'dbem_uploads_type',
+						[
+							'' => __('Any Type', 'events-manager'),
+							'image' => __('Image', 'events-manager'),
+							'document' => __('Document', 'events-manager'),
+							'spreadsheet' => __('Spreadsheet', 'events-manager'),
+						],
+						__('Restrict uploads to a specific type of file. Leave as "Any Type" to allow all.', 'events-manager')
+					);
+					em_options_input_text(
+						__('Allowed Extensions', 'events-manager'),
+						'dbem_uploads_extensions',
+						sprintf( __('Comma-separated list of allowed file extensions: %s. Leave blank to allow any.', 'events-manager'), '<code>' . implode( ', ', array_keys(EM\Uploads\Uploader::$supported_file_types) ) . '</code>') .'<br>' . __('If File Type is also set, only these extensions within the permitted File Type will be permitted.', 'events-manager')
+					);
+					?>
+				</table>
+			</div>
+
+			<!-- Image Dimensions -->
+			<div class="em-opt-section">
+				<h4><?php esc_html_e('Image Dimensions', 'events-manager'); ?></h4>
+				<table class="form-table">
+					<?php
+					em_options_input_text(__('Maximum Width (px)', 'events-manager'), 'dbem_image_max_width', __('The maximum width an uploaded image can have. Larger images will be rejected. Leave blank to allow any size.', 'events-manager'));
+					em_options_input_text(__('Maximum Height (px)', 'events-manager'), 'dbem_image_max_height', __('The maximum height an uploaded image can have. Larger images will be rejected. Leave blank to allow any size.', 'events-manager'));
+					em_options_input_text(__('Minimum Width (px)', 'events-manager'), 'dbem_image_min_width', __('The minimum width an uploaded image can have. Smaller images will be rejected. Leave blank to allow any size.', 'events-manager'));
+					em_options_input_text(__('Minimum Height (px)', 'events-manager'), 'dbem_image_min_height', __('The minimum height an uploaded image can have. Smaller images will be rejected. Leave blank to allow any size.', 'events-manager'));
+					em_options_input_text ( __( 'Maximum size (bytes)', 'events-manager'), 'dbem_image_max_size', __( "The maximum allowed size for images uploaded, in bytes", 'events-manager') . '. ' . sprintf(__(' Maximum size permitted by WordPress is %s.', 'events-manager'), '<code>' . wp_max_upload_size() . '</code>') );
+					?>
+				</table>
+			</div>
+
+			<?php echo $save_button; ?>
 	</div> <!-- . inside -->
 	</div> <!-- .postbox -->
-	<?php	
+	<?php
 }
 
 /**
