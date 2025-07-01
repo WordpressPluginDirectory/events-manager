@@ -14,23 +14,33 @@ class EM_Locations_Widget extends WP_Widget {
     /** constructor */
     function __construct() {
     	$this->defaults = array(
-    		'title' => __('Event Locations','events-manager'),
+    		'title' => 'Event Locations',
     		'scope' => 'future',
     		'order' => 'ASC',
     		'limit' => 5,
 		    'format_header' => '',
 		    'format' => EM_Formats::dbem_block_location_list_item_format(''),
 		    'format_footer' => '',
-    	    'no_locations_text' => '<div class="em-list-no-items">'.__('No locations', 'events-manager').'</div>',
+    	    'no_locations_text' => '<div class="em-list-no-items">No locations</div>',
     		'orderby' => 'event_start_date,event_start_time,location_name',
 		    'v6' => false,
     	);
-    	$this->em_orderby_options = array(
+        parent::__construct(false, 'Event Locations', ['description' => 'Display a list of event locations on Events Manager.']);
+        add_action('wp_loaded', array($this, 'wp_loaded'));
+    }
+
+    /** Loads translated strings and updates defaults */
+    function wp_loaded() {
+		$this->name = __('Event Locations', 'events-manager');
+        $this->defaults['title'] = __('Event Locations','events-manager');
+        $this->defaults['no_locations_text'] = '<div class="em-list-no-items">'.__('No locations', 'events-manager').'</div>';
+        
+        $this->em_orderby_options = array(
     		'event_start_date, event_start_time, location_name' => __('Event start date/time, location name','events-manager'),
     		'location_name' => __('Location name','events-manager')
     	);
-    	$widget_ops = array('description' => __( "Display a list of event locations on Events Manager.", 'events-manager') );
-        parent::__construct(false, $name = 'Event Locations', $widget_ops);	
+        
+        $this->widget_options['description'] = __("Display a list of event locations on Events Manager.", 'events-manager');
     }
 
     /** @see WP_Widget::widget */

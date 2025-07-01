@@ -115,7 +115,7 @@
 								?>
 								<strong>
 								<?php echo $EM_Event->get_recurrence_description(); ?> <br />
-								<a href="<?php echo $url ?>edit/?event_id=<?php echo $EM_Event->recurrence_id ?>"><?php _e ( 'Edit Recurring Events', 'events-manager'); ?></a>
+								<a href="<?php echo $url ?>edit/?event_id=<?php echo $EM_Event->get_recurring_event()->event_id ?>"><?php _e ( 'Edit Recurring Event', 'events-manager'); ?></a>
 								<?php if( current_user_can('delete_events')) : ?>
 								<span class="trash"><a href="<?php echo $url ?>?action=event_delete&amp;event_id=<?php echo $EM_Event->event_id ?>" class="em-event-rec-delete" onclick ="if( !confirm('<?php echo $recurrence_delete_confirm; ?>') ){ return false; }"><?php _e('Delete','events-manager'); ?></a></span>
 								<?php endif; ?>										

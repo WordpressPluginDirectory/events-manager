@@ -68,13 +68,13 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		}
 	}
 	
-	public function __get( $var ){
-		if( $var == 'bookings' ){
+	public function __get( $prop ){
+		if( $prop == 'bookings' ){
 			return $this->load();
-		}elseif( $var == 'event' ){
+		}elseif( $prop == 'event' ){
 			return $this->get_event();
 		}
-		return parent::__get( $var );
+		return parent::__get( $prop );
 	}
 	
 	public function __set( $var, $val ){
@@ -186,6 +186,24 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		}
 		return apply_filters('em_bookings_add_from_post',$result,$EM_Booking,$this);
 	}
+
+	public function get_booking_vars() {
+		$EM_Booking = $this->has_booking();
+		$template_vars = array(
+			'EM_Event' => $this->get_event(),
+			'tickets_count' =>  count($this->get_tickets()->tickets),
+			'available_tickets_count' =>  count( $this->get_available_tickets() ),
+			//decide whether user can book, event is open for bookings etc.
+			'can_book' =>  is_user_logged_in() || (get_option('dbem_bookings_anonymous') && !is_user_logged_in()),
+			'is_open' =>  $this->is_open(), //whether there are any available tickets right now
+			'is_free' =>  $this->get_event()->is_free(),
+			'show_tickets' =>  true,
+			'id' =>  absint($this->event_id),
+			'already_booked' => is_object( $EM_Booking ) && $EM_Booking->booking_id > 0,
+			'EM_Booking' => $this->get_intent_default(), // get the booking intent if not supplied already
+		);
+		return $template_vars;
+	}
 	
 	/**
 	 * Gets an initial booking intent object, not saved to DB but containing the minimum information required to make a booking, including required spaces already selected (if set by event owner).
@@ -205,7 +223,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 				$spaces = !empty($_REQUEST['em_tickets'][$EM_Ticket->ticket_id]['spaces']) ? $_REQUEST['em_tickets'][$EM_Ticket->ticket_id]['spaces']:0;
 				$min_spaces = $EM_Ticket->get_spaces_minimum();
 				// if ticket spaces defined by post, or if a ticket selection is required (by being only ticket or required)
-				if( $spaces > 0 ||  $is_single_ticket || $EM_Ticket->ticket_required ) {
+				if( $spaces > 0 ||  $is_single_ticket || $EM_Ticket->required ) {
 					// make sure we meet the minimum
 					$spaces = $min_spaces > $spaces ? $min_spaces : $spaces;
 				}
@@ -269,16 +287,16 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		    	$EM_Ticket = $this->tickets->get_first();
 		    	$EM_Event = $this->get_event();
 		    	//if ticket has cut-off date, that should take precedence as we save the ticket cut-off date/time to the event in single ticket mode
-		    	if( !empty($EM_Ticket->ticket_end) ){
+		    	if( !empty($EM_Ticket->end) ){
 		    		//if ticket end dates are set, move to event
 		    		$EM_Event->event_rsvp_date = $EM_Ticket->end()->format('Y-m-d');
 		    		$EM_Event->event_rsvp_time = $EM_Ticket->end()->format('H:i:00');
-		    		if( $EM_Event->is_recurring() && !empty($EM_Ticket->ticket_meta['recurrences']) ){
+		    		if( $EM_Event->is_recurring( true ) && !empty($EM_Ticket->ticket_meta['recurrences']) ){
 		    			$EM_Event->recurrence_rsvp_days = $EM_Ticket->ticket_meta['recurrences']['end_days'];		    			
 		    		}
 		    	}else{
 		    		//if no end date is set, use event end date (which will have defaulted to the event start date
-		    		if( !$EM_Event->is_recurring() ){
+		    		if( !$EM_Event->is_recurring( true ) ){
 		    			//save if we have a valid rsvp end date
 		    			if( $EM_Event->rsvp_end()->valid ){
 						    $EM_Ticket->ticket_end = $EM_Event->rsvp_end()->getDateTime();
@@ -350,6 +368,9 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	}
 	
 	function has_space( $include_member_tickets = false ){
+		// recurrences we cannot assume there is no space
+		// TOOD [Recurrences] Fina days to quickly check if there are any spaces available for all recurrences
+		if ( $this->get_event()->is_recurring() ) return true;
 		return count($this->get_available_tickets( $include_member_tickets )->tickets) > 0;
 	}
 	
@@ -357,9 +378,9 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	    $return = false;
 	    $EM_Event = $this->get_event();
 		if( $EM_Event->event_active_status !== 0 ){
-		    if( $EM_Event->rsvp_end()->getTimestamp() > time()){
-		    	$return = true;
-	        }
+			if( $EM_Event->rsvp_end()->getTimestamp() > time()){
+				$return = true;
+			}
 		}
 	    return $return;
 	}
@@ -369,6 +390,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		if( static::$disable_restrictions ){
 			$return = true;
 		}else{
+			// with recurrences, we need to go through individual recurrences and see if any are open
 			$return = $this->has_open_time() && $this->has_space($include_member_tickets);
 		}
 		return apply_filters('em_bookings_is_open', $return, $this, $include_member_tickets);
@@ -402,6 +424,9 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			$booking_ids = $wpdb->get_col("SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id'");
 			$result_tickets = $wpdb->query("DELETE FROM ". EM_TICKETS_BOOKINGS_TABLE ." WHERE booking_id IN (SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id')");
 			$result = $wpdb->query("DELETE FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id'");
+			if ( $this->get_event()->is_recurring( true ) ) {
+				$this->get_event()->get_recurrence_sets()->delete_bookings();
+			}
 		}else{
 			//we have not bookings loaded to delete, nor an event to delete bookings from, so bookings are considered 'deleted' since there's nothing ot delete
 			$result = $result_tickets = true;
@@ -975,10 +1000,6 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	static function em_booking_js_footer(){
 		?>		
 		<script type="text/javascript">
-			<?php
-			$include_path = dirname(dirname(__FILE__)); //get path to parent directory
-			include($include_path.'/includes/js/bookingsform.js');
-			?>
 			jQuery(document).ready( function($){	
 				<?php
 					//we call the segmented JS files and include them here
@@ -1047,7 +1068,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 				),
 				EM_EVENTS_TABLE => array(
 					// accepted args that would require events table to be joined
-					'args' => array('scope', 'timezone', 'recurring', 'private', 'private_only', 'post_id', 'mode', 'has_location', 'no_location', 'event_location_type', 'has_event_location', 'category', 'tag', 'event_status','recurrence', 'recurrences', 'month', 'year', 'owner', 'language'),
+					'args' => array('scope', 'timezone', 'recurring', 'private', 'private_only', 'post_id', 'mode', 'has_location', 'no_location', 'event_location_type', 'has_event_location', 'category', 'tag', 'event_status', 'month', 'year', 'owner', 'language','recurrence', 'recurrences', 'recurrence', 'recurring_event'),
 					// any args that may have a specific empty value that still means it's 'set', could also be an array of empty value types
 					'empty_args' => array(),
 					// any args here that match the value or that within the array of values will be considered as ignored, for example scope 'all' doesn't actually require any SQL conditions

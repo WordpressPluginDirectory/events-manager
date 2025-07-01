@@ -197,8 +197,11 @@ function em_event_form($args = array()){
 				$EM_Event->location_id = $default_loc;
 				$EM_Event->location = new EM_Location($default_loc);
 			}
+			// add default recurrence set too
+			$EM_Event->get_recurrence_sets()->include[] = new EM\Recurrences\Recurrence_Set();
 		}
 		em_locate_template('forms/event-editor.php',true, array('args'=>$args));
+		EM_Events::add_editor_js_vars();
 	}
 	if( get_option('dbem_css_editors') ) echo '</div>';
 	wp_enqueue_style('dashicons');
@@ -244,7 +247,7 @@ function em_events_admin($args = array()){
 			}
 			if( !empty($_REQUEST['recurrence_id']) ){
 				$Event = em_get_event( absint($_REQUEST['recurrence_id']) );
-				$EM_Notices->add_alert(sprintf(esc_html__('You are viewing individual recurrences of recurring event %s.', 'events-manager'), '<a href="'.$Event->get_edit_url().'">'.$Event->event_name.'</a>'));
+				$EM_Notices->add_alert(sprintf(esc_html__('You are viewing individual recurrences of %s.', 'events-manager'), '<a href="'.$Event->get_edit_url().'">'.$Event->event_name.'</a>'));
 				$EM_Notices->add_alert(esc_html__('You can edit individual recurrences and disassociate them with this recurring event.', 'events-manager'));
 				$args['recurrence_id'] = absint($_REQUEST['recurrence_id']);
 			}

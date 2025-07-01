@@ -13,7 +13,7 @@ $EM_DateTime = new EM_DateTime($calendar['month_start'], 'UTC');
 $id = absint($args['id']);
 $events = array(); // used in two templates
 ?>
-<div class="<?php em_template_classes('calendar'); ?> <?php echo esc_attr(implode(' ', $calendar['css']['calendar_classes'])); ?>" data-scope="<?php echo esc_attr($args['scope']['name']); ?>" data-preview-tooltips-trigger="" id="em-calendar-<?php echo $id ?>" data-view-id="<?php echo $id ?>" data-view-type="calendar">
+<div class="<?php em_template_classes('calendar'); ?> <?php echo esc_attr(implode(' ', $calendar['css']['calendar_classes'])); ?>" data-scope="<?php echo esc_attr($args['scope']['name']); ?>" data-preview-tooltips-trigger="" id="em-calendar-<?php echo $id ?>" data-view-id="<?php echo $id ?>" data-view-type="calendar" data-month="<?php echo esc_attr($calendar['month']); ?>" data-year="<?php echo esc_attr($calendar['year']); ?>" data-timezone="<?php echo esc_attr($calendar['timezone']); ?>">
 	<?php
 	// display section for showing header navigation (datepicker, arrows, search toggle etc.) of the calendar
 	$template = em_locate_template('calendar/section-header-navigation.php', false);

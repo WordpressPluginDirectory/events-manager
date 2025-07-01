@@ -161,7 +161,7 @@ function wp_events_plugin_init(){
 		'menu_icon' => 'dashicons-calendar',
 		'yarpp_support'=>true
 	));
-	if ( get_option('dbem_recurrence_enabled') ){
+	if ( get_option('dbem_repeating_enabled') ){
 		$event_recurring_post_type = apply_filters('em_cpt_event_recurring', array(	
 			'public' => apply_filters('em_cp_event_recurring_public', false),
 			'show_ui' => true,
@@ -187,23 +187,23 @@ function wp_events_plugin_init(){
 				'delete_post' => 'delete_recurring_event',
 				'read_post' => 'read_recurring_event',
 			),
-			'label' => __('Recurring Events','events-manager'),
-			'description' => __('Recurring Events Template','events-manager'),
+			'label' => __('Repeating Events','events-manager'),
+			'description' => __('Repeating Events Template','events-manager'),
 			'labels' => array (
-				'name' => __('Recurring Events','events-manager'),
-				'singular_name' => __('Recurring Event','events-manager'),
-				'menu_name' => __('Recurring Events','events-manager'),
-				'add_new' => __('Add Recurring Event','events-manager'),
-				'add_new_item' => __('Add New Recurring Event','events-manager'),
+				'name' => __('Repeating Events','events-manager'),
+				'singular_name' => __('Repeating Event','events-manager'),
+				'menu_name' => __('Repeating Events','events-manager'),
+				'add_new' => __('Add Repeating Event','events-manager'),
+				'add_new_item' => __('Add New Repeating Event','events-manager'),
 				'edit' => __('Edit','events-manager'),
-				'edit_item' => __('Edit Recurring Event','events-manager'),
-				'new_item' => __('New Recurring Event','events-manager'),
+				'edit_item' => __('Edit Repeating Event','events-manager'),
+				'new_item' => __('New Repeating Event','events-manager'),
 				'view' => __('View','events-manager'),
-				'view_item' => __('Add Recurring Event','events-manager'),
-				'search_items' => __('Search Recurring Events','events-manager'),
-				'not_found' => __('No Recurring Events Found','events-manager'),
-				'not_found_in_trash' => __('No Recurring Events Found in Trash','events-manager'),
-				'parent' => __('Parent Recurring Event','events-manager'),
+				'view_item' => __('Add Repeating Event','events-manager'),
+				'search_items' => __('Search Repeating Events','events-manager'),
+				'not_found' => __('No Repeating Events Found','events-manager'),
+				'not_found_in_trash' => __('No Repeating Events Found in Trash','events-manager'),
+				'parent' => __('Parent Repeating Event','events-manager'),
 			)
 		));
 	}
@@ -259,10 +259,10 @@ function wp_events_plugin_init(){
 	//gutenberg support - define EM_GUTENBERG in your wp-config.php page to enable
 	if( defined('EM_GUTENBERG') && EM_GUTENBERG ){
 		$event_post_type['show_in_rest'] = true;
-		if ( get_option('dbem_recurrence_enabled') ) $event_recurring_post_type['show_in_rest'] = true;
+		if ( get_option('dbem_repeating_enabled') ) $event_recurring_post_type['show_in_rest'] = true;
 		if( get_option('dbem_locations_enabled', true) ) $location_post_type['show_in_rest'] = true;
 		function em_gutenberg_support( $can_edit, $post_type ){
-			$recurrences = $post_type == 'event-recurring' && get_option('dbem_recurrence_enabled');
+			$recurrences = $post_type == 'event-recurring' && get_option('dbem_repeating_enabled');
 			$locations = $post_type == EM_POST_TYPE_LOCATION && get_option('dbem_locations_enabled', true);
 			if( $post_type == EM_POST_TYPE_EVENT || $recurrences || $locations ) $can_edit = true;
 			return $can_edit;
@@ -273,7 +273,7 @@ function wp_events_plugin_init(){
 	if( EM_POST_TYPE_LOCATION_SLUG !== '' && strstr(EM_POST_TYPE_EVENT_SLUG, EM_POST_TYPE_LOCATION_SLUG) !== FALSE ){
 		//Now register posts, but check slugs in case of conflicts and reorder registrations
 		register_post_type(EM_POST_TYPE_EVENT, $event_post_type);
-		if ( get_option('dbem_recurrence_enabled') ){
+		if ( get_option('dbem_repeating_enabled') ){
 			register_post_type('event-recurring', $event_recurring_post_type);
 		}
 		if( get_option('dbem_locations_enabled', true) ){
@@ -285,7 +285,7 @@ function wp_events_plugin_init(){
 		}
 		register_post_type(EM_POST_TYPE_EVENT, $event_post_type);
 		//Now register posts, but check slugs in case of conflicts and reorder registrations
-		if ( get_option('dbem_recurrence_enabled') ){
+		if ( get_option('dbem_repeating_enabled') ){
 			register_post_type('event-recurring', $event_recurring_post_type);
 		}
 	}

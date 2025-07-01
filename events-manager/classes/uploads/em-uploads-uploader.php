@@ -94,7 +94,8 @@ class Uploader {
 		static::$default_options['max_files'] = get_option('dbem_uploads_max_files');
 		static::$default_options['allow_multiple'] = get_option('dbem_uploads_allow_multiple');
 		static::$default_options['type'] = get_option('dbem_uploads_type');
-		static::$default_options['extensions'] = explode(',', str_replace(' ', '', get_option('dbem_uploads_extensions')) );
+		$extensions = str_replace( ' ', '', get_option('dbem_uploads_extensions') );
+		static::$default_options['extensions'] = !empty($extensions) ? explode(',', $extensions) : [];
 
 		static::$default_options['image_min_width'] = get_option('dbem_image_min_width');
 		static::$default_options['image_max_width'] = get_option('dbem_image_max_width');
@@ -758,6 +759,5 @@ class Uploader {
 		</script>
 		<?php
 	}
-
 }
-Uploader::init();
+add_filter('events_manager_loaded', ['EM\Uploads\Uploader', 'init'], 1);

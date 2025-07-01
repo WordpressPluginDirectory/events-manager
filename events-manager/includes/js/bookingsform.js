@@ -3,8 +3,9 @@ document.querySelectorAll('#em-booking-form').forEach( el => el.classList.add('e
 
 // Add event listeners
 var em_booking_form_observer;
-document.addEventListener("DOMContentLoaded", function() {
-	document.querySelectorAll('form.em-booking-form').forEach( function( booking_form ){
+document.addEventListener("em_booking_form_js_loaded", function( e ) {
+	let container = e.detail.container;
+	container.querySelectorAll('form.em-booking-form').forEach( function( booking_form ){
 		// backwards compatibility tweaks
 		if( !('id' in booking_form.dataset) ){
 			// find event id and give some essential ids
@@ -20,8 +21,9 @@ document.addEventListener("DOMContentLoaded", function() {
 		}
 		em_booking_form_init( booking_form );
 	});
+
 	// if you have an AJAX-powered site, set EM.bookings_form_observer = true before DOMContentLoaded and EM will detect dynamically added booking forms
-	if( true || 'bookings_form_observer' in EM && EM.bookings_form_observer ) {
+	if( 'bookings_form_observer' in EM && EM.bookings_form_observer ) {
 		em_booking_form_observer = new MutationObserver( function( mutationList ) {
 			mutationList.forEach( function( mutation ) {
 				if ( mutation.type === 'childList' ){
@@ -33,9 +35,287 @@ document.addEventListener("DOMContentLoaded", function() {
 				}
 			});
 		});
-		em_booking_form_observer.observe( document, { childList: true, attributes: false, subtree: true, } );
+		em_booking_form_observer.observe( container, { childList: true, attributes: false, subtree: true, } );
 	}
+
+	// add a listener to close the recurring booking picker upon a successful booking
+	container.addEventListener( 'em_booking_success', ( e ) => {
+		if ( e.detail.response.success ) {
+			e.currentTarget.closest('.em-booking-recurrence-form')?.querySelector( '.em-booking-recurrence-picker' )?.classList.add( 'hidden' );
+		}
+	});
+
+	em_init_booking_recurring_form( container );
 });
+
+var em_init_booking_recurring_form = function( container ) {
+	// handle size breakpoints
+	let fetchEM = function( data, responseType = 'text' ){
+		// Fetch the booking form
+		return fetch( EM.bookingajaxurl, {
+			method: "POST",
+			body: data
+		}).then( function(response) {
+			if (response.ok) {
+				return responseType === 'json' ? response.json() : response.text();
+			}
+			return Promise.reject(response);
+		});
+	}
+
+	let breakpoints = { 'xsmall': 425, 'small' : 650, 'medium' : 890, 'large' : false }
+	EM_ResizeObserver( breakpoints, container.querySelectorAll( '.em-booking-recurrence-picker' ) );
+
+	// handle the booking calendar for recurring events
+	container.querySelectorAll('.em-booking-recurring').forEach( function( recurringBooking ){
+		let nonces;
+		let recurrenceBooking = recurringBooking.querySelector('.em-booking-recurrence-form');
+		let recurrenceDates = recurringBooking.querySelector('.em-booking-recurrences');
+
+		// load the nonces here, once, so we share them and also load them if in cache mode
+		if ( !( nonces instanceof Object ) ) {
+			if ( EM.cached ) {
+				// get the nonces via AJAX, set the nonces to object so we don't double-dip
+				nonces = {};
+				fetchEM( new URLSearchParams( { action: 'booking_form_nonces' } ), 'json' )
+					.then( json => { nonces = json; } )
+					.catch( error => console.log('Error fetching booking form:', error) );
+			} else {
+				// nonces will be set already, get them directly
+				nonces = {
+					booking_form : recurrenceBooking.dataset.nonce,
+					booking_recurrences : recurringBooking.querySelector('.em-booking-recurrence-picker')?.dataset.nonce,
+				};
+			}
+		}
+
+		// catch clicks to the calendar so that we load up dates on the side
+		let gettingRecurrences;
+		recurringBooking.addEventListener('click', function( e ){
+			if ( e.target.closest('.em-calendar .eventful, .em-calendar .eventful-pre, .em-calendar .eventful-post, .em-calendar .eventful-today') ){
+				// get the recurrence dates for this day
+				e.preventDefault();
+				if ( !gettingRecurrences ) {
+					let date = e.target.closest('.em-cal-day-date');
+					if ( date && recurrenceDates.dataset.date !== date?.dataset.date ) {
+						// select this date, all others no
+						date.closest('.em-cal-body').querySelectorAll('.em-cal-day-date').forEach( calDate => calDate.classList.toggle( 'selected', calDate === date ) );
+						gettingRecurrences = getDateRecurrences( date?.dataset.date ).finally( () => { gettingRecurrences = null } );
+					}
+				}
+			}
+		});
+		let getDateRecurrences = function( date = false ){
+			// prepare data
+			let data = {
+				action: 'booking_recurrences',
+				event_id: recurringBooking.dataset.event,
+				day: date || '',
+				nonce: nonces.booking_recurrences,
+				timezone: recurringBooking.querySelector('.em-calendar')?.dataset.timezone || '',
+			}
+			// Check for skeleton template
+			let skeleton = recurringBooking.querySelector('.em-booking-recurrences-skeleton')?.content.cloneNode(true);
+			if ( skeleton ) {
+				// count how many dates we have and add/remove that may from skeleton
+				let count = recurrenceDates.querySelectorAll('.em-booking-recurrence').length;
+				let skeletonRecurrenceDates = skeleton.querySelectorAll('.em-booking-recurrence');
+				if ( count && count !== skeletonRecurrenceDates.length ) {
+					// go through the skeleton dates and remove/add so it matches length
+					if ( skeletonRecurrenceDates.length > count ) {
+						for ( let i = count; i < skeletonRecurrenceDates.length; i++ ) {
+							skeletonRecurrenceDates[i].remove();
+						}
+					} else if ( skeletonRecurrenceDates.length < count ) {
+						let templateDate = skeletonRecurrenceDates[0];
+						for ( let i = skeletonRecurrenceDates.length; i < count; i++ ) {
+							skeleton.querySelector( '.em-booking-recurrence' ).append( templateDate.cloneNode( true ) );
+						}
+					}
+
+				}
+				// replace contents of bookingRecurrence with skeleton
+				recurrenceDates.innerHTML = '';
+				recurrenceDates.append(skeleton);
+				recurrenceDates.classList.add('skeleton');
+			}
+			// Fetch the booking form
+			return fetchEM( new URLSearchParams( data ) )
+				.then( function( html ) {
+					recurrenceDates.innerHTML = html;
+					recurrenceDates.innerHTML = recurrenceDates.firstElementChild.innerHTML;
+					recurrenceDates.dataset.date = date;
+				})
+				.catch( (error) => console.log('Error fetching booking form recurrences:', error) )
+				.finally( () => {
+					if ( recurrenceDates ) {
+						// clean things up
+						recurrenceDates.classList.remove('skeleton');
+						em_setup_selectize( recurrenceDates );
+						// select things if previously selected, otherwise remove classes/props
+						let selected;
+						if ( recurrenceDates.classList.contains('selected') && recurrenceDates.dataset.selectedEvent ) {
+							// check if selectedEvent exists and reselect it, otherwise remove event
+							selected = recurrenceDates.querySelector(`[data-event="${recurrenceDates.dataset.selectedEvent}"]`);
+						}
+						if ( selected ) {
+							selected.classList.add('selected');
+						} else {
+							recurrenceDates.classList.remove('selected');
+							delete recurrenceDates.dataset.selectedEvent;
+						}
+						// fire the loaded event
+						recurrenceDates.dispatchEvent( new CustomEvent( 'booking_recurrences_loaded', {
+							bubbles: true,
+							detail: {
+								date: date[0],
+								time: date[1] || null
+							}
+						} ) );
+					}
+				});
+		}
+
+		// catch selection of timezone
+		recurringBooking.addEventListener('change', function( e ){
+			if ( e.target.matches('.em-booking-recurrences .em-timezone') && e.detail.target.value ) {
+				// set timezone and reload calendar
+				let calendar = recurringBooking.querySelector('.em-calendar');
+				if ( calendar ) {
+					calendar.dataset.timezone = e.detail.selectize.getValue();
+					calendar.dispatchEvent( new CustomEvent( 'reload', { bubbles: true } ) );
+				}
+				// reload the current date
+				getDateRecurrences( recurrenceDates.dataset.date ).finally( function() {
+					if ( recurrenceDates.dataset.selectedEvent ) {
+						recurrenceDates.querySelector(`[data-event="${recurrenceDates.dataset.selectedEvent}"]`).classList.add('selected');
+					}
+				});
+			}
+		})
+
+		// get the booking form
+		let fetchBookingForm = function( event_id ){
+			if ( !Number(event_id) ) {
+				recurrenceBooking.innerHTML = '';
+			} else if ( recurrenceBooking && recurrenceBooking.dataset.event !== event_id ) {
+				let data = {
+					action: 'booking_form',
+					event_id: event_id,
+					nonce: nonces.booking_form,
+				}
+
+				// Check for skeleton template
+				let skeleton = recurringBooking.querySelector('.em-booking-summary-skeleton')?.content.cloneNode(true);
+				if ( skeleton ) {
+					// replace contents of bookingRecurrence with skeleton
+					recurrenceBooking.innerHTML = '';
+					recurrenceBooking.append(skeleton);
+					window.scroll({
+						top: recurrenceBooking.getBoundingClientRect().top +  window.scrollY - EM.booking_offset,
+						behavior : 'smooth',
+					});
+				}
+				// set up recurrence data
+				if ( recurrenceDates ) {
+					recurrenceDates.classList.add('selected');
+					recurrenceDates.dataset.selectedEvent = event_id;
+					recurrenceDates.querySelectorAll('.em-booking-recurrence').forEach( function( recurrenceDate ) {
+						recurrenceDate.classList.toggle('selected', recurrenceDate.dataset.event === `${event_id}` );
+					});
+				}
+
+				// Fetch the booking form
+				fetchEM ( new URLSearchParams(data) )
+					.then(function(html) {
+						// Initialize the new booking form
+						recurrenceBooking.innerHTML = html;
+						recurrenceBooking.dataset.event = event_id;
+						// Find and execute inline scripts -- backward compatible
+						const scripts = recurrenceBooking.querySelectorAll('script:not([type]), script[type="text/javascript"]');
+						scripts.forEach(script => {
+							if (!script.src) { // Only handle inline scripts
+								const newScript = document.createElement('script');
+								newScript.textContent = script.textContent;
+								script.parentElement.replaceChild(newScript, script);
+							}
+						});
+						// Initialize the forms
+						let bookingForm = recurrenceBooking.querySelector('form.em-booking-form');
+						if ( bookingForm) {
+							em_setup_ui_elements( bookingForm );
+							em_setup_scripts( bookingForm );
+							em_booking_form_init( bookingForm );
+						}
+					})
+					.catch( (error) => console.log('Error fetching booking form recurrences:', error) )
+			}
+		}
+
+		recurringBooking.querySelector('.em-booking-recurrence-picker.mode-select')?.addEventListener('change', function( e ) {
+			fetchBookingForm( e.detail.target.value );
+		});
+		// catch clicks on the recurrence dates and load booking form
+		recurringBooking.querySelector('.em-booking-recurrences')?.addEventListener('click', function( e ){
+			let recurrenceDate = e.target.closest('.em-booking-recurrence');
+			if ( recurrenceDate && !recurrenceDate.hasAttribute('disabled') ){
+				// get the recurrence dates for this day
+				fetchBookingForm( recurrenceDate.dataset.event );
+			}
+		});
+
+		// Function to handle URL hash for date format linking to specific recurrences
+		let handleHashChange = function(e) {
+		    // Skip if the hash change came from a link click
+			if (e && e.type === 'hashchange' && window.lastClickedHashLink) {
+				window.lastClickedHashLink = false;
+				return;
+			}
+			// get the hash and see if it's a date we need to feed to the recurrence picker
+		    let hash = window.location.hash.substring(1);
+		    if ( hash.match(/^\d{4}-\d{2}-\d{2}(@\d{2}:\d{2}:\d{2})?$/) ) {
+		        let date = hash.split('@')[0];
+				if ( recurrenceDates ) {
+					let recurrenceDate = recurringBooking.querySelector( `.em-booking-recurrence[href="#${ hash }"]` );
+					if ( recurrenceDate ) {
+						recurrenceDate.click();
+					} else {
+						if ( recurrenceDates?.dataset.date !== date ) {
+							getDateRecurrences( date ).then( () => {
+								recurringBooking.querySelector( `.em-booking-recurrence[href="#${ hash }"]` )?.click();
+							} );
+						}
+					}
+					// load calendar to match month/year we're after
+					let calendar = recurringBooking.querySelector('.em-calendar');
+					if ( calendar ) {
+						let dateObj = new Date(date);
+						if (calendar.dataset.year !== dateObj.getFullYear() || calendar.dataset.month !== dateObj.getMonth() + 1) {
+							calendar.dataset.month = dateObj.getMonth() + 1;
+							calendar.dataset.year = dateObj.getFullYear();
+						}
+						calendar.dispatchEvent(new CustomEvent('reload', { bubbles: true }));
+					}
+				}
+		    }
+		};
+		// Track hash links being clicked
+		container.addEventListener('click', function(e) {
+		    if ( e.target.closest('a[href^="#"]') ) {
+		        window.lastClickedHashLink = true;
+		        // Reset flag after short delay in case hashchange event doesn't trigger
+		        setTimeout( () => { window.lastClickedHashLink = false }, 100 );
+		    }
+		});
+
+		// Check URL hash on initial load
+		handleHashChange();
+
+		// Add event listener for hash changes
+		window.addEventListener('hashchange', handleHashChange);
+
+	});
+};
 
 var em_booking_form_count_spaces = function( booking_form ){
 	// count spaces booked, if greater than 0 show booking form
@@ -149,7 +429,7 @@ var em_booking_form_add_message = function( booking_form, content = null, opts =
 	}
 }
 
-var em_booking_form_add_error = function ( booking_form, error, opts ) {
+var em_booking_form_add_error = function ( booking_form, error, opts = {} ) {
 	let options = Object.assign({
 		type : 'error',
 	}, opts);
@@ -201,10 +481,11 @@ var em_booking_form_hide_success = function( booking_form, opts = {} ){
 		detail : {
 			options : options,
 		},
+		bubbles: true,
 	}));
 	// hide login
 	if ( options.hideLogin ) {
-		document.querySelectorAll('.em-booking-login').forEach( login => login.classList.add('hidden') );
+		booking_form.parentElement.querySelectorAll('.em-login').forEach( login => login.classList.add('hidden') );
 	}
 }
 
@@ -223,10 +504,11 @@ var em_booking_form_unhide_success = function( booking_form, opts = {} ){
 		detail : {
 			options : options,
 		},
+		bubbles: true,
 	}));
 	// hide login
 	if ( options.showLogin ) {
-		document.querySelectorAll('.em-booking-login').forEach( login => login.classList.add('hidden') );
+		booking_form.parentElement.querySelectorAll('.em-booking-login').forEach( login => login.classList.add('hidden') );
 	}
 };
 
@@ -327,12 +609,13 @@ var em_booking_form_update_booking_intent = function( booking_form, booking_inte
 			booking_intent : booking_intent,
 		},
 		cancellable : true,
+		bubbles: true,
 	}) );
 }
 
 var em_booking_summary_ajax_promise;
 var em_booking_summary_ajax = async function ( booking_form ){
-	let summary_section = document.getElementById('em-booking-form-section-summary-' + booking_form.dataset.id);
+	let summary_section = booking_form.querySelector('.em-booking-form-section-summary');
 	let summary;
 	if( summary_section ) {
 		summary = summary_section.querySelector('.em-booking-form-summary');
@@ -350,6 +633,7 @@ var em_booking_summary_ajax = async function ( booking_form ){
 				booking_data : booking_data,
 			},
 			cancellable : true,
+			bubbles: true,
 		}) );
 		let template = booking_form.querySelector('.em-booking-summary-skeleton');
 		if ( template ) {
@@ -364,6 +648,7 @@ var em_booking_summary_ajax = async function ( booking_form ){
 			}
 			booking_form.dispatchEvent( new CustomEvent('em_booking_summary_skeleton', {
 				detail: { skeleton: skeleton },
+				bubbles: true,
 			}) );
 			summary.replaceChildren(skeleton);
 		}
@@ -399,6 +684,7 @@ var em_booking_summary_ajax = async function ( booking_form ){
 				summary : summary,
 			},
 			cancellable : true,
+			bubbles: true,
 		}) );
 	}).catch( function( error ){
 		// remove all booking inent data - invalid state
@@ -409,6 +695,7 @@ var em_booking_summary_ajax = async function ( booking_form ){
 				summary : summary,
 			},
 			cancellable : true,
+			bubbles: true,
 		}) );
 	}).finally( function(){
 		em_booking_summary_ajax_promise = false;
@@ -420,6 +707,7 @@ var em_booking_summary_ajax = async function ( booking_form ){
 				summary : summary,
 			},
 			cancellable : true,
+			bubbles: true,
 		}) );
 	});
 	return em_booking_summary_ajax_promise;
@@ -491,7 +779,7 @@ var em_booking_form_submit = function( booking_form, opts = {} ){
 }
 
 var em_booking_form_submit_start = function( booking_form ){
-	document.querySelectorAll('.em-booking-message').forEach( message => message.remove() );
+	booking_form.querySelectorAll('.em-booking-message').forEach( message => message.remove() );
 	em_booking_form_show_spinner( booking_form );
 	let booking_intent = booking_form.querySelector('input.em-booking-intent');
 	let button = booking_form.querySelector( 'input.em-form-submit' );
@@ -539,6 +827,7 @@ var em_booking_form_submit_success = function( booking_form, response, opts = {}
 					response : response,
 				},
 				cancellable : true,
+				bubbles: true,
 			}));
 		}
 		if( (options.redirect === true) && response.redirect ){ //custom redirect hook
@@ -563,6 +852,7 @@ var em_booking_form_submit_success = function( booking_form, response, opts = {}
 					response : response,
 				},
 				cancellable : true,
+				bubbles: true,
 			}));
 		}
 	}
@@ -590,6 +880,7 @@ var em_booking_form_submit_success = function( booking_form, response, opts = {}
 				response : response,
 			},
 			cancellable : true,
+			bubbles: true,
 		}));
 	}
 }
@@ -602,7 +893,8 @@ var em_booking_form_submit_error = function( booking_form, error ){
 		detail: {
 			error : error,
 		},
-		cancellable : true
+		cancellable : true,
+		bubbles: true,
 	}));
 	em_booking_form_add_error( booking_form,  'There was an unexpected network error, please try again or contact a site administrator.' );
 	console.log( error );

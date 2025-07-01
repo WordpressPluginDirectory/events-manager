@@ -195,7 +195,7 @@ function em_content_page_title($original_content, $id = null) {
 			}elseif( $post->ID == $edit_events_page_id ){
 				if( !empty($_REQUEST['action']) && $_REQUEST['action'] = 'edit' ){
 					if( is_object($EM_Event) && $EM_Event->event_id){					
-						if($EM_Event->is_recurring()){
+						if($EM_Event->is_recurring( true )){
 							$content = __( "Reschedule Events", 'events-manager')." '{$EM_Event->event_name}'";
 						}else{
 							$content = __( "Edit Event", 'events-manager') . " '" . $EM_Event->event_name . "'";

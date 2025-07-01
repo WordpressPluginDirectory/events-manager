@@ -8,7 +8,7 @@ function em_event_submission_emails($result, $EM_Event){
     if( $result ){
 		//if this is just published, we need to email the user about the publication, or send to pending mode again for review
 		$cant_publish_event = $EM_Event->is_individual() && !user_can($EM_Event->get_contact()->ID, 'publish_events');
-		$cant_publish_recurring_event = $EM_Event->is_recurring() && !user_can($EM_Event->get_contact()->ID, 'publish_recurring_events'); 
+		$cant_publish_recurring_event = $EM_Event->is_recurring( true ) && !user_can($EM_Event->get_contact()->ID, 'publish_recurring_events'); 
 		$output_type = get_option('dbem_smtp_html') ? 'html':'email';
 		if( $cant_publish_event || $cant_publish_recurring_event ){
 		    if( $EM_Event->is_published() && !$EM_Event->get_previous_status() ){

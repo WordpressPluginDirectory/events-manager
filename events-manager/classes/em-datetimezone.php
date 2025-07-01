@@ -68,6 +68,19 @@ class EM_DateTimeZone extends DateTimeZone {
 		}
 		return parent::getName();
 	}
+
+	/**
+	 * Gets the name of the city this timezone is in, without the continent, e.g. Europe/Madrid returns just 'Madrid'
+	 * @return string
+	 */
+	public function getCity(){
+		$name = $this->getName();
+		if( !$this->isUTC() ){
+			$names = explode('/', $name);
+			$name = array_pop($names);
+		}
+		return $name;
+	}
 	
 	public function isUTC(){
 		$name = parent::getName();

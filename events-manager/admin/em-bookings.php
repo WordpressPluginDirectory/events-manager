@@ -72,7 +72,7 @@ function em_bookings_dashboard(){
 			    $EM_Bookings_Table->display();
 		        ?>
 	        </div>
-	        <br class="clear" />
+	        <br class="clear">
 	        <div class="em-bookings-events wrap">
 				<h2><?php esc_html_e('Events With Bookings Enabled','events-manager'); ?></h2>
 			    <?php
@@ -116,7 +116,28 @@ function em_bookings_event(){
   			<?php endif; ?>
   			<?php do_action('em_admin_event_booking_options_buttons'); ?>
 			<hr class="wp-header-end">
-			
+
+			<?php if ( $EM_Event->is_recurring() ) : ?>
+			<p class="em-notice em-notice-icon" >
+				<span class="em-icon em-icon-info"></span>
+				<?php
+				$recurrence_bookings = esc_html( sprintf( __('Recurrence %s', 'events-manager'), __('Bookings', 'events-manager') ) );
+				$recurrence_bookings_link = '<a href="#event-bookings">'. strtolower($recurrence_bookings) .'</a>';
+				$event_recurrences = esc_html( sprintf( __('%s Recurrences', 'events-manager'), __('Event', 'events-manager') ) );
+				$event_recurrences_link = '<a href="#event-recurrences">'. strtolower($event_recurrences) .'</a>';
+				?>
+				<span><?php echo sprintf( esc_html__('This is a recurring %s. You can find all %s on this page, or click on individual %s to view recurrence-specific bookings.', 'events-manager'), esc_html__('Event', 'events-manager'), $recurrence_bookings_link, $event_recurrences_link ); ?></span>
+			</p>
+			<?php elseif ( $EM_Event->is_recurrence() ) : ?>
+				<p class="em-notice em-notice-icon" >
+					<span class="em-icon em-icon-info"></span>
+					<?php
+					$recurring_link = '<a href="'. esc_url( add_query_arg('event_id', $EM_Event->get_recurring_event()->event_id) ) . '">' . $EM_Event->event_name . '</a>';
+					?>
+					<span><?php echo sprintf( esc_html__('This is a %s recurrence of %s.', 'events-manager'), strtolower(esc_html__('Event', 'events-manager')), $recurring_link ); ?></span>
+				</p>
+			<?php endif; ?>
+
 	        <?php if( !is_admin() ) echo $EM_Notices; ?>
 			<p><strong><?php esc_html_e('Event Name','events-manager'); ?></strong> : <?php echo esc_html($EM_Event->event_name); ?></p>
 			<?php do_action('em_admin_event_booking_before_availibility', $EM_Event); ?>
@@ -150,8 +171,17 @@ function em_bookings_event(){
 				</div>
 			</div>
 			<?php endif; ?>
-			<div class="wrap">
-				<h2><?php esc_html_e('Bookings','events-manager'); ?></h2>
+
+			<div class="wrap" id="event-bookings">
+				<h2>
+					<?php
+						if ( $EM_Event->is_recurring() ) {
+							echo esc_html( sprintf( __('Recurrence %s', 'events-manager'), __('Bookings', 'events-manager') ) );
+						} else {
+							esc_html_e('Bookings','events-manager');
+						}
+					?>
+				</h2>
 				<?php
 				$EM_Bookings_Table = new EM_Bookings_Table();
 				$EM_Bookings_Table->status = 'all';
@@ -162,6 +192,16 @@ function em_bookings_event(){
 				}
 	            ?>
 			</div>
+
+			<?php if ( $EM_Event->is_recurring() ): ?>
+			<div class="em-bookings-events wrap" id="event-recurrences">
+				<h2><?php echo esc_html( sprintf( __('%s Recurrences', 'events-manager'), __('Event', 'events-manager') ) ); ?></h2>
+				<?php
+				$EM_Events_Table = new EM\List_Table\Events_Bookings();
+				$EM_Events_Table->display();
+				?>
+			</div>
+			<?php endif; ?>
 			<?php do_action('em_bookings_event_footer', $EM_Event); ?>
 		</div>
 	</div>
@@ -199,13 +239,13 @@ function em_bookings_ticket(){
 			<div>
 				<table>
 					<tr><td><?php echo __('Name','events-manager'); ?></td><td></td><td><?php echo $EM_Ticket->ticket_name; ?></td></tr>
-					<tr><td><?php echo __('Description','events-manager'); ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td></td><td><?php echo ($EM_Ticket->ticket_description) ? $EM_Ticket->ticket_description : '-'; ?></td></tr>
-					<tr><td><?php echo __('Price','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->ticket_price) ? $EM_Ticket->ticket_price : '-'; ?></td></tr>
-					<tr><td><?php echo __('Spaces','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->ticket_spaces) ? $EM_Ticket->ticket_spaces : '-'; ?></td></tr>
-					<tr><td><?php echo __('Min','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->ticket_min) ? $EM_Ticket->ticket_min : '-'; ?></td></tr>
-					<tr><td><?php echo __('Max','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->ticket_max) ? $EM_Ticket->ticket_max : '-'; ?></td></tr>
-					<tr><td><?php echo __('Start','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->ticket_start) ? $EM_Ticket->start()->formatDefault() : '-'; ?></td></tr>
-					<tr><td><?php echo __('End','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->ticket_end) ? $EM_Ticket->end()->formatDefault() : '-'; ?></td></tr>
+					<tr><td><?php echo __('Description','events-manager'); ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td></td><td><?php echo ($EM_Ticket->description) ? $EM_Ticket->description : '-'; ?></td></tr>
+					<tr><td><?php echo __('Price','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->price) ? $EM_Ticket->price : '-'; ?></td></tr>
+					<tr><td><?php echo __('Spaces','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->spaces) ? $EM_Ticket->spaces : '-'; ?></td></tr>
+					<tr><td><?php echo __('Min','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->min) ? $EM_Ticket->min : '-'; ?></td></tr>
+					<tr><td><?php echo __('Max','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->max) ? $EM_Ticket->max : '-'; ?></td></tr>
+					<tr><td><?php echo __('Start','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->start) ? $EM_Ticket->start()->formatDefault() : '-'; ?></td></tr>
+					<tr><td><?php echo __('End','events-manager'); ?></td><td></td><td><?php echo ($EM_Ticket->end) ? $EM_Ticket->end()->formatDefault() : '-'; ?></td></tr>
 					<?php do_action('em_booking_admin_ticket_row', $EM_Ticket); ?>
 				</table>
 			</div>

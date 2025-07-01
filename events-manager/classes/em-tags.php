@@ -19,11 +19,13 @@ class EM_Tags extends EM_Taxonomy_Terms {
 	
 	/**
 	 * Legacy get overload for any use of $EM_Tags->tags
-	 * @param string $var_name
+	 *
+	 * @param string $prop_name
+	 *
 	 * @return array|NULL
 	 */
-	public function __get( $var_name ){
-		if( $var_name == 'tags' ){
+	public function __get ( $prop_name ){
+		if ( $prop_name == 'tags' ){
 			return $this->terms;
 		}
 		return null;

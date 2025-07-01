@@ -22,6 +22,7 @@ let closeModal = function( modal, onClose = null ){
 			}
 		}
 		modal.triggerHandler('em_modal_close');
+		modal[0].dispatchEvent( new CustomEvent('em_modal_close', { bubbles: true, detail: { modal: modal } } ) );
 		if( typeof onClose === 'function' ){
 			onClose();
 		}

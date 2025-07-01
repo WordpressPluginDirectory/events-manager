@@ -85,6 +85,11 @@ div.em-location-data .em-location-map-404 { vertical-align:middle; text-align: c
 #em-tickets-form .ticket-dates-to-normal, #em-tickets-form .ticket-dates-to-recurring { display:inline; }
 #em-tickets-form .ticket-required input, #em-tickets-form .ticket-roles input { width:auto; }
 #em-tickets-form .ticket-roles div { margin-left:110px; }
+#em-tickets-form .ticket-roles label { font-weight: normal; }
+#em-tickets-form .ticket-required .ticket_required-default { display: none; }
+#em-tickets-form .ticket-required:has(input:indeterminate) .ticket_required-default { display: inline-block; font-style: italic; }
+#em-tickets-form .em-ticket-form-parent-warning { margin: 0 0 15px; font-style: italic; }
+#em-tickets-form .ticket-deleted { display: none; visibility: hidden; }
 
 /* Booking Form */
 .em-booking { margin:15px 0px 10px 0px; position:relative; }

@@ -923,6 +923,7 @@ function em_output_events_view( $args, $view = null ){
 		$view = empty($args['view']) ? get_option('dbem_search_form_view') : $args['view'];
 	}
     do_action('em_output_events_view_header', $args, $view);
+	if( empty($args['id']) ) $args['id'] = rand(100, getrandmax()); // prevent warnings
 	
 	if ( !empty($args['has_search']) ) {
 		// get the default args for this list of events, so it's defaulted into the search form
@@ -1370,6 +1371,17 @@ if( !function_exists( 'is_main_query' ) ){
 function em_get_date_format(){
 	return get_option('dbem_date_format');
 }
+
+function em_get_datepicker_format() {
+	$format = get_option('dbem_datepicker_format');
+    $map = ['d'=>'d','D'=>'D','l'=>'l','j'=>'j','J'=>'jS','w'=>'w','W'=>'W',
+            'F'=>'F','m'=>'m','n'=>'n','M'=>'M','y'=>'y','Y'=>'Y','H'=>'H',
+            'h'=>'h','G'=>'g','i'=>'i','S'=>'s','s'=>'s','K'=>'A','U'=>'U','Z'=>'c'];
+    return preg_replace_callback('/./', function($m) use ($map) {
+        return isset($map[$m[0]]) ? $map[$m[0]] : '\\'.$m[0];
+    }, $format);
+}
+
 
 /**
  * Backwards compatibility fuction to trigger the deprecated em_bookings_form_footer action if the newly introduced action em_booking_form_buttons_header is fired.

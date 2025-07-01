@@ -23,7 +23,7 @@
 	} else if (typeof module === 'object' && typeof module.exports === 'object') {
 		module.exports = factory(require('jquery'));
 	} else {
-		root.Selectize = factory(root.jQuery);
+		root.EM_Selectize = factory(root.jQuery);
 	}
 }(this, function ($) {
 	'use strict';
@@ -3709,8 +3709,8 @@
 		}
 	};
 
-	$.fn.selectize = function (settings_user) {
-		var defaults = $.fn.selectize.defaults;
+	$.fn.em_selectize = function (settings_user) {
+		var defaults = $.fn.em_selectize.defaults;
 		var settings = $.extend({}, defaults, settings_user);
 		var attr_data = settings.dataAttr;
 		var field_label = settings.labelField;
@@ -3887,8 +3887,8 @@
 		});
 	};
 
-	$.fn.selectize.defaults = Selectize.defaults;
-	$.fn.selectize.support = {
+	$.fn.em_selectize.defaults = Selectize.defaults;
+	$.fn.em_selectize.support = {
 		validity: SUPPORTS_VALIDITY_API
 	};
 

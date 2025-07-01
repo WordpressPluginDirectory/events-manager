@@ -148,10 +148,15 @@
 								<?php 
 								if ( $EM_Event->is_recurrence() ) {
 									$recurrence_delete_confirm = __('WARNING! You will delete ALL recurrences of this event, including booking history associated with any event in this recurrence. To keep booking information, go to the relevant single event and save it to detach it from this recurrence series.','events-manager');
+									$event = $EM_Event->get_recurring_event();
 									?>
 									<strong>
 									<?php echo $EM_Event->get_recurrence_description(); ?> <br />
-									<a href="<?php echo esc_url($EM_Event->get_edit_reschedule_url()); ?>"><?php _e ( 'Edit Recurring Events', 'events-manager'); ?></a>
+									<?php if ( $event->is_recurring() ) : ?>
+										<a href="<?php echo esc_url($EM_Event->get_edit_reschedule_url()); ?>"><?php echo esc_html( sprintf( __('Edit %s', 'events-manager'), __('Recurring Events') ) ); ?></a>
+									<?php elseif ( $event->is_repeating() ) : ?>
+										<a href="<?php echo esc_url($EM_Event->get_edit_reschedule_url()); ?>"><?php echo esc_html( sprintf( __('Edit %s', 'events-manager'), __('Repeating Events') ) ); ?></a>
+									<?php endif; ?>
 									<?php if( current_user_can('delete_events')) : ?>
 									<span class="trash"><a href="<?php echo esc_url(add_query_arg(array('action'=>'event_delete', 'event_id'=>$EM_Event->recurrence_id, '_wpnonce'=> wp_create_nonce('event_delete_'.$EM_Event->recurrence_id)))); ?>" class="em-event-rec-delete" onclick ="if( !confirm('<?php echo $recurrence_delete_confirm; ?>') ){ return false; }"><?php _e('Delete','events-manager'); ?></a></span>
 									<?php endif; ?>										

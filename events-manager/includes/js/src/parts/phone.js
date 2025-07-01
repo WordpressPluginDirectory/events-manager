@@ -1,5 +1,6 @@
 // phone numbers
-let em_setup_phone_inputs = function(){};
+let em_setup_phone_inputs = function( container ){};
+let em_unsetup_phone_inputs = function( container ){};
 if ( EM.phone ) {
 
 	let getCountry = function() {
@@ -672,6 +673,7 @@ if ( EM.phone ) {
 			}
 
 			let iti = EM.intlTelInput( input, options);
+			//iti.countryContainer.querySelector('button')?.setAttribute('data-nostyle', '');
 			let pixels = parseInt( input.style.paddingLeft.replace('px', '') ); // pad this an extra px
 			input.style.setProperty('padding-left', pixels + 'px', 'important' );
 
@@ -713,6 +715,15 @@ if ( EM.phone ) {
 				}
 			});
 
+		});
+	};
+
+	em_unsetup_phone_inputs = function( container ) {
+		container.querySelectorAll( 'input.em-phone-intl[type="tel"]' ).forEach( function(el){
+			let iti = EM.intlTelInput?.getInstance(el);
+			if ( iti ) {
+				iti.destroy();
+			}
 		});
 	};
 }

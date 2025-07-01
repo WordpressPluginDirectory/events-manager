@@ -15,6 +15,19 @@ class Events_Bookings extends List_Table {
 	
 	public $event;
 	public $item_type;
+
+	public static $has_filters = true;
+	public static $filter_vars = [
+		'event' => [
+			'param' => 'event_id',
+			'default' => '',
+		],
+		'scope' => [ 'default' => 'all' ],
+		'search' => [
+			'param' => 'em_search',
+			'default' => '',
+		],
+	];
 	
 	public static $export_action = 'export_events_bookings_csv';
 	
@@ -51,7 +64,14 @@ class Events_Bookings extends List_Table {
 		if( !empty($sortable_cols[$this->orderby]) ) {
 			$orderby = $sortable_cols[$this->orderby][0];
 		}
-		$events = EM_Events::get( array('search' => $this->filters['search'], 'scope'=>$this->filters['scope'], 'limit'=>$this->limit, 'offset' => $this->offset, 'order'=>$this->order, 'orderby'=> $orderby, 'bookings'=>true, 'owner' => $owner, 'pagination' => 1 ) );
+		$args = [ 'search' => $this->filters['search'], 'scope'=>$this->filters['scope'], 'limit'=>$this->limit, 'offset' => $this->offset, 'order'=>$this->order, 'orderby'=> $orderby, 'bookings'=>true, 'owner' => $owner, 'pagination' => 1 ];
+		if ( !empty( $this->filters['event'] ) ) {
+			$EM_Event = em_get_event( $this->filters['event'] );
+			if ( $EM_Event->is_recurring() ) {
+				$args['recurring_event'] = $EM_Event->event_id;
+			}
+		}
+		$events = EM_Events::get( $args );
 		$this->total_items = EM_Events::$num_rows_found;
 		//Prepare data
 		return $events;
@@ -107,8 +127,10 @@ class Events_Bookings extends List_Table {
 			}else{
 				$val = $EM_Event->event_name;
 			}
-		}elseif( $col == 'booked_spaces'){
+		}elseif( $col == 'booked_available_spaces'){
 			$val = $EM_Event->get_bookings()->get_booked_spaces()."/".$EM_Event->get_spaces();
+		}elseif( $col == 'booked_spaces'){
+			$val = $EM_Event->get_bookings()->get_booked_spaces();
 		}elseif( $col == 'pending_spaces'){
 			$val = $EM_Event->get_bookings()->get_pending_spaces();
 		} elseif ( $col === 'event_datetimes' ) {
@@ -129,7 +151,9 @@ class Events_Bookings extends List_Table {
 		$id = esc_attr($this->id);
 		?>
 		<div class="alignleft actions filters em-list-table-filters <?php echo $id; ?>-filters <?php if ( !static::$show_filters ) echo 'hidden'; ?>">
-			<input name="em_search" type="text" class="inline <?php echo $id; ?>-filter" placeholder="<?php esc_attr_e('Search bookings', 'events-manager'); ?> ..." value="<?php echo esc_attr($this->filters['search']);?>">
+			<?php if ( empty($this->filters['event']) ): ?>
+			<input name="em_search" type="text" class="inline <?php echo $id; ?>-filter" placeholder="<?php echo esc_attr( sprintf( __('Search %s', 'events-manager'), __('Events', 'events-manager') ) ); ?> ..." value="<?php echo esc_attr($this->filters['search']);?>">
+			<?php endif; ?>
 			<select name="scope" class="<?php echo $id; ?>-filter">
 				<?php
 					foreach ( em_get_scopes() as $key => $value ) {
@@ -142,6 +166,9 @@ class Events_Bookings extends List_Table {
 			</select>
 			<?php do_action('em_events_bookings_table_output_table_filters', $this); ?>
 			<input name="pno" type="hidden" value="1">
+			<?php if ( $this->filters['event'] ) : ?>
+			<input name="event_id" type="hidden" value="<?php echo esc_attr($this->filters['event']) ?>">
+			<?php endif; ?>
 			<input id="post-query-submit" class="button-secondary" type="submit" value="<?php esc_attr_e( 'Filter' ); ?>">
 		</div>
 		<?php parent::extra_tablenav( $which ); ?>

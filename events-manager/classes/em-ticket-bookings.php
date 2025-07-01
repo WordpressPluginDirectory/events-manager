@@ -170,20 +170,22 @@ class EM_Ticket_Bookings extends EM_Tickets_Bookings {
 	
 	/**
 	 * Get specific EM_Ticket_Booking properties we already know here, especially for code that assumes EM_Ticket_Booking still has more than one space and thinks this is an EM_Ticket_Booking object
-	 * @param $var
+	 *
+	 * @param $prop
+	 *
 	 * @return mixed|null
 	 */
-	public function __get( $var ){
-		if( $var === 'ticket_booking_price' ){
+	public function __get( $prop ){
+		if( $prop === 'ticket_booking_price' ){
 			$this->get_price();
-		}elseif ( $var === 'ticket_booking_spaces' ){
+		}elseif ( $prop === 'ticket_booking_spaces' ){
 			return $this->get_spaces();
-		} elseif ( $var === 'ticket_bookings') {
+		} elseif ( $prop === 'ticket_bookings') {
 			return $this->get_ticket_bookings();
-		} elseif ( $var === 'id' ){
+		} elseif ( $prop === 'id' ){
 			return $this->booking_id . '-' . $this->ticket_id;
 		}
-		return parent::__get( $var );
+		return parent::__get( $prop );
 	}
 	
 	public function __set( $prop, $value ) {

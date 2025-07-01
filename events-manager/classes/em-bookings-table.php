@@ -439,7 +439,7 @@ class EM_Bookings_Table extends EM\List_Table {
 		}elseif( !empty($EM_Ticket) && is_object($EM_Ticket) ){
 			return $EM_Ticket;
 		} elseif( !empty($_REQUEST['ticket_id']) ) {
-			$this->ticket_id = new EM_Ticket( $_REQUEST['ticket_id'] );
+			$this->ticket = EM_Ticket::get( $_REQUEST['ticket_id'] );
 			return $this->ticket;
 		}
 		return false;
@@ -505,7 +505,11 @@ class EM_Bookings_Table extends EM\List_Table {
 			$args = array( 'ticket_id' => $EM_Ticket->ticket_id );
 		}elseif( $EM_Event !== false ){
 			//bookings for an event
-			$args = array( 'event' => $EM_Event->event_id );
+			if ( $EM_Event->is_recurring() ) {
+				$args = array( 'recurring_event' => $EM_Event->event_id );
+			} else {
+				$args = array( 'event' => $EM_Event->event_id );
+			}
 			$args['owner'] = !current_user_can('manage_others_bookings') ? get_current_user_id() : false;
 		}else{
 			//all bookings for a status
@@ -1130,7 +1134,7 @@ class EM_Bookings_Table extends EM\List_Table {
 	 *
 	 * @return false|string
 	 */
-	public function get_attendees_multiple_col( $attendees_array, $col, $EM_Object ){
+	public function get_attendees_multiple_col( $attendees_array, $col, $EM_Object, $html = false ){
 		ob_start();
 		if( !in_array( $this->format, ['csv', 'xls', 'xlsx'] ) ){
 			if ( $EM_Object instanceof EM_Ticket_Bookings ) {
@@ -1163,7 +1167,11 @@ class EM_Bookings_Table extends EM\List_Table {
 								<?php
 									foreach ( $attendee_data['attendees'] as $attendee_num => $attendee_value ) {
 										echo '<dt>' . esc_html( sprintf( __('Attendee #%d', 'events-manager-pro'), $attendee_num + 1) ) . '</dt>';
-										echo '<dd>' . esc_html($attendee_value) . '</dd>';
+										if ( $html ) {
+											echo '<dd>' . $attendee_value . '</dd>';
+										} else {
+											echo '<dd>' . esc_html($attendee_value) . '</dd>';
+										}
 									}
 								?>
 							</dl>

@@ -1,8 +1,6 @@
 <?php
 /*
 This template is the main meat of the calendar, most of the heavy lifting is done here to show dates according to settings.
-
-2022-07 - It's recommended to avoid tweaking this file, as more work will inevitably be done in this part of the calendar logic for the coming months. Use CSS/JS or PHP Hooks whenever possible for the time being.
 */
 /* @var array       $args       The $args passed onto the calendar template via EM_Calendar  */
 /* @var array       $calendar   The $calendar array of data passed on by EM_Calendar         */
@@ -15,7 +13,7 @@ This template is the main meat of the calendar, most of the heavy lifting is don
 	// go through day cells
 	$events = $multiday_slots = $multiday_slots_freed = array();
 	foreach($calendar['cells'] as $date => $cell_data ){
-		$class = ( !empty($cell_data['events']) && count($cell_data['events']) > 0 ) ? 'eventful':'eventless';
+		$class = ( !empty($cell_data['events']) && count($cell_data['events']) > 0 ) ? 'eventful eventful':'eventless';
 		if(!empty($cell_data['type'])){
 			$class .= "-".$cell_data['type'];
 		}
@@ -25,7 +23,7 @@ This template is the main meat of the calendar, most of the heavy lifting is don
 		?>
 		<div class="<?php echo esc_attr($class); ?> em-cal-day em-cal-col-<?php echo $col_count; ?>">
 			<?php if( !empty($cell_data['events']) && count($cell_data['events']) > 0 ): ?>
-				<div class="em-cal-day-date colored" data-calendar-date="<?php echo $cell_data['date']; ?>">
+				<div class="em-cal-day-date colored" data-date="<?php echo esc_attr($date); ?>" data-timestamp="<?php echo esc_attr($cell_data['date']); ?>" >
 					<a href="<?php echo esc_url($cell_data['link']); ?>" title="<?php echo esc_attr($cell_data['link_title']); ?>"><?php echo esc_html(date('j',$cell_data['date'])); ?></a>
 					<?php if( $args['limit'] && $cell_data['events_count'] > $args['limit'] && get_option('dbem_display_calendar_events_limit_msg') != '' ): ?>
 						<div class="limited-icon size-small size-medium">+</div>
@@ -51,6 +49,8 @@ This template is the main meat of the calendar, most of the heavy lifting is don
 					$EM_Category = $EM_Event->get_categories()->get_first();
 					if( $EM_Category ) {
 						$colors[] = $EM_Category->get_color();
+					} else {
+						$colors[] = get_option('dbem_category_default_color');
 					}
 					// check multi-day events first
 					if( !empty($args['long_events']) && $EM_Event->event_start_date != $EM_Event->event_end_date ){

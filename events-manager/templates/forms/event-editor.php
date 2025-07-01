@@ -31,7 +31,7 @@ $id = rand(); // not related to searches, so we'll just add an ID for good pract
 			}
 		}
 	?>
-	<form enctype='multipart/form-data' id="event-form-<?php echo $id; ?>" class="<?php em_template_classes('event-editor'); ?> <?php if( $EM_Event->is_recurring() ) echo 'em-event-admin-recurring' ?>"
+	<form enctype='multipart/form-data' id="event-form-<?php echo $id; ?>" class="<?php em_template_classes('event-editor'); ?> <?php if( $EM_Event->is_recurring( true ) ) echo 'em-event-admin-recurring' ?>"
 	      method="post" action="<?php echo esc_url(add_query_arg(array('success'=>null, 'action'=>null))); ?>" data-view-id="<?php echo $id; ?>">
 		<?php do_action('em_front_event_form_header', $EM_Event); ?>
 		<section class="event-form-submitter <?php echo $template; ?>">
@@ -64,15 +64,14 @@ $id = rand(); // not related to searches, so we'll just add an ID for good pract
 		<section class="event-form-when  <?php echo $template; ?>">
 			<h3><?php esc_html_e( 'When', 'events-manager'); ?></h3>
 			<div class="input">
-			<?php
-				if( empty($EM_Event->event_id) && $EM_Event->can_manage('edit_recurring_events','edit_others_recurring_events') && get_option('dbem_recurrence_enabled') ){
-					em_locate_template('forms/event/when-with-recurring.php',true);
-				}elseif( $EM_Event->is_recurring()  ){
-					em_locate_template('forms/event/recurring-when.php',true);
-				}else{
-					em_locate_template('forms/event/when.php',true);
-				}
-			?>
+			<?php em_locate_template('forms/event/when.php',true); ?>
+			</div>
+		</section>
+
+		<section class="event-form-recurrences recurring-event-editor <?php echo $template; ?>">
+			<h4><?php esc_html_e( 'Recurrences', 'events-manager'); ?></h4>
+			<div class="input">
+				<?php em_locate_template('forms/event/when/recurring/recurrences.php',true); ?>
 			</div>
 		</section>
 

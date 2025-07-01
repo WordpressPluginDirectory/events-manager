@@ -178,7 +178,7 @@ function em_options_save(){
 	if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'cleanup_event_orphans' && check_admin_referer('em_cleanup_event_orphans_'.get_current_user_id().'_wpnonce') && em_wp_is_super_admin() ){
 		//Firstly, get all orphans
 		global $wpdb;
-		$sql = 'SELECT event_id FROM '.EM_EVENTS_TABLE.' WHERE post_id NOT IN (SELECT ID FROM ' .$wpdb->posts. ' WHERE post_type="'. EM_POST_TYPE_EVENT .'" OR post_type="event-recurring")';
+		$sql = 'SELECT event_id FROM '.EM_EVENTS_TABLE.' WHERE post_id > 0 AND post_id NOT IN (SELECT ID FROM ' .$wpdb->posts. ' WHERE post_type="'. EM_POST_TYPE_EVENT .'" OR post_type="event-recurring")';
 		if( EM_MS_GLOBAL ){
 			if( is_main_site() ){
 				$sql .= $wpdb->prepare(' AND (blog_id=%d or blog_id IS NULL)', get_current_blog_id());
@@ -267,6 +267,38 @@ function em_options_save(){
 		header('Content-Type: text/plain; charset=utf-8');
 		header('Content-Disposition: attachment; filename="events-manager-settings.txt"');
 		echo json_encode($options);
+		exit();
+	}
+
+	// convert ALL repeating events
+	if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'convert_repeating_to_recurrence' && check_admin_referer('convert_repeating_to_recurrence_'. get_current_user_id(), 'nonce') ){
+		// go through all the repeated events, remove the post, unset post_id and done!
+		global $wpdb;
+		$post_ids_subquery = 'SELECT post_id FROM '. EM_EVENTS_TABLE ." WHERE post_id IS NOT NULL AND event_type='recurrence'";
+		$post_deletion = $wpdb->query( 'DELETE FROM '. $wpdb->posts . ' WHERE ID IN (' . $post_ids_subquery . ')');
+		if ( $post_deletion !== false ) {
+			$meta_deletion = $wpdb->query( 'DELETE FROM ' . $wpdb->postmeta . ' WHERE post_id IN (' . $post_ids_subquery . ')' );
+			if ( $meta_deletion !== false ) {
+				$update_events = $wpdb->query( 'UPDATE ' . EM_EVENTS_TABLE . " SET post_id = NULL WHERE event_type = 'recurrence' AND post_id > 0" );
+				if ( $update_events !== false ) {
+					$wpdb->update( EM_EVENTS_TABLE, ['event_type' => 'recurring'], ['event_type' => 'repeating'] );
+					$wpdb->update( $wpdb->postmeta, ['meta_value' => 'recurring'], ['meta_key'=> '_event_type', 'meta_value' => 'repeating'] );
+					$wpdb->update( $wpdb->posts, ['post_type' => EM_POST_TYPE_EVENT], ['post_type' => 'event-recurring'] );
+					update_option('dbem_repeating_enabled', false);
+					update_option('dbem_recurrence_enabled', true);
+					$message = __('The repeating events have been converted into recurring events.', 'events-manager');
+					$EM_Notices->add_confirm( $message, true );
+					EM_Admin_Notices::remove('v7-reconvert-recurrences');
+				} else {
+					$EM_Notices->add_error( 'Deleted post data and meta, but could not update event.', true );
+				}
+			} else {
+				$EM_Notices->add_error( 'Could not delete post meta.', true );
+			}
+		} else {
+			$EM_Notices->add_error( 'Could not delete post data.', true );
+		}
+		wp_safe_redirect( em_wp_get_referer() );
 		exit();
 	}
 	
@@ -780,11 +812,11 @@ function em_admin_option_box_caps(){
 				),
 				sprintf(__('%s Capabilities','events-manager'),__('Recurring Event','events-manager')) => array(
 					/* Recurring Event Capabilties */
-					'publish_recurring_events' => sprintf(__('Users can publish %s and skip any admin approval','events-manager'),__('recurring events','events-manager')),
-					'delete_others_recurring_events' => sprintf(__('User can delete other users %s','events-manager'),__('recurring events','events-manager')),
-					'edit_others_recurring_events' => sprintf(__('User can edit other users %s','events-manager'),__('recurring events','events-manager')),
-					'delete_recurring_events' => sprintf(__('User can delete their own %s','events-manager'),__('recurring events','events-manager')),
-					'edit_recurring_events' => sprintf(__('User can create and edit %s','events-manager'),__('recurring events','events-manager'))						
+					'publish_recurring_events' => sprintf(__('Users can publish %s and skip any admin approval','events-manager'),__('repeating events','events-manager')),
+					'delete_others_recurring_events' => sprintf(__('User can delete other users %s','events-manager'),__('repeating events','events-manager')),
+					'edit_others_recurring_events' => sprintf(__('User can edit other users %s','events-manager'),__('repeating events','events-manager')),
+					'delete_recurring_events' => sprintf(__('User can delete their own %s','events-manager'),__('repeating events','events-manager')),
+					'edit_recurring_events' => sprintf(__('User can create and edit %s','events-manager'),__('repeating events','events-manager'))
 				),
 				sprintf(__('%s Capabilities','events-manager'),__('Location','events-manager')) => array(
 					/* Location Capabilities */
@@ -978,7 +1010,7 @@ function em_admin_option_box_uninstall(){
     			    <td>
     			    	<?php 
     			    		global $wpdb;
-    			    		$sql = 'SELECT count(*) FROM '.EM_EVENTS_TABLE.' WHERE post_id NOT IN (SELECT ID FROM ' .$wpdb->posts. ' WHERE post_type="'. EM_POST_TYPE_EVENT .'" OR post_type="event-recurring")';
+    			    		$sql = 'SELECT count(*) FROM '.EM_EVENTS_TABLE.' WHERE post_id > 0 AND post_id NOT IN (SELECT ID FROM ' .$wpdb->posts. ' WHERE post_type="'. EM_POST_TYPE_EVENT .'" OR post_type="event-recurring")';
     			    		if( EM_MS_GLOBAL ){
     			    			if( is_main_site() ){
     			    				$sql .= $wpdb->prepare(' AND (blog_id=%d or blog_id IS NULL)', get_current_blog_id());
@@ -1064,6 +1096,29 @@ function em_admin_option_box_uninstall(){
 					</script>
     		    </td></tr>
 			</table>
+
+			<?php if ( get_option('dbem_repeating_enabled') ) : ?>
+			<table class="form-table">
+				<tr class="em-header"><td colspan="2">
+						<h4><?php esc_html_e ( 'Convert and Deactivate Repeating Events', 'events-manager'); ?></h4>
+						<p><?php esc_html_e('Click the button below to mass-convert all your repeating events into recurring events.','events-manager'); ?></p>
+						<p>
+							<?php
+							$warning = esc_html__('This will delete all event recurrence posts/pages, and unify them into one URL. Any 404 pages resulting from these will automatically 302-redirect to the recurring event (which will be a new URL).', 'events-manager');
+							echo $warning;
+						?></p>
+						<p style="color:firebrick; font-weight: bold;"><?php esc_html_e('We strongly suggest you back up your database before proceding with this action, it cannot be undone otherwise!', 'events-manager'); ?></p>
+					</td></tr>
+				<tr><td colspan="2">
+						<?php
+						$convert_url = esc_url( add_query_arg( ['action' => 'convert_repeating_to_recurrence', 'nonce' => 'x'] ) );
+						$convert_nonce = wp_create_nonce('convert_repeating_to_recurrence_'. get_current_user_id());
+						EM\Scripts_and_Styles::add_js_var('convert_recurring_warning', __('Are you sure you want to convert all repeating events into recurring events?', 'events-manager') . "\n\n" . __('WARNING: This action cannot be undone.', 'events-manager') . "\n\n"  . $warning);
+						?>
+						<a href="<?php echo esc_url($convert_url); ?>" class="button-secondary em-convert-recurrence-link" data-nonce="<?php echo esc_attr($convert_nonce); ?>"><?php esc_html_e('Convert ALL Repeating Events', 'events-manager'); ?></a>
+					</td></tr>
+			</table>
+			<?php endif; ?>
 			
 			<table class="form-table">
     		    <tr class="em-header"><td colspan="2">

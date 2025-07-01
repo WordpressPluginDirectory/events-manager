@@ -100,12 +100,8 @@ class EM_ML_IO {
 		
 		$EM_Event->blog_id  = $event->blog_id ;
 		$EM_Event->group_id  = $event->group_id ;
-		$EM_Event->recurrence  = $event->recurrence ;
-		$EM_Event->recurrence_freq  = $event->recurrence_freq ;
-		$EM_Event->recurrence_byday  = $event->recurrence_byday ;
-		$EM_Event->recurrence_interval  = $event->recurrence_interval ;
-		$EM_Event->recurrence_byweekno  = $event->recurrence_byweekno ;
-		$EM_Event->recurrence_days  = $event->recurrence_days ;
+		$EM_Event->recurrence_sets  = $event->get_recurrence_sets() ;
+		$EM_Event->recurrence_set_id = $event->recurrence_set_id;
 		self::event_merge_original_attributes($EM_Event, $event);
     }
 	
@@ -251,9 +247,9 @@ class EM_ML_IO {
 		// save parent info about this event
 		if( !EM_ML::is_original( $EM_Event ) ){
 			$event = EM_ML::get_original( $EM_Event );
-			if( $EM_Event->is_recurring() ){
-				// make this a recurrence of the original language, even though this is a recurring event
-				$EM_Event->recurrence_id = $event->event_id;
+			if( $EM_Event->is_recurring( true ) ){
+				// give the translation the same recurrence_set_id to
+				$EM_Event->recurrence_set_id = $event->recurrence_set_id;
 			}
 			static::event_merge_original_meta( $EM_Event, $event );
 		}
@@ -323,33 +319,40 @@ class EM_ML_IO {
 		if( $result ){
 			$event = EM_ML::get_original_event($EM_Event);
 			$is_original = $event->event_id == $EM_Event->event_id;
-			if( $EM_Event->recurring_reschedule ){
+			// only for repeating events, recurrences don't need translating since they're on one page
+			if( $EM_Event->is_repeating() ){
 				// first, we obtain the original event, get all the recurrences, and match the timestamp of each translation with that post ID and set the recurrence. If there is no match (for no explicable reason), we delete the event.
 				if( !$is_original ){
 					// get original recurrences, sort them by timestamp
 					$events = $wpdb->get_results( $wpdb->prepare('SELECT event_start_date, event_start_time, post_id, event_id FROM '.EM_EVENTS_TABLE.' WHERE recurrence=0 AND recurrence_id=%d', $event->event_id), ARRAY_A );
 					$original_post_ids = $original_event_ids = array();
-					foreach( $events as $recurrence_event ){
-						$EM_DateTime = new EM_DateTime($recurrence_event['event_start_date'].' '.$recurrence_event['event_start_time'], $EM_Event->get_timezone());
-						$original_post_ids[$EM_DateTime->getTimestamp()] = absint($recurrence_event['post_id']);
-						$original_event_ids[$recurrence_event['post_id']] = $recurrence_event['event_id'];
-					}
-					// join the original post_ids with the new post_ids based on timestamp, delete any posts that have no identical times since we can't link the translation.
-					$attach_post_ids = array();
-					foreach( $post_ids as $ts => $post_id ){
-						if( !empty($original_post_ids[$ts]) ){
-							$attach_post_ids[$original_post_ids[$ts]] = $post_id;
-						}else{
-							// delete the event as there's no match
-							wp_delete_post($post_id);
+					foreach( $EM_Event->get_recurrence_sets()->get_recurrences() as $recurrence_event ){
+						$EM_DateTime = new EM_DateTime( $recurrence_event['start'], $EM_Event->get_timezone() );
+						if ( !empty($recurrence_event['post_id']) ) {
+							$original_post_ids[$recurrence_event['start']] = absint($recurrence_event['post_id']);
+							$original_event_ids[$recurrence_event['post_id']] = $recurrence_event['event_id'];
+						} else {
+							$original_event_ids[] = $recurrence_event['event_id'];
 						}
 					}
-					// attach the events
-					EM_ML::attach_translations( $EM_Event->event_language, $attach_post_ids, EM_POST_TYPE_EVENT, $EM_Event->blog_id );
-					// correct the wp_postmeta table which will have inherited the parent id of the recurring event
-					foreach( $attach_post_ids as $original_post_id => $post_id ){
-						update_post_meta( $post_id, '_event_parent', $original_event_ids[$original_post_id] );
-						update_post_meta( $post_id, '_event_translation', 1 );
+					// join the original post_ids with the new post_ids (assuming these are repeated recurrences) based on timestamp, delete any posts that have no identical times since we can't link the translation.
+					$attach_post_ids = array();
+					if ( $original_post_ids ) {
+						foreach( $post_ids as $ts => $post_id ){
+							if( !empty($original_post_ids[$ts]) ){
+								$attach_post_ids[$original_post_ids[$ts]] = $post_id;
+							}else{
+								// delete the event as there's no match
+								wp_delete_post($post_id);
+							}
+						}
+						// attach the events
+						EM_ML::attach_translations( $EM_Event->event_language, $attach_post_ids, EM_POST_TYPE_EVENT, $EM_Event->blog_id );
+						// correct the wp_postmeta table which will have inherited the parent id of the recurring event
+						foreach( $attach_post_ids as $original_post_id => $post_id ){
+							update_post_meta( $post_id, '_event_parent', $original_event_ids[$original_post_id] );
+							update_post_meta( $post_id, '_event_translation', 1 );
+						}
 					}
 				}else{
 					// firstly, we need to save the language of these events, since they were added directly, not via insert_post
@@ -367,9 +370,6 @@ class EM_ML_IO {
 					EM_ML_Search::$active = false; //just in case
 					$event = em_get_event( $event_id );
 					EM_ML_IO::event_merge_original_meta( $event, $EM_Event );
-					$event->recurring_reschedule = $EM_Event->recurring_reschedule;
-					$event->recurring_recreate_bookings = false; //specifically skip creation/recreation of tickets/booking-data for translations, as these are overriden by ML functions
-					$event->recurring_delete_bookings = false; //don't even try
 					$event->save_meta(); //this will save the current event and call this function again to pass through the top if clause
 				}
 				add_filter('em_event_get_bookings', 'EM_ML_Bookings::override_bookings',100,2);
@@ -412,7 +412,7 @@ class EM_ML_IO {
 		if( $result ){
 			$EM_Event = $EM_Tickets->get_event();
 			//if this is a recurring event, we should save all the ticket meta to the equivalent tickets belonging to the recurrences
-			if( $EM_Event instanceof EM_Event && $EM_Event->is_recurring() ){
+			if( $EM_Event instanceof EM_Event && $EM_Event->is_recurring( true ) ){
 				$EM_Event = EM_ML::get_original($EM_Event); //get original event recurrence, not the translation (even though the bookings object points to the same data) just in case
 				//we need to update ticket meta fields so they have translation data
 				foreach( $EM_Event->get_bookings()->get_tickets() as $EM_Ticket ){ /* @var EM_Ticket $EM_Ticket */

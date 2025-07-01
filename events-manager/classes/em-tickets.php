@@ -8,9 +8,9 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 	
 	/**
 	 * Array of EM_Ticket objects for a specific event
-	 * @var array
+	 * @var EM_Ticket[]
 	 */
-	var $tickets = array();
+	var $tickets = [];
 	/**
 	 * @var int
 	 */
@@ -25,12 +25,14 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 	 * @var EM_Event
 	 */
 	protected $event;
+	public $deleted_tickets = [];
 	
 	/**
 	 * Creates an EM_Tickets instance
-	 * @param mixed $event
+	 * @param mixed $object
+	 * @param bool $force_load  Loads tickets from database, skipping any caching or local loading
 	 */
-	function __construct( $object = false ){
+	function __construct( $object = false, $force_load = false ){
 		global $wpdb;
 		if( is_numeric($object) || $object instanceof EM_Event || $object instanceof EM_Booking ){
 			$this->event_id = (is_object($object)) ? $object->event_id:$object;
@@ -55,7 +57,7 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 		    }
 			$tickets = $wpdb->get_results($sql, ARRAY_A);
 			foreach ($tickets as $ticket){
-				$EM_Ticket = new EM_Ticket($ticket);
+				$EM_Ticket = $force_load ? new EM_Ticket($ticket) : EM_Ticket::get($ticket);
 				$EM_Ticket->event_id = $this->event_id;
 				$EM_Ticket->event = $this->event;
 				$this->tickets[$EM_Ticket->ticket_id] = $EM_Ticket;
@@ -67,7 +69,7 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 			    }
 			}else{
 				foreach($object as $ticket){
-					$EM_Ticket = new EM_Ticket($ticket);
+					$EM_Ticket = $force_load ? new EM_Ticket($ticket) : EM_Ticket::get($ticket);
 					$EM_Ticket->event_id = $this->event_id;
 					$EM_Ticket->event = $this->event;
 					$this->tickets[$EM_Ticket->ticket_id] = $EM_Ticket;				
@@ -179,6 +181,34 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 		}
 		return apply_filters('em_tickets_delete', ($result !== false), $ticket_ids, $this);
 	}
+
+	function detach() {
+		$results = [];
+		foreach ( $this->tickets as $EM_Ticket ) {
+			$results[] = $EM_Ticket->detach();
+		}
+		return !in_array(false, $results);
+	}
+
+	/**
+	 * If the associated event with these tickets is a recurrence, try and re-link tickets with parent tickets, based on name.
+	 * @return bool
+	 */
+	function attach() {
+		if ( $this->get_event()->is_recurrence() ) {
+			$results = [];
+			$EM_Tickets = $this->get_event()->get_recurring_event()->get_tickets();
+			foreach ( $this->tickets as $EM_Ticket ) {
+				foreach ( $EM_Tickets as $ticket ) {
+					if ( $ticket->name === $EM_Ticket->name ) {
+						// link the ticket to the ticket parent and remove redundant inherited data
+						$results[] = $EM_Ticket->attach( $ticket->ticket_id );
+					}
+				}
+			}
+		}
+		return isset($results) && !in_array(false, $results);
+	}
 	
 	/**
 	 * Retrieve multiple ticket info via POST
@@ -188,7 +218,7 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 		//Build Event Array
 		do_action('em_tickets_get_post_pre', $this);
 		$current_tickets = $this->tickets; //save previous tickets so things like ticket_meta doesn't get overwritten
-		$this->tickets = array(); //clean current tickets out
+		$this->tickets = []; //clean current tickets out
 		if( !empty($_POST['em_tickets']) && is_array($_POST['em_tickets']) ){
 			//get all ticket data and create objects
 			global $allowedposttags;
@@ -201,14 +231,19 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 			    		$EM_Ticket = new EM_Ticket();
 			    	}
 					$ticket_data['event_id'] = $this->event_id;
-					$EM_Ticket->get_post($ticket_data);
-					$EM_Ticket->ticket_order = $order;
-					if( $EM_Ticket->ticket_id ){
-						$this->tickets[$EM_Ticket->ticket_id] = $EM_Ticket;
-					}else{
-						$this->tickets[] = $EM_Ticket;
-					}
-				    $order++;
+					// check if a ticket is to be deleted
+				    if ( $EM_Ticket->ticket_id && !empty($ticket_data['delete']) && wp_verify_nonce( $ticket_data['delete'], 'delete_ticket_'.$EM_Ticket->ticket_id ) ) {
+					    $this->deleted_tickets[ $EM_Ticket->ticket_id ] = $EM_Ticket;
+				    } else {
+					    $EM_Ticket->get_post($ticket_data);
+					    $EM_Ticket->ticket_order = $order;
+					    if( $EM_Ticket->ticket_id ){
+						    $this->tickets[ $EM_Ticket->ticket_id ] = $EM_Ticket;
+					    }else{
+						    $this->tickets[ $EM_Ticket->ticket_uuid ] = $EM_Ticket;
+					    }
+					    $order++;
+				    }
 			    }
 			}
 		}else{
@@ -236,19 +271,27 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 	}
 	
 	/**
-	 * Save tickets into DB 
+	 * Save tickets into DB, deletes any tickets set to be deleted
 	 */
-	function save(){
+	function save() {
 		$result = true;
-		foreach( $this->tickets as $EM_Ticket ){
-			/* @var $EM_Ticket EM_Ticket */
+		// save tickets
+		foreach ( $this->tickets as $EM_Ticket ) {
 			$EM_Ticket->event_id = $this->event_id; //pass on saved event_data
-			if( !$EM_Ticket->save() ){
+			if ( !$EM_Ticket->save() ) {
 				$result = false;
-				$this->add_error($EM_Ticket->get_errors());
+				$this->add_error( $EM_Ticket->get_errors() );
 			}
 		}
-		return apply_filters('em_tickets_save', $result, $this);
+		// delete tickets
+		foreach ( $this->deleted_tickets as $EM_Ticket ) {
+			if ( !$EM_Ticket->delete() ) {
+				$result = false;
+				$this->add_error( $EM_Ticket->get_errors() );
+			}
+		}
+
+		return apply_filters( 'em_tickets_save', $result, $this );
 	}
 	
 	/**

@@ -43,7 +43,7 @@ function bp_em_my_events_content() {
 function bp_em_my_events_editor_title() {
 	global $EM_Event;
 	if( is_object($EM_Event) ){
-		if($EM_Event->is_recurring()){
+		if($EM_Event->is_recurring( true )){
 			echo __( "Reschedule Events", 'events-manager')." '{$EM_Event->event_name}'";
 		}else{
 			echo __( "Edit Event", 'events-manager') . " '" . $EM_Event->event_name . "'";

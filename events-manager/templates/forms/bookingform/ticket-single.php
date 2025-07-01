@@ -22,15 +22,15 @@ global $allowedposttags;
 			//output collumn by type, or call a custom action
 			switch($type){
 				case 'type':
-					if(!empty($EM_Ticket->ticket_description)){ //show description if there is one
-						?><p class="ticket-desc"><?php echo wp_kses($EM_Ticket->ticket_description,$allowedposttags); ?></p><?php
+					if(!empty($EM_Ticket->description)){ //show description if there is one
+						?><p class="ticket-desc"><?php echo wp_kses($EM_Ticket->description,$allowedposttags); ?></p><?php
 					}
 					break;
 				case 'price':
 					?><p class="ticket-price"><label><?php echo $name; ?></label><strong><?php echo $EM_Ticket->get_price(true); ?></strong></p><?php
 					break;
 				case 'spaces':
-					if( $EM_Ticket->get_available_spaces() > 1 && ( empty($EM_Ticket->ticket_max) || $EM_Ticket->ticket_max > 1 ) ): //more than one space available ?>
+					if( $EM_Ticket->get_available_spaces() > 1 && ( empty($EM_Ticket->max) || $EM_Ticket->max > 1 ) ): //more than one space available ?>
 						<p class="em-tickets-spaces">
 							<label for='em-ticket-spaces-<?php echo $EM_Ticket->ticket_id ?>'><?php echo $name; ?></label>
 							<?php

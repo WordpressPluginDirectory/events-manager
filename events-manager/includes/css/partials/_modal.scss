@@ -146,6 +146,9 @@
 			margin: 0;
 			padding: 20px 15px;
 			overflow-y: auto !important;
+			&.no-overflow {
+				overflow-y: visible !important;
+			}
 
 			&.has-image {
 				display: grid;

@@ -13,15 +13,10 @@ jQuery(document).ready( function($){
 	}
 	$('#em-wrapper').addClass('em');
 
-
-	var load_ui_css = false; //load jquery ui css?
-	/* Time Entry */
+	/* Time Entry - legacy @deprecated */
 	$('#start-time').each(function(i, el){
 		$(el).addClass('em-time-input em-time-start').next('#end-time').addClass('em-time-input em-time-end').parent().addClass('em-time-range');
 	});
-	if( $(".em-time-input").length > 0 ){
-		em_setup_timepicker('body');
-	}
 
 	/*
 	 * ADMIN AREA AND PUBLIC FORMS (Still polishing this section up, note that form ids and classes may change accordingly)
@@ -41,284 +36,6 @@ jQuery(document).ready( function($){
 			el.closest('.event-form-image, .location-form-image').find('#event-image-img, #location-image-img').show();
 		}
 	});
-	//Event Editor
-	//Recurrence Date Patterns
-	$('.event-form-with-recurrence').each( function(){
-		let recurring_form = $(this);
-		recurring_form.on('change', '.em-recurrence-checkbox', function(){
-			if( this.checked ){
-				recurring_form.find('.em-recurring-text').each( function(){
-					this.style.removeProperty('display');
-				});
-				recurring_form.find('.em-event-text').each( function(){
-					this.style.setProperty('display', 'none', 'important');
-				});
-			}else{
-				recurring_form.find('.em-recurring-text').each( function(){
-					this.style.setProperty('display', 'none', 'important');
-				});
-				recurring_form.find('.em-event-text').each( function(){
-					this.style.removeProperty('display');
-				});
-			}
-		});
-	});
-	$('.event-form-with-recurrence .em-recurrence-checkbox').trigger('change');
-	//Recurrence Warnings
-	$('#event-form.em-event-admin-recurring').on('submit', function(event){
-		var form = $(this);
-		if( form.find('input[name="event_reschedule"]').first().val() == 1 ){
-			var warning_text = EM.event_reschedule_warning;
-		}else if( form.find('input[name="event_recreate_tickets"]').first().val() == 1 ){
-			var warning_text = EM.event_recurrence_bookings;
-		}else{
-			var warning_text = EM.event_recurrence_overwrite;
-		}
-		confirmation = confirm(warning_text);
-		if( confirmation == false ){
-			event.preventDefault();
-		}
-	});
-	//Buttons for recurrence warnings within event editor forms
-	$('.em-reschedule-trigger').on('click', function(e){
-		e.preventDefault();
-		var trigger = $(this);
-		trigger.closest('.em-recurrence-reschedule').find(trigger.data('target')).removeClass('reschedule-hidden');
-		trigger.siblings('.em-reschedule-value').val(1);
-		trigger.addClass('reschedule-hidden').siblings('a').removeClass('reschedule-hidden');
-	});
-	$('.em-reschedule-cancel').on('click', function(e){
-		e.preventDefault();
-		var trigger = $(this);
-		trigger.closest('.em-recurrence-reschedule').find(trigger.data('target')).addClass('reschedule-hidden');
-		trigger.siblings('.em-reschedule-value').val(0);
-		trigger.addClass('reschedule-hidden').siblings('a').removeClass('reschedule-hidden');
-	});
-	// Event Status
-	$('select[name="event_active_status"]').on('change', function(event){
-		var selected = $(this);
-		if( selected.val() == '0' ){
-			var warning_text = EM.event_cancellations.warning.replace(/\\n/g, '\n');
-			confirmation = confirm(warning_text);
-			if( confirmation == false ){
-				event.preventDefault();
-			}
-		}
-	});
-	//Tickets & Bookings
-	if( $("#em-tickets-form").length > 0 ){
-		//Enable/Disable Bookings
-		$('#event-rsvp').on('click', function(event){
-			if( !this.checked ){
-				confirmation = confirm(EM.disable_bookings_warning);
-				if( confirmation == false ){
-					event.preventDefault();
-				}else{
-					$('#event-rsvp-options').hide();
-				}
-			}else{
-				$('#event-rsvp-options').fadeIn();
-			}
-		});
-		if($('input#event-rsvp').is(":checked")) {
-			$("div#rsvp-data").fadeIn();
-		} else {
-			$("div#rsvp-data").hide();
-		}
-		//Ticket(s) UI
-		var reset_ticket_forms = function(){
-			$('#em-tickets-form table tbody tr.em-tickets-row').show();
-			$('#em-tickets-form table tbody tr.em-tickets-row-form').hide();
-		};
-		//recurrences and cut-off logic for ticket availability
-		if( $('#em-recurrence-checkbox').length > 0 ){
-			$('#em-recurrence-checkbox').on('change', function(){
-				if( $('#em-recurrence-checkbox').is(':checked') ){
-					$('#em-tickets-form .ticket-dates-from-recurring, #em-tickets-form .ticket-dates-to-recurring, #event-rsvp-options .em-booking-date-recurring').show();
-					$('#em-tickets-form .ticket-dates-from-normal, #em-tickets-form .ticket-dates-to-normal, #event-rsvp-options .em-booking-date-normal, #em-tickets-form .hidden').hide();
-				}else{
-					$('#em-tickets-form .ticket-dates-from-normal, #em-tickets-form .ticket-dates-to-normal, #event-rsvp-options .em-booking-date-normal').show();
-					$('#em-tickets-form .ticket-dates-from-recurring, #em-tickets-form .ticket-dates-to-recurring, #event-rsvp-options .em-booking-date-recurring, #em-tickets-form .hidden').hide();
-				}
-			}).trigger('change');
-		}else if( $('#em-form-recurrence').length > 0 ){
-			$('#em-tickets-form .ticket-dates-from-recurring, #em-tickets-form .ticket-dates-to-recurring, #event-rsvp-options .em-booking-date-recurring').show();
-			$('#em-tickets-form .ticket-dates-from-normal, #em-tickets-form .ticket-dates-to-normal, #event-rsvp-options .em-booking-date-normal, #em-tickets-form .hidden').hide();
-		}else{
-			$('#em-tickets-form .ticket-dates-from-recurring, #em-tickets-form .ticket-dates-to-recurring, #event-rsvp-options .em-booking-date-recurring, #em-tickets-form .hidden').hide();
-		}
-		//Add a new ticket
-		$("#em-tickets-add").on('click', function(e){
-			e.preventDefault();
-			reset_ticket_forms();
-			//create copy of template slot, insert so ready for population
-			var tickets = $('#em-tickets-form table tbody');
-			tickets.first('.em-ticket-template').find('input.em-date-input.flatpickr-input').each(function(){
-				if( '_flatpickr' in this ){
-					this._flatpickr.destroy();
-				}
-			}); //clear all datepickers, should be done first time only, next times it'd be ignored
-			var rowNo = tickets.length+1;
-			var slot = tickets.first('.em-ticket-template').clone(true).attr('id','em-ticket-'+ rowNo).removeClass('em-ticket-template').addClass('em-ticket').appendTo($('#em-tickets-form table'));
-			//change the index of the form element names
-			slot.find('*[name]').each( function(index,el){
-				el = $(el);
-				el.attr('name', el.attr('name').replace('em_tickets[0]','em_tickets['+rowNo+']'));
-			});
-			// sort out until datepicker ids
-			let start_datepicker = slot.find('.ticket-dates-from-normal').first();
-			if( start_datepicker.attr('data-until-id') ){
-				let until_id = start_datepicker.attr('data-until-id').replace('-0', '-'+ rowNo);
-				start_datepicker.attr('data-until-id', until_id);
-				slot.find('.ticket-dates-to-normal').attr('id', start_datepicker.attr('data-until-id'));
-
-			}
-			//show ticket and switch to editor
-			slot.show().find('.ticket-actions-edit').trigger('click');
-			//refresh datepicker and values
-			slot.find('.em-time-input').off().each(function(index, el){
-				if( typeof this.em_timepickerObj == 'object' ){
-					this.em_timepicker('remove');
-				}
-			}); //clear all em_timepickers - consequently, also other click/blur/change events, recreate the further down
-			em_setup_ui_elements(slot);
-			$('html, body').animate({ scrollTop: slot.offset().top - 30 }); //sends user to form
-			check_ticket_sortability();
-		});
-		//Edit a Ticket
-		$(document).on('click', '.ticket-actions-edit', function(e){
-			e.preventDefault();
-			reset_ticket_forms();
-			var tbody = $(this).closest('tbody');
-			tbody.find('tr.em-tickets-row').hide();
-			tbody.find('tr.em-tickets-row-form').fadeIn();
-			return false;
-		});
-		$(document).on('click', '.ticket-actions-edited', function(e){
-			e.preventDefault();
-			var tbody = $(this).closest('tbody');
-			var rowNo = tbody.attr('id').replace('em-ticket-','');
-			tbody.find('.em-tickets-row').fadeIn();
-			tbody.find('.em-tickets-row-form').hide();
-			tbody.find('*[name]').each(function(index,el){
-				el = $(el);
-				if( el.attr('name') == 'ticket_start_pub'){
-					tbody.find('span.ticket_start').text(el.val());
-				}else if( el.attr('name') == 'ticket_end_pub' ){
-					tbody.find('span.ticket_end').text(el.val());
-				}else if( el.attr('name') == 'em_tickets['+rowNo+'][ticket_type]' ){
-					if( el.find(':selected').val() == 'members' ){
-						tbody.find('span.ticket_name').prepend('* ');
-					}
-				}else if( el.attr('name') == 'em_tickets['+rowNo+'][ticket_start_recurring_days]' ){
-					var text = tbody.find('select.ticket-dates-from-recurring-when').val() == 'before' ? '-'+el.val():el.val();
-					if( el.val() != '' ){
-						tbody.find('span.ticket_start_recurring_days').text(text);
-						tbody.find('span.ticket_start_recurring_days_text, span.ticket_start_time').removeClass('hidden').show();
-					}else{
-						tbody.find('span.ticket_start_recurring_days').text(' - ');
-						tbody.find('span.ticket_start_recurring_days_text, span.ticket_start_time').removeClass('hidden').hide();
-					}
-				}else if( el.attr('name') == 'em_tickets['+rowNo+'][ticket_end_recurring_days]' ){
-					var text = tbody.find('select.ticket-dates-to-recurring-when').val() == 'before' ? '-'+el.val():el.val();
-					if( el.val() != '' ){
-						tbody.find('span.ticket_end_recurring_days').text(text);
-						tbody.find('span.ticket_end_recurring_days_text, span.ticket_end_time').removeClass('hidden').show();
-					}else{
-						tbody.find('span.ticket_end_recurring_days').text(' - ');
-						tbody.find('span.ticket_end_recurring_days_text, span.ticket_end_time').removeClass('hidden').hide();
-					}
-				}else{
-					var classname = el.attr('name').replace('em_tickets['+rowNo+'][','').replace(']','').replace('[]','');
-					tbody.find('.em-tickets-row .'+classname).text(el.val());
-				}
-			});
-			//allow for others to hook into this
-			$(document).triggerHandler('em_maps_tickets_edit', [tbody, rowNo, true]);
-			$('html, body').animate({ scrollTop: tbody.parent().offset().top - 30 }); //sends user back to top of form
-			return false;
-		});
-		$(document).on('change', '.em-ticket-form select.ticket_type', function(e){
-			//check if ticket is for all users or members, if members, show roles to limit the ticket to
-			var el = $(this);
-			if( el.find('option:selected').val() == 'members' ){
-				el.closest('.em-ticket-form').find('.ticket-roles').fadeIn();
-			}else{
-				el.closest('.em-ticket-form').find('.ticket-roles').hide();
-			}
-		});
-		$(document).on('click', '.em-ticket-form .ticket-options-advanced', function(e){
-			//show or hide advanced tickets, hidden by default
-			e.preventDefault();
-			var el = $(this);
-			if( el.hasClass('show') ){
-				el.closest('.em-ticket-form').find('.em-ticket-form-advanced').fadeIn();
-				el.find('.show,.show-advanced').hide();
-				el.find('.hide,.hide-advanced').show();
-			}else{
-				el.closest('.em-ticket-form').find('.em-ticket-form-advanced').hide();
-				el.find('.show,.show-advanced').show();
-				el.find('.hide,.hide-advanced').hide();
-			}
-			el.toggleClass('show');
-		});
-		$('.em-ticket-form').each( function(){
-			//check whether to show advanced options or not by default for each ticket
-			var show_advanced = false;
-			var el = $(this);
-			el.find('.em-ticket-form-advanced input[type="text"]').each(function(){ if(this.value != '') show_advanced = true; });
-			if( el.find('.em-ticket-form-advanced input[type="checkbox"]:checked').length > 0 ){ show_advanced = true; }
-			el.find('.em-ticket-form-advanced option:selected').each(function(){ if(this.value != '') show_advanced = true; });
-			if( show_advanced ) el.find('.ticket-options-advanced').trigger('click');
-		});
-		//Delete a ticket
-		$(document).on('click', '.ticket-actions-delete', function(e){
-			e.preventDefault();
-			var el = $(this);
-			var tbody = el.closest('tbody');
-			if( tbody.find('input.ticket_id').val() > 0 ){
-				//only will happen if no bookings made
-				el.text('Deleting...');
-				$.getJSON( $(this).attr('href'), {'em_ajax_action':'delete_ticket', 'id':tbody.find('input.ticket_id').val()}, function(data){
-					if(data.result){
-						tbody.remove();
-					}else{
-						el.text('Delete');
-						alert(data.error);
-					}
-				});
-			}else{
-				//not saved to db yet, so just remove
-				tbody.remove();
-			}
-			check_ticket_sortability();
-			return false;
-		});
-		//Sort Tickets
-		$('#em-tickets-form.em-tickets-sortable table').sortable({
-			items: '> tbody',
-			placeholder: "em-ticket-sortable-placeholder",
-			handle:'.ticket-status',
-			helper: function( event, el ){
-				var helper = $(el).clone().addClass('em-ticket-sortable-helper');
-				var tds = helper.find('.em-tickets-row td').length;
-				helper.children().remove();
-				helper.append('<tr class="em-tickets-row"><td colspan="'+tds+'" style="text-align:left; padding-left:15px;"><span class="dashicons dashicons-tickets-alt"></span></td></tr>');
-				return helper;
-			},
-		});
-		var check_ticket_sortability = function(){
-			var em_tickets = $('#em-tickets-form table tbody.em-ticket');
-			if( em_tickets.length == 1 ){
-				em_tickets.find('.ticket-status').addClass('single');
-				$('#em-tickets-form.em-tickets-sortable table').sortable( "option", "disabled", true );
-			}else{
-				em_tickets.find('.ticket-status').removeClass('single');
-				$('#em-tickets-form.em-tickets-sortable table').sortable( "option", "disabled", false );
-			}
-		};
-		check_ticket_sortability();
-	}
 
 	//Manual Booking
 	$(document).on('click', 'a.em-booking-button', function(e){
@@ -434,9 +151,9 @@ jQuery(document).ready( function($){
 	});
 
 	//Datepicker - legacy
+	var load_ui_css; //load jquery ui css?
 	if( $('.em-date-single, .em-date-range, #em-date-start').length > 0 ){
 		load_ui_css = true;
-		em_setup_datepicker('body');
 	}
 	if( load_ui_css ) em_load_jquery_css();
 
@@ -450,27 +167,6 @@ jQuery(document).ready( function($){
 			$('input.select-all').prop('checked', false);
 		}
 	});
-
-
-	// recurrence stuff
-	// recurrency descriptor
-	function updateIntervalDescriptor () {
-		$(".interval-desc").hide();
-		var number = "-plural";
-		if ($('input.em-recurrence-interval').val() == 1 || $('input.em-recurrence-interval').val() == "") number = "-singular";
-		var descriptor = "span.interval-desc.interval-"+$("select.em-recurrence-frequency").val()+number;
-		$(descriptor).show();
-	}
-	function updateIntervalSelectors () {
-		$('.alternate-selector').hide();
-		$('.em-'+ $('select.em-recurrence-frequency').val() + "-selector").show();
-	}
-	// recurrency elements
-	updateIntervalDescriptor();
-	updateIntervalSelectors();
-	$('input.em-recurrence-interval').on('keyup', updateIntervalDescriptor);
-	$('select.em-recurrence-frequency').on('change', updateIntervalDescriptor);
-	$('select.em-recurrence-frequency').on('change', updateIntervalSelectors);
 
 	/* Load any maps */
 	if( $('.em-location-map').length > 0 || $('.em-locations-map').length > 0 || $('#em-map').length > 0 || $('.em-search-geo').length > 0 ){
@@ -500,7 +196,7 @@ jQuery(document).ready( function($){
 
 	//Finally, add autocomplete here
 	if( jQuery( 'div.em-location-data [name="location_name"]' ).length > 0 ){
-		$('div.em-location-data [name="location_name"]').selectize({
+		$('div.em-location-data [name="location_name"]').em_selectize({
 			plugins: ["restore_on_backspace"],
 			valueField: "id",
 			labelField: "label",
@@ -656,12 +352,27 @@ function em_setup_ui_elements ( $container ) {
 		em_setup_datepicker( container );
 	}
 	if( container.querySelector(".em-time-input") ){
-		em_setup_timepicker( $container );
+		em_setup_timepicker( container );
 	}
 	// Phone numbers
 	em_setup_phone_inputs( container );
 	// let other things hook in
 	document.dispatchEvent( new CustomEvent( 'em_setup_ui_elements', { detail: { container : container } } ) );
+}
+
+/**
+ * Unsetup containers with UI elements, primarily useful if intending on duplicating an element which would require re-setup.
+ * @param $container
+ */
+function em_unsetup_ui_elements( $container ) {
+	let container = $container instanceof jQuery ? $container[0] : $container;
+	em_unsetup_selectize( container );
+	em_unsetup_tippy( container );
+	em_unsetup_datepicker( container );
+	em_unsetup_timepicker( container );
+	em_unsetup_phone_inputs( container );
+	// let other things hook in
+	document.dispatchEvent( new CustomEvent( 'em_unsetup_ui_elements', { detail: { container : container } } ) );
 }
 
 /* Local JS Timezone related placeholders */
@@ -754,18 +465,18 @@ var em_ajaxify = function(url){
 };
 
 // load externals after DOM load, supplied by EM.assets, only if selector matches
-document.addEventListener('DOMContentLoaded', function(){
+var em_setup_scripts = function( $container = false ) {
+	let container = $container || document;
 	if( EM && 'assets' in EM ) {
 		let baseURL = EM.url + '/includes/external/';
 		for ( const [selector, assets] of Object.entries(EM.assets) ) {
 			// load scripts if one element exists for selector
-			let els = document.querySelector('.em ' + selector);
-			if (els) {
+			if ( container.querySelector(selector) ) {
 				if ('css' in assets) {
 					// Iterate through assets.css object and add stylesheet to head
 					for (const [id, value] of Object.entries(assets.css)) {
 						// Check if the stylesheet with the given ID already exists
-						if (!document.getElementById(id)) {
+						if (!document.getElementById( id + '-css' )) {
 							// Create a new link element for the stylesheet
 							const link = document.createElement('link');
 							link.id = id + '-css';
@@ -778,18 +489,43 @@ document.addEventListener('DOMContentLoaded', function(){
 					}
 				}
 				if ('js' in assets) {
+					// add a tracking of all assets to load, and execute loaded hooks after all assets are loaded and in order of dependence
+					let loaded = {};
+					let loadedListener = function( id ) {
+						loaded[id] = false;
+						if ( Object.entries( loaded ).length === Object.entries( assets.js ).length ) {
+							// all items for this asset loaded, so we go through all the entries and fire their events
+							for ( id of Object.keys( loaded ) ) {
+								loadAsset( id )
+							}
+						}
+					};
+					let loadAsset = function( id ) {
+						if ( !loaded[id] ) {
+							let asset = assets.js[id];
+							if ( typeof asset === 'object' && 'event' in asset ) {
+								if ( asset?.requires) {
+									loadAsset( asset.requires );
+								}
+								document.dispatchEvent( new CustomEvent( asset.event, {
+									detail: {
+										container: container,
+									}
+								} ) );
+							}
+							loaded[id] = true;
+						}
+					};
 					// Iterate through assets.js object and add script to head
-					for (const [id, value] of Object.entries(assets.js)) {
+					for ( const [ id, value ] of Object.entries(assets.js)) {
 						// Check if the script with the given ID already exists
-						if (!document.getElementById(id)) {
+						if ( !document.getElementById( id + '-js' ) ) {
 							// Create a new script element for the JavaScript file
 							const script = document.createElement('script');
 							script.id = id + '-js';
 							script.async = true;
 							if ( typeof value === 'object' ) {
-								if( 'event' in value ) {
-									script.onload = function() { document.dispatchEvent( new CustomEvent(value.event) ) };
-								}
+								// add locale data
 								if ( 'locale' in value && value.locale ) {
 									script.dataset.locale = value.locale;
 								}
@@ -797,7 +533,9 @@ document.addEventListener('DOMContentLoaded', function(){
 							} else {
 								script.src = value.match(/^http/g) ? value : baseURL + value;
 							}
-
+							// listen for loads so we execute the real onload hooks once all files are loaded (or errorred out)
+							script.onload = () => loadedListener(id);
+							script.onerror = () => loadedListener(id);
 							// Append the script to the document head
 							document.head.appendChild(script);
 						}
@@ -806,4 +544,5 @@ document.addEventListener('DOMContentLoaded', function(){
 			}
 		}
 	}
-});
+}
+document.addEventListener('DOMContentLoaded', () => em_setup_scripts( document ));

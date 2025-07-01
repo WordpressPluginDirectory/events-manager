@@ -196,8 +196,7 @@
   width: calc(100% - 2em) !important;
   /* hide visually */
   opacity: 0 !important;
-  font-size: 0 !important;
-  /* removes text cursor in Internet Explorer 11 */
+  font-size: 0 !important; /* removes text cursor in Internet Explorer 11 */
 }
 .em .input .em-input-upload .filepond--data, .em.pixelbones .em-input-upload.input .filepond--data, .em-input-upload .filepond--data {
   position: absolute !important;
@@ -264,8 +263,7 @@
 .em .input .em-input-upload .filepond--drop-label.filepond--drop-label label, .em.pixelbones .em-input-upload.input .filepond--drop-label.filepond--drop-label label, .em-input-upload .filepond--drop-label.filepond--drop-label label {
   display: block !important;
   margin: 0 !important;
-  padding: 0.5em;
-  /* use padding instead of margin so click area is not impacted */
+  padding: 0.5em; /* use padding instead of margin so click area is not impacted */
 }
 .em .input .em-input-upload .filepond--drop-label label, .em.pixelbones .em-input-upload.input .filepond--drop-label label, .em-input-upload .filepond--drop-label label {
   cursor: default !important;
@@ -527,8 +525,7 @@
   right: 0.5625em !important;
 }
 .em .input .em-input-upload .filepond--file [data-align*=center], .em.pixelbones .em-input-upload.input .filepond--file [data-align*=center], .em-input-upload .filepond--file [data-align*=center] {
-  left: calc(50% - 0.8125em);
-  /* .8125 is half of button width */
+  left: calc(50% - 0.8125em); /* .8125 is half of button width */
 }
 .em .input .em-input-upload .filepond--file [data-align*=bottom], .em.pixelbones .em-input-upload.input .filepond--file [data-align*=bottom], .em-input-upload .filepond--file [data-align*=bottom] {
   bottom: 1.125em !important;
@@ -1064,8 +1061,7 @@
   width: 100% !important;
   height: 100% !important;
   vertical-align: top !important;
-  transform-box: fill-box;
-  /* should center the animation correctly when zoomed in */
+  transform-box: fill-box; /* should center the animation correctly when zoomed in */
 }
 .em .input .em-input-upload .filepond--progress-indicator path, .em.pixelbones .em-input-upload.input .filepond--progress-indicator path, .em-input-upload .filepond--progress-indicator path {
   fill: none !important;

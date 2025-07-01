@@ -211,20 +211,20 @@ class EM_Booking extends EM_Object{
 	}
 
 	
-	function __get( $var ){
+	function __get( $prop ){
 	    //get the modified or created date from the DB only if requested, and save to object
-	    if( $var == 'timestamp' ){
+	    if( $prop == 'timestamp' ){
 	    	if( $this->date() === false ) return 0;
 	    	return $this->date()->getTimestampWithOffset();
-	    }elseif( $var == 'language' ){
+	    }elseif( $prop == 'language' ){
 	    	if( !empty($this->booking_meta['lang']) ){
 	    		return $this->booking_meta['lang'];
 		    }
-	    }elseif( $var == 'person' ){
+	    }elseif( $prop == 'person' ){
 	    	return $this->get_person();
-	    }elseif( $var == 'date' ){
+	    }elseif( $prop == 'date' ){
 			return $this->date();
-	    }elseif( $var == 'uuid' ){
+	    }elseif( $prop == 'uuid' ){
 		    return $this->booking_uuid;
 	    }
 	    return null;

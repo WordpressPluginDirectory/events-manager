@@ -278,4 +278,20 @@ function em_user_action_links( $actions, $user ){
 	return $actions;
 }
 add_filter('user_row_actions','em_user_action_links',10,2);
+
+add_filter('em_admin_notice_v7-reconvert-recurrences_message', function(){
+	ob_start();
+	?>
+	It looks like you may have previously upgraded from Events Manager 6 and converted your repeating events into our new recurring events format in Events Manager 7
+	<p>We recommend running the conversion one more time due to some issues that may have prevented the full conversion in versions 7.0 - 7.0.2.</p>
+	<?php
+	$warning = esc_html__('This will delete all event recurrence posts/pages, and unify them into one URL. Any 404 pages resulting from these will automatically 302-redirect to the recurring event (which will be a new URL).', 'events-manager');
+	$convert_url = esc_url( add_query_arg( ['action' => 'convert_repeating_to_recurrence', 'nonce' => 'x'], EM_ADMIN_URL .'&page=events-manager-options' ) );
+	$convert_nonce = wp_create_nonce('convert_repeating_to_recurrence_'. get_current_user_id());
+	EM\Scripts_and_Styles::add_js_var('convert_recurring_warning', __('Are you sure you want to convert all repeating events into recurring events?', 'events-manager') . "\n\n" . __('WARNING: This action cannot be undone.', 'events-manager') . "\n\n"  . $warning);
+	?>
+	<p><a href="<?php echo esc_url($convert_url); ?>" class="button-secondary em-convert-recurrence-link" data-nonce="<?php echo esc_attr($convert_nonce); ?>"><?php esc_html_e('Convert ALL Repeating Events', 'events-manager'); ?></a></p>
+	<?php
+	return ob_get_clean();
+});
 ?>

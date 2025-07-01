@@ -1,5 +1,5 @@
 /* Selectize deselect function */
-Selectize.define('click2deselect', function(options) {
+EM_Selectize.define('click2deselect', function(options) {
 	var self = this;
 	var setup = self.setup;
 	this.setup = function() {

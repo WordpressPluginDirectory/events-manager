@@ -19,35 +19,24 @@
   /* CSS Variables
   –––––––––––––––––––––––––––––––––––––––––––––––––– */
   /* default theme: light background, dark text, blue accent */
-  --theme-hue: 0;
-  /* white */
-  --accent-hue: 220;
-  /* blue */
+  --theme-hue: 0; /* white */
+  --accent-hue: 220; /* blue */
   --accent-s: 86%;
   --accent-l: 57%;
-  --text-color-richer: hsl(var(--theme-hue), 0%, 5%);
-  /* #0d0d0d		*/
-  --text-color-normal: hsl(var(--theme-hue), 0%, 13%);
-  /* #222222 		text color; button:hover:focus color */
-  --text-color-softer: hsl(var(--theme-hue), 0%, 33%);
-  /* #555555 		button color; button:hover border */
-  --accent-color: hsl(var(--accent-hue), var(--accent-s), var(--accent-l));
-  /* #33C3F0 		link; button-primary bg+border; textarea,select:focus border */
-  --accent-color-hover: hsl(var(--accent-hue), calc(var(--accent-s) - 10%), calc(var(--accent-l) - 8%));
-  /* #1EAEDB 		link hover; button-primary:hover:focus bg+border */
-  --border-color: hsl(var(--theme-hue), 0%, 73%);
-  /* #bbbbbb		button border */
-  --border-color-softer: hsl(var(--theme-hue), 0%, 82%);
-  /* #d1d1d1		textarea,select,code,td,hr border	 */
-  --background-color: transparent;
-  /* transparent body background; textarea,select background */
+  --text-color-richer: hsl(var(--theme-hue), 0%, 5%); /* #0d0d0d		*/
+  --text-color-normal: hsl(var(--theme-hue), 0%, 13%); /* #222222 		text color; button:hover:focus color */
+  --text-color-softer: hsl(var(--theme-hue), 0%, 33%); /* #555555 		button color; button:hover border */
+  --accent-color: hsl(var(--accent-hue), var(--accent-s), var(--accent-l)); /* #33C3F0 		link; button-primary bg+border; textarea,select:focus border */
+  --accent-color-hover: hsl(var(--accent-hue), calc(var(--accent-s) - 10%), calc(var(--accent-l) - 8%)); /* #1EAEDB 		link hover; button-primary:hover:focus bg+border */
+  --border-color: hsl(var(--theme-hue), 0%, 73%); /* #bbbbbb		button border */
+  --border-color-softer: hsl(var(--theme-hue), 0%, 82%); /* #d1d1d1		textarea,select,code,td,hr border	 */
+  --background-color: transparent; /* transparent body background; textarea,select background */
   --background-color-softer: hsl(var(--theme-hue), 0%, 95%);
   --background-color-checkboxes: white;
   --background-color-inputs: white;
   --background-color-skeleton: #ededed;
   --background-color-skeleton-softer: hsl(var(--theme-hue), 0%, 95%);
-  --code-background: hsl(var(--theme-hue), 0%, 95%);
-  /* #f1f1f1 		code background*/
+  --code-background: hsl(var(--theme-hue), 0%, 95%); /* #f1f1f1 		code background*/
   --button-primary-color: white;
   --font-size: 16px;
   --line-height: 20px;
@@ -137,8 +126,7 @@
   /* Base Styles
   –––––––––––––––––––––––––––––––––––––––––––––––––– */
   scroll-behavior: smooth !important;
-  font-size: var(--font-size) !important;
-  /* changed from 15px in orig skeleton */
+  font-size: var(--font-size) !important; /* changed from 15px in orig skeleton */
   line-height: var(--line-height) !important;
   font-weight: var(--font-weight) !important;
   font-family: var(--font-family) !important;
@@ -188,10 +176,8 @@
   /* Larger than tablet */
 }
 .em.pixelbones .pixelbones {
-  line-height: 1.15;
-  /* 1 */
-  -webkit-text-size-adjust: 100%;
-  /* 2 */
+  line-height: 1.15; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
 }
 .em.pixelbones .pixelbones {
   margin: 0;
@@ -204,29 +190,21 @@
   margin: 0.67em 0;
 }
 .em.pixelbones hr {
-  box-sizing: content-box;
-  /* 1 */
-  height: 0;
-  /* 1 */
-  overflow: visible;
-  /* 2 */
+  box-sizing: content-box; /* 1 */
+  height: 0; /* 1 */
+  overflow: visible; /* 2 */
 }
 .em.pixelbones pre {
-  font-family: monospace, monospace;
-  /* 1 */
-  font-size: 1em;
-  /* 2 */
+  font-family: monospace, monospace; /* 1 */
+  font-size: 1em; /* 2 */
 }
 .em.pixelbones a {
   background-color: transparent;
 }
 .em.pixelbones abbr[title] {
-  border-bottom: none;
-  /* 1 */
-  text-decoration: underline;
-  /* 2 */
-  text-decoration: underline dotted;
-  /* 2 */
+  border-bottom: none; /* 1 */
+  text-decoration: underline; /* 2 */
+  text-decoration: underline dotted; /* 2 */
 }
 .em.pixelbones b,
 .em.pixelbones strong {
@@ -235,10 +213,8 @@
 .em.pixelbones code,
 .em.pixelbones kbd,
 .em.pixelbones samp {
-  font-family: monospace, monospace;
-  /* 1 */
-  font-size: 1em;
-  /* 2 */
+  font-family: monospace, monospace; /* 1 */
+  font-size: 1em; /* 2 */
 }
 .em.pixelbones small {
   font-size: 80%;
@@ -321,23 +297,17 @@
 .em.pixelbones .input select,
 .em.pixelbones .input textarea {
   display: inline-block;
-  font-family: inherit;
-  /* 1 */
-  font-size: 100%;
-  /* 1 */
-  line-height: 1.15;
-  /* 1 */
-  margin: 0;
-  /* 2 */
+  font-family: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  line-height: 1.15; /* 1 */
+  margin: 0; /* 2 */
 }
 .em.pixelbones .input button,
-.em.pixelbones .input input {
-  /* 1 */
+.em.pixelbones .input input { /* 1 */
   overflow: visible;
 }
 .em.pixelbones .input button,
-.em.pixelbones .input select {
-  /* 1 */
+.em.pixelbones .input select { /* 1 */
   text-transform: none;
 }
 .em.pixelbones .input button,
@@ -363,18 +333,12 @@
   padding: 0.35em 0.75em 0.625em;
 }
 .em.pixelbones .input legend {
-  box-sizing: border-box;
-  /* 1 */
-  color: inherit;
-  /* 2 */
-  display: table;
-  /* 1 */
-  max-width: 100%;
-  /* 1 */
-  padding: 0;
-  /* 3 */
-  white-space: normal;
-  /* 1 */
+  box-sizing: border-box; /* 1 */
+  color: inherit; /* 2 */
+  display: table; /* 1 */
+  max-width: 100%; /* 1 */
+  padding: 0; /* 3 */
+  white-space: normal; /* 1 */
 }
 .em.pixelbones .input progress {
   vertical-align: baseline;
@@ -384,29 +348,23 @@
 }
 .em.pixelbones .input [type=checkbox],
 .em.pixelbones .input [type=radio] {
-  box-sizing: border-box;
-  /* 1 */
-  padding: 0;
-  /* 2 */
+  box-sizing: border-box; /* 1 */
+  padding: 0; /* 2 */
 }
 .em.pixelbones .input [type=number]::-webkit-inner-spin-button,
 .em.pixelbones .input [type=number]::-webkit-outer-spin-button {
   height: auto;
 }
 .em.pixelbones .input [type=search] {
-  -webkit-appearance: textfield;
-  /* 1 */
-  outline-offset: -2px;
-  /* 2 */
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
 }
 .em.pixelbones .input [type=search]::-webkit-search-decoration {
   -webkit-appearance: none;
 }
 .em.pixelbones .input ::-webkit-file-upload-button {
-  -webkit-appearance: button;
-  /* 1 */
-  font: inherit;
-  /* 2 */
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
 }
 .em.pixelbones details {
   display: block;
@@ -531,8 +489,8 @@
 .em.pixelbones a :focus {
   background-color: transparent !important;
 }
-.em.pixelbones .button.input, .em.pixelbones button.input, .em.pixelbones input[type=submit].input, .em.pixelbones input[type=reset].input, .em.pixelbones input[type=button].input, .em.pixelbones.input .button, .em.pixelbones.input button, .em.pixelbones.input input[type=submit], .em.pixelbones.input input[type=reset], .em.pixelbones.input input[type=button],
-.em.pixelbones .input .button, .em.pixelbones .input button, .em.pixelbones .input input[type=submit], .em.pixelbones .input input[type=reset], .em.pixelbones .input input[type=button] {
+.em.pixelbones .button.input:not([data-nostyle]), .em.pixelbones button.input:not([data-nostyle]), .em.pixelbones input[type=submit].input:not([data-nostyle]), .em.pixelbones input[type=reset].input:not([data-nostyle]), .em.pixelbones input[type=button].input:not([data-nostyle]), .em.pixelbones.input .button:not([data-nostyle]), .em.pixelbones.input button:not([data-nostyle]), .em.pixelbones.input input[type=submit]:not([data-nostyle]), .em.pixelbones.input input[type=reset]:not([data-nostyle]), .em.pixelbones.input input[type=button]:not([data-nostyle]),
+.em.pixelbones .input .button:not([data-nostyle]), .em.pixelbones .input button:not([data-nostyle]), .em.pixelbones .input input[type=submit]:not([data-nostyle]), .em.pixelbones .input input[type=reset]:not([data-nostyle]), .em.pixelbones .input input[type=button]:not([data-nostyle]) {
   display: inline-block;
   height: 38px !important;
   padding: var(--button-padding) !important;
@@ -551,19 +509,25 @@
   cursor: pointer !important;
   box-sizing: border-box !important;
 }
-.em.pixelbones .button.input.disabled, .em.pixelbones button.input.disabled, .em.pixelbones input[type=submit].input.disabled, .em.pixelbones input[type=reset].input.disabled, .em.pixelbones input[type=button].input.disabled, .em.pixelbones.input .button.disabled, .em.pixelbones.input button.disabled, .em.pixelbones.input input[type=submit].disabled, .em.pixelbones.input input[type=reset].disabled, .em.pixelbones.input input[type=button].disabled,
-.em.pixelbones .input .button.disabled, .em.pixelbones .input button.disabled, .em.pixelbones .input input[type=submit].disabled, .em.pixelbones .input input[type=reset].disabled, .em.pixelbones .input input[type=button].disabled {
+.em.pixelbones .button.input:not([data-nostyle]).disabled, .em.pixelbones button.input:not([data-nostyle]).disabled, .em.pixelbones input[type=submit].input:not([data-nostyle]).disabled, .em.pixelbones input[type=reset].input:not([data-nostyle]).disabled, .em.pixelbones input[type=button].input:not([data-nostyle]).disabled, .em.pixelbones.input .button:not([data-nostyle]).disabled, .em.pixelbones.input button:not([data-nostyle]).disabled, .em.pixelbones.input input[type=submit]:not([data-nostyle]).disabled, .em.pixelbones.input input[type=reset]:not([data-nostyle]).disabled, .em.pixelbones.input input[type=button]:not([data-nostyle]).disabled,
+.em.pixelbones .input .button:not([data-nostyle]).disabled, .em.pixelbones .input button:not([data-nostyle]).disabled, .em.pixelbones .input input[type=submit]:not([data-nostyle]).disabled, .em.pixelbones .input input[type=reset]:not([data-nostyle]).disabled, .em.pixelbones .input input[type=button]:not([data-nostyle]).disabled {
   pointer-events: none !important;
   opacity: 0.5 !important;
 }
-.em.pixelbones .input .button:hover, .em.pixelbones .input .button:focus, .em.pixelbones .input button:hover, .em.pixelbones .input button:focus, .em.pixelbones .input input[type=submit]:hover, .em.pixelbones .input input[type=submit]:focus, .em.pixelbones .input input[type=reset]:hover, .em.pixelbones .input input[type=reset]:focus, .em.pixelbones .input input[type=button]:hover, .em.pixelbones .input input[type=button]:focus, .em.pixelbones .input.button:hover, .em.pixelbones .input.button:focus,
-.em.pixelbones .input button.em.pixelbones .input:hover,
-.em.pixelbones .input button.em.pixelbones .input:focus, .em.pixelbones .input input[type=submit].em.pixelbones .input:hover, .em.pixelbones .input input[type=submit].em.pixelbones .input:focus, .em.pixelbones .input input[type=reset].em.pixelbones .input:hover, .em.pixelbones .input input[type=reset].em.pixelbones .input:focus, .em.pixelbones .input input[type=button].em.pixelbones .input:hover, .em.pixelbones .input input[type=button].em.pixelbones .input:focus {
+.em.pixelbones .button.input[data-nostyle], .em.pixelbones button.input[data-nostyle], .em.pixelbones.input .button[data-nostyle], .em.pixelbones.input button[data-nostyle],
+.em.pixelbones .input .button[data-nostyle], .em.pixelbones .input button[data-nostyle] {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+.em.pixelbones .input .button:not([data-nostyle]):hover, .em.pixelbones .input .button:not([data-nostyle]):focus, .em.pixelbones .input button:not([data-nostyle]):hover, .em.pixelbones .input button:not([data-nostyle]):focus, .em.pixelbones .input input[type=submit]:not([data-nostyle]):hover, .em.pixelbones .input input[type=submit]:not([data-nostyle]):focus, .em.pixelbones .input input[type=reset]:not([data-nostyle]):hover, .em.pixelbones .input input[type=reset]:not([data-nostyle]):focus, .em.pixelbones .input input[type=button]:not([data-nostyle]):hover, .em.pixelbones .input input[type=button]:not([data-nostyle]):focus, .em.pixelbones .input.button:not([data-nostyle]):hover, .em.pixelbones .input.button:not([data-nostyle]):focus,
+.em.pixelbones .input button.em.pixelbones .input:not([data-nostyle]):hover,
+.em.pixelbones .input button.em.pixelbones .input:not([data-nostyle]):focus, .em.pixelbones .input input[type=submit].em.pixelbones .input:not([data-nostyle]):hover, .em.pixelbones .input input[type=submit].em.pixelbones .input:not([data-nostyle]):focus, .em.pixelbones .input input[type=reset].em.pixelbones .input:not([data-nostyle]):hover, .em.pixelbones .input input[type=reset].em.pixelbones .input:not([data-nostyle]):focus, .em.pixelbones .input input[type=button].em.pixelbones .input:not([data-nostyle]):hover, .em.pixelbones .input input[type=button].em.pixelbones .input:not([data-nostyle]):focus {
   color: var(--text-color-normal) !important;
   border-color: var(--text-color-softer) !important;
   outline: 0 !important;
 }
-.em.pixelbones.input .button:hover, .em.pixelbones.input .button:focus, .em.pixelbones.input button:hover, .em.pixelbones.input button:focus, .em.pixelbones.input input[type=submit]:hover, .em.pixelbones.input input[type=submit]:focus, .em.pixelbones.input input[type=reset]:hover, .em.pixelbones.input input[type=reset]:focus, .em.pixelbones.input input[type=button]:hover, .em.pixelbones.input input[type=button]:focus, .em.pixelbones.input.button:hover, .em.pixelbones.input.button:focus {
+.em.pixelbones.input .button:not([data-nostyle]):hover, .em.pixelbones.input .button:not([data-nostyle]):focus, .em.pixelbones.input button:not([data-nostyle]):hover, .em.pixelbones.input button:not([data-nostyle]):focus, .em.pixelbones.input input[type=submit]:not([data-nostyle]):hover, .em.pixelbones.input input[type=submit]:not([data-nostyle]):focus, .em.pixelbones.input input[type=reset]:not([data-nostyle]):hover, .em.pixelbones.input input[type=reset]:not([data-nostyle]):focus, .em.pixelbones.input input[type=button]:not([data-nostyle]):hover, .em.pixelbones.input input[type=button]:not([data-nostyle]):focus, .em.pixelbones.input.button:not([data-nostyle]):hover, .em.pixelbones.input.button:not([data-nostyle]):focus {
   color: var(--text-color-normal) !important;
   border-color: var(--text-color-softer) !important;
   outline: 0 !important;
@@ -582,9 +546,9 @@
   background-color: var(--accent-color-hover) !important;
   border-color: var(--accent-color-hover) !important;
 }
-.em.pixelbones.input button, .em.pixelbones.input .button,
-.em.pixelbones .input button, .em.pixelbones .input .button,
-.em.pixelbones button.input, .em.pixelbones .button.input {
+.em.pixelbones.input button:not([data-nostyle]), .em.pixelbones.input .button:not([data-nostyle]),
+.em.pixelbones .input button:not([data-nostyle]), .em.pixelbones .input .button:not([data-nostyle]),
+.em.pixelbones button.input:not([data-nostyle]), .em.pixelbones .button.input:not([data-nostyle]) {
   margin-bottom: 10px !important;
 }
 .em.pixelbones.input [data-lastpass-icon-root] {
@@ -632,8 +596,7 @@
 .em.pixelbones.input select:not([multiple]) {
   width: 100% !important;
   height: 38px !important;
-  padding: var(--input-padding) !important;
-  /* The 6px vertically centers text on FF, ignored by Webkit */
+  padding: var(--input-padding) !important; /* The 6px vertically centers text on FF, ignored by Webkit */
   border-radius: 4px !important;
   background-color: var(--background-color-inputs) !important;
   box-shadow: none !important;
@@ -737,8 +700,7 @@
   outline: 0 !important;
 }
 .em.pixelbones .input div.input-wrap, .em.pixelbones.input div.input-wrap {
-  padding: 0 !important;
-  /* The 7px vertically centers text on FF, ignored by Webkit */
+  padding: 0 !important; /* The 7px vertically centers text on FF, ignored by Webkit */
 }
 .em.pixelbones .input div.input-wrap > input, .em.pixelbones .input div.input-wrap > input:focus, .em.pixelbones .input div.input-wrap > input:hover, .em.pixelbones.input div.input-wrap > input, .em.pixelbones.input div.input-wrap > input:focus, .em.pixelbones.input div.input-wrap > input:hover {
   width: 100% !important;
@@ -749,9 +711,9 @@
   box-shadow: none !important;
   box-sizing: border-box !important;
 }
-.em.pixelbones .input label,
-.em.pixelbones .input legend, .em.pixelbones.input label,
-.em.pixelbones.input legend {
+.em.pixelbones .input label:not([data-nostyle]),
+.em.pixelbones .input legend:not([data-nostyle]), .em.pixelbones.input label:not([data-nostyle]),
+.em.pixelbones.input legend:not([data-nostyle]) {
   display: block !important;
   margin-bottom: 8px !important;
   font-weight: normal !important;
@@ -767,7 +729,7 @@
 .em.pixelbones .input label.inline-right, .em.pixelbones .input fieldset.inline-right, .em.pixelbones.input label.inline-right, .em.pixelbones.input fieldset.inline-right {
   margin-left: 10px !important;
 }
-.em.pixelbones .input .inline-inputs label, .em.pixelbones .input .inline-inputs legend, .em.pixelbones .input .inline-inputs input:not([type=radio]):not([type=checkbox]), .em.pixelbones .input .inline-inputs select:not([mutiple]), .em.pixelbones.input .inline-inputs label, .em.pixelbones.input .inline-inputs legend, .em.pixelbones.input .inline-inputs input:not([type=radio]):not([type=checkbox]), .em.pixelbones.input .inline-inputs select:not([mutiple]) {
+.em.pixelbones .input .inline-inputs label:not([data-nostyle]), .em.pixelbones .input .inline-inputs legend:not([data-nostyle]), .em.pixelbones .input .inline-inputs input:not([type=radio]):not([type=checkbox]):not([data-nostyle]), .em.pixelbones .input .inline-inputs select:not([mutiple]):not([data-nostyle]), .em.pixelbones.input .inline-inputs label:not([data-nostyle]), .em.pixelbones.input .inline-inputs legend:not([data-nostyle]), .em.pixelbones.input .inline-inputs input:not([type=radio]):not([type=checkbox]):not([data-nostyle]), .em.pixelbones.input .inline-inputs select:not([mutiple]):not([data-nostyle]) {
   width: auto !important;
   display: inline-block !important;
   margin: 0 !important;
@@ -832,50 +794,6 @@
   opacity: 0.5;
   background-color: #efefef;
 }
-.em.pixelbones .skeleton {
-  box-sizing: border-box;
-  position: relative;
-  overflow: hidden;
-}
-.em.pixelbones .skeleton .item {
-  width: 100%;
-  height: 38px;
-  margin-bottom: 15px;
-  border: 1px var(--background-color-skeleton-softer);
-  border-radius: 4px;
-  background-color: var(--background-color-skeleton);
-  box-shadow: none;
-}
-.em.pixelbones .skeleton .item::after {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  transform: translateX(-100%);
-  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0.2) 80%, rgba(255, 255, 255, 0.5) 20%, rgba(255, 255, 255, 0));
-  animation: shimmer 1.5s infinite;
-  content: "";
-}
-.em.pixelbones .skeleton .item.label {
-  width: 33%;
-  height: 14px;
-  margin-bottom: 8px;
-  border-radius: 0;
-}
-.em.pixelbones .skeleton .item.text {
-  height: 26px;
-  border-radius: 0;
-}
-.em.pixelbones .skeleton .item.title {
-  margin-bottom: 15px;
-  border-radius: 0;
-}
-@keyframes shimmer {
-  100% {
-    transform: translateX(110%);
-  }
-}
 .em.pixelbones ul {
   list-style: circle inside !important;
 }
@@ -935,14 +853,10 @@
   height: 1px;
   width: 1px;
   overflow: hidden;
-  clip: rect(1px 1px 1px 1px);
-  /* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
-  clip: rect(1px, 1px, 1px, 1px);
-  /*maybe deprecated but we need to support legacy browsers */
-  clip-path: inset(50%);
-  /*modern browsers, clip-path works inwards from each corner*/
-  white-space: nowrap;
-  /* added line to stop words getting smushed together (as they go onto seperate lines and some screen readers do not understand line feeds as a space */
+  clip: rect(1px 1px 1px 1px); /* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
+  clip: rect(1px, 1px, 1px, 1px); /*maybe deprecated but we need to support legacy browsers */
+  clip-path: inset(50%); /*modern browsers, clip-path works inwards from each corner*/
+  white-space: nowrap; /* added line to stop words getting smushed together (as they go onto seperate lines and some screen readers do not understand line feeds as a space */
 }
 .em.pixelbones .u-full-width {
   width: 100% !important;
@@ -999,7 +913,12 @@
   For other event list and single event display CSS, see the _items.scss file
    */
   /* Booking Form */
+  /* Booking Calendar */
   /* My Bookings Page */
+  /* Recurring Summary Dates Styling */
+  /*
+  Recurrence Sets and Set styling, out here to reduce selector length, and allow draggable styling
+   */
   /* Bookings Table (originally from events-manager.css) */
   /* The selection modal of columns for the bookings table */
 }
@@ -1061,6 +980,7 @@
   --icon-undo: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="%23535358" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7h11a5 5 0 0 1 0 10M4 7l3-3M4 7l3 3m1 7h3"/></svg>');
   --icon-phone: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23230000" stroke="%23230000" stroke-width="2.2" viewBox="0 0 48 48"><path fill="none" stroke-linecap="round" stroke-linejoin="round" d="M19.3 12.5a24 24 0 0 1-.9-4.4 3 3 0 0 0-3-2.6H8.7a3 3 0 0 0-3 3.3 37 37 0 0 0 33.6 33.6 3 3 0 0 0 3.3-3v-6.1c0-2.3-1.1-3.6-2.6-3.7a24 24 0 0 1-4.4-1c-1.7-.4-3.6 0-4.8 1.3l-3 3a31.3 31.3 0 0 1-12.6-12.6l3-3a4.9 4.9 0 0 0 1.2-4.8Z"/></svg>');
   --icon-file: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%23000" viewBox="0 0 64 64"><path d="M44 8v8h8"/><path d="m52 16-8-8H12v48h40V16z"/></svg>');
+  --icon-drag: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%23555" stroke-width="0" viewBox="0 0 15 15"><path fill="%23555" fill-rule="evenodd" stroke="none" d="M4.5 2.5a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm4 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm-4 5a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm4 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm-4 5a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm4 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0Z" clip-rule="evenodd"/></svg>');
 }
 .em .em-icon {
   display: inline-block;
@@ -1267,6 +1187,9 @@
 .em .em-icon.em-icon-file {
   background-image: var(--icon-file);
 }
+.em .em-icon.em-icon-drag {
+  background-image: var(--icon-drag);
+}
 .em.em-calendar {
   --nav-color: #777;
   --nav-border: 1px solid #dedede;
@@ -1282,9 +1205,9 @@
   --date-background: #fff;
   --date-border-color: #cdcdcd;
   --date-border: 1px solid var(--date-border-color);
-  --date-today-color: #fff;
-  --date-today-background: #aaa;
-  --date-today-border: 1px solid #cdcdcd;
+  --date-today-color: #999;
+  --date-today-background: #ededed;
+  --date-today-border: 1px solid var(--date-today-background);
   --date-more-color: var(--nav-color);
   --calendar-background: #fff;
   --counter-background: #F36752;
@@ -1310,13 +1233,28 @@
 .em.em-calendar section > div {
   width: 100%;
 }
-.em.em-calendar section.em-cal-nav {
+.em.em-calendar section.em-cal-days {
+  grid-template-columns: repeat(7, 1fr);
+}
+.em.em-calendar .em-cal-nav {
   grid-template-columns: 1fr auto;
   justify-items: center;
   align-items: center;
 }
-.em.em-calendar section.em-cal-days {
-  grid-template-columns: repeat(7, 1fr);
+.em.em-calendar .em-cal-nav.em-cal-nav-centered {
+  grid-template-columns: 1fr;
+}
+.em.em-calendar .em-cal-nav.em-cal-nav-centered .month-nav {
+  display: grid;
+  gap: 20px;
+  width: max-content;
+  grid-template-columns: 22px 1fr 22px;
+  align-items: center;
+  justify-items: center;
+}
+.em.em-calendar .em-cal-nav.em-cal-nav-centered .month-nav .em-calnav svg {
+  height: 22px;
+  width: 22px;
 }
 .em.em-calendar .em-cal-nav > div {
   margin: 10px 0;
@@ -1341,8 +1279,7 @@
 .em.em-calendar .em-cal-nav .month input:hover, .em.em-calendar .em-cal-nav .month input:focus, .em.em-calendar .em-cal-nav .month span.marker:hover, .em.em-calendar .em-cal-nav .month span.marker:focus {
   border: 0 !important;
 }
-.em.em-calendar .em-cal-nav .month span.marker {
-  /* temp element used to measure width dynamically, hidden to prevent jank, shown enough to generate width  */
+.em.em-calendar .em-cal-nav .month span.marker { /* temp element used to measure width dynamically, hidden to prevent jank, shown enough to generate width  */
   display: inline-block;
   position: absolute;
   left: -100%;
@@ -1481,11 +1418,12 @@
 .em.em-calendar .em-cal-body .em-cal-day.eventful .em-cal-day-date a, .em.em-calendar .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date a, .em.em-calendar .em-cal-body .em-cal-day.eventful-post .em-cal-day-date a {
   border: var(--date-border) !important;
 }
-.em.em-calendar .em-cal-body .em-cal-day.eventful-today .em-cal-day-date a, .em.em-calendar .em-cal-body .em-cal-day.eventless-today .em-cal-day-date a {
-  color: var(--date-today-color) !important;
-  border: var(--date-today-border) !important;
-  background: var(--date-today-background) !important;
+.em.em-calendar .em-cal-body .em-cal-day.eventful-today .em-cal-day-date a, .em.em-calendar .em-cal-body .em-cal-day.eventful-today .em-cal-day-date span, .em.em-calendar .em-cal-body .em-cal-day.eventless-today .em-cal-day-date a, .em.em-calendar .em-cal-body .em-cal-day.eventless-today .em-cal-day-date span {
   border-radius: 50%;
+  text-decoration: underline !important;
+  text-underline-offset: 5px;
+  font-size: 16px;
+  line-height: 18px;
 }
 .em.em-calendar .em-cal-body .em-cal-day span.date-day-colors {
   display: none;
@@ -1548,10 +1486,8 @@
   text-decoration: none !important;
 }
 .em.em-calendar .em-cal-body.event-style-pill .em-cal-event.multiday {
-  /* (10) + ((20+1) * x) - 5 */
-  /* if has-end */
-  /* (10) + ((20+1) * x) */
-  /* if no has-end */
+  /* (10) + ((20+1) * x) - 5 */ /* if has-end */
+  /* (10) + ((20+1) * x) */ /* if no has-end */
 }
 .em.em-calendar .em-cal-body.event-style-pill .em-cal-event.multiday > div {
   left: -10px;
@@ -1613,6 +1549,13 @@
   display: none !important;
   visibility: hidden;
 }
+.em.em-calendar.size-large .event-style-pill .eventful-today .em-cal-day-date, .em.em-calendar.size-large .event-style-pill .eventless-today .em-cal-day-date {
+  margin-bottom: 6px;
+}
+.em.em-calendar.size-large .event-style-pill .eventful-today .em-cal-day-date a, .em.em-calendar.size-large .event-style-pill .eventless-today .em-cal-day-date a {
+  width: 38px;
+  height: 38px;
+}
 .em.em-calendar.size-medium .size-small:not(.size-medium), .em.em-calendar.size-medium .size-large:not(.size-medium) {
   display: none !important;
   visibility: hidden;
@@ -1659,27 +1602,28 @@
 .em.em-calendar.size-medium .em-cal-body .em-cal-day .em-cal-event, .em.em-calendar.size-small .em-cal-body .em-cal-day .em-cal-event {
   display: none;
 }
-.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored {
+.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored {
   --date-border-color-top: none;
   --date-border-color-right: none;
   --date-border-color-bottom: none;
   --date-border-color-left: none;
   --date-border-color: #fefefe;
   --date-border: 1px solid var(--date-border-color);
+  --date-border: 1px solid var(--date-border-color);
 }
-.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored a, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored a, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored a, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored a, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored a, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored a {
+.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored a, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored a {
   border: none;
 }
-.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored div.ring, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored div.ring, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored div.ring, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored div.ring {
+.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring {
   border-radius: 50%;
   padding: 1px;
   display: inline-block;
   border: var(--date-border) !important;
 }
-.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.one, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored div.ring.one, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored div.ring.one, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.one, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored div.ring.one, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored div.ring.one {
+.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.one, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.one {
   border-color: var(--date-border-color) !important;
 }
-.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.two, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored div.ring.two, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored div.ring.two, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.two, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored div.ring.two, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored div.ring.two {
+.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.two, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.two {
   border-top-color: var(--date-border-color-top) !important;
   border-left-color: var(--date-border-color-top) !important;
   border-right-color: var(--date-border-color-bottom) !important;
@@ -1688,7 +1632,7 @@
   clip-path: polygon(0 0, 75% 0, 75% 25%, 100% 25%, 100% 100%, 25% 100%, 25% 75%, 0 75%);
   -webkit-clip-path: polygon(0 0, 75% 0, 75% 25%, 100% 25%, 100% 100%, 25% 100%, 25% 75%, 0 75%);
 }
-.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.three, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored div.ring.three, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored div.ring.three, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.three, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored div.ring.three, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored div.ring.three {
+.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.three, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.three {
   border-top-color: var(--date-border-color-top) !important;
   border-right-color: var(--date-border-color-bottom) !important;
   border-bottom-color: var(--date-border-color-bottom) !important;
@@ -1696,7 +1640,7 @@
   clip-path: polygon(0px 25%, 25% 25%, 25% 0%, 75% 0, 75% 25%, 100% 25%, 100% 75%, 75% 75%, 75% 100%, 25% 100%, 25% 75%, 0 75%);
   -webkit-clip-path: polygon(0px 25%, 25% 25%, 25% 0%, 75% 0, 75% 25%, 100% 25%, 100% 75%, 75% 75%, 75% 100%, 25% 100%, 25% 75%, 0 75%);
 }
-.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.four, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored div.ring.four, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored div.ring.four, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.four, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-pre .em-cal-day-date.colored div.ring.four, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-post .em-cal-day-date.colored div.ring.four {
+.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.four, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored div.ring.four {
   border-top-color: var(--date-border-color-top) !important;
   border-right-color: var(--date-border-color-right) !important;
   border-bottom-color: var(--date-border-color-bottom) !important;
@@ -1704,6 +1648,10 @@
   background-clip: content-box;
   clip-path: polygon(0px 25%, 25% 25%, 25% 0%, 75% 0, 75% 25%, 100% 25%, 100% 75%, 75% 75%, 75% 100%, 25% 100%, 25% 75%, 0 75%);
   -webkit-clip-path: polygon(0px 25%, 25% 25%, 25% 0%, 75% 0, 75% 25%, 100% 25%, 100% 75%, 75% 75%, 75% 100%, 25% 100%, 25% 75%, 0 75%);
+}
+.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored.selected div.ring, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful .em-cal-day-date.colored.selected div.ring {
+  border-width: 3px !important;
+  font-weight: bold !important;
 }
 .em.em-calendar.size-medium .em-cal-body .em-cal-day .em-cal-day-limit, .em.em-calendar.size-small .em-cal-body .em-cal-day .em-cal-day-limit {
   display: none;
@@ -1719,28 +1667,28 @@
   display: none !important;
   visibility: hidden;
 }
-.em.em-calendar.size-small .em-cal-nav {
+.em.em-calendar.size-small .em-cal-nav:not(.em-cal-nav-centered) {
   padding: 0 0.5% 0 1%;
   margin: 0 0 10px;
 }
-.em.em-calendar.size-small .em-cal-nav > div {
+.em.em-calendar.size-small .em-cal-nav:not(.em-cal-nav-centered) > div {
   margin: 0;
 }
-.em.em-calendar.size-small .em-cal-nav .month input {
+.em.em-calendar.size-small .em-cal-nav:not(.em-cal-nav-centered) .month input {
   font-size: 20px !important;
   padding-left: 0 !important;
 }
-.em.em-calendar.size-small .em-cal-nav .em-calnav {
+.em.em-calendar.size-small .em-cal-nav:not(.em-cal-nav-centered) .em-calnav {
   width: 26px;
   height: 26px;
   padding: 2px;
 }
-.em.em-calendar.size-small .em-cal-nav .em-calnav svg {
+.em.em-calendar.size-small .em-cal-nav:not(.em-cal-nav-centered) .em-calnav svg {
   height: 22px;
   width: 22px;
   margin: 0 auto;
 }
-.em.em-calendar.size-small .em-cal-nav .em-calnav-today.size-small {
+.em.em-calendar.size-small .em-cal-nav:not(.em-cal-nav-centered) .em-calnav-today.size-small {
   display: inline-block;
   width: 12px;
   height: 12px;
@@ -1749,24 +1697,30 @@
   border-radius: 50%;
   margin-bottom: 3px;
 }
-.em.em-calendar.size-small .em-cal-nav .em-calnav-today.size-small:hover {
+.em.em-calendar.size-small .em-cal-nav:not(.em-cal-nav-centered) .em-calnav-today.size-small:hover {
   filter: brightness(0.8);
 }
-.em.em-calendar.size-small .em-cal-body .em-cal-day .em-cal-day-date.em-cal-day-date a, .em.em-calendar.size-small .em-cal-body .em-cal-day .em-cal-day-date.em-cal-day-date span {
+.em.em-calendar.size-small .em-cal-body .em-cal-day .em-cal-day-date a, .em.em-calendar.size-small .em-cal-body .em-cal-day .em-cal-day-date span {
   padding: 6px;
-  width: 32px;
-  height: 32px;
-  font-size: 15px;
-}
-.em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-today .em-cal-day-date a, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventless-today .em-cal-day-date a {
   width: 36px;
   height: 36px;
+  font-size: 16px;
 }
-.em.em-calendar.size-small.with-advanced .em-cal-nav .month input {
+.em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-today .em-cal-day-date a, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventless-today .em-cal-day-date a {
+  width: 38px;
+  height: 38px;
+}
+.em.em-calendar.size-small .em-cal-body.eventful a, .em.em-calendar.size-small .em-cal-body.eventful span {
+  line-height: 16px;
+}
+.em.em-calendar.size-small.with-advanced .em-cal-nav:not(.em-cal-nav-centered) .month input {
   padding-left: 10px !important;
 }
-.em.em-calendar.with-advanced .em-cal-nav {
+.em.em-calendar.with-advanced .em-cal-nav:not(.em-cal-nav-centered) {
   grid-template-columns: 25px 1fr auto;
+}
+.em.em-calendar.with-advanced .em-cal-nav.em-cal-nav-centered {
+  grid-template-columns: 25px 1fr;
 }
 .em.em-calendar.with-advanced .em-cal-nav .em-search-advanced-trigger {
   display: block;
@@ -1974,6 +1928,9 @@
   margin: 0;
   padding: 20px 15px;
   overflow-y: auto !important;
+}
+.em.em-modal .em-modal-popup .em-modal-content.no-overflow {
+  overflow-y: visible !important;
 }
 .em.em-modal .em-modal-popup .em-modal-content.has-image {
   display: grid;
@@ -2337,14 +2294,10 @@
   height: 1px;
   width: 1px;
   overflow: hidden;
-  clip: rect(1px 1px 1px 1px);
-  /* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
-  clip: rect(1px, 1px, 1px, 1px);
-  /*maybe deprecated but we need to support legacy browsers */
-  clip-path: inset(50%);
-  /*modern browsers, clip-path works inwards from each corner*/
-  white-space: nowrap;
-  /* added line to stop words getting smushed together (as they go onto seperate lines and some screen readers do not understand line feeds as a space */
+  clip: rect(1px 1px 1px 1px); /* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
+  clip: rect(1px, 1px, 1px, 1px); /*maybe deprecated but we need to support legacy browsers */
+  clip-path: inset(50%); /*modern browsers, clip-path works inwards from each corner*/
+  white-space: nowrap; /* added line to stop words getting smushed together (as they go onto seperate lines and some screen readers do not understand line feeds as a space */
 }
 .em.em-search .em-search-views .em-search-views-options-list:focus, .em.em-search-advanced .em-search-views .em-search-views-options-list:focus, .em .em-search-advanced .em-search-views .em-search-views-options-list:focus {
   border: none !important;
@@ -2678,7 +2631,6 @@
   --border-radius: 4px;
 }
 .em .selectize-control.em-selectize:not(.always-open, .multidropdown) input, .em .selectize-control.em-selectize:not(.always-open, .multidropdown) input:focus, .em .selectize-control.em-selectize:not(.always-open, .multidropdown) input:focus, .em .selectize-control.em-selectize-autocomplete:not(.always-open, .multidropdown) input, .em .selectize-control.em-selectize-autocomplete:not(.always-open, .multidropdown) input:focus, .em .selectize-control.em-selectize-autocomplete:not(.always-open, .multidropdown) input:focus {
-  width: auto !important;
   border: 0 !important;
   outline: 0 !important;
   height: auto !important;
@@ -2686,13 +2638,13 @@
   margin: 0 !important;
   border-radius: 0 !important;
   background: none !important;
+  width: auto !important;
 }
 .em .selectize-control.em-selectize:not(.always-open, .multidropdown) .selectize-input, .em .selectize-control.em-selectize-autocomplete:not(.always-open, .multidropdown) .selectize-input {
   border-radius: var(--border-radius) !important;
   width: 100% !important;
   min-height: 38px !important;
-  padding: 6px 30px 6px 10px !important;
-  /* The 6px vertically centers text on FF, ignored by Webkit */
+  padding: 6px 30px 6px 10px !important; /* The 6px vertically centers text on FF, ignored by Webkit */
 }
 .em .selectize-control.em-selectize:not(.always-open, .multidropdown) .selectize-input:after, .em .selectize-control.em-selectize-autocomplete:not(.always-open, .multidropdown) .selectize-input:after {
   display: inline-flex !important;
@@ -2703,7 +2655,7 @@
   background-size: 16px 16px;
   height: 16px;
   width: 16px;
-  margin-top: calc( 16px/2 * -1 );
+  margin-top: calc(16px / 2 * -1);
   right: 8px;
   top: 50%;
 }
@@ -2766,7 +2718,7 @@
   background-size: 26px 26px;
   height: 26px;
   width: 26px;
-  margin-top: calc( 26px/2 * -1 );
+  margin-top: calc(26px / 2 * -1);
   right: 8px;
   top: 50%;
 }
@@ -2854,7 +2806,7 @@
   background-size: 16px 16px;
   height: 16px;
   width: 16px;
-  margin-top: calc( 16px/2 * -1 );
+  margin-top: calc(16px / 2 * -1);
   right: 8px;
   top: 50%;
 }
@@ -3010,8 +2962,7 @@
   color: var(--meta-color) !important;
   font-style: italic !important;
   text-decoration: underline dotted var(--meta-color) 1px !important;
-  text-underline-offset: 3px;
-  /* some may not support it, acceptable loss */
+  text-underline-offset: 3px; /* some may not support it, acceptable loss */
 }
 .em.em-item .em-item-meta .em-item-taxonomy ul, .em.em-list .em-item .em-item-meta .em-item-taxonomy ul, .em.em-list-widget .em-item .em-item-meta .em-item-taxonomy ul {
   display: inline-block !important;
@@ -3108,8 +3059,7 @@
   justify-items: center;
   grid-gap: 20px;
 }
-.em.em-list.em-grid > div.em-item {
-  /* a little more specific to override without !important */
+.em.em-list.em-grid > div.em-item { /* a little more specific to override without !important */
   max-width: 400px;
   height: 100%;
   padding: 0 !important;
@@ -3570,8 +3520,7 @@
   border: 1px solid var(--main-border-color);
 }
 .em.em-event-booking-form .em-booking-form .input-user-field, .em.em-event-booking-form .em-booking-form .input-group, .em.em-event-booking-form .em-booking-form .input-type {
-  display: block !important;
-  /* bootstrap and others interfere with this */
+  display: block !important; /* bootstrap and others interfere with this */
   margin-bottom: 25px !important;
 }
 .em.em-event-booking-form .em-booking-form .input-user-field.hidden, .em.em-event-booking-form .em-booking-form .input-group.hidden, .em.em-event-booking-form .em-booking-form .input-type.hidden {
@@ -3868,6 +3817,141 @@
 .em .em-booking-form-summary .skeleton .em-bs-row.em-bs-row-item {
   grid-template-columns: 7fr 1fr 2fr;
 }
+.em .em-booking-recurrence-picker.mode-calendar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  align-items: start;
+  width: 100%;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-xsmall {
+  grid-template-columns: 1fr;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-xsmall .em-view-container[data-view=calendar] {
+  width: 100%;
+  max-width: 425px;
+  margin: 0 auto;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-xsmall .em-booking-recurrences {
+  width: 100%;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-small {
+  grid-template-columns: 1fr minmax(200px, auto);
+  align-items: start;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-small .em-view-container[data-view=calendar] {
+  width: 100%;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-small .em-booking-recurrences {
+  width: 100%;
+  padding-right: 5px;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-medium .em-booking-recurrence {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  align-items: center;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-medium, .em .em-booking-recurrence-picker.mode-calendar.size-large {
+  grid-template-columns: minmax(325px, 450px) minmax(300px, 1fr);
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-medium .em-view-container[data-view=calendar], .em .em-booking-recurrence-picker.mode-calendar.size-large .em-view-container[data-view=calendar] {
+  width: 100%;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-medium .em-booking-recurrences, .em .em-booking-recurrence-picker.mode-calendar.size-large .em-booking-recurrences {
+  width: 100%;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-large .em-booking-recurrence, .em .em-booking-recurrence-picker.mode-calendar.size-xsmall .em-booking-recurrence {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px;
+  align-items: center;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-large .em-booking-recurrence .em-booking-recurrence-time, .em .em-booking-recurrence-picker.mode-calendar.size-xsmall .em-booking-recurrence .em-booking-recurrence-time {
+  padding-left: 10px !important;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-large .em-booking-recurrence .em-booking-recurrence-spaces, .em .em-booking-recurrence-picker.mode-calendar.size-xsmall .em-booking-recurrence .em-booking-recurrence-spaces {
+  grid-column: 1/-1;
+}
+.em .em-booking-recurrence-picker.mode-calendar.size-large .em-booking-recurrences:not(.has-dates) .em-booking-recurrence .em-booking-recurrence-time, .em .em-booking-recurrence-picker.mode-calendar.size-xsmall .em-booking-recurrences:not(.has-dates) .em-booking-recurrence .em-booking-recurrence-time {
+  padding-left: 0px !important;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+  --original-accent-color: var(--accent-color);
+  --selected-border: var(--original-accent-color);
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences.selected .em-booking-recurrence:not(.selected) {
+  opacity: 0.5;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences.selected .em-booking-recurrence.selected, .em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences.selected .em-booking-recurrence.selected:focus, .em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences.selected .em-booking-recurrence.selected:hover {
+  border: 2px solid var(--selected-border) !important;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences h3 {
+  font-size: 22px !important;
+  margin-top: 6px !important;
+  margin-bottom: 10px !important;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences p.em-timezone {
+  margin: 0 0 10px !important;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences p.em-timezone .em-selectize {
+  margin: 0 !important;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences .em-booking-recurrence {
+  --accent-color: var(--text-color-softer);
+  --accent-color-hover: var(--text-color-normal);
+  margin: 0;
+  padding: 15px;
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
+  width: 100%;
+  line-height: 20px;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences .em-booking-recurrence:not(.skeleton-item) {
+  border: 1px solid var(--border-color);
+  background-color: var(--background-color-inputs, #fff);
+  text-decoration: none;
+  color: var(--text-color-normal);
+  cursor: pointer;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences .em-booking-recurrence.skeleton-item {
+  height: auto;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences .em-booking-recurrence:not([disabled]):hover, .em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences .em-booking-recurrence:not([disabled]):focus {
+  border-color: var(--accent-color) !important;
+  transform: translateY(-2px);
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences .em-booking-recurrence * {
+  padding: 0 !important;
+  margin: 0 !important;
+  vertical-align: middle;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences .em-booking-recurrence .em-icon {
+  margin-right: 8px !important;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences .em-booking-recurrence[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: var(--background-color-softer);
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences .em-booking-recurrence .em-booking-recurrence-spaces {
+  font-size: 80%;
+  font-style: italic;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences:not(.has-dates) .em-booking-recurrence-date {
+  display: none;
+  visibility: hidden;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences p.more-recurrenes {
+  font-size: 80%;
+  font-style: italic;
+}
+.em .em-booking-recurrence-form {
+  margin-top: 40px;
+}
 .em .em-my-bookings-actions-content a.em-bookings-rsvp-confirm {
   color: #198754 !important;
 }
@@ -3951,50 +4035,6 @@
 .em.em-event-editor .input.em-location-data .em-selectize-autocomplete {
   margin-bottom: 5px !important;
 }
-.em.em-event-editor .input .event-form-when > * {
-  display: block;
-  margin-bottom: 15px !important;
-}
-.em.em-event-editor .input .event-form-when > p {
-  margin-bottom: 20px !important;
-}
-.em.em-event-editor .input .event-form-when .em-recurrence-pattern select, .em.em-event-editor .input .event-form-when .em-recurrence-pattern input[type=text] {
-  width: auto !important;
-}
-.em.em-event-editor .input .event-form-when .em-recurrence-pattern select {
-  padding-right: 30px !important;
-}
-.em.em-event-editor .input .event-form-when .em-recurrence-pattern div.alternate-selector {
-  margin-top: 15px;
-}
-.em.em-event-editor .input .event-form-when .alternate-selector.em-weekly-selector label {
-  width: auto !important;
-  display: inline-block !important;
-  padding-right: 10px !important;
-}
-.em.em-event-editor .input .event-form-when .em-event-dates label {
-  width: 100%;
-  display: block;
-}
-.em.em-event-editor .input .event-form-when .em-event-dates .em-date-start-end {
-  width: 100% !important;
-  max-width: 500px !important;
-}
-.em.em-event-editor .input .event-form-when .em-event-dates.em-datepicker-until .em-datepicker-until-fields {
-  display: grid;
-  grid-template-columns: minmax(100px, 150px) min-content minmax(100px, 150px);
-  grid-column-gap: 8px;
-  justify-items: center;
-  align-items: center;
-  margin-bottom: 15px;
-}
-.em.em-event-editor .input .event-form-when .em-event-dates.em-datepicker-until .em-datepicker-until-fields > * {
-  margin-bottom: 0 !important;
-  width: 100%;
-}
-.em.em-event-editor .input .event-form-when .event-form-recurrence-when > * {
-  margin-bottom: 20px;
-}
 .em.em-event-editor .em-ticket-form .em-ticket-form-main > div, .em.em-event-editor .em-ticket-form .em-ticket-form-advanced > div {
   margin-bottom: 10px;
 }
@@ -4003,6 +4043,558 @@
 }
 .em.em-event-editor .em-ticket-form .em-ticket-form-main > div.inline-inputs:last-child, .em.em-event-editor .em-ticket-form .em-ticket-form-main > div .inline-inputs:last-child, .em.em-event-editor .em-ticket-form .em-ticket-form-advanced > div.inline-inputs:last-child, .em.em-event-editor .em-ticket-form .em-ticket-form-advanced > div .inline-inputs:last-child {
   margin-bottom: 20px;
+}
+.em form.em-is-recurring .single-event-data {
+  display: none;
+  visibility: hidden;
+}
+.em form.em-is-recurring #em-tickets-form .ticket-dates-from-normal,
+.em form.em-is-recurring #em-tickets-form .ticket-dates-to-normal,
+.em form.em-is-recurring #event-rsvp-options .em-booking-date-normal {
+  display: none;
+  visibility: hidden;
+}
+.em form:not(.em-is-recurring) .recurring-event-editor, .em form:not(.em-is-recurring) .recurring-event-data, .em form:not(.em-is-recurring) .postbox#em-event-recurring {
+  display: none;
+  visibility: hidden;
+}
+.em form:not(.em-is-recurring) #em-tickets-form .ticket-dates-from-recurring,
+.em form:not(.em-is-recurring) #em-tickets-form .ticket-dates-to-recurring,
+.em form:not(.em-is-recurring) #event-rsvp-options .em-booking-date-recurring {
+  display: none;
+  visibility: hidden;
+}
+.em .event-form-when .em-event-datetimes > * {
+  margin-bottom: 15px !important;
+}
+.em .event-form-when .em-event-datetimes > *:last-child {
+  margin-bottom: 0 !important;
+}
+.em .event-form-when .em-event-dates label {
+  width: 100%;
+  display: block;
+}
+.em .event-form-when .em-event-dates .em-date-start-end {
+  width: 100% !important;
+  max-width: 250px !important;
+}
+.em .event-form-when .em-event-dates.em-datepicker-range fieldset {
+  width: 100%;
+}
+.em .event-form-when .em-event-dates.em-datepicker-until .em-datepicker-until-fields {
+  display: grid;
+  grid-template-columns: minmax(100px, 150px) min-content minmax(100px, 150px);
+  grid-column-gap: 8px;
+  justify-items: center;
+  align-items: center;
+}
+.em .event-form-when .em-event-dates.em-datepicker-until .em-datepicker-until-fields > * {
+  margin-bottom: 0 !important;
+  width: 100%;
+}
+.em .event-form-when .em-event-dates.em-datepicker-until .em-datepicker-until-fields .em-range-description {
+  margin-top: 15px;
+}
+.em .event-form-when .em-event-dates.em-datepicker-until .em-datepicker-until-fields [disabled] {
+  color: #777;
+}
+.em .event-form-when .em-event-type label:has(select) {
+  line-height: 38px;
+  vertical-align: middle;
+}
+.em .event-form-when > *, .em .em-recurrence-sets > * {
+  margin-bottom: 15px !important;
+}
+.em .event-form-when > p, .em .em-recurrence-sets > p {
+  margin-bottom: 20px !important;
+}
+.em .event-form-when fieldset, .em .em-recurrence-sets fieldset {
+  margin-bottom: 0 !important;
+}
+.em .event-form-when .em-recurrence-dates.em-datepicker-range fieldset, .em .em-recurrence-sets .em-recurrence-dates.em-datepicker-range fieldset {
+  width: 100%;
+  max-width: 250px !important;
+}
+.em .em-recurring-summary {
+  margin-bottom: 15px;
+}
+.em .em-recurring-summary .recurring-summary-missing {
+  font-style: italic;
+}
+.em .recurring-summary-dates {
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  grid-template-areas: "start-label" "start-datetime" "end-label" "end-datetime" "timezone";
+}
+.em .recurring-summary-dates .label-start-time {
+  grid-area: start-label;
+}
+.em .recurring-summary-dates .label-end-time {
+  grid-area: end-label;
+}
+.em .recurring-summary-dates .label-start-day {
+  grid-area: start-label;
+}
+.em .recurring-summary-dates .label-end-day {
+  grid-area: end-label;
+}
+.em .recurring-summary-dates .recurring-datetime-start {
+  grid-area: start-datetime;
+}
+.em .recurring-summary-dates .recurring-datetime-end {
+  grid-area: end-datetime;
+}
+.em .recurring-summary-dates .recurring-timezone {
+  grid-area: timezone;
+  margin-top: 8px;
+}
+.em .recurring-summary-dates .recurring-all-day {
+  grid-area: all-day;
+  margin-top: 10px;
+}
+.em .recurring-summary-dates > * {
+  margin-bottom: 10px;
+}
+.em .recurring-summary-dates .label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+.em .recurring-summary-dates .label:not(:first-child) {
+  margin-top: 8px;
+}
+.em .recurring-summary-dates .recurring-all-day {
+  font-style: italic;
+  margin-top: 8px;
+}
+.em .recurring-summary-dates:not(.is-all-day):not(.has-all-day) .all-day {
+  display: none;
+  visibility: hidden;
+}
+.em .recurring-summary-dates.size-large {
+  display: block;
+}
+.em .recurring-summary-dates.size-large * {
+  display: inline-block;
+}
+.em .recurring-summary-dates.size-large .label-start-day, .em .recurring-summary-dates.size-large .recurring-all-day {
+  margin: 8px 0;
+  display: block;
+}
+.em .recurring-summary-dates.size-large .recurring-datetime, .em .recurring-summary-dates.size-large .label-end-day, .em .recurring-summary-dates.size-large .recurring-timezone {
+  margin: 0 8px 0 0;
+}
+.em .recurring-summary-dates.size-large .recurring-timezone .label {
+  display: none;
+  visibility: hidden;
+}
+.em .recurring-summary-dates.size-large .recurring-timezone .timezone-varied {
+  font-size: 0.8rem;
+  font-style: italic;
+}
+.em .recurring-summary-dates.size-large .label-start-day {
+  display: block !important;
+  visibility: visible !important;
+}
+.em .recurring-summary-dates.size-large .label-end-day {
+  display: inline-block !important;
+  visibility: visible !important;
+}
+.em .recurring-summary-dates.size-large .label-time {
+  display: none;
+  visibility: hidden;
+}
+.em .recurring-summary-dates.is-all-day:not(.size-large) {
+  width: max-content;
+  grid-template-columns: min-content 25px minmax(auto, 1fr);
+  grid-template-areas: "start-label start-label start-label" "start-datetime end-label end-datetime" "all-day all-day all-day" "timezone timezone timezone";
+}
+.em .recurring-summary-dates.is-all-day:not(.size-large) .label-time, .em .recurring-summary-dates.is-all-day:not(.size-large) .time {
+  display: none;
+  visibility: hidden;
+}
+.em .recurring-summary-dates.is-all-day:not(.size-large) .recurring-datetime, .em .recurring-summary-dates.is-all-day:not(.size-large) .label-end-day {
+  margin: 0;
+}
+.em .recurring-summary-dates.is-all-day:not(.size-large) .label-end-day {
+  justify-self: center;
+  align-self: center;
+  white-space: nowrap;
+  width: auto;
+}
+.em .recurring-summary-dates.has-all-day .label.all-day {
+  display: none;
+  visibility: hidden;
+}
+.em .recurring-summary-dates:not(.has-multiple-timezones) .timezone-varied {
+  display: none;
+  visibility: hidden;
+}
+.em .recurring-summary-dates .timezone-varied {
+  margin: 0;
+  font-style: italic;
+}
+.em .em-recurrence-sets {
+  margin-bottom: 20px;
+  /* CSS for showing a placeholder during drag-and-drop ordering */
+}
+.em .em-recurrence-sets .em-recurrence-set-template {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-sets .em-recurrence-type {
+  margin-bottom: 20px;
+}
+.em .em-recurrence-sets .em-recurrence-type .em-recurrence-advanced-description-primary {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-sets .drop-placeholder {
+  background-color: #f0f0f0;
+  border: 1px dotted #ccc;
+  margin: 5px 0;
+}
+.em .em-recurrence-sets:not([data-exclude-count="0"]) .em-recurrence-type-include .em-add-recurrence-set[data-type=exclude] {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-sets .em-recurrence-type-include[data-count="1"] .em-recurrence-set {
+  display: block;
+}
+.em .em-recurrence-sets .em-recurrence-type-include[data-count="1"] .em-recurrence-set .em-recurrence-set-actions {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-sets .em-recurrence-type-include[data-count="1"] .em-recurrence-set .em-recurrence-set-data {
+  border-left: none;
+  padding: 15px;
+}
+.em .em-recurrence-sets .em-recurrence-type-include[data-count="1"] .em-recurrence-set .em-recurrence-set-data .em-recurrence-advanced {
+  padding-left: 5px;
+}
+.em .em-recurrence-sets .em-recurrence-type-include:not([data-count="1"]) .em-recurrence-set {
+  grid-template-columns: 105px 1fr;
+}
+.em .em-recurrence-sets .em-recurrence-type-include:not([data-count="1"]) .em-recurrence-set:first-child {
+  grid-template-columns: 75px 1fr;
+}
+.em .em-recurrence-sets .em-recurrence-type-include:not([data-count="1"]) .em-recurrence-set .em-recurrence-set-actions button {
+  margin-right: 4px;
+}
+.em .em-recurrence-sets .em-recurrence-type-include:not([data-count="1"]) .em-recurrence-set .em-recurrence-set-actions button.em-recurrence-set-action-advanced {
+  margin-left: 2px;
+}
+.em .em-recurrence-sets .em-recurrence-type-include .em-recurrence-set:first-child .em-recurrence-set-action-advanced, .em .em-recurrence-sets .em-recurrence-type-include .em-recurrence-set:first-child .em-recurrence-advanced-description {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-sets .em-recurrence-type-include .em-recurrence-set:first-child .em-recurrence-advanced-description-primary {
+  margin-top: 0;
+  display: block;
+  visibility: visible;
+}
+.em .em-recurrence-sets .em-recurrence-type-exclude[data-count="0"] {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-sets .em-recurrence-type-exclude:not([data-count="0"]) .em-recurrence-set {
+  grid-template-columns: 72px 1fr;
+}
+.em .em-recurrence-sets .em-recurrence-type-exclude:not([data-count="0"]) .em-recurrence-set .em-recurrence-set-action-advanced {
+  margin-left: 7px;
+}
+.em .em-recurrence-sets .em-recurrence-type-exclude .em-recurrence-set:not(.has-advanced-value) .advanced-summary {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-sets .em-recurrence-type-exclude .advanced-summary .duration-days {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-sets button[data-nostyle] {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+.em .em-recurrence-sets button[data-nostyle]:focus {
+  outline: none;
+}
+.em .em-recurrence-sets button[data-nostyle].em-add-recurrence-set {
+  color: var(--accent-color);
+  font-weight: bold;
+}
+.em .em-recurrence-sets .recurrence-reschedule-action {
+  color: #c46200;
+  line-height: 38px;
+  margin-bottom: 5px;
+}
+.em .em-recurrence-sets .recurrence-reschedule-action .em-icon-warning {
+  background: #c46200;
+  -webkit-mask-image: var(--icon-warning);
+  mask-image: var(--icon-warning);
+}
+.em .em-recurrence-sets .recurrence-reschedule-action label {
+  margin-bottom: 0 !important;
+}
+.em .em-recurrence-sets .recurrence-reschedule-action label select {
+  border-color: #dedede;
+  color: #c46200;
+}
+.em .em-recurrence-sets .recurrence-reschedule-action .em-icon-undo {
+  width: 22px;
+  height: 22px;
+  background-size: 22px;
+  vertical-align: middle;
+  margin-left: 5px;
+}
+.em .em-recurrence-sets .em-recurrence-type > .recurrence-reschedule-action {
+  margin-bottom: 10px;
+}
+.em .em-recurrence-sets .em-recurrence-type.em-recurrence-type-new .em-icon-undo {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-sets:has(.em-recurrence-set[data-primary][data-rescheduled].has-modified-date-range) .em-recurrence-set:not([data-primary]):not(.has-date-range) .primary-reschedule-override-warning {
+  display: inline-block;
+  visibility: visible;
+}
+.em .em-recurrence-sets:has(.em-recurrence-set[data-primary][data-rescheduled].has-modified-date-range-end) .em-recurrence-set:not([data-primary]):not(.has-date-range):not(.has-date-range-end) .primary-reschedule-override-warning {
+  display: inline-block;
+  visibility: visible;
+}
+.em .em-recurrence-sets:has(.em-recurrence-set[data-primary][data-rescheduled].has-modified-date-range-start) .em-recurrence-set:not([data-primary]):not(.has-date-range):not(.has-date-range-start) .primary-reschedule-override-warning {
+  display: inline-block;
+  visibility: visible;
+}
+.em .em-recurrence-set {
+  box-shadow: 0 0 0 transparent;
+  border-radius: 4px;
+  border: 1px solid #dedede;
+  background-color: #fff;
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  margin-bottom: 10px;
+  align-items: start;
+}
+.em .em-recurrence-set label[data-nostyle], .em .em-recurrence-set legend[data-nostyle] {
+  width: auto;
+  margin: 0 0 10px 0;
+  padding: 0;
+  line-height: 1;
+  display: block;
+}
+.em .em-recurrence-set label[data-nostyle].inline, .em .em-recurrence-set legend[data-nostyle].inline {
+  margin: 0;
+  display: inline-block;
+}
+.em .em-recurrence-set input[type=checkbox]:indeterminate {
+  -webkit-appearance: checkbox !important;
+}
+.em .em-recurrence-set input:placeholder-shown {
+  opacity: 0.8;
+}
+.em .em-recurrence-set:last-child {
+  margin-bottom: 10px;
+}
+.em .em-recurrence-set[data-type=exclude] {
+  grid-template-columns: 105px 1fr;
+}
+.em .em-recurrence-set[data-type=exclude] .em-recurrence-set-action-order {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-set .em-recurrence-set-actions {
+  padding: 10px;
+  background: #F9FBFC;
+  height: 100%;
+  text-align: right;
+}
+.em .em-recurrence-set .em-recurrence-set-actions button.em-icon {
+  margin-top: 5px;
+}
+.em .em-recurrence-set .em-recurrence-set-actions button.em-icon-drag {
+  cursor: move;
+}
+.em .em-recurrence-set .em-recurrence-set-actions .em-icon {
+  opacity: 0.6;
+}
+.em .em-recurrence-set .em-recurrence-set-actions button.undo, .em .em-recurrence-set .em-recurrence-set-actions button.primary-reschedule-override-warning {
+  display: none;
+  visibility: hidden;
+  margin-top: 10px;
+}
+.em .em-recurrence-set.has-advanced-value .em-recurrence-set-action-advanced {
+  position: relative;
+}
+.em .em-recurrence-set.has-advanced-value .em-recurrence-set-action-advanced::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  width: 8px;
+  height: 8px;
+  background-color: #4CAF50; /* green circle */
+  border: 1px solid white; /* optional: gives a border to stand out */
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1); /* optional shadow */
+}
+.em .em-recurrence-set.has-advanced-value[data-rescheduled]:not(.new-recurrence-set) button.undo, .em .em-recurrence-set.has-advanced-value.advanced-modified:not(.new-recurrence-set) button.undo {
+  display: inline-block;
+  visibility: visible;
+}
+.em .em-recurrence-set.has-advanced-value[data-rescheduled] .em-recurrence-set-action-advanced::after, .em .em-recurrence-set.has-advanced-value.advanced-modified .em-recurrence-set-action-advanced::after {
+  background-color: #c46200;
+}
+.em .em-recurrence-set.has-advanced-value.advanced-modified-primary .em-recurrence-set-action-advanced::after {
+  background-color: #c46200;
+}
+.em .em-recurrence-set .em-recurrence-set-data {
+  border-left: 1px solid #dedede;
+  padding: 10px 20px 10px 20px;
+  height: 100%;
+}
+.em .em-recurrence-set .em-recurrence-set-data .em-datepicker-dates {
+  margin-bottom: 0;
+}
+.em .em-recurrence-set .em-recurrence-pattern select, .em .em-recurrence-set .em-recurrence-pattern input[type=text] {
+  width: auto !important;
+}
+.em .em-recurrence-set .em-recurrence-pattern select {
+  padding-right: 30px !important;
+}
+.em .em-recurrence-set .em-recurrence-pattern div.alternate-selector:not(.em-selectize) {
+  margin-top: 15px;
+}
+.em .em-recurrence-set .em-recurrence-pattern .em-on-selector.em-datepicker-multiple {
+  display: inline;
+}
+.em .em-recurrence-set .em-recurrence-pattern .em-on-selector.em-datepicker-multiple label.em-date-input {
+  display: inline-block !important;
+}
+.em .em-recurrence-set .em-recurrence-pattern .em-on-selector.em-datepicker-multiple .em-datepicker-dates {
+  margin-bottom: 0;
+}
+.em .em-recurrence-set .em-recurrence-pattern input.hidden {
+  display: none !important;
+  visibility: hidden !important;
+}
+.em .em-recurrence-set .em-recurrence-pattern .em-weekly-selector {
+  display: inline-block;
+  width: max-content;
+  margin: 0 !important;
+}
+.em .em-recurrence-set .em-recurrence-pattern .em-weekly-selector .selectize-control.em-selectize:not(.negated) {
+  display: inline-block;
+  width: max-content;
+  margin-bottom: 0 !important;
+}
+.em .em-recurrence-set .em-recurrence-pattern .em-weekly-selector .selectize-control.em-selectize:not(.negated) .selectize-input > input {
+  width: 40px !important;
+}
+.em .em-recurrence-set .em-recurrence-pattern .em-weekly-selector .selectize-control.em-selectize:not(.negated) .selectize-input .item {
+  margin-bottom: 0 !important;
+}
+.em .em-recurrence-set .advanced-summary {
+  display: block;
+  visibility: visible;
+  margin: 10px 0 0;
+  font-style: italic;
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+.em .em-recurrence-set .advanced-summary .all-day {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-set .advanced-summary .is-set {
+  font-weight: bold;
+}
+.em .em-recurrence-set:has(input.em-time-all-day[type=checkbox]:checked) .advanced-summary .all-day, .em .em-recurrence-set:has(input.em-time-all-day[type=checkbox]:indeterminate) .advanced-summary .all-day {
+  display: inline;
+  visibility: visible;
+}
+.em .em-recurrence-set:has(input.em-time-all-day[type=checkbox]:checked) .advanced-summary .times, .em .em-recurrence-set:has(input.em-time-all-day[type=checkbox]:indeterminate) .advanced-summary .times {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-set:has(select.em-recurrence-frequency option[value=on]:checked) .advanced-summary .dates {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-set:has(.em-recurrence-status select[data-default="0"]) .advanced-summary, .em .em-recurrence-set:has(.em-recurrence-status select option[value="0"]:checked) .advanced-summary {
+  text-decoration: line-through;
+  color: #563c3c;
+}
+.em .em-recurrence-set .em-recurrence-advanced {
+  border-top: 1px solid #dedede;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+.em .em-recurrence-set .em-recurrence-advanced ::placeholder {
+  opacity: 0.7;
+}
+.em .em-recurrence-set .em-recurrence-advanced legend, .em .em-recurrence-set .em-recurrence-advanced label[for] {
+  font-size: 1em;
+}
+.em .em-recurrence-set .em-recurrence-advanced > p {
+  font-style: italic;
+  margin: 5px 0 15px;
+}
+.em .em-recurrence-set .em-recurrence-advanced > div {
+  margin-bottom: 18px;
+}
+.em .em-recurrence-set .em-recurrence-advanced > div:last-child {
+  margin-bottom: 0;
+}
+.em .em-recurrence-set .em-recurrence-advanced > div:last-child .em-selectize.selectize-control {
+  margin-bottom: 0 !important;
+}
+.em .em-recurrence-set.show-advanced .em-recurrence-advanced, .em .em-recurrence-set[data-type=include]:first-child:not(.reordering) .em-recurrence-advanced {
+  padding: 18px 0 10px 10px;
+  max-height: 1000px;
+  opacity: 1;
+  overflow: visible;
+}
+.em .em-recurrence-set.show-advanced .em-recurrence-set-actions, .em .em-recurrence-set[data-type=include]:first-child:not(.reordering) .em-recurrence-set-actions {
+  grid-template-columns: auto;
+}
+.em .em-recurrence-set.show-advanced .em-recurrence-set-actions .em-icon.em-icon-filter, .em .em-recurrence-set[data-type=include]:first-child:not(.reordering) .em-recurrence-set-actions .em-icon.em-icon-filter {
+  background-image: var(--icon-filter-hide);
+}
+.em .em-recurrence-set.show-advanced .em-recurrence-pattern, .em .em-recurrence-set[data-type=include]:first-child:not(.reordering) .em-recurrence-pattern {
+  margin-bottom: 18px;
+}
+.em .em-recurrence-set.show-advanced .advanced-summary, .em .em-recurrence-set[data-type=include]:first-child:not(.reordering) .advanced-summary {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-set .em-recurrence-set-actions {
+  grid-template-columns: 69px;
+  transition: grid-template-columns 0.3s ease;
+}
+.em .em-recurrence-set .reschedule-trigger {
+  width: 15px;
+  height: 15px;
+  background-size: 15px;
+  margin-left: 5px;
+}
+.em .em-recurrence-set .reschedule-trigger[disabled] {
+  display: none;
+  visibility: hidden;
+}
+.em .em-recurrence-set.new-recurrence-set .reschedule-trigger {
+  display: none;
+  visibility: hidden;
+}
+.em .em-modal-content .recurrence-reschedule-action {
+  line-height: 38px;
+}
+.em .em-modal-content .recurrence-reschedule-action .reschedule-warning, .em .em-modal-content .recurrence-reschedule-action .undo {
+  display: none;
+  visibility: hidden;
 }
 .em .em-location-map-container {
   width: 100%;
@@ -4749,14 +5341,10 @@
   height: 1px;
   width: 1px;
   overflow: hidden;
-  clip: rect(1px 1px 1px 1px);
-  /* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
-  clip: rect(1px, 1px, 1px, 1px);
-  /*maybe deprecated but we need to support legacy browsers */
-  clip-path: inset(50%);
-  /*modern browsers, clip-path works inwards from each corner*/
-  white-space: nowrap;
-  /* added line to stop words getting smushed together (as they go onto seperate lines and some screen readers do not understand line feeds as a space */
+  clip: rect(1px 1px 1px 1px); /* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
+  clip: rect(1px, 1px, 1px, 1px); /*maybe deprecated but we need to support legacy browsers */
+  clip-path: inset(50%); /*modern browsers, clip-path works inwards from each corner*/
+  white-space: nowrap; /* added line to stop words getting smushed together (as they go onto seperate lines and some screen readers do not understand line feeds as a space */
 }
 .em .em-bookings-table .em-bookings-table-views .em-bookings-table-views-options-list label.em-bookings-table-view-option[data-view=bookings], .em .em-bookings-table .em-bookings-table-views .em-bookings-table-views-options-list label.em-bookings-table-view-option[data-view=mulitple-bookings] {
   background-size: 24px !important;
@@ -4842,14 +5430,10 @@
   height: 1px;
   width: 1px;
   overflow: hidden;
-  clip: rect(1px 1px 1px 1px);
-  /* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
-  clip: rect(1px, 1px, 1px, 1px);
-  /*maybe deprecated but we need to support legacy browsers */
-  clip-path: inset(50%);
-  /*modern browsers, clip-path works inwards from each corner*/
-  white-space: nowrap;
-  /* added line to stop words getting smushed together (as they go onto seperate lines and some screen readers do not understand line feeds as a space */
+  clip: rect(1px 1px 1px 1px); /* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
+  clip: rect(1px, 1px, 1px, 1px); /*maybe deprecated but we need to support legacy browsers */
+  clip-path: inset(50%); /*modern browsers, clip-path works inwards from each corner*/
+  white-space: nowrap; /* added line to stop words getting smushed together (as they go onto seperate lines and some screen readers do not understand line feeds as a space */
 }
 .em .em-tooltip-ddm-display {
   top: -5px !important;
@@ -5147,7 +5731,7 @@
 .em .iti .iti__search-input {
   width: 100% !important;
 }
-.em .iti button.iti__selected-country {
+.em .iti .iti__country-container button.iti__selected-country[type=button] {
   display: flex !important;
   cursor: pointer !important;
   box-sizing: border-box !important;
@@ -5272,6 +5856,10 @@
   display: none;
   visibility: hidden;
 }
+.em form .event-form-bookings:has(input.event_rsvp:not(:checked)) #event-rsvp-options, .em form .event-form-bookings:has(input.event_rsvp:not(:checked)) .event-rsvp-options {
+  display: none;
+  visibility: hidden;
+}
 
 .em {
   --counter-background: #F36752;
@@ -5287,8 +5875,7 @@
   --default-color: #666666;
   --default-border: #4b86b4;
   /* #2a4d69 • #4b86b4 • #adcbe3 • #e7eff6 • #63ace5 */
-  --palette-1-bg: #03396c;
-  /* for things like table headings or borders of tables */
+  --palette-1-bg: #03396c; /* for things like table headings or borders of tables */
   --palette-1-color: #FFFFFF;
   --meta-color: #787878;
   --meta-bg: transparent;
@@ -5324,6 +5911,9 @@
   display: none !important;
   visibility: hidden !important;
 }
+.em .em-datepicker fieldset {
+  margin-bottom: 0 !important;
+}
 .em .em-datepicker .em-datepicker-data.hidden {
   position: absolute !important;
   left: -10000px !important;
@@ -5333,6 +5923,72 @@
   overflow: hidden !important;
   visibility: visible;
   display: inherit;
+}
+.em .em-datepicker .em-date-input.button.button-secondary {
+  width: max-content !important;
+  min-height: 30px !important;
+}
+.em .em-datepicker .em-date-input.button.button-secondary input[type=text], .em .em-datepicker .em-date-input.button.button-secondary input[type=date] {
+  opacity: 0 !important;
+  width: 1px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: inline !important;
+}
+.em .em-datepicker .em-date-input.button.button-secondary + button.clear-all {
+  min-height: 30px !important;
+}
+.em .em-datepicker.em-datepicker-multiple .em-datepicker-dates {
+  margin: 10px 0;
+  max-width: 800px;
+  line-height: 1;
+}
+.em .em-datepicker.em-datepicker-multiple .em-datepicker-dates:not(.has-value) {
+  display: none;
+  visibility: hidden;
+}
+.em .em-datepicker.em-datepicker-multiple .em-datepicker-dates .item {
+  background: #dff4fd;
+  border: 1px solid #97dbf9;
+  color: #0095c3;
+  padding-left: 8px;
+  border-radius: calc(0.375rem - 1px);
+  cursor: pointer;
+  margin: 0 3px 3px 0;
+  display: inline-flex;
+  align-items: center;
+  padding-right: 0 !important;
+}
+.em .em-datepicker.em-datepicker-multiple .em-datepicker-dates .item a.remove {
+  color: inherit;
+  text-decoration: none;
+  vertical-align: middle;
+  display: inline-block;
+  padding: 1px 5px;
+  border-left: 1px solid #dee2e6;
+  border-radius: 0 2px 2px 0;
+  box-sizing: border-box;
+  margin-left: 5px;
+}
+.em .em-datepicker.em-datepicker-multiple .em-datepicker-dates .item span {
+  line-height: 1.5;
+}
+.em .em-datepicker.em-datepicker-multiple .em-datepicker-dates .item.clear-all {
+  background: #efefef;
+  border: 1px solid #cdcdcd;
+  color: #777;
+  border-left: 1px solid #cdcdcd;
+}
+.em .em-datepicker.em-datepicker-multiple .em-datepicker-dates.disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+.em .em-datepicker:not(.has-value) .clear-all {
+  visibility: hidden;
+  display: none;
 }
 .em.em-view-container {
   position: relative;
@@ -5457,6 +6113,53 @@
   background-color: red;
   -webkit-mask-image: var(--icon-cross-circle);
   mask-image: var(--icon-cross-circle);
+}
+.em .skeleton {
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+.em .skeleton .item {
+  display: block;
+  width: 100%;
+  height: 38px;
+  margin-bottom: 15px;
+  border: 1px solid var(--background-color-skeleton-softer);
+  border-radius: 4px;
+  background-color: var(--background-color-skeleton);
+  box-shadow: none;
+  overflow: hidden;
+  position: relative;
+}
+.em .skeleton .item::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0.2) 80%, rgba(255, 255, 255, 0.5) 20%, rgba(255, 255, 255, 0));
+  animation: shimmer 1.5s infinite;
+  content: "";
+}
+.em .skeleton .item.label {
+  width: 33%;
+  height: 14px;
+  margin-bottom: 8px;
+  border-radius: 0;
+}
+.em .skeleton .item.text {
+  height: 26px;
+  border-radius: 0;
+}
+.em .skeleton .item.title {
+  margin-bottom: 15px;
+  border-radius: 0;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(110%);
+  }
 }
 
 .em-working {
@@ -5774,6 +6477,32 @@ body .pac-container, .em .flatpickr-calendar {
   cursor: move;
 }
 
+#em-tickets-form input[type=checkbox][indeterminate]:not(:checked) {
+  -webkit-appearance: checkbox;
+} /* allow indeterminate to work */
+#em-tickets-form .ticket-roles label {
+  font-weight: normal;
+}
+
+#em-tickets-form .ticket-required .ticket_required-default {
+  display: none;
+}
+
+#em-tickets-form .ticket-required:has(input:indeterminate) .ticket_required-default {
+  display: inline-block;
+  font-style: italic;
+}
+
+#em-tickets-form .em-ticket-form-parent-warning {
+  margin: 0 0 15px;
+  font-style: italic;
+}
+
+#em-tickets-form .ticket-deleted {
+  display: none;
+  visibility: hidden;
+}
+
 /* Ticket Forms */
 .em-ticket-form .ticket-options {
   margin-top: 10px;
@@ -5991,6 +6720,24 @@ Please edit your theme's CSS to override this
 /* Time Picker */
 .em-time-input {
   width: 7em;
+}
+.em-time-input fieldset {
+  margin-bottom: 0 !important;
+}
+
+.em-time-range:has(.em-time-all-day:checked) .em-time-input {
+  background-color: #dedede !important;
+  --background-color-inputs: #dedede;
+  color: #777 !important;
+  pointer-events: none;
+}
+
+.em-time-range:has(.em-time-all-day:indeterminate) .em-time-input {
+  background-color: #efefef !important;
+  --background-color-inputs: #efefef;
+}
+.em-time-range:has(.em-time-all-day:indeterminate) .em-time-input::placeholder {
+  opacity: 0.5;
 }
 
 .em-time-range .em-time-input.error, .em-time-input.error {

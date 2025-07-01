@@ -4,8 +4,8 @@ Donate link: https://wp-events-plugin.com
 Tags: events, calendar, tickets, bookings, appointments
 Text Domain: events-manager
 Requires at least: 6.1
-Tested up to: 6.7.2
-Stable tag: 6.6.4.4
+Tested up to: 6.8
+Stable tag: 7.0.3
 Requires PHP: 7.0
 License: GPLv2
 
@@ -164,6 +164,84 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps wit
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
+= 7.0.3 =
+* Fixed code to prevent fatal error in some instances where users run a widget.
+* Added additional CSS selector/detector to booking form JS dynamic loading to detect waitlist forms.
+* Changed uploader to initialize on `init` so that multisite global options are applied.
+* Moved `EM_MS_Globals` out of `events-manager.php` into its own class file.
+* Fixed bug in multisite global tables mode showing faulty recurrence set records in the editor.
+* Added recurring event recurrence description to events admin list.
+* Changed default scope to 'all' for any post status other than 'All' or 'Published' in admin events list.
+* Added `event_type` search attribute for `EM_Events::get()`, accepting comma-separated list or array of event types to include.
+* Added `post_id` accepted boolean values (or `'true'` / `'0'`) to include or exclude events with a post ID (essentially, include/exclude recurrences).
+* Fixed search form not working in shortcode using `has_search` due to view container ID mismatches.
+* Fixed potential widget fatal errors.
+* Added cache flushing when editing category colors or images to update cached pages throughout a site.
+* Fixed `EM_Event->save()` invocation trying to create a post even if it’s an event recurrence.
+* Fixed ability to add higher than `event_status` 1 and added `em_get_post_status` to allow custom post statuses in WP admin.
+* Fixed end-of-month jumps when `empty_months` is set to false.
+* Changed newly added `empty_months` shortcode prop to `true`, which mimics previous calendar behavior.
+* Fixed orphaned events remover in admin tools incorrectly including new recurrences as orphaned events.
+* Fixed conversion issues from repeated to recurring events, now prompting re-conversion for upgraded event installs.
+
+= 7.0.2 =
+* Fixed recurring event editor UI display issues on front-end for recurring/repeated event patterns.
+* Fixed bbPress fatal error.
+* Fixed ticket start/end times being ignored due to new overriding ticket settings.
+
+= 7.0.1 =
+* Added recurring events functionality, which now hosts one page for all events of that recurrence type.
+* Added recurrence booking form picker including a calendar and dropdown selection.
+* Added support for true timezone-relative calendar and recurrence selection listings via the `calendar_timezone` attribute.
+* Added support for searching in timezone-relative scopes for events using the `timezone_scope` attribute.
+* Added admin support for viewing bookings belonging to recurring events.
+* Added conversion features to transfer repeated (previously called "recurring") events into recurring events.
+* Added 302 redirection functionality for converted repeated > recurring events.
+* Moved booking form JS into externally and dynamically loaded JS file.
+* Added month skipping navigation in calendars allowing skipping months with no events.
+* Added multiple calendar UI display tweaks/fixes to eventful and today months.
+* Fixed blank calendar dates showing display dates.
+* Added different calendar header option via the `calendar_header` attribute.
+* Added `setStartOfMonth()` and `setEndOfMonth()` to `EM_DateTime`.
+* Added timezone display options in `EM_DateTime::getDate()` and `getDateTime()` functions.
+* Changed selectize JS to dispatch a `CustomEvent` object from parent element with `detail` containing selectize objects.
+* Post ID is now optional for events.
+* Fixed loading order of translated string assignments so they occur after init, while hard-coding potentially required strings during previously translated actions/filters.
+* Updated readme "tested up to".
+* Namespaced Selectize and the `.selectize()` functions to `EM_Selectize` and `.em_selectize()` respectively to avoid collisions with other plugins.
+* Fixed phone input button styling clashes in manual bookings and potentially other pages.
+* Moved `EM_Scripts_and_Styles` out of `events-manager.php` into its own class.
+* Added `EM\Scripts_and_Styles::add_js_var()` allowing for footer localization.
+* Added `em_wp_localize_script_footer` allowing plugins to override EM localized script vars.
+* Added a catch exception in `EM_DateTime::modify()`.
+* Renamed some PHP variables in overriding methods (minor).
+* Added multi-layer recurrence patterns including exclusions so events can have multiple recurrence patterns.
+* Added `event_type` field allowing for recurrences, repeated, and recurring event types.
+* Changed recurring event saving logic to prevent deletion unless explicitly rescheduled or removed.
+* Added cancellation/deletion options for recurrences not included in newly rescheduled patterns.
+* Improved event update logic so that only new recurrences are added during rescheduling.
+* Changed vocabulary from “recurring events” to “repeating events” for clarity and future compatibility.
+* Updated ticket logic to support recurrence/override patterns while maintaining parent-child relationships.
+* Added `Recurring_Sets` and `Recurring_Set` objects to handle recurrence data.
+* Rewritten recurring event logic for greater flexibility and future extensibility.
+* Added `EM_Ticket::get()` for cache-friendly ticket retrieval.
+* Added `EM_DateTimeZone::getCity()`.
+* Deprecated `recurrence_` fields in `events` table.
+* Added `em_event_recurrences` table.
+* Changed ticket deletion so it requires an event save.
+* Added nonce safeguards for disabling RSVP/bookings, deleting recurrences, and rescheduling tickets.
+* Added `em_datepicker_format()` function to output datepicker format.
+* Fixed uploader validation issues in JS and PHP caused by blank default extensions settings for event/location image uploads.
+* Added non-escape option to allow HTML sub-values in attendees mulitple column data views on bookings table.
+* Removed JS requirement for asset selectors to be wrapped by `em` in dynamic asset loading.
+* Improved dynamic asset loading by pre-loading asset groups before firing `onload` events.
+* Improved booking form JS by encapsulating container scopes within functions and events rather than scoping at the document level.
+* Fixed phone input field JS error.
+* Fixed missing uploader field minified CSS files.
+* Fixed calendars showing the wrong month when there's a long event starting in an earlier month.
+* Fixed ticket caching issue when saving events, which caused the event editor/page to show outdated ticket data such as prices.
+* Added `EM_Event->just_disabled_rsvp` to detect RSVP being disabled during an event save process.
+
 = 6.6.4.4 =
 * Re-added cancellation checks before processing a booking, previously added in 6.6.4.2 and removed in .3 due to urgent validation reports.
 * Fixed image validation issues introduced in 6.6.4.2

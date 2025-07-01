@@ -81,7 +81,13 @@
 			#em-tickets-form.em-tickets-sortable .em-tickets-row .ticket-status span.dashicons { cursor:move; }
 			#em-tickets-form .em-ticket-sortable-placeholder { border:2px dashed #dedede; background:#efefef; }
 			#em-tickets-form .ui-sortable-helper { cursor:move; }
-			/* Ticket Forms */
+			#em-tickets-form input[type="checkbox"][indeterminate]:not(:checked) { -webkit-appearance: checkbox; } /* allow indeterminate to work */
+			#em-tickets-form .ticket-roles label { font-weight: normal; }
+			#em-tickets-form .ticket-required .ticket_required-default { display: none; }
+			#em-tickets-form .ticket-required:has(input:indeterminate) .ticket_required-default { display: inline-block; font-style: italic; }
+			#em-tickets-form .em-ticket-form-parent-warning { margin: 0 0 15px; font-style: italic; }
+			#em-tickets-form .ticket-deleted { display: none; visibility: hidden; }
+	/* Ticket Forms */
 				.em-ticket-form .ticket-options { margin-top:10px; }
  				#em-tickets-form .ticket-roles div { margin-left:110px; }
 	/* The editor */

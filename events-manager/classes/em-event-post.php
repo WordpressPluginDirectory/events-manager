@@ -271,10 +271,18 @@ class EM_Event_Post {
 		    $query = array();
 			//Let's deal with the scope - default is future
 			if( is_admin() ){
-				$scope = $wp_query->query_vars['scope'] = (!empty($_REQUEST['scope'])) ? $_REQUEST['scope']:'future';
-				//TODO limit what a user can see admin side for events/locations/recurring events
-				if( !empty($wp_query->query_vars['recurrence_id']) && is_numeric($wp_query->query_vars['recurrence_id']) ){
-				    $query[] = array( 'key' => '_recurrence_id', 'value' => $wp_query->query_vars['recurrence_id'], 'compare' => '=' );
+				if ( in_array( $_REQUEST['post_status'] ?? 'all', [ 'future', 'draft', 'pending', 'private', 'trash'] ) ) {
+					$scope = $wp_query->query_vars['scope'] = (!empty($_REQUEST['scope'])) ? $_REQUEST['scope']:'all';
+				} else {
+					$scope = $wp_query->query_vars['scope'] = (!empty($_REQUEST['scope'])) ? $_REQUEST['scope']:'future';
+				}
+				if ( !empty( $wp_query->query_vars['recurring_event'] ) && is_numeric( $wp_query->query_vars['recurring_event'] ) ) {
+					global $wpdb;
+					$sql = $wpdb->prepare("SELECT recurrence_set_id FROM " . EM_EVENT_RECURRENCES_TABLE . " WHERE event_id = %d AND recurrence_type='include'", $wp_query->query_vars['recurring_event'] );
+					$recurrence_set_ids = $wpdb->get_col( $sql );
+					if ( !empty( $recurrence_set_ids ) ) {
+						$query[] = array( 'key' => '_recurrence_set_id', 'value' => $recurrence_set_ids, 'compare' => 'IN', 'type' => 'NUMERIC' );
+					}
 				}
 			}else{
 				if( !empty($wp_query->query_vars['calendar_day']) ) $wp_query->query_vars['scope'] = $wp_query->query_vars['calendar_day'];

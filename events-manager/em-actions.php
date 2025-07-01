@@ -17,21 +17,6 @@ function em_init_actions_start() {
 		     	echo EM_Object::json_encode($location_array);
 			}
 			die();
-		}   
-	 	if( isset($_REQUEST['em_ajax_action']) && $_REQUEST['em_ajax_action'] == 'delete_ticket' ) {
-			if( isset($_REQUEST['id']) ){
-				$EM_Ticket = new EM_Ticket( absint($_REQUEST['id']) );
-				$result = $EM_Ticket->delete();
-				if( $result ){
-					$result = array('result'=>true, 'success'=>true);
-				}else{
-					$result = array('result'=>false, 'success'=>false, 'error'=>$EM_Ticket->feedback_message);
-				}
-			}else{
-				$result = array('result'=>false, 'success'=>false, 'error'=>__('No ticket id provided','events-manager'));
-			}			
-		    echo EM_Object::json_encode($result);
-			die();
 		}
 		if(isset($_REQUEST['query']) && $_REQUEST['query'] == 'GlobalMapData') {
 			$EM_Locations = EM_Locations::get( $_REQUEST );
@@ -61,11 +46,54 @@ function em_init_actions_start() {
 	
 		if(isset($_REQUEST['ajaxCalendar']) && $_REQUEST['ajaxCalendar']) {
 			$_REQUEST['has_search'] = false; //prevent search from loading up again
-			echo EM_Calendar::output($_REQUEST, false);
+			echo EM_Calendar::output( $_REQUEST, false );
 			die();
 		}
+
+		// Booking Form actions, AJAX specific
+		if( isset($_REQUEST['action']) ) {
+			if ( $_REQUEST['action'] == 'booking_form' ) {
+				if ( !empty( $_REQUEST['event_id'] ) && !empty( $_REQUEST['nonce'] ) && wp_verify_nonce( $_REQUEST['nonce'], 'booking_form' ) ) {
+					$EM_Event = em_get_event( absint( $_REQUEST['event_id'] ) );
+					do_action('em_ajax_output_booking_form', $EM_Event);
+					if ( $EM_Event->is_published() ) {
+						echo $EM_Event->output_booking_form();
+					} else {
+						echo '<div class="em-booking-form-error">' . __( 'This event is not available or has been cancelled', 'events-manager' ) . '</div>';
+					}
+				} else {
+					echo '<div class="em-booking-form-error">' . __( 'Invalid request', 'events-manager' ) . '</div>';
+				}
+				exit();
+			} elseif ( $_REQUEST['action'] == 'booking_recurrences' ) {
+				if ( !empty( $_REQUEST['event_id'] ) && !empty( $_REQUEST['nonce'] ) && wp_verify_nonce( $_REQUEST['nonce'], 'booking_recurrences' ) ) {
+					$EM_Event = em_get_event( absint( $_REQUEST['event_id'] ) );
+					// get the date requested
+					$day = $_REQUEST['day'];
+					if ( preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $day) ) {
+						$scope = $day;
+					}
+					if ( !empty($_REQUEST['timezone']) && preg_match('/^(([A-Za-z0-9-_]+\/[A-Za-z0-9-_]+)|([A-Za-z]{1,4})|(UTC|GMT)(\+|-)[0-9]{1,2}([\.:][0-9]{2})?)$/', $_REQUEST['timezone']) ) {
+						$EM_Event->set_timezone( $_REQUEST['timezone'] );
+					}
+					include em_locate_template( 'forms/bookingform/recurring/booking-recurrences.php' );
+				} else {
+					echo '<div class="em-booking-form-error">' . __( 'Invalid request', 'events-manager' ) . '</div>';
+				}
+				exit();
+			} elseif ( $_REQUEST['action'] == 'booking_form_nonces' ) {
+				if ( ( defined( 'WP_CACHE' ) && WP_CACHE ) || defined( 'EM_CACHE' ) && EM_CACHE ) {
+					$nonces = array (
+						'booking_form' => wp_create_nonce( 'booking_form' ),
+						'booking_recurrences' => wp_create_nonce( 'booking_recurrences' ),
+					);
+					echo EM_Object::json_encode( $nonces );
+					exit();
+				}
+			}
+		}
 	}
-	
+
 	//Event Actions
 	if( !empty($_REQUEST['action']) && substr($_REQUEST['action'],0,5) == 'event' ){
 		//Load the event object, with saved event if requested
@@ -108,11 +136,11 @@ function em_init_actions_start() {
 		if ( $_REQUEST['action'] == 'event_duplicate' && wp_verify_nonce($_REQUEST['_wpnonce'],'event_duplicate_'.$EM_Event->event_id) ) {
 			$event = $EM_Event->duplicate();
 			if( $event === false ){
-				$EM_Notices->add_error($EM_Event->errors, true);
+				$EM_Notices->add_error( $EM_Event->errors, true );
 				wp_safe_redirect( em_wp_get_referer() );
 			}else{
-				$EM_Notices->add_confirm($event->feedback_message, true);
-				wp_safe_redirect( $event->get_edit_url() );
+				$EM_Notices->add_confirm( $event->feedback_message, true );
+				wp_safe_redirect( $event->get_edit_url( false ) );
 			}
 			exit();
 		}
@@ -143,9 +171,9 @@ function em_init_actions_start() {
 			}
 			wp_safe_redirect(em_wp_get_referer());
 			exit();
-		}elseif( $_REQUEST['action'] == 'event_attach' && !empty($_REQUEST['undo_id']) && wp_verify_nonce($_REQUEST['_wpnonce'],'event_attach_'.get_current_user_id().'_'.$EM_Event->event_id) ){ 
+		}elseif( $_REQUEST['action'] == 'event_attach' && !empty($_REQUEST['undo_id']) && !empty($_REQUEST['_wpnonce']) && wp_verify_nonce($_REQUEST['_wpnonce'],'event_attach_'.get_current_user_id().'_'.$EM_Event->event_id) ){
 			//Detach event and move on
-			if( $EM_Event->attach( absint($_REQUEST['undo_id']) ) ){
+			if( $EM_Event->attach( absint($_REQUEST['undo_id']), !empty($_REQUEST['recurring_id']) ? absint($_REQUEST['recurring_id']) : null )  ){
 				$EM_Notices->add_confirm( $EM_Event->feedback_message, true );
 			}else{
 				$EM_Notices->add_error( $EM_Event->errors, true );
@@ -274,7 +302,7 @@ function em_init_actions_start() {
 	
 	//Booking Actions
 	$booking_allowed_actions = array('bookings_approve'=>'approve','bookings_reject'=>'reject','bookings_unapprove'=>'unapprove', 'bookings_delete'=>'delete');
-	$booking_ajax_actions = array('booking_add', 'booking_add_one', 'booking_cancel', 'booking_save', 'booking_set_status', 'booking_resend_email', 'booking_modify_person', 'bookings_add_note', 'booking_form_summary', 'booking_rsvp_change', 'booking_set_rsvp_status');
+	$booking_ajax_actions = array('booking_add', 'booking_add_one', 'booking_cancel', 'booking_save', 'booking_set_status', 'booking_resend_email', 'booking_modify_person', 'bookings_add_note', 'booking_form', 'booking_form_summary', 'booking_rsvp_change', 'booking_set_rsvp_status');
 	$booking_nopriv_actions = array('booking_add', 'booking_form_summary');
 	$booking_actions = array_merge( $booking_ajax_actions, array_keys($booking_allowed_actions) );
 	if( !empty($_REQUEST['action']) && in_array($_REQUEST['action'], $booking_actions) && (is_user_logged_in() || (in_array($_REQUEST['action'], $booking_nopriv_actions) && get_option('dbem_bookings_anonymous'))) ){
@@ -613,6 +641,22 @@ function em_init_actions_start() {
 			echo EM_Object::json_encode(apply_filters('em_action_'.$_REQUEST['action'], $return, $EM_Booking));
 			die();
 		}
+	}
+
+	// convert repeating events
+	if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'convert_to_recurrence' && !empty($_REQUEST['event_id']) && check_admin_referer('convert_to_recurrence_'.absint($_REQUEST['event_id']), 'nonce') ){
+		//Convert event to recurring event
+		$EM_Event = em_get_event( absint($_REQUEST['event_id']) );
+		if( $EM_Event->convert_to_recurring() ){
+			$message = __('The repeating event has been converted into a recurring event.', 'events-manager') . ' ' . '<a href=" ' . $EM_Event->get_edit_url() . '">' . esc_html__('Edit Event', 'events-manager') . '</a>';
+			$EM_Notices->add_confirm( $message, true );
+			$redirect = add_query_arg( array('converted' => $EM_Event->event_id), remove_query_arg('event_id', em_wp_get_referer()) );
+			wp_safe_redirect( $redirect );
+		}else{
+			$EM_Notices->add_error( $EM_Event->errors, true );
+			wp_safe_redirect( em_wp_get_referer() );
+		}
+		exit();
 	}
 	
 	//AJAX call for searches

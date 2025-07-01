@@ -67,11 +67,10 @@ class EM_Events extends EM_Object {
 				//get all fields from table, add events table prefix to avoid ambiguous fields from location
 				$selectors = $events_table . '.*';
 			}elseif( EM_MS_GLOBAL ){
-				$selectors = $events_table.'.post_id, '.$events_table.'.blog_id';
+				$selectors = $events_table.'.event_id, '. $events_table.'.post_id , ' . $events_table.'.blog_id';
 			}else{
-				$selectors = $events_table.'.post_id';
+				$selectors = $events_table.'.event_id, '. $events_table.'.post_id';
 			}
-			if( $calc_found_rows ) $selectors = 'SQL_CALC_FOUND_ROWS ' . $selectors; //for storing total rows found
 			$selectors = 'DISTINCT ' . $selectors; //duplicate avoidance
 		}
 		
@@ -203,7 +202,8 @@ $limit $offset";
 		$results = $wpdb->get_results( $sql, ARRAY_A);
 		self::$num_rows = $wpdb->num_rows;
 		if( $calc_found_rows ){
-			self::$num_rows_found = $wpdb->get_var('SELECT FOUND_ROWS()');
+			$sql_count = str_replace( $selectors, ' COUNT(*) ', $sql );
+			self::$num_rows_found = $wpdb->get_var($sql_count);
 		}else{
 			self::$num_rows_found = self::$num_rows;
 		}
@@ -219,11 +219,19 @@ $limit $offset";
 		
 		if( EM_MS_GLOBAL ){
 			foreach ( $results as $event ){
-				$events[] = em_get_event($event['post_id'], $event['blog_id']);
+				if ( !empty($event['post_id']) ) {
+					$events[] = em_get_event( $event['post_id'], $event['blog_id'] );
+				} else {
+					$events[] = em_get_event( $event['event_id'] );
+				}
 			}
 		}else{
 			foreach ( $results as $event ){
-				$events[] = em_get_event($event['post_id'], 'post_id');
+				if ( !empty($event['post_id']) ) {
+					$events[] = em_get_event( $event['post_id'], 'post_id' );
+				} else {
+					$events[] = em_get_event( $event['event_id'] );
+				}
 			}
 		}
 		
@@ -287,7 +295,7 @@ $limit $offset";
 		//Can be either an array for the get search or an array of EM_Event objects
 		if( is_object(current($args)) && get_class((current($args))) == 'EM_Event' ){
 			$func_args = func_get_args();
-			$events = $func_args[0];
+			$events = $func_args[0]; /* @var EM_Event[] $events */
 			$args = (!empty($func_args[1]) && is_array($func_args[1])) ? $func_args[1] : array();
 			$args = apply_filters('em_events_output_args', self::get_default_search($args), $events);
 			$limit = ( !empty($args['limit']) && is_numeric($args['limit']) ) ? $args['limit']:false;
@@ -488,6 +496,20 @@ $limit $offset";
 		}
 		return parent::get_pagination_links($args, $count, $search_action, $default_args);
 	}
+
+	/**
+	 * Adds JavaScript variables to the page load, useful for dynamically loading localized text specifically for the event editor when loaded.
+	 * @return void
+	 */
+	public static function add_editor_js_vars() {
+		$js_vars = [
+			'deleteTicketWarning' => sprintf( esc_html__('Are you sure you want to delete this ticket? All bookings related to this ticket will be deleted once you save this %s.','events-manager'), esc_html__('Event', 'events-manager') ),
+			'deleteTicketParentWarning' => esc_html__('Are you sure you want to delete this ticket?', 'events-manager') . "\n\n" . esc_html__('Tickets within recurrences without any bookings will be deleted.', 'events-manager')  . "\n\n" . esc_html__('Tickets within recurrences that already have bookings WILL NOT be deleted, the ticket will be deactivated instead to prevent further bookings.','events-manager'),
+		];
+		EM\Scripts_and_Styles::add_js_var('eventEditor', $js_vars);
+		// add recurrence set stuff too
+		EM\Recurrences\Recurrence_Sets::add_js_vars();
+	}
 	
 	/* (non-PHPdoc)
 	 * DEPRECATED - this class should just contain static classes,
@@ -537,6 +559,14 @@ $limit $offset";
 				}
 			}
 		}
+		// recurrence set
+		if ( !empty($args['recurrence_set']) ){
+			if ( is_numeric( $args['recurrence_set'] ) ){
+				$conditions['recurrence_set'] = "(`recurrence_set_id`=" . absint($args['recurrence_set']).")";
+			} elseif ( static::array_is_numeric( $args['recurrence_set'] ) ){
+				$conditions['recurrence_set'] = "(`recurrence_set_id` IN (" . implode(',', $args['recurrence_set']).") )";
+			}
+		}
 		//search conditions
 		if( !empty($args['search']) ){
 			if( get_option('dbem_locations_enabled') ){
@@ -575,9 +605,15 @@ $limit $offset";
 		if( !empty($args['post_id'])){
 			if( is_array($args['post_id']) ){
 				$conditions['post_id'] = "(".EM_EVENTS_TABLE.".post_id IN (".implode(',',$args['post_id'])."))";
-			}else{
+			} elseif ( $args['post_id'] === true || $args['post_id'] === 'true' ) {
+				// if set to true specifically (or 'true' in a shortcode, we search for all events that DO HAVE a post ID (recurrences)
+				$conditions['post_id'] = "(".EM_EVENTS_TABLE.".post_id > 0 )";
+			} else {
 				$conditions['post_id'] = "(".EM_EVENTS_TABLE.".post_id={$args['post_id']})";
 			}
+		} elseif ( $args['post_id'] === null || $args['post_id'] === '0' || $args['post_id'] === 0 ) {
+			// if not false, we search for all events which do not have a post ID (recurrences)
+			$conditions['post_id'] = "(".EM_EVENTS_TABLE.".post_id IS NULL )";
 		}
 		// event locations
 		if( !empty($args['event_location_type']) ){
@@ -711,6 +747,7 @@ $limit $offset";
 	public static function get_default_search( $array_or_defaults = array(), $array = array() ){
 		$defaults = array(
 			'recurring' => false, //we don't initially look for recurring events only events and recurrences of recurring events
+			'recurrence_set' => false, // get a specific set of event recurrences within a recurrence
 			'orderby' => get_option('dbem_events_default_orderby'),
 			'order' => get_option('dbem_events_default_order'),
 			'groupby' => false,
@@ -739,6 +776,7 @@ $limit $offset";
 			'cancelled' => get_option('dbem_events_include_status_cancelled') ? null : false, // include cancelled events
 			'active' => null,
 			'active_status' => null,
+			'event_type' => false,
 		);
 		//sort out whether defaults were supplied or just the array of search values
 		if( empty($array) ){

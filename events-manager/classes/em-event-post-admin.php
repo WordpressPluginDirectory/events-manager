@@ -35,15 +35,26 @@ class EM_Event_Post_Admin{
 		global $post, $EM_Event, $pagenow;
 		if( $pagenow == 'post.php' && ($post->post_type == EM_POST_TYPE_EVENT || $post->post_type == 'event-recurring') ){
 			if ( $EM_Event->is_recurring() ) {
-				$warning = "<p><strong>".__( 'WARNING: This is a recurring event.', 'events-manager')."</strong></p>";
-				$warning .= "<p>". __( 'Modifications to recurring events will be applied to all recurrences and will overwrite any changes made to those individual event recurrences.', 'events-manager') . '</p>';
-				$warning .= "<p>". __( 'Bookings to individual event recurrences will be preserved if event times and ticket settings are not modified.', 'events-manager') . '</p>';
-				$warning .= '<p><a href="'. esc_url( add_query_arg(array('scope'=>'all', 'recurrence_id'=>$EM_Event->event_id), em_get_events_admin_url()) ).'">'. esc_html__('You can edit individual recurrences and disassociate them with this recurring event.','events-manager') . '</a></p>';
+				$recurring_events = strtolower( sprintf( __('Recurring %s', 'events-manager'), __('Events', 'events-manager') ) );
+				$event_txt = __('Event', 'events-manager');
+				$recurring_event = strtolower( sprintf( __('Recurring %s', 'events-manager'), $event_txt ) );
+				$warning = "<p><strong>". sprintf( esc_html__( 'WARNING: This is a %s.', 'events-manager'), $recurring_event )."</strong></p>";
+				$warning .= "<p>". esc_html( sprintf( __( 'Modifications to %s can be applied to all recurrences and will overwrite any changes made to those individual %s recurrences.', 'events-manager'), $recurring_events, strtolower($event_txt) ) ) . '</p>';
+				$warning .= "<p>". sprintf( esc_html__( 'Bookings to individual %s recurrences will be preserved unless you delete tickets or choose to reschedule and delete rescheduled recurrences.', 'events-manager'), $event_txt ) . '</p>';
+				?><div class="notice notice-warning is-dismissible"><?php echo $warning; ?></div><?php
+			} elseif ( $EM_Event->is_repeating() ) {
+				$recurring_events = strtolower( sprintf( __('Repeating %s', 'events-manager'), __('Events', 'events-manager') ) );
+				$event_txt = __('Event', 'events-manager');
+				$recurring_event = strtolower( sprintf( __('Repeating %s', 'events-manager'), $event_txt ) );
+				$warning = "<p><strong>". sprintf( esc_html__( 'WARNING: This is a %s.', 'events-manager'), $recurring_event )."</strong></p>";
+				$warning .= "<p>". esc_html( sprintf( __( 'Modifications to %s can be applied to all recurrences and will overwrite any changes made to those individual %s recurrences.', 'events-manager'), $recurring_events, strtolower($event_txt) ) ) . '</p>';
+				$warning .= "<p>". sprintf( esc_html__( 'Bookings to individual %s recurrences will be preserved unless you delete tickets or choose to reschedule and delete rescheduled recurrences.', 'events-manager'), $event_txt ) . '</p>';
+				$warning .= '<p><a href="'. esc_url( add_query_arg(array('scope'=>'all', 'recurring_event'=>$EM_Event->event_id), em_get_events_admin_url()) ).'">'. esc_html__('You can edit individual recurrences and disassociate them with this repeating event.','events-manager') . '</a></p>';
 				?><div class="notice notice-warning is-dismissible"><?php echo $warning; ?></div><?php
 			} elseif ( $EM_Event->is_recurrence() ) {
-				$warning = "<p><strong>".__('WARNING: This is a recurrence in a set of recurring events.', 'events-manager')."</strong></p>";
-				$warning .= "<p>". sprintf(__('If you update this event data and save, it could get overwritten if you edit the recurring event template. To make it an independent, <a href="%s">detach it</a>.', 'events-manager'), $EM_Event->get_detach_url())."</p>";
-				$warning .= "<p>".sprintf(__('To manage the whole set, <a href="%s">edit the recurring event template</a>.', 'events-manager'),admin_url('post.php?action=edit&amp;post='.$EM_Event->get_event_recurrence()->post_id))."</p>";
+				$warning = "<p><strong>".__('WARNING: This is a recurrence in a set of repeating events.', 'events-manager')."</strong></p>";
+				$warning .= "<p>". sprintf(__('If you update this event data and save, it could get overwritten if you edit the repeating event template. To make it an independent, <a href="%s">detach it</a>.', 'events-manager'), $EM_Event->get_detach_url())."</p>";
+				$warning .= "<p>".sprintf(__('To manage the whole set, <a href="%s">edit the repeating event template</a>.', 'events-manager'),admin_url('post.php?action=edit&amp;post='.$EM_Event->get_recurring_event()->post_id))."</p>";
 				?><div class="notice notice-warning is-dismissible"><?php echo $warning; ?></div><?php
 			}
 			if( !empty($EM_Event->group_id) && function_exists('groups_get_group') ){
@@ -136,7 +147,7 @@ class EM_Event_Post_Admin{
 				if( !$get_meta || !$validate_meta || !$save_meta ){
 					//failed somewhere, set to draft, don't publish
 					$EM_Event->set_status(null, true);
-					if( $EM_Event->is_recurring() ){
+					if( $EM_Event->is_recurring( true ) ){
 						$EM_Notices->add_error( '<strong>'.__('Your event details are incorrect and recurrences cannot be created, please correct these errors first:','events-manager').'</strong>', true); //Always seems to redirect, so we make it static
 					}else{
 						$EM_Notices->add_error( '<strong>'.sprintf(__('Your %s details are incorrect and cannot be published, please correct these errors first:','events-manager'),__('event','events-manager')).'</strong>', true); //Always seems to redirect, so we make it static
@@ -145,7 +156,7 @@ class EM_Event_Post_Admin{
 					apply_filters('em_event_save', false, $EM_Event);
 				}else{
 					//if this is just published, we need to email the user about the publication, or send to pending mode again for review
-					if( (!$EM_Event->is_recurring() && !current_user_can('publish_events')) || ($EM_Event->is_recurring() && !current_user_can('publish_recurring_events')) ){
+					if( (!$EM_Event->is_recurring( true ) && !current_user_can('publish_events')) || ($EM_Event->is_recurring( true ) && !current_user_can('publish_recurring_events')) ){
 						if( $EM_Event->is_published() ){ $EM_Event->set_status(0, true); } //no publishing and editing... security threat
 					}
 					apply_filters('em_event_save', true, $EM_Event);
@@ -164,7 +175,7 @@ class EM_Event_Post_Admin{
 					$EM_Event->get_previous_status(); //before we save anything
 					$event_status = $EM_Event->get_status(true);
 					//if this is just published, we need to email the user about the publication, or send to pending mode again for review
-					if( (!$EM_Event->is_recurring() && !current_user_can('publish_events')) || ($EM_Event->is_recurring() && !current_user_can('publish_recurring_events')) ){
+					if( (!$EM_Event->is_recurring( true ) && !current_user_can('publish_events')) || ($EM_Event->is_recurring( true ) && !current_user_can('publish_recurring_events')) ){
 						if( $EM_Event->is_published() ){ $EM_Event->set_status(0, true); } //no publishing and editing... security threat
 					}
 					//now update the db
@@ -176,9 +187,9 @@ class EM_Event_Post_Admin{
 		    			$EM_Event->get_categories()->save_index(); //just save to index, WP should have saved the taxonomy data
 					}
 					//deal with recurrences
-					if( $EM_Event->is_recurring() && ($EM_Event->is_published() || (defined('EM_FORCE_RECURRENCES_SAVE') && EM_FORCE_RECURRENCES_SAVE)) ){
+					if( $EM_Event->is_recurring( true ) && $EM_Event->is_published() ){
 						//recurrences are (re)saved only if event is published
-						$EM_Event->save_events();
+						$EM_Event->get_recurrence_sets()->save_recurrences();
 					}
 					apply_filters('em_event_save', true, $EM_Event);
 					//flag a cache refresh if we get here
@@ -194,6 +205,15 @@ class EM_Event_Post_Admin{
 			self::maybe_publish_location($EM_Event);
 			//Set server timezone back, even though it should be UTC anyway
 			date_default_timezone_set($server_timezone);
+			
+			// handle recurrences (previously handled via EM_Event_Recurring_Post_Admin::save_post but now handled here since regular events can be recurring)
+			if ( $EM_Event->is_recurring( true ) ) {
+				if ( !$EM_Event->get_recurrence_sets()->save_recurrences() && ( $EM_Event->is_published() || 'future' == $EM_Event->post_status ) ) {
+					$EM_Event->set_status( null, true );
+					$EM_Notices->add_error( __( 'Something went wrong with the recurrence update...', 'events-manager' ) . __( 'There was a problem saving the recurring events.', 'events-manager' ) );
+				}
+			}
+			$EM_EVENT_SAVE_POST = false; //last filter of save_post in EM for events
 		}
 	}
 	
@@ -270,6 +290,9 @@ class EM_Event_Post_Admin{
 			add_meta_box('em-event-anonymous', __('Anonymous Submitter Info','events-manager'), array('EM_Event_Post_Admin','meta_box_anonymous'),EM_POST_TYPE_EVENT, 'side','high');
 		}
 		add_meta_box('em-event-when', __('When','events-manager'), array('EM_Event_Post_Admin','meta_box_date'),EM_POST_TYPE_EVENT, 'side','high');
+		if ( get_option('dbem_recurrence_enabled') && ( !$EM_Event->event_id || $EM_Event->is_recurring() ) ) {
+			add_meta_box('em-event-recurring', __('Recurrences','events-manager'), array('EM_Event_Recurring_Post_Admin','meta_box_recurrence'),EM_POST_TYPE_EVENT, 'normal','high');
+		}
 		if(get_option('dbem_locations_enabled', true)){
 			add_meta_box('em-event-where', __('Where','events-manager'), array('EM_Event_Post_Admin','meta_box_location'),EM_POST_TYPE_EVENT, 'normal','high');
 		}
@@ -318,6 +341,7 @@ class EM_Event_Post_Admin{
 		//create meta box check of date nonce
 		?><input type="hidden" name="_emnonce" value="<?php echo wp_create_nonce('edit_event'); ?>" /><?php
 		em_locate_template('forms/event/when.php', true);
+		EM_Events::add_editor_js_vars();
 	}
 	
 	public static function meta_box_bookings_stats(){
@@ -325,6 +349,7 @@ class EM_Event_Post_Admin{
 	}
 
 	public static function meta_box_bookings(){
+		EM_Events::add_editor_js_vars();
 		em_locate_template('forms/event/bookings.php', true);
 		add_action('admin_footer',array('EM_Event_Post_Admin','meta_box_bookings_overlay'));
 	}
@@ -404,25 +429,13 @@ class EM_Event_Recurring_Post_Admin{
 	}
 	
 	/**
-	 * Beacuse in wp admin recurrences get saved early on during save_post, meta added by  other plugins to the recurring event template don't get copied over to recurrences
+	 * Beacuse in wp admin repeated events get saved early on during save_post, meta added by  other plugins to the repeating event template don't get copied over to recurrences
 	 * This re-saves meta late in save_post to correct this issue, in the future when recurrences refer to one post, this shouldn't be an issue 
 	 * @param int $post_id
 	 */
 	public static function save_post($post_id){
 		global $wpdb, $EM_Notices, $EM_SAVING_EVENT, $EM_EVENT_SAVE_POST;
 		if( !empty($EM_SAVING_EVENT) ) return; //never proceed with this if using EM_Event::save(); which only gets executed outside wp admin
-		$post_type = get_post_type($post_id);
-		$saving_status = !in_array(get_post_status($post_id), array('trash','auto-draft')) && !defined('DOING_AUTOSAVE');
-		if(!defined('UNTRASHING_'.$post_id) && $post_type == 'event-recurring' && $saving_status && !empty($EM_EVENT_SAVE_POST) ){
-			$EM_Event = em_get_event($post_id, 'post_id');
-			$EM_Event->post_type = $post_type;
-			//get the list post IDs for recurrences this recurrence
-		 	if( !$EM_Event->save_events() && ( $EM_Event->is_published() || 'future' == $EM_Event->post_status ) ){
-				$EM_Event->set_status(null, true);
-				$EM_Notices->add_error(__ ( 'Something went wrong with the recurrence update...', 'events-manager'). __ ( 'There was a problem saving the recurring events.', 'events-manager'));
-		 	}
-		}
-		$EM_EVENT_SAVE_POST = false; //last filter of save_post in EM for events
 	}
 
 	public static function before_delete_post($post_id){
@@ -432,10 +445,10 @@ class EM_Event_Recurring_Post_Admin{
 			//now delete recurrences
 			//only delete other events if this isn't a draft-never-published event
 			if( !empty($EM_Event->event_id) ){
-    			$events_array = EM_Events::get( array('recurrence'=>$EM_Event->event_id, 'scope'=>'all', 'status'=>'everything' ) );
+    			$events_array = EM_Events::get( array('recurring_event'=>$EM_Event->event_id, 'scope'=>'all', 'status'=>'everything' ) );
     			foreach($events_array as $event){
     				/* @var $event EM_Event */
-    				if($EM_Event->event_id == $event->recurrence_id && !empty($event->recurrence_id) ){ //double check the event is a recurrence of this event
+    				if($EM_Event->event_id == $event->get_recurrence_set()->event_id ){
     					wp_delete_post($event->post_id, true);
     				}
     			}
@@ -453,10 +466,10 @@ class EM_Event_Recurring_Post_Admin{
 			//only trash other events if this isn't a draft-never-published event
 			if( !empty($EM_Event->event_id) ){
     			//now trash recurrences
-    			$events_array = EM_Events::get( array('recurrence_id'=>$EM_Event->event_id, 'scope'=>'all', 'status'=>'everything' ) );
+    			$events_array = EM_Events::get( array('recurring_event'=>$EM_Event->event_id, 'scope'=>'all', 'status'=>'everything' ) );
     			foreach($events_array as $event){
     				/* @var $event EM_Event */
-    				if($EM_Event->event_id == $event->recurrence_id ){ //double check the event is a recurrence of this event
+    				if( $EM_Event->event_id == $event->get_recurrence_set()->event_id ){ //double check the event is a recurrence of this event
     					wp_trash_post($event->post_id);
     				}
     			}
@@ -473,10 +486,10 @@ class EM_Event_Recurring_Post_Admin{
 			$EM_Event = em_get_event($post_id,'post_id');
 			//only untrash other events if this isn't a draft-never-published event, because if so it never had other events to untrash
 			if( !empty($EM_Event->event_id) ){
-    			$events_array = EM_Events::get( array('recurrence_id'=>$EM_Event->event_id, 'scope'=>'all', 'status'=>'everything' ) );
+    			$events_array = EM_Events::get( array('recurring_event'=>$EM_Event->event_id, 'scope'=>'all', 'status'=>'everything' ) );
     			foreach($events_array as $event){
     				/* @var $event EM_Event */
-    				if($EM_Event->event_id == $event->recurrence_id){
+    				if( $EM_Event->event_id == $event->get_recurrence_set()->event_id ){
     					wp_untrash_post($event->post_id);
     				}
     			}
@@ -485,7 +498,7 @@ class EM_Event_Recurring_Post_Admin{
 	}
 	
 	public static function untrashed_post($post_id){
-		if(get_post_type($post_id) == 'event-recurring'){
+		if( get_post_type($post_id) == 'event-recurring' ){
 			global $EM_Notices,$EM_Event;
 			$EM_Event->set_status(1);
 			$EM_Notices->remove_all(); //no validation/notices needed
@@ -497,10 +510,12 @@ class EM_Event_Recurring_Post_Admin{
 		//since this is the first point when the admin area loads event stuff, we load our EM_Event here
 		if( empty($EM_Event) && !empty($post) ){
 			$EM_Event = em_get_event($post->ID, 'post_id');
+			$EM_Event->event_type = 'repeating';
 		}
 		if( !empty($EM_Event->event_owner_anonymous) ){
 			add_meta_box('em-event-anonymous', __('Anonymous Submitter Info','events-manager'), array('EM_Event_Post_Admin','meta_box_anonymous'),'event-recurring', 'side','high');
 		}
+		add_meta_box('em-event-when', __('When','events-manager'), array('EM_Event_Post_Admin','meta_box_date'),'event-recurring', 'side','high');
 		add_meta_box('em-event-recurring', __('Recurrences','events-manager'), array('EM_Event_Recurring_Post_Admin','meta_box_recurrence'),'event-recurring', 'normal','high');
 		//add_meta_box('em-event-meta', 'Event Meta (debugging only)', array('EM_Event_Post_Admin','meta_box_metadump'),'event-recurring', 'normal','high');
 		if(get_option('dbem_locations_enabled', true)){
@@ -520,9 +535,19 @@ class EM_Event_Recurring_Post_Admin{
 		}
 	}
 	
-	public static function meta_box_recurrence(){
-	    ?><input type="hidden" name="_emnonce" value="<?php echo wp_create_nonce('edit_event'); ?>" /><?php
-		em_locate_template('forms/event/recurring-when.php', true);
+	public static function meta_box_recurrence( $post ){
+		global $EM_Event;
+		if( empty($EM_Event) && !empty($post) ){
+			$EM_Event = em_get_event($post->ID, 'post_id');
+			$EM_Event->event_type = 'repeating';
+		} elseif ( $post->post_type == 'event-recurring' ){
+			$EM_Event->event_type = 'repeating';
+		}
+		?>
+		<div class="em">
+			<?php em_locate_template('forms/event/when/recurring/recurrences.php', true); ?>
+		</div>
+		<?php
 	}
 }
 add_action('admin_init',array('EM_Event_Recurring_Post_Admin','init'));

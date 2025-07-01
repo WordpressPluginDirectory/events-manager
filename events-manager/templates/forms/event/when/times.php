@@ -4,7 +4,7 @@
 /* @var EM_Event $EM_Event */
 $hours_format = em_get_hour_format();
 ?>
-<div class="em-time-range">
+<div class="em-time-range event-times">
 	<fieldset class="inline">
 		<legend><?php _e('Event Times','events-manager'); ?></legend>
 		<label for="em-event-start-time-<?php echo $id ?>" class="screen-reader-text"><?php esc_html_e('Start Time', 'events-manager'); ?></label>

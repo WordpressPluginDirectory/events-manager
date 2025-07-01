@@ -140,6 +140,7 @@ class EM_Taxonomy_Admin {
 					$wpdb->insert(EM_META_TABLE, array('object_id' => $term_id, 'meta_key' => self::$option_name .'-bgcolor', 'meta_value' => $color));
 				}
 				wp_cache_set($term_id, $color, 'em_'.self::$option_name.'_colors');
+				$flush_cache = true;
 			}
 		}
 		if( !empty($_POST['term_image']) ){
@@ -161,13 +162,18 @@ class EM_Taxonomy_Admin {
 					$wpdb->insert(EM_META_TABLE, array('object_id' => $term_id, 'meta_key'=> self::$option_name .'-image-id', 'meta_value' => $term_image_id));
 				}
 			}
+			$flush_cache = true;
 		}else{
 			//check if an image exists, if so remove association
 			$prev_settings = $wpdb->get_results('SELECT meta_value FROM '.EM_META_TABLE." WHERE object_id='{$term_id}' AND meta_key='". self::$option_name ."-image'");
 			if( count($prev_settings) > 0 ){
 				$wpdb->delete(EM_META_TABLE, array('object_id' => $term_id, 'meta_key' => self::$option_name .'-image'));
 				$wpdb->delete(EM_META_TABLE, array('object_id' => $term_id, 'meta_key' => self::$option_name .'-image-id'));
+				$flush_cache = true;
 			}
+		}
+		if ( !empty($flush_cache) ) {
+			wp_cache_flush();
 		}
 	}
 	

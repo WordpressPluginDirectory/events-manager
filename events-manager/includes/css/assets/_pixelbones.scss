@@ -133,46 +133,61 @@
     .button.input, button.input, input[type="submit"].input, input[type="reset"].input, input[type="button"].input,
     &.input .button, &.input button, &.input input[type="submit"], &.input input[type="reset"], &.input input[type="button"],
 	.input .button, .input button, .input input[type="submit"], .input input[type="reset"], .input input[type="button"] {
-        display: inline-block;
-        height: 38px !important;
-        padding: var(--button-padding) !important;
-        color: var(--text-color-softer) !important;
-        text-align: center !important;
-        font-size: 11px !important;
-        font-weight: 600 !important;
-        line-height: 38px !important;
-        letter-spacing: 1px !important;
-        text-transform: uppercase !important;
-        text-decoration: none !important;
-        white-space: nowrap !important;
-        background-color: transparent !important;
-        border-radius: 4px !important;
-        border: 1px solid var(--border-color) !important;
-        cursor: pointer !important;
-        box-sizing: border-box !important;
+	    &:not([data-nostyle]) {
+		    display: inline-block;
+		    height: 38px !important;
+		    padding: var(--button-padding) !important;
+		    color: var(--text-color-softer) !important;
+		    text-align: center !important;
+		    font-size: 11px !important;
+		    font-weight: 600 !important;
+		    line-height: 38px !important;
+		    letter-spacing: 1px !important;
+		    text-transform: uppercase !important;
+		    text-decoration: none !important;
+		    white-space: nowrap !important;
+		    background-color: transparent !important;
+		    border-radius: 4px !important;
+		    border: 1px solid var(--border-color) !important;
+		    cursor: pointer !important;
+		    box-sizing: border-box !important;
 
-	    &.disabled {
-		    pointer-events: none !important;
-		    opacity: 0.5 !important;
+		    &.disabled {
+			    pointer-events: none !important;
+			    opacity: 0.5 !important;
+		    }
 	    }
     }
+	.button.input, button.input,
+	&.input .button, &.input button,
+	.input .button, .input button {
+		&[data-nostyle] {
+			background-color: transparent;
+			border: none;
+			cursor: pointer;
+		}
+	}
 
 	.input {
 		.button, button, input[type="submit"], input[type="reset"], input[type="button"], &.button,
 		button#{&}, input[type="submit"]#{&}, input[type="reset"]#{&}, input[type="button"]#{&} {
-			&:hover, &:focus {
-				color: var(--text-color-normal) !important;
-				border-color: var(--text-color-softer) !important;
-				outline: 0 !important;
+			&:not([data-nostyle]) {
+				&:hover, &:focus {
+					color: var(--text-color-normal) !important;
+					border-color: var(--text-color-softer) !important;
+					outline: 0 !important;
+				}
 			}
 		}
 	}
 	&.input {
 		.button, button, input[type="submit"], input[type="reset"], input[type="button"], &.button {
-			&:hover, &:focus {
-				color: var(--text-color-normal) !important;
-				border-color: var(--text-color-softer) !important;
-				outline: 0 !important;
+			&:not([data-nostyle]) {
+				&:hover, &:focus {
+					color: var(--text-color-normal) !important;
+					border-color: var(--text-color-softer) !important;
+					outline: 0 !important;
+				}
 			}
 		}
 	}
@@ -194,7 +209,9 @@
 	&.input button, &.input .button,
 	.input button, .input .button,
 	button.input, .button.input {
-		margin-bottom: 10px !important;
+		&:not([data-nostyle]) {
+			margin-bottom: 10px !important;
+		}
 	}
 
 	/* 3rd party compat */
@@ -324,11 +341,13 @@
 
 	    label,
 	    legend {
-	        display: block !important;
-	        margin-bottom: 8px !important;
-	        font-weight: normal !important;
-	        font-size: var(--font-size);
-	        line-height: var(--line-height);
+	        &:not([data-nostyle]) {
+		        display: block !important;
+		        margin-bottom: 8px !important;
+		        font-weight: normal !important;
+		        font-size: var(--font-size);
+		        line-height: var(--line-height);
+	        }
 	    }
 
 		label, fieldset {
@@ -344,9 +363,11 @@
 		}
 		.inline-inputs {
 			label, legend, input:not([type="radio"]):not([type="checkbox"]), select:not([mutiple]){
-				width: auto !important;
-				display: inline-block !important;
-				margin: 0 !important;
+				&:not([data-nostyle]) {
+					width: auto !important;
+					display: inline-block !important;
+					margin: 0 !important;
+				}
 			}
 			> div {
 				display: inline-block;
@@ -410,63 +431,6 @@
 		input:disabled, select:disabled, textarea:disabled {
 			opacity: 0.5;
 			background-color:#efefef;
-		}
-	}
-
-	.skeleton {
-		box-sizing: border-box;
-		position : relative;
-		overflow: hidden;
-
-		.item {
-			width: 100%;
-			height: 38px;
-			margin-bottom: 15px;
-			border : 1px var(--background-color-skeleton-softer);
-			border-radius: 4px;
-			background-color: var(--background-color-skeleton);
-			box-shadow: none;
-
-			&::after {
-				position: absolute;
-				top: 0;
-				right: 0;
-				bottom: 0;
-				left: 0;
-				transform: translateX(-100%);
-				background-image: linear-gradient(
-								90deg,
-								rgba(#fff, 0) 0,
-								rgba(#fff, 0.2) 80%,
-								rgba(#fff, 0.5) 20%,
-								rgba(#fff, 0)
-				);
-				animation: shimmer 1.5s infinite;
-				content: '';
-			}
-
-			&.label {
-				width: 33%;
-				height: 14px;
-				margin-bottom: 8px;
-				border-radius: 0;
-			}
-
-			&.text {
-				height: 26px;
-				border-radius: 0;
-			}
-
-			&.title {
-				margin-bottom: 15px;
-				border-radius: 0;
-			}
-
-			@keyframes shimmer {
-				100% {
-					transform: translateX(110%);
-				}
-			}
 		}
 	}
 

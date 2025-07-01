@@ -9,7 +9,7 @@ let em_close_other_selectized = function(){
 }
 
 document.addEventListener('events_manager_js_loaded', function(){
-	Selectize.define('multidropdown', function( options ) {
+	EM_Selectize.define('multidropdown', function( options ) {
 		if( !this.$input.hasClass('multidropdown') ) return;
 		let s = this;
 		let s_setup = s.setup;
@@ -132,13 +132,15 @@ function em_setup_selectize( container_element ){
 	};
 
 	// Selectize General
-	container.find('select:not([multiple]).em-selectize, .em-selectize select:not([multiple])').selectize({
+	container.find('select:not([multiple]).em-selectize, .em-selectize select:not([multiple])').em_selectize({
 		selectOnTab : false,
 		render: {
 			option: optionRender,
 		},
+	}).on('change', ( e ) => {
+		e.target.selectize?.$input[0].parentElement.dispatchEvent( new CustomEvent('change', { bubbles: true, cancelable: true, detail : { target: e.target, selectize: e.target.selectize } }) )
 	});
-	container.find('select[multiple].em-selectize, .em-selectize select[multiple]').selectize({
+	container.find('select[multiple].em-selectize, .em-selectize select[multiple]').em_selectize({
 		selectOnTab : false,
 		hideSelected : false,
 		plugins: ["remove_button", 'click2deselect','multidropdown'],
@@ -161,6 +163,8 @@ function em_setup_selectize( container_element ){
 			}
 
 		},
+	}).on('change', ( e ) => {
+		e.target.selectize?.$input[0].parentElement.dispatchEvent( new CustomEvent('change', { bubbles: true, cancelable: true, detail : { target: e.target, selectize: e.target.selectize } }) )
 	});
 	container.find('.em-selectize:not(.always-open)').each( function(){
 		if( 'selectize' in this ){
@@ -219,5 +223,14 @@ function em_setup_selectize( container_element ){
 				});
 			}
 		});
+	});
+}
+
+function em_unsetup_selectize( container ) {
+	container.querySelectorAll('.em-selectize').forEach( function( el ) {
+		//extra behaviour for selectize "always open mode"
+		if ( 'selectize' in el ) {
+			el.selectize.destroy();
+		}
 	});
 }

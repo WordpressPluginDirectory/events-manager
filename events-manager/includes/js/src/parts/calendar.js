@@ -12,7 +12,7 @@ jQuery(document).ready( function($){
 		calendar.on('click', 'a.em-calnav, a.em-calnav-today', function(e){
 			e.preventDefault();
 			const el = $(this);
-			if( el.data('disabled') == 1 || el.attr('href') === '') return; // do nothing if disabled or no link provided
+			if( el.attr('href') === '') return; // do nothing if disabled or no link provided
 			el.closest('.em-calendar').prepend('<div class="loading" id="em-loading"></div>');
 			let url = el.attr('href');
 			const view_id = el.closest('[data-view-id]').data('view-id');
@@ -36,6 +36,9 @@ jQuery(document).ready( function($){
 				$URL.searchParams.delete('yr');
 				url = $URL.toString();
 			}
+			if ( calendar.attr('data-timezone') ) {
+				form_data.set('calendar_timezone', calendar.attr('data-timezone') );
+			}
 			form_data.set('id', view_id);
 			form_data.set('ajaxCalendar', 1); // AJAX trigger
 			form_data.set('em_ajax', 1); // AJAX trigger
@@ -56,11 +59,14 @@ jQuery(document).ready( function($){
 					}else{
 						calendar = view;
 					}
-					calendar.trigger('em_calendar_load');
+					calendar[0].dispatchEvent( new CustomEvent( 'em_calendar_load', { bubbles: true } ) );
 				},
 				dataType: 'html'
 			});
 		} );
+		calendar[0].addEventListener('reload', () => {
+			calendar_trigger_ajax( calendar, calendar.attr('data-year'), calendar.attr('data-month') );
+		});
 		let calendar_trigger_ajax = function( calendar, year, month ){
 			let link = calendar.find('.em-calnav-next');
 			let url = new URL(link.attr('href'), window.location.origin);
@@ -85,6 +91,9 @@ jQuery(document).ready( function($){
 						window.location.href = link;
 					}
 				}
+				// select this date, all others no
+				e.target.closest('.em-cal-body').querySelectorAll('.em-cal-day-date').forEach( calDate => calDate.classList.remove('selected') );
+				e.target.closest('.em-cal-day').querySelector('.em-cal-day-date')?.classList.add('selected');
 			});
 			if( month_form.length > 0 ){
 				month_form.find('input[type="submit"]').hide();
@@ -158,11 +167,14 @@ jQuery(document).ready( function($){
 				tippy(calendar.find('.em-cal-event').toArray(), tooltip_vars);
 			}else if( calendar.hasClass('preview-modal') ){
 				// Modal
-				calendar.find('.em-cal-event').on('click', function(){
+				calendar.find('.em-cal-event').on('click', function( e ){
 					const id = this.getAttribute('data-event-id');
 					const modal = calendar.find('section.em-cal-events-content .em-cal-event-content[data-event-id="'+id+'"]');
 					modal.attr('data-calendar-id', calendar.attr('id'));
 					openModal(modal);
+					// select this date, all others no
+					e.target.closest('.em-cal-body').querySelectorAll('.em-cal-day-date').forEach( calDate => calDate.classList.remove('selected') );
+					e.target.closest('.em-cal-day').querySelector('.em-cal-day-date')?.classList.add('selected');
 				});
 			}
 			// responsive mobile view for date clicks
@@ -170,11 +182,13 @@ jQuery(document).ready( function($){
 				calendar.find('.eventful .em-cal-day-date, .eventful-post .em-cal-day-date, .eventful-pre .em-cal-day-date').on('click', function( e ){
 					//if( calendar.hasClass('size-small') || calendar.hasClass('size-medium') ){
 					e.preventDefault();
-					const id = this.getAttribute('data-calendar-date');
-					const modal = calendar.find('.em-cal-date-content[data-calendar-date="'+id+'"]');
+					const id = this.getAttribute('data-timestamp');
+					const modal = calendar.find('.em-cal-date-content[data-calendar-date="'+id+'"], .em-cal-date-content[data-timestamp="'+id+'"]');
 					modal.attr('data-calendar-id', calendar.attr('id'));
 					openModal(modal);
-					//}
+					// select this date, all others no
+					e.target.closest('.em-cal-body').querySelectorAll('.em-cal-day-date').forEach( calDate => calDate.classList.remove('selected') );
+					e.target.closest('.em-cal-day').querySelector('.em-cal-day-date')?.classList.add('selected');
 				});
 			}
 			// observe resizing if not fixed

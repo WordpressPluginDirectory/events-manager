@@ -101,7 +101,6 @@
 				margin-bottom: 5px !important;
 			}
 		}
-		@import 'admin/when';
 	}
 	.em-ticket-form {
 		.em-ticket-form-main, .em-ticket-form-advanced {
@@ -118,6 +117,8 @@
 		}
 	}
 }
+
+@import 'admin/when';
 
 .em-location-map-container {
 	width : 100%;

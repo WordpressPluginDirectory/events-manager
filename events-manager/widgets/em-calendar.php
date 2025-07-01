@@ -14,14 +14,22 @@ class EM_Widget_Calendar extends WP_Widget {
     /** constructor */
     function __construct() {
     	$this->defaults = array(
-    		'title' => __('Calendar','events-manager'),
+    		'title' => 'Calendar',
     		'long_events' => 0,
     		'category' => 0,
 		    'scope' => 'all',
 		    'calendar_size' => get_option('dbem_calendar_default', 'auto'),
     	);
-    	$widget_ops = array('description' => __( "Display your events in a calendar widget.", 'events-manager') );
-        parent::__construct(false, $name = __('Events Calendar','events-manager'), $widget_ops);	
+	    $widget_ops = array('description' => "Display your events in a calendar widget.");
+	    parent::__construct(false, 'Events Calendar', $widget_ops);
+	    add_action('wp_loaded', array($this, 'wp_loaded'));
+    }
+
+    /** Loads translated strings and updates defaults */
+    function wp_loaded() {
+		$this->name = __('Events Calendar','events-manager');
+        $this->defaults['title'] = __('Calendar','events-manager');
+        $this->widget_options['description'] = __("Display your events in a calendar widget.", 'events-manager');
     }
 
     /** @see WP_Widget::widget */

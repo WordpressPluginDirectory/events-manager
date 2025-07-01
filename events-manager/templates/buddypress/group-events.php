@@ -119,7 +119,7 @@
 								?>
 								<strong>
 								<?php echo $EM_Event->get_recurrence_description(); ?> <br />
-								<a href="<?php echo $url ?>edit/?event_id=<?php echo $EM_Event->recurrence_id ?>"><?php _e ( 'Edit Recurring Events', 'events-manager'); ?></a>
+								<a href="<?php echo $url ?>edit/?event_id=<?php echo $EM_Event->get_recurring_event()->event_id; ?>"><?php _e ( 'Edit Recurring Event', 'events-manager'); ?></a>
 								</strong>
 								<?php
 							}else{ echo "&nbsp;"; }

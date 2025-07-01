@@ -14,8 +14,8 @@ function em_setup_tippy( container_element ){
 				} catch ( error ) {
 					console.log('Invlid tooltip selector in %o : %o', reference, error);
 				}
-			}
-			return reference.getAttribute('aria-label');
+			};
+			return reference.getAttribute('aria-label') ?? reference.title ?? '';
 		},
 		'touch' : ['hold', 300],
 		allowHTML : true,
@@ -90,5 +90,13 @@ function em_setup_tippy( container_element ){
 		tippy_content.addEventListener('mouseover', function(){
 			ddm_content.firstElementChild.blur();
 		});
+	});
+}
+
+function em_unsetup_tippy( container ) {
+	container.querySelectorAll('.em-tooltip-ddm').forEach( function( el ){
+		if ( '_tippy' in el ) {
+			el._tippy.destroy();
+		}
 	});
 }

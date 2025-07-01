@@ -23,6 +23,8 @@ Some of the extra things added;
 * Overlay preview, image and file size/type validation provided via FilePond official plugins.
 
 */
+
+
 document.addEventListener('em_uploader_ready', function(e) {
 	// get script options
 	let script = document.getElementById('filepond-js');
@@ -35,8 +37,6 @@ document.addEventListener('em_uploader_ready', function(e) {
 			}
 		}).catch( e => { console.log('Error loading locale : %o', e ); } );
 	}
-
-	let setup_em_loader;
 
 	// add a hidden input with a postfix name, which will add the fileId as a key
 	let getHiddenInputName = function( input, fileId, postFix ) {
@@ -53,7 +53,7 @@ document.addEventListener('em_uploader_ready', function(e) {
 	let filenames = {};
 	let sources = {};
 
-	setup_em_loader = function( container ) {
+	let setup_em_uploader = function( container ) {
 		container.querySelectorAll('input.em-uploader').forEach(input => {
 			let input_data = {};
 			let wrapper = input.closest('.em-input-upload') ?? input.parentElement;
@@ -353,6 +353,11 @@ document.addEventListener('em_uploader_ready', function(e) {
 					},
 				};
 
+				// pre-override cleanup
+				if ( input.accept ) { // let accept override, unless inline options override
+					delete pondOptions.acceptedFileTypes;
+				}
+
 				// check if there's an options holder
 				let inline_options = wrapper.querySelector('.em-uploader-options');
 				if (inline_options) {
@@ -361,7 +366,7 @@ document.addEventListener('em_uploader_ready', function(e) {
 
 				// last cleanup
 				if ( typeof pondOptions.acceptedFileTypes === 'undefined' || pondOptions.acceptedFileTypes.length === 0 ) {
-					pondOptions.allowFileTypeValidation = false;
+					pondOptions.allowFileTypeValidation = !!input.accept;
 
 				}
 
@@ -613,9 +618,9 @@ document.addEventListener('em_uploader_ready', function(e) {
 			input.addEventListener('change', validateMaxFilesBeforeUpload);
 		});
 	}
-	setup_em_loader( document ); // init
+	setup_em_uploader( document ); // init
 	// load in dynamic content
 	document.addEventListener('em_setup_ui_elements', ( e ) => {
-		setup_em_loader( e.detail.container );
+		setup_em_uploader( e.detail.container );
 	});
 })

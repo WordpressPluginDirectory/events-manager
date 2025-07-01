@@ -27,7 +27,10 @@
 				</td>
 			</tr>
 			<?php
-			em_options_radio_binary ( __( 'Enable recurrence?', 'events-manager'), 'dbem_recurrence_enabled', __( 'Select yes to enable the recurrence features feature','events-manager') ); 
+			em_options_radio_binary ( __( 'Enable recurrence?', 'events-manager'), 'dbem_recurrence_enabled', __( 'Recurring events allow you to create one event page with recurring dates on the same page. Recurrences have their own bookings assigned to them, but can be linked with shared tickets.','events-manager'), '', '#row_dbem_recurrence_picker' );
+			//EM\Scripts_and_Styles::add_js_var('recurrencesDisableWarning', __('Are you sure you want to disable recurring events? If you do so, any recurrences you currently have enabled will stop showing, and de-sync from the recurring events should you re-save them whilst recurrences are disabled.', 'events-manager') );
+			em_options_radio_binary ( __( 'Enable repeated events?', 'events-manager'), 'dbem_repeating_enabled', __( 'Repeated events are similar to recurrences, but each event is independent of each other with its own page on your site and entirely separate bookings. You can mass-edit the recurrences by editing your repeating event.','events-manager') );
+			//EM\Scripts_and_Styles::add_js_var('repeatedDisableWarning', __('Are you sure you want to disable repeated events? If you do so, any recurrences you currently have enabled will become nornal events, and de-sync from the recurring events should you re-save them whilst recurrences are disabled.', 'events-manager') );
 			em_options_radio_binary ( __( 'Enable bookings?', 'events-manager'), 'dbem_rsvp_enabled', __( 'Select yes to allow bookings and tickets for events.','events-manager') );     
 			em_options_radio_binary ( __( 'Enable tags?', 'events-manager'), 'dbem_tags_enabled', __( 'Select yes to enable the tag features','events-manager') );
 			if( !(EM_MS_GLOBAL && !is_main_site()) ){

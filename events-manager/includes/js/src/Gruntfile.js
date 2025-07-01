@@ -2,6 +2,16 @@ module.exports = function(grunt) {
 
 	let sources = [
 		'parts/index.js',
+		'parts/event-editor.js',
+		'parts/event-editor/recurrences/add-remove.js',
+		'parts/event-editor/recurrences/drag-drop.js',
+		'parts/event-editor/recurrences/reschedule.js',
+		'parts/event-editor/recurrences/recurring-datetimes.js',
+		'parts/event-editor/recurrences/ui-functions.js',
+		'parts/event-editor/recurrences/ui-form.js',
+		'parts/event-editor/recurrences/ui-advanced.js',
+		'parts/event-editor/recurrences/ui-elements.js',
+		'parts/event-editor/tickets/ticket-editor.js',
 		'parts/list-table.js',
 		'parts/list-table-bookings.js',
 		'parts/datepicker.js',

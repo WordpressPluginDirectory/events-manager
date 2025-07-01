@@ -19,6 +19,7 @@ function em_install() {
 		 	// Creates the events table if necessary
 		 	if( !EM_MS_GLOBAL || (EM_MS_GLOBAL && is_main_site()) ){
 				em_create_events_table();
+			    em_create_recurrences_table();
 				em_create_events_meta_table();
 				em_create_locations_table();
 			  	em_create_bookings_table();
@@ -133,7 +134,8 @@ function em_create_events_table() {
 	$table_name = $wpdb->prefix.'em_events';
 	$sql = "CREATE TABLE ".$table_name." (
 		event_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-		post_id bigint(20) unsigned NOT NULL,
+		post_id bigint(20) unsigned NULL DEFAULT NULL,
+        event_type VARCHAR(20) DEFAULT 'event',		
 		event_parent bigint(20) unsigned NULL DEFAULT NULL,
 		event_slug VARCHAR( 200 ) NULL DEFAULT NULL,
 		event_owner bigint(20) unsigned DEFAULT NULL,
@@ -158,15 +160,10 @@ function em_create_events_table() {
 		location_id bigint(20) unsigned NULL DEFAULT NULL,
 		event_location_type VARCHAR(15) NULL DEFAULT NULL,
 		recurrence_id bigint(20) unsigned NULL DEFAULT NULL,
+		recurrence_set_id bigint(20) unsigned NULL DEFAULT NULL,
+		recurrence_rsvp_days int(3) NULL DEFAULT NULL,
   		event_date_created datetime NULL DEFAULT NULL,
   		event_date_modified datetime NULL DEFAULT NULL,
-		recurrence tinyint(1) unsigned NOT NULL DEFAULT 0,
-		recurrence_interval int(4) NULL DEFAULT NULL,
-		recurrence_freq tinytext NULL DEFAULT NULL,
-		recurrence_byday tinytext NULL DEFAULT NULL,
-		recurrence_byweekno int(4) NULL DEFAULT NULL,
-		recurrence_days int(4) NULL DEFAULT NULL,
-		recurrence_rsvp_days int(3) NULL DEFAULT NULL,
 		blog_id bigint(20) unsigned NULL DEFAULT NULL,
 		group_id bigint(20) unsigned NULL DEFAULT NULL,
 		event_language varchar(14) NULL DEFAULT NULL,
@@ -177,16 +174,63 @@ function em_create_events_table() {
 	if( $wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name ){
 		dbDelta($sql);
 	}elseif( get_option('dbem_version') != '' ){
+		$current_version = get_option('dbem_version');
 		if( get_option('dbem_version') < 5.984 ){
 			// change the recurrence flag to a required field defaulting to 0, to avoid missing recurrences in EM_Events::get() due to wayward null values
 			$wpdb->query("UPDATE $table_name SET recurrence = 0 WHERE recurrence IS NULL");
 			$wpdb->query("ALTER TABLE $table_name CHANGE `recurrence` `recurrence` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0'");
 			$wpdb->query("ALTER TABLE $table_name CHANGE `event_status` `event_status` TINYINT(1) NULL DEFAULT NULL;");
 		}
+		if ( version_compare( $current_version, '6.6.4.4.4', '<') ){
+			// set post_id to NULL option
+			$wpdb->query("
+			    ALTER TABLE {$table_name} 
+			    MODIFY COLUMN post_id BIGINT(20) UNSIGNED NULL DEFAULT NULL
+			");
+		}
 		dbDelta($sql);
 	}
-	em_sort_out_table_nu_keys($table_name, array('event_status','event_active_status','post_id','blog_id','group_id','location_id','event_start', 'event_end', 'event_start_date', 'event_end_date'));
+	em_sort_out_table_nu_keys($table_name, array('event_status','event_active_status','post_id','blog_id','group_id','location_id','event_start', 'event_end', 'event_start_date', 'event_end_date', 'event_type'));
 	if( em_check_utf8mb4_tables() ) maybe_convert_table_to_utf8mb4( $table_name );
+}
+
+function em_create_recurrences_table() {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'em_event_recurrences';
+
+	$charset_collate = $wpdb->get_charset_collate();
+
+	$sql = "CREATE TABLE $table_name (
+        recurrence_set_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        event_id BIGINT(20) UNSIGNED NOT NULL,
+        recurrence_order INT(3) UNSIGNED NULL DEFAULT NULL,
+        recurrence_type ENUM('include', 'exclude') NULL DEFAULT 'include',
+		recurrence_interval int(4) NULL DEFAULT NULL,
+		recurrence_freq tinytext NULL DEFAULT NULL,
+		recurrence_byday tinytext NULL DEFAULT NULL,
+		recurrence_byweekno int(4) NULL DEFAULT NULL,
+		recurrence_duration int(4) NULL DEFAULT NULL,
+		recurrence_dates MEDIUMTEXT NULL DEFAULT NULL,
+        recurrence_start_date DATE NULL DEFAULT NULL,
+        recurrence_end_date DATE NULL DEFAULT NULL,
+        recurrence_end_after INT(4) NULL DEFAULT NULL,
+        recurrence_start_time TIME NULL DEFAULT NULL,
+        recurrence_end_time TIME NULL DEFAULT NULL,
+ 		recurrence_all_day tinyint(1) unsigned NULL DEFAULT NULL,
+		recurrence_timezone tinytext NULL DEFAULT NULL,
+		recurrence_status tinyint(1) NULL DEFAULT NULL,
+        PRIMARY KEY (recurrence_set_id),
+        KEY event_id (event_id)
+    ) $charset_collate;";
+
+	/* In future could add these two for overriding
+	recurrence_rsvp_days int(3) NULL DEFAULT NULL,
+    recurrence_rsvp_time TIME NULL DEFAULT NULL,
+	 */
+
+	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+	dbDelta($sql);
+	em_sort_out_table_nu_keys($table_name, array('event_id'));
 }
 
 function em_create_events_meta_table(){
@@ -320,7 +364,10 @@ function em_create_tickets_table() {
 	$sql = "CREATE TABLE {$table_name} (
 		ticket_id BIGINT( 20 ) UNSIGNED NOT NULL AUTO_INCREMENT,
 		event_id BIGINT( 20 ) UNSIGNED NOT NULL ,
-		ticket_name TINYTEXT NOT NULL ,
+		ticket_parent BIGINT( 20 ) UNSIGNED NULL,
+		ticket_status INT( 1 ) UNSIGNED NULL,
+		ticket_order INT( 2 ) UNSIGNED NULL,
+		ticket_name TINYTEXT NULL ,
 		ticket_description TEXT NULL ,
 		ticket_price DECIMAL( 14 , 4 ) NULL ,
 		ticket_start DATETIME NULL ,
@@ -332,9 +379,10 @@ function em_create_tickets_table() {
 		ticket_members_roles LONGTEXT NULL,
 		ticket_guests INT( 1 ) NULL ,
 		ticket_required INT( 1 ) NULL ,
-		ticket_parent BIGINT( 20 ) UNSIGNED NULL,
-		ticket_order INT( 2 ) UNSIGNED NULL,
 		ticket_meta LONGTEXT NULL,
+		multi_event SMALLINT UNSIGNED NULL DEFAULT NULL,
+		multi_event_auto_enrol TINYINT(1) NULL DEFAULT NULL,
+		multi_event_ticket BIGINT(20) UNSIGNED NULL DEFAULT NULL,
 		PRIMARY KEY  (ticket_id)
 		) DEFAULT CHARSET=utf8 ;";
 
@@ -433,6 +481,7 @@ function em_add_options() {
 	//all the options
 	$dbem_options = array(
 		'dbem_data' => array(), //used to store admin-related data such as notice flags and other row keys that may not always exist in the wp_options table
+		'dbem_event_status_enabled' => !$already_installed,
 		//time formats
 		'dbem_time_format' => get_option('time_format'),
 		'dbem_date_format' => get_option('date_format'),
@@ -719,6 +768,9 @@ function em_add_options() {
 		'dbem_use_select_for_locations' => 0,
 		'dbem_attributes_enabled' => 1,
 		'dbem_recurrence_enabled'=> 1,
+		'dbem_recurrence_picker' => 'calendar',
+		'dbem_recurrence_convert_enabled' => 1,
+		'dbem_repeating_enabled' => 0,
 		'dbem_rsvp_enabled'=> 1,
 		'dbem_categories_enabled'=> 1,
 		'dbem_tags_enabled' => 1,
@@ -1720,6 +1772,59 @@ function em_upgrade_current_installation(){
 			// remove flag for admin notice
 			$message = 'Events Manager 6.6.4 introduces a completely revamped uploads UI and API! Enable our new visual uploader in <a href="'. EM_ADMIN_URL .'&amp;page=events-manager-options#general+uploads' .'"><em>Events > Settings > Uploads</em></a>';
 			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
+		}
+		// V7 Updates
+		if( version_compare( $current_version, '7.0', '<') ){
+			if ( EM_MS_GLOBAL ) {
+				// do this once to global tables
+				$done_already = $wpdb->get_var('SELECT event_id FROM ' . EM_EVENTS_TABLE . " WHERE event_type='repeating'");
+			}
+			if ( empty( $done_already ) ) {
+				// Update event_type based on recurrence field
+				$wpdb->query("UPDATE " . EM_EVENTS_TABLE . " SET event_type = 
+		                CASE 
+		                    WHEN recurrence = 1 THEN 'repeating' 
+		                    WHEN recurrence_id IS NOT NULL AND recurrence != 1 THEN 'recurrence' 
+		                    ELSE '". EM_POST_TYPE_EVENT ."'
+		                END
+			        ");
+				// Migrate recurrence data to new table
+				$wpdb->query("
+			            INSERT INTO ". EM_EVENT_RECURRENCES_TABLE ." ( event_id, recurrence_type, recurrence_freq, recurrence_interval, recurrence_byday, recurrence_byweekno, recurrence_start_date, recurrence_start_time, recurrence_end_date, recurrence_end_time, recurrence_duration, recurrence_order, recurrence_timezone, recurrence_status )
+			            SELECT event_id, 'include', recurrence_freq, recurrence_interval, recurrence_byday, recurrence_byweekno, event_start_date, event_start_time, event_end_date, event_end_time, recurrence_days, 1, event_timezone, event_status FROM " . EM_EVENTS_TABLE . " WHERE recurrence = 1 AND event_translation != 1
+		            ");
+				// update events table with the new recurrence set id
+				$wpdb->query("UPDATE " . EM_EVENTS_TABLE . " e JOIN " . EM_EVENT_RECURRENCES_TABLE . " r ON e.recurrence_id = r.event_id SET e.recurrence_set_id = r.recurrence_set_id WHERE e.recurrence_id IS NOT NULL");
+			}
+			// copy over new values to post meta
+			// Copy event_type and recurrence_set_id to postmeta for all records with a post_id
+			$wpdb->query("
+			    INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value)
+			    SELECT e.post_id, '_event_type', e.event_type FROM " . EM_EVENTS_TABLE . " e WHERE e.event_type IS NOT NULL
+			");
+			$wpdb->query("
+			    INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value)
+			    SELECT e.post_id, '_recurrence_set_id', e.recurrence_set_id FROM " . EM_EVENTS_TABLE . " e WHERE e.recurrence_set_id IS NOT NULL
+			");
+
+			// update tickets so they are all enabled by default
+			$wpdb->query("UPDATE " . EM_TICKETS_TABLE . " SET ticket_status = 1 WHERE ticket_parent IS NULL");
+			// update tickets so they are all enabled by default
+			update_option('dbem_repeating_enabled', get_option('dbem_recurrence_enabled'));
+			update_option('dbem_recurrence_enabled', false);
+			$message = 'Events Manager 7.0 introduces completely revamped recurring events functionality! Enable recurring events in <em>Events > Settings > General > General Options > Events</em>. <a target="_blank" href="https://em.cm/em7-update/">check our blog post</a>';
+			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
+		}
+		if ( version_compare( $current_version, '7.0.2.2', '<' ) ) {
+			// check if recurrence_freq still exists in the database table wp_em_events, and if so check if dbem_recurrence_enabled is true and   dbem_repeating_enabled is false - if this all meets criteria, we need to warn users to try re-converting their events
+			$column = $wpdb->get_row( "SHOW FULL COLUMNS FROM ". EM_EVENTS_TABLE . " WHERE Field='recurrence_freq';" );
+			if ( $column ) {
+				if ( get_option( 'dbem_recurrence_enabled' ) && ! get_option( 'dbem_repeating_enabled' ) ) {
+					// user may have converted everything from 6 to 7 and we should encourage a re-import
+					$EM_Admin_Notice = new EM_Admin_Notice(array( 'name' => 'v7-reconvert-recurrences', 'who' => 'admin', 'where' => 'all' ));
+					EM_Admin_Notices::add($EM_Admin_Notice, is_multisite());
+				}
+			}
 		}
 	}
 }

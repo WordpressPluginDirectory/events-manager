@@ -79,13 +79,13 @@ class EM_Tickets_Bookings extends EM_Object implements Iterator, Countable, Arra
 		do_action( static::$n, $this, $EM_Booking);
 	}
 	
-	public function __get( $shortname ){
-		if( $shortname === 'booking_id' || $shortname === 'id' ){
+	public function __get( $prop ){
+		if( $prop === 'booking_id' || $prop === 'id' ){
 			return $this->booking_id;
-		} elseif ( $shortname === 'booking' ){
+		} elseif ( $prop === 'booking' ){
 			return $this->get_booking();
 		}
-		return parent::__get($shortname);
+		return parent::__get($prop);
 	}
 	
 	public function __set( $prop, $val ){

@@ -61,30 +61,41 @@ class EM_DateTime extends DateTime {
 			}
 		}
 	}
-	
+
 	/**
 	 * Shortcut for creating a EM_DateTime instance and having it returned for chained methods.
 	 *
 	 * @param $time
 	 * @param $timezone
 	 *
+	 * @see EM_DateTime::__construct()
 	 * @return EM_DateTime
 	 */
 	public static function create( $time = 'now', $timezone = null ){
 		return new EM_DateTime($time, $timezone);
 	}
-	
+
 	#[\ReturnTypeWillChange]
 	/**
 	 * {@inheritDoc}
 	 * @see DateTime::format()
 	 */
-	public function format( $format = 'Y-m-d H:i:s'){
+	public function format( $format = 'Y-m-d H:i:s', $timezone = null ){
+		// if we want a timezone, copy and format the copy
+		if ( $timezone ) {
+			$EM_DateTime = $this->copy();
+			if ( $timezone === true ) {
+				$timezone = 'UTC';
+			}
+			$EM_DateTime->setTimezone( $timezone );
+			return $EM_DateTime->format( $format );
+		}
+		// format normally
 		if( !$this->valid && ($format == 'Y-m-d' || $format == em_get_date_format())) return '';
 		if( $format !== 'Y-m-d H:i:s' ) $format = $this->formatTimezones($format); // format UTC timezones
 		return parent::format($format);
 	}
-	
+
 	/**
 	 * Formats timezone name/abbreviation placeholders when there is a manual offset, which would be passed onto date formatting functions and usually output UTC timezone information.
 	 * @param string $format The format to be parsed.
@@ -229,10 +240,15 @@ class EM_DateTime extends DateTime {
 	 * Returns EM_DateTime object in all cases, but $this->valid will be set to false if unsuccessful
 	 * {@inheritDoc}
 	 * @see DateTime::modify()
+	 * @noinspection \PhpDocRedundantThrowsInspection
 	 */
-	public function modify( $modify ){
-		$result = parent::modify($modify);
-		$this->valid = $result !== false;
+	public function modify( $modifer ){
+		try {
+			$result = parent::modify($modifer);
+			$this->valid = $result !== false;
+		} catch ( Exception $e ) {
+			$this->valid = false;
+		}
 		return $this;
 	}
 	
@@ -248,7 +264,10 @@ class EM_DateTime extends DateTime {
 	public function add( $DateInterval ){
 		if( is_object($DateInterval) ){
 			$result = parent::add($DateInterval);
-		}else{
+		} else {
+			if ( $DateInterval[0] !== 'P' ) {
+				$DateInterval = 'P' . $DateInterval;
+			}
 			$result = parent::add( new DateInterval($DateInterval) );
 		}
 		$this->valid = $result !== false;
@@ -291,6 +310,26 @@ class EM_DateTime extends DateTime {
 		return $this;
 	}
 	
+	/**
+	 * Sets the date to the first day of the current month
+	 * @return EM_DateTime Returns object for chaining.
+	 */
+	public function setStartOfMonth () {
+		$this->setDate( $this->format( 'Y' ), $this->format( 'm' ), 1 );
+		return $this;
+	}
+
+	/**
+	 * Sets the date to the last day of the current month
+	 * @return EM_DateTime Returns object for chaining.
+	 */
+	public function setEndOfMonth () {
+		$this->setDate( $this->format( 'Y' ), $this->format( 'm' ), $this->format( 't' ) );
+
+		return $this;
+	}
+
+
 	/**
 	 * Easy chainable cloning function, useful for situations where you may want to manipulate the current date,
 	 * such as adding a month and getting the DATETIME string without changing the original value of this object.
@@ -339,26 +378,26 @@ class EM_DateTime extends DateTime {
 	}
 	
 	/**
-	 * Returns a MySQL DATE formatted string.
-	 * @param bool $utc
+	 * Returns a MySQL DATE formatted string. If a timezone name is supplied, the date returned will be relative to that timezone.
+	 *
+	 * For example, if you have a date 2000-01-01 20:00:00 UTC and provide America/Los_Angeles, the date will be 2000-01-02 because it's 2am next day UTC-time.
+	 *
+	 * @param bool|string $timezone
 	 * @return string
 	 */
-	public function getDate( $utc = false ){
-		return $this->format('Y-m-d');
+	public function getDate( $timezone = null ){
+		return $this->format('Y-m-d', $timezone);
 	}
 	
 	/**
-	 * Returns a MySQL DATETIME formatted string, with the option of providing the UTC equivalent.
-	 * @param bool $utc If set to true a UTC relative time will be provided.
+	 * Returns a MySQL DATETIME formatted string. If a timezone name is supplied, the date returned will be relative to that timezone.
+	 *
+	 * For example, if you have a date 2000-01-01 20:00:00 UTC and provide America/Los_Angeles, the date will be 2000-01-02 because it's 2am next day UTC-time.
+	 *
 	 * @return string
 	 */
-	public function getDateTime( $utc = false ){
-		if( $utc ){
-			$current_timezone = $this->getTimezone()->getName();
-			$this->setTimezone('UTC');
-		}
-		$return = $this->format('Y-m-d H:i:s');
-		if( $utc ) $this->setTimezone($current_timezone);
+	public function getDateTime( $timezone = null ){
+		$return = $this->format('Y-m-d H:i:s', $timezone);
 		return $return;
 	}
 	

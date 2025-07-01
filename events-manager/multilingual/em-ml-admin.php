@@ -114,7 +114,7 @@ class EM_ML_Admin{
     	    foreach( $event->get_tickets()->tickets as $EM_Ticket ){ /* @var $EM_Ticket EM_Ticket */
     	        $name = !empty($EM_Ticket->ticket_meta['langs'][$lang]['ticket_name']) ? $EM_Ticket->ticket_meta['langs'][$lang]['ticket_name'] : '';
     	        $description =  !empty($EM_Ticket->ticket_meta['langs'][$lang]['ticket_description']) ? $EM_Ticket->ticket_meta['langs'][$lang]['ticket_description']: '';
-    	        $desc_ph = !empty($EM_Ticket->ticket_description) ? $EM_Ticket->ticket_description:__('Description','events-manager');  
+    	        $desc_ph = !empty($EM_Ticket->description) ? $EM_Ticket->description:__('Description','events-manager');
     	        ?>
     	        <tbody>
     	        <tr>

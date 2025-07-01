@@ -227,7 +227,11 @@ class Dashboard {
 				if ( ! empty( $conditions['owner'] ) ) {
 					unset( $conditions['owner'] );
 				}
-				$conditions['event'] = $wpdb->prepare( ' event_id = %d ', $EM_Event->event_id );
+				if ( $EM_Event->is_recurring() ) {
+					$conditions['event'] = $wpdb->prepare( ' event_id IN ( SELECT event_id FROM '. EM_EVENTS_TABLE .' WHERE recurrence_set_id IN ( SELECT recurrence_set_id fROM '.EM_EVENT_RECURRENCES_TABLE.' WHERE event_id = %d ) )', $EM_Event->event_id );
+				} else {
+					$conditions['event'] = $wpdb->prepare( ' event_id = %d ', $EM_Event->event_id );
+				}
 			}
 		}
 		if( !empty($args['status']) && \EM_Object::array_is_numeric($args['status']) ){

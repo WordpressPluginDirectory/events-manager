@@ -406,8 +406,8 @@ class EM_Data_Privacy {
 			if( $EM_Event->event_rsvp ){
 				$tickets = array();
 				foreach( $EM_Event->get_tickets() as $EM_Ticket ){ /* @var EM_Ticket $EM_Ticket */
-					$ticket = array($EM_Ticket->ticket_name, $EM_Ticket->ticket_description, $EM_Ticket->get_price(true));
-					if( empty($EM_Ticket->ticket_description) ) unset($ticket[1]);
+					$ticket = array($EM_Ticket->name, $EM_Ticket->description, $EM_Ticket->get_price(true));
+					if( empty($EM_Ticket->description) ) unset($ticket[1]);
 					$tickets[] = implode( ' - ',  $ticket);
 				}
 				$export_item['data'][] = array('name' => __('Tickets','events-manager'), 'value' => implode('<br>', $tickets) );

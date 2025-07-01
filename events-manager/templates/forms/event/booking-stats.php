@@ -1,7 +1,7 @@
 <?php
 global $EM_Event, $post;
 ?>
-<div id='rsvp-data'>
+<div id='rsvp-data' class="event-rsvp-stats">
 	<?php
 		$available_spaces = $EM_Event->get_bookings()->get_available_spaces();
 		$booked_spaces = $EM_Event->get_bookings()->get_booked_spaces();

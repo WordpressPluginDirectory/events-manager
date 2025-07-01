@@ -9,7 +9,8 @@ $frontend: false; // used in list-tables and possibly other partials
 /* New Stuff **/
 @import "partials/mixins";
 .wp-admin {
-	@import 'partials/admin/index';
+	@import 'partials/admin';
+	@import "partials/event-editor";
 	@import 'partials/icons';
 	@import 'partials/tooltips';
 	@import 'partials/libraries';
@@ -57,7 +58,7 @@ $frontend: false; // used in list-tables and possibly other partials
 		}
 	}
 
-	/* Selectize-specific stuff */
+	/* Selectize-specific stuff for WP Admin styling area */
 	.selectize-control {
 		&.em-selectize:not(.always-open), &.em-selectize-autocomplete:not(.always-open) {
 			.selectize-input {
@@ -69,38 +70,112 @@ $frontend: false; // used in list-tables and possibly other partials
 			}
 		}
 	}
-}
-.event-form-recurrence {
-	fieldset.inline {
-		display: inline-block;
-	}
-}
+	// specific recurrence styling for WP Admin
+	.em-recurrence-set {
 
-.event-form-when {
-	label, legend {
-		display: block;
-		width: 100%;
-		margin-bottom: 8px;
+		.em-recurrence-set-data {
+			label {
+				margin-bottom: 8px;
+			}
 
-		&.inline-left {
-			width: auto;
-			display: inline-block;
-			padding-right: 5px;
-			padding-left: 3px;
+			.em-recurrence-duration {
+				margin-top: 0;
+			}
+
+			.em-datepicker .em-date-input.button {
+				height: 30px;
+				border: 1px solid #cdcdcd;
+				color: #777;
+			}
+
+			.em-weekly-selector {
+				.em-selectize:not(.always-open).selectize-control {
+					& > .selectize-input {
+						min-height: 30px !important;
+						padding: 3px 30px 3px 10px !important;
+
+						.item {
+							font-size: 12px;
+						}
+
+						@media screen and (max-width: 782px) {
+							min-height: 40px !important;
+							padding: 6px 30px 6px 10px !important;
+
+							.item {
+								font-size: 14px;
+							}
+						}
+					}
+
+					.selectize-dropdown {
+						top: calc(100% - 2px) !important;
+					}
+				}
+			}
+		}
+
+		@media screen and (max-width: 782px) {
+			line-height: 50px;
 		}
 	}
-	.em-time-range fieldset {
-		margin-bottom: 10px;
+	.em-recurrence-sets {
+		fieldset.inline {
+			display: inline-block;
+		}
 	}
-	> * {
-		margin-bottom: 15px !important;
+
+	.event-form-when, .em-recurrence-sets {
+		label, legend {
+			display: block;
+			width: 100%;
+			margin-bottom: 8px;
+
+			&.inline-left {
+				width: auto;
+				display: inline-block;
+				padding-right: 5px;
+				padding-left: 3px;
+			}
+		}
+		.em-time-range fieldset {
+			margin-bottom: 10px;
+		}
+		> * {
+			margin-bottom: 15px !important;
+		}
+		> p {
+			margin-bottom: 20px !important;
+		}
+		input.em-date-start-end {
+			width: 100%;
+			background: #fff;
+		}
 	}
-	> p {
-		margin-bottom: 20px !important;
+	&.post-type-event {
+		.wp-list-table {
+			.event-cancelled {
+				text-decoration: line-through;
+			}
+		}
 	}
-	input.em-date-start-end {
-		width: 100%;
-		background: #fff;
+
+	.em-booking-recurring {
+		margin-top: 50px;
+		.em-calendar {
+			background-color: #fff !important;
+			border: 1px solid #ddd;
+			.em-month-picker {
+				--border-color-softer: transparent;
+				--accent-color: transparent;
+				font-size: 20px !important;
+			}
+		}
+	}
+
+	.skeleton {
+		--background-color-skeleton: #d6d6d6;
+		--background-color-skeleton-softer: #d6d6d6;
 	}
 }
 

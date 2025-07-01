@@ -21,11 +21,13 @@ class EM_Categories extends EM_Taxonomy_Terms {
 		
 	/**
 	 * Legacy get overload for any use of $EM_Categories->tags
-	 * @param string $var_name
+	 *
+	 * @param string $prop_name
+	 *
 	 * @return array|NULL
 	 */
-	function __get( $var_name ){
-		if( $var_name == 'categories' ){
+	function __get ( $prop_name ){
+		if ( $prop_name == 'categories' ){
 			return $this->terms;
 		}
 		return null;
