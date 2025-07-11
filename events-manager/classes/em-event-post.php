@@ -284,6 +284,7 @@ class EM_Event_Post {
 						$query[] = array( 'key' => '_recurrence_set_id', 'value' => $recurrence_set_ids, 'compare' => 'IN', 'type' => 'NUMERIC' );
 					}
 				}
+				add_filter('pre_option_dbem_events_current_are_past', '__return_zero');
 			}else{
 				if( !empty($wp_query->query_vars['calendar_day']) ) $wp_query->query_vars['scope'] = $wp_query->query_vars['calendar_day'];
 				if( empty($wp_query->query_vars['scope']) ){
@@ -371,6 +372,9 @@ class EM_Event_Post {
 			  	}
 			  	$wp_query->query_vars['order'] = get_option('dbem_events_default_archive_order','ASC');
 		  	}
+			if ( is_admin() ) {
+				remove_filter('pre_option_dbem_events_current_are_past', '__return_zero');
+			}
 		}elseif( !empty($wp_query->query_vars['post_type']) && $wp_query->query_vars['post_type'] == EM_POST_TYPE_EVENT ){
 			$wp_query->query_vars['scope'] = 'all';
 			if( $wp_query->query_vars['post_status'] == 'pending' ){

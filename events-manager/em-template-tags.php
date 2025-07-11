@@ -250,6 +250,8 @@ function em_events_admin($args = array()){
 				$EM_Notices->add_alert(sprintf(esc_html__('You are viewing individual recurrences of %s.', 'events-manager'), '<a href="'.$Event->get_edit_url().'">'.$Event->event_name.'</a>'));
 				$EM_Notices->add_alert(esc_html__('You can edit individual recurrences and disassociate them with this recurring event.', 'events-manager'));
 				$args['recurrence_id'] = absint($_REQUEST['recurrence_id']);
+			} else {
+				$args['event_type'] = ['recurring', 'repeating', 'event'];
 			}
 			$args = apply_filters('em_events_admin_args', $args);
 			//template $args for different views
@@ -279,11 +281,13 @@ function em_events_admin($args = array()){
 			//add limit and offset again to args
 			$args['limit'] = $limit;
 			$args['offset'] = $offset;
+			add_filter('pre_option_dbem_events_current_are_past', '__return_zero', 99);
 			$EM_Events = EM_Events::get( $args ); //now get the limited events to display
 			$future_count = EM_Events::count( $args_views['future'] );
 			$pending_count = EM_Events::count( $args_views['pending'] );
 			$draft_count = EM_Events::count( $args_views['draft'] );
 			$past_count = EM_Events::count( $args_views['past'] );
+			remove_filter('pre_option_dbem_events_current_are_past', '__return_zero', 99);
 			em_locate_template('tables/events.php',true, array(
 				'args'=>$args, 
 				'EM_Events'=>$EM_Events, 

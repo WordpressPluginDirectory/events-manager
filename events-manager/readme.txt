@@ -5,7 +5,7 @@ Tags: events, calendar, tickets, bookings, appointments
 Text Domain: events-manager
 Requires at least: 6.1
 Tested up to: 6.8
-Stable tag: 7.0.3
+Stable tag: 7.0.5
 Requires PHP: 7.0
 License: GPLv2
 
@@ -164,6 +164,30 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps wit
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
+= 7.0.5 =
+* Improved installation/upgrade logic to allow users to re-trigger `dbem_version` upgrades from 6 to 7 without duplicating recurrence set data.
+* Fixed confusing redirect when converting individual repeated events to recurring events—now correctly redirects to the converted event.
+* Added `EM_Event->is_repated()` and `$include_repeated` boolean param to `EM_Event->is_recurring()` to differentiate between repeated events and instances of recurring events.
+* Fixed image display issues for recurring events on event lists.
+* Fixed orphan removals for Multisite installations.
+* Fixed date-based event queries failing due to new timezone-relative search features in EM 7.
+* Added short circuit to prevent current events from showing as past events in the admin menu so that recurrences appear correctly.
+* Fixed front-end editor showing recurrences instead of the main recurring event in the admin events list.
+* Fixed fatal error when calling `EM_Event->get_recurrence_description()` on a recurrence.
+* Fixed JS error occurring after a successful booking.
+* Fixed and mitigated issues where broken event data in the `wp_em_events` table (e.g., null dates) prevented saving that event in the admin area.
+* Fixed buggy behavior including false positive datepicker validations when saving a recurring event with primary recurrence set to an "On" frequency.
+* Fixed minor PHP warning when RSVP is disabled in the admin settings page.
+* Added location duplication feature.
+* Added automatic disabling of event and location duplication via third-party plugins (Yoast Duplicate Post, Duplicate Pages, and Copy & Duplicate) to prevent data breakage.
+
+= 7.0.4 =
+* Fixed 3 security vulnerabilities reported by Muhammad Yudha and @mikemyers via WordFence. Update strongly advaised.
+* Fixed pagination errors introduced in 7.0.3.
+* Fixed potential collation issues with DB tables and added more meaningful errors when saving index tables so admins see clearer error messages.
+* Tweaked installation and update process to schedule DB updates via `wp_cron` for WP-CLI and auto-updates, rather than relying on a dashboard page load.
+* Fixed uninstall fatal error caused by the new `recurrences` table introduced in v7.
+
 = 7.0.3 =
 * Fixed code to prevent fatal error in some instances where users run a widget.
 * Added additional CSS selector/detector to booking form JS dynamic loading to detect waitlist forms.

@@ -88,35 +88,32 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		// Recurse recurrenceSets by recurrence set (.em-recurrence-set) to begin with
 		recurrenceSets.querySelectorAll('.em-recurrence-set').forEach( function ( recurrenceSet ) {
 			if ( !recurrenceSet.matches('.em-recurrence-type-include .em-recurrence-set:first-child') ) {
-				// only applies to recurrences without the 'on' frequency
-				if ( recurrenceSet.querySelector('select.em-recurrence-frequency')?.value !== 'on' ) {
-					// loop each flatpickr input and set placeholders and detect if default value has changed
-					recurrenceSetPrimary.querySelectorAll('.em-recurrence-advanced .em-datepicker .em-date-input.flatpickr-input').forEach(function (input) {
-						let datePicker = input.closest('.em-datepicker');
-						let value = input._flatpickr.altInput.value;
-						let modifiedDefault = input._flatpickr._inputData.some( input => input.value !== input.dataset.undo );
+				// loop each flatpickr input and set placeholders and detect if default value has changed
+				recurrenceSetPrimary.querySelectorAll('.em-recurrence-advanced .em-datepicker .em-date-input.flatpickr-input').forEach(function (input) {
+					let datePicker = input.closest('.em-datepicker');
+					let value = input._flatpickr.altInput.value;
+					let modifiedDefault = input._flatpickr._inputData.some( input => input.value !== input.dataset.undo );
 
-						// get the text format directly, we assume it's the same as the datepicker type for events, it's an EM setting (if dev customizations change the template, they'll need to account for it here)
-						let datesSelector = '.em-recurrence-dates .em-date-input.form-control';
-						if (datePicker.classList.contains('em-datepicker-range')) {
-							recurrenceSet.querySelectorAll(datesSelector).forEach(function (dp) {
-								dp.previousElementSibling.placeholder ||= dp.placeholder;
-								dp.placeholder = value ? value : dp.previousElementSibling.placeholder;
-								if ( dp.value === '' && modifiedDefault ) {
-									dp.closest('.em-recurrence-set').dataset.primaryModified = '1';
-								}
-							});
-						} else if (datePicker.classList.contains('em-datepicker-until')) {
-							datesSelector += input.classList.contains('em-date-input-start') ? '.em-date-input-start' : '.em-date-input-end';
-							recurrenceSet.querySelectorAll(datesSelector).forEach(function (dp) {
-								dp.placeholder = value ? value : dp.previousElementSibling.placeholder;
-								if ( dp.value === '' && modifiedDefault ) {
-									dp.closest('.em-recurrence-set').dataset.primaryModified = '1';
-								}
-							});
-						}
-					});
-				}
+					// get the text format directly, we assume it's the same as the datepicker type for events, it's an EM setting (if dev customizations change the template, they'll need to account for it here)
+					let datesSelector = '.em-recurrence-dates .em-date-input.form-control';
+					if (datePicker.classList.contains('em-datepicker-range')) {
+						recurrenceSet.querySelectorAll(datesSelector).forEach(function (dp) {
+							dp.previousElementSibling.placeholder ||= dp.placeholder;
+							dp.placeholder = value ? value : dp.previousElementSibling.placeholder;
+							if ( dp.value === '' && modifiedDefault ) {
+								dp.closest('.em-recurrence-set').dataset.primaryModified = '1';
+							}
+						});
+					} else if (datePicker.classList.contains('em-datepicker-until')) {
+						datesSelector += input.classList.contains('em-date-input-start') ? '.em-date-input-start' : '.em-date-input-end';
+						recurrenceSet.querySelectorAll(datesSelector).forEach(function (dp) {
+							dp.placeholder = value ? value : dp.previousElementSibling.placeholder;
+							if ( dp.value === '' && modifiedDefault ) {
+								dp.closest('.em-recurrence-set').dataset.primaryModified = '1';
+							}
+						});
+					}
+				});
 			}
 		});
 

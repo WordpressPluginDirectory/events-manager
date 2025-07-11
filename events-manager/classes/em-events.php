@@ -152,8 +152,9 @@ FROM (
 	) AS lookup
 ) {$events_table}
 WHERE RowNumber = 1
-$orderby_sql
-$limit $offset";
+$orderby_sql";
+					$sql_count = str_replace( $selectors, ' COUNT(*) ', $sql );
+					$sql .= "\n". "$limit $offset";
 				}else{
 					//we'll keep this query simply because it's a little faster and still seems reliable when not grouping or group-sorting any fields in the locations table
 					$sql = "
@@ -171,8 +172,9 @@ FROM (
 	ORDER BY {$groupby_field} $groupby_orderby_sql
 ) {$events_table}
 WHERE RowNumber = 1
-$orderby_sql
-$limit $offset";
+$orderby_sql";
+					$sql_count = str_replace( $selectors, ' COUNT(*) ', $sql );
+					$sql .= "\n". "$limit $offset";
 				}
 			}
 		}
@@ -184,17 +186,26 @@ $limit $offset";
 SELECT $selectors FROM $events_table
 $location_optional_join
 $where
-$orderby_sql
-$limit $offset";
+$orderby_sql";
+			$sql_count = str_replace( $selectors, ' COUNT(*) ', $sql );
+			$sql .= "\n". "$limit $offset";
 		}
 	
 		//THE Query filter
 		$sql = apply_filters('em_events_get_sql', $sql, $args);
+		if ( has_filter('em_events_get_sql') && !has_filter('em_events_get_sql_count') ) {
+			// backwards compatibility here, try and replace the SQL selector with COUNT(*) and remove the limit/offset via a preg_replace
+			$sql_count = preg_replace( '/SELECT[\s\S]*?FROM/i', 'SELECT COUNT(*) FROM', $sql, 1 );
+			$sql_count = preg_replace( '/\s+LIMIT\s+\d+(?:\s*,\s*\d+)?/i', '', $sql_count );
+			$sql_count = preg_replace( '/\s+OFFSET\s+\d+/i', '', $sql_count );
+		} else {
+			$sql_count = apply_filters('em_events_get_sql_count', $sql_count ?? $sql, $args);
+		}
 		//if( em_wp_is_super_admin() && WP_DEBUG_DISPLAY ){ echo "<pre>"; print_r($sql); echo '</pre>'; }
 				
 		//If we're only counting results, return the number of results and go no further
 		if( $count ){
-			self::$num_rows_found = self::$num_rows = $wpdb->get_var($sql);
+			self::$num_rows_found = self::$num_rows = $wpdb->get_var($sql_count);
 			return apply_filters('em_events_get_count', self::$num_rows, $args);		
 		}
 		
@@ -202,7 +213,6 @@ $limit $offset";
 		$results = $wpdb->get_results( $sql, ARRAY_A);
 		self::$num_rows = $wpdb->num_rows;
 		if( $calc_found_rows ){
-			$sql_count = str_replace( $selectors, ' COUNT(*) ', $sql );
 			self::$num_rows_found = $wpdb->get_var($sql_count);
 		}else{
 			self::$num_rows_found = self::$num_rows;
@@ -333,7 +343,7 @@ $limit $offset";
 				$output .= self::get_pagination_links($args, $events_count);
 			}
 		}elseif( $args['no_results_msg'] !== false ){
-			$output = !empty($args['no_results_msg']) ? $args['no_results_msg'] : get_option('dbem_no_events_message');
+			$output = !empty($args['no_results_msg']) ? esc_html($args['no_results_msg']) : get_option('dbem_no_events_message');
 		}
 		
 		//TODO check if reference is ok when restoring object, due to changes in php5 v 4
@@ -483,7 +493,7 @@ $limit $offset";
 				echo self::get_pagination_links($args, $events_count, 'search_events', $default_args);
 			}
 		}elseif( $args['no_results_msg'] !== false ){
-			echo !empty($args['no_results_msg']) ? $args['no_results_msg'] : get_option('dbem_no_events_message');
+			echo !empty($args['no_results_msg']) ? esc_html($args['no_results_msg']) : get_option('dbem_no_events_message');
 		}
 		return apply_filters('em_events_output_grouped', ob_get_clean(), $EM_Events, $args, $events_count);
 	}

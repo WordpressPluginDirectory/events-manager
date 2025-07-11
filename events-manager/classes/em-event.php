@@ -500,6 +500,19 @@ class EM_Event extends EM_Object{
 		}
 		// set some type casts
 		if ( $this->event_id ) $this->event_id = absint($this->event_id);
+		// do a little cleanup if we notice anything odd from bad installs, plugin conflicts etc.
+		if ( $this->event_id && $this->is_recurring(true) ) {
+			$this->recurrence_set_id = null; // no recurrence set id for recurring and repeating
+			if ( !$this->event_start_date ) {
+				$Recurrence_Set = $this->get_recurrence_set();
+				if ( empty($this->event_timezone) ) $this->event_timezone = $Recurrence_Set->timezone ?? get_option('dbem_timezone_default');
+				if ( empty($this->event_start_date) ) $this->event_start_date = $Recurrence_Set->start_date ?? date('Y-m-d');
+				if ( empty($this->event_start_time) || $this->event_start_time == '00:00:00' ) $this->event_start_time = $Recurrence_Set->start_time ?? '00:00:00';
+				if ( empty($this->event_end_date) ) $this->event_end_date = $Recurrence_Set->end_date ?? date('Y-m-d');
+				if ( empty($this->event_end_time) || $this->event_end_time == '00:00:00' ) $this->event_end_time = $Recurrence_Set->end_time ?? '00:00:00';
+				$this->event_all_day ??= $Recurrence_Set->all_day ?? false;
+			}
+		}
 		// fire hook to add any extra info to an event
 		do_action('em_event', $this, $id, $search_by);
 		//add this event to the cache
@@ -544,13 +557,13 @@ class EM_Event extends EM_Object{
 	public function __set( $prop, $val ){
 		if( $prop == 'event_start_date' || $prop == 'event_end_date' || $prop == 'event_rsvp_date' ){
 			//if date is valid, set it, if not set it to null
-			$this->$prop = preg_match('/^\d{4}-\d{2}-\d{2}$/', $val) ? $val : null;
+			$this->$prop = $val && preg_match('/^\d{4}-\d{2}-\d{2}$/', $val) ? $val : null;
 			if( $prop == 'event_start_date') $this->start = $this->event_start = null;
 			elseif( $prop == 'event_end_date') $this->end = $this->event_end = null;
 			elseif( $prop == 'event_rsvp_date') $this->rsvp_end = null;
 		}elseif( $prop == 'event_start_time' || $prop == 'event_end_time' || $prop == 'event_rsvp_time' ){
 			//if time is valid, set it, otherwise set it to midnight
-			$this->$prop = preg_match('/^\d{2}:\d{2}:\d{2}$/', $val) ? $val : '00:00:00';
+			$this->$prop = $val && preg_match('/^\d{2}:\d{2}:\d{2}$/', $val) ? $val : '00:00:00';
 			if( $prop == 'event_start_time') $this->start = null;
 			elseif( $prop == 'event_end_time') $this->end = null;
 			elseif( $prop == 'event_rsvp_time') $this->rsvp_end = null;
@@ -1071,7 +1084,7 @@ class EM_Event extends EM_Object{
 	function save(){
 		global $wpdb, $current_user, $blog_id, $EM_SAVING_EVENT;
 		$EM_SAVING_EVENT = true; //this flag prevents our dashboard save_post hooks from going further
-		if ( $this->is_recurrence() && $this->get_recurring_event()->is_recurring() ) {
+		if ( $this->is_recurrence() ) {
 			// not repeated event, but a recurrence of a recurring event - no post saving done here
 			$result = true;
 		} else {
@@ -1283,7 +1296,7 @@ class EM_Event extends EM_Object{
 				$this->previous_status = 0; //for sure this was previously status 0
 				$this->event_date_created = $event_array['event_date_created'] = current_time('mysql');
 				if ( !$wpdb->insert(EM_EVENTS_TABLE, $event_array) ){
-					$this->add_error( sprintf(__('Something went wrong saving your %s to the index table. Please inform a site administrator about this.','events-manager'),__('event','events-manager')));
+					$this->log_db_error( __('event','events-manager'), EM_EVENTS_TABLE );
 				}else{
 					//success, so link the event with the post via an event id meta value for easy retrieval
 					$this->event_id = $wpdb->insert_id;
@@ -1298,12 +1311,13 @@ class EM_Event extends EM_Object{
 			    $this->get_previous_status();
 				$this->event_date_modified = $event_array['event_date_modified'] = current_time('mysql');
 				if ( $wpdb->update(EM_EVENTS_TABLE, $event_array, array('event_id'=>$this->event_id) ) === false ){
-					$this->add_error( sprintf(__('Something went wrong updating your %s to the index table. Please inform a site administrator about this.','events-manager'),__('event','events-manager')));			
+					$this->log_db_error( __('event','events-manager'), EM_EVENTS_TABLE );
 				}else{
 					//Also set the status here if status != previous status
 					if( $this->previous_status != $this->get_status() ) $this->set_status($this->get_status());
 					$this->feedback_message = sprintf(__('Successfully saved %s','events-manager'),__('Event','events-manager'));
 				}
+
 				//check anonymous submission information
     			if( !empty($this->event_owner_anonymous) && get_option('dbem_events_anonymous_user') != $this->event_owner ){
     			    //anonymous user owner has been replaced with a valid wp user account, so we remove anonymous status flag but leave email and name for future reference
@@ -1453,10 +1467,11 @@ class EM_Event extends EM_Object{
 		return apply_filters('em_event_duplicate', false, $this);;
 	}
 	
-	function duplicate_url($raw = false){
-	    $url = add_query_arg(array('action'=>'event_duplicate', 'event_id'=>$this->event_id, '_wpnonce'=> wp_create_nonce('event_duplicate_'.$this->event_id)));
+	function duplicate_url( $raw = false ){
+		$url = preg_match('/^https?\:\/\//', $raw ) ? $raw : false;
+	    $url = add_query_arg(array('action'=>'event_duplicate', 'event_id'=>$this->event_id, '_wpnonce'=> wp_create_nonce('event_duplicate_'.$this->event_id)), $url);
 	    $url = apply_filters('em_event_duplicate_url', $url, $this);
-	    $url = $raw ? esc_url_raw($url):esc_url($url);
+	    $url = $raw === false ? esc_url_raw($url) : esc_url($url);
 	    return $url;
 	}
 
@@ -2066,18 +2081,23 @@ class EM_Event extends EM_Object{
 	 * @see EM_Object::get_image_url()
 	 */
 	function get_image_url($size = 'full'){
-	    if( EM_MS_GLOBAL && get_current_blog_id() != $this->blog_id ){
-	        switch_to_blog($this->blog_id);
-	        $switch_back = true;
-	    }
-		$return = parent::get_image_url($size);
-		if( !empty($switch_back) ){ restore_current_blog(); }
+		if ( $this->is_recurrence() ) {
+			$this->image_url = $this->get_recurring_event()->get_image_url($size);
+			return $this->image_url;
+		} else {
+			if( EM_MS_GLOBAL && get_current_blog_id() != $this->blog_id ){
+				switch_to_blog($this->blog_id);
+				$switch_back = true;
+			}
+			$return = parent::get_image_url($size);
+			if( !empty($switch_back) ){ restore_current_blog(); }
+		}
 		return $return;
 	}
 	
 	function get_edit_reschedule_url(){
-		if( $this->is_recurrence() ){
-			return $this->get_recurrence_set()->get_event()->get_edit_url();
+		if( $this->is_recurrence( true ) ){
+			return $this->get_recurring_event()->get_edit_url();
 		}
 	}
 	
@@ -2539,7 +2559,8 @@ class EM_Event extends EM_Object{
     								        switch_to_blog($this->blog_id);
     								        $switch_back = true;
     								    }
-								        $replace = get_the_post_thumbnail($this->ID, $image_size, array('alt' => esc_attr($this->event_name)) );
+										$post_id = $this->is_recurrence() ? $this->get_recurring_event()->post_id : $this->post_id;
+								        $replace = get_the_post_thumbnail($post_id, $image_size, array('alt' => esc_attr($this->event_name)) );
 								        if( !empty($switch_back) ){ restore_current_blog(); }
 								    }
 								}else{
@@ -2675,7 +2696,7 @@ class EM_Event extends EM_Object{
 					break;
 				case '#_RECURRINGPATTERN':
 					$replace = '';
-					if( $this->is_recurrence() || $this->is_recurring( true ) ){
+					if( $this->is_recurrence( true ) || $this->is_recurring( true ) ){
 						$replace = $this->get_event_recurrence()->get_recurrence_set()->get_recurrence_description();
 					}
 					break;
@@ -3193,8 +3214,9 @@ class EM_Event extends EM_Object{
 	 ***********************************************************/
 
 	/**
-	 * Returns true if this is a recurring event.
+	 * Returns true if this is a recurring event. Set $include_repeating to true to also evaluate repeating events as a recurring event (mainly for backwards compatibility)
 	 *
+	 * @param boolean $include_repeating
 	 * @return boolean
 	 */
 	function is_recurring( $include_repeating = false ) {
@@ -3206,10 +3228,11 @@ class EM_Event extends EM_Object{
 	 *
 	 * Unlike is_recurring() this pre-loads the Recurrence_Set into this object by default. If you don't intend to call get_recurrence_sets() right after and use the object returned, you can set $prepare_set to false.
 	 *
+	 * @param boolean $include_repeating	 *
 	 * @return boolean
 	 */
-	function is_recurrence() {
-		return (!$this->post_id || $this->event_type === 'recurrence') && $this->recurrence_set_id;
+	function is_recurrence( $include_repeating = false ) {
+		return ( !$this->post_id || $include_repeating ) && $this->event_type === 'recurrence' && $this->recurrence_set_id;
 	}
 
 	/**
@@ -3219,6 +3242,15 @@ class EM_Event extends EM_Object{
 	 */
 	function is_repeating() {
 		return $this->event_type == 'repeating' || $this->post_type == 'event-recurring';
+	}
+
+	/**
+	 * Will return true if this individual event is part of a repeating event set. Recurrences of repeating events are individual events with their own post id.
+	 *
+	 * @return boolean
+	 */
+	function is_repeated() {
+		return $this->post_id && $this->event_type === 'recurrence' && $this->recurrence_set_id;
 	}
 
 	/**
@@ -3286,7 +3318,7 @@ class EM_Event extends EM_Object{
 	 */
 	function detach(){
 		global $wpdb;
-		if( $this->is_recurrence() && $this->can_manage('edit_recurring_events','edit_others_recurring_events') ){
+		if( $this->is_repeated() && $this->can_manage('edit_recurring_events','edit_others_recurring_events') ){
 			//remove recurrence id from post meta and index table
 			$url = $this->get_attach_url();
 			$wpdb->update(EM_EVENTS_TABLE, array('recurrence_id' => null, 'recurrence_set' => null, 'event_type' => EM_POST_TYPE_EVENT ), array('event_id' => $this->event_id));
@@ -3416,7 +3448,11 @@ class EM_Event extends EM_Object{
 	 * @deprecated use Recurrence_Sets::get_recurrence_description() or Recurrence_Set::get_recurrence_description()
 	 */
 	function get_recurrence_description() {
-		return $this->get_recurrence_sets()->get_recurrence_description();
+		if ( $this->is_recurrence( true ) ) {
+			return $this->get_recurring_event()->get_recurrence_description();
+		} else {
+			return $this->get_recurrence_sets()->get_recurrence_description();
+		}
 	}
 	
 	/**********************************************************
@@ -3675,7 +3711,7 @@ function em_event_gallery_override( $attr = array() ){
 	if( !empty($post->post_type) && $post->post_type == EM_POST_TYPE_EVENT && empty($attr['id']) && empty($attr['ids']) ){
 		//no id specified, so check if it's recurring and override id with recurrence template post id
 		$EM_Event = em_get_event($post->ID, 'post_id');
-		if( $EM_Event->is_recurrence() ){
+		if( $EM_Event->is_recurrence( true) ){
 			$attr['id'] = $EM_Event->get_event_recurrence()->post_id;
 		}
 	}

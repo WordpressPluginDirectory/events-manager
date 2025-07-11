@@ -186,8 +186,18 @@ class EM_Location_Post_Admin{
 		if( !empty($EM_Location->owner_anonymous) ){
 			add_meta_box('em-location-anonymous', __('Anonymous Submitter Info','events-manager'), array('EM_Location_Post_Admin','meta_box_anonymous'),EM_POST_TYPE_LOCATION, 'side','high');
 		}
+		add_action('post_submitbox_misc_actions', [ static::class, 'meta_box_action_post_submitbox_start' ] );
 	}
-	
+
+	public static function meta_box_action_post_submitbox_start(){
+		global $EM_Location;
+		?>
+		<div class="misc-pub-section misc-pub-post-status misc-location-duplicate-link">
+			<a href="<?php echo esc_url($EM_Location->duplicate_url()); ?>"><?php echo esc_html(sprintf(__('Duplicate %s','events-manager'), __('Location','events-manager'))); ?></a>
+		</div>
+		<?php
+	}
+
 	public static function meta_box_metadump(){
 		global $post,$EM_Location;
 		echo "<pre>"; print_r(get_post_custom($post->ID)); echo "</pre>";

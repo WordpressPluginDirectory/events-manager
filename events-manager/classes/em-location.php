@@ -233,7 +233,7 @@ class EM_Location extends EM_Object {
 					$this->blog_id = $search_by;
 				}else{
 					$location_meta = get_post_meta($location_post->ID);
-				}	
+				}
 				//Get custom fields
 				foreach($location_meta as $location_meta_key => $location_meta_val){
 					$field_name = substr($location_meta_key, 1);
@@ -246,7 +246,7 @@ class EM_Location extends EM_Object {
 							$this->$field_name = $location_meta_val[0];
 						}
 					}
-				}	
+				}
 			}
 			//load post data - regardless
 			$this->post_id = $location_post->ID;
@@ -268,6 +268,27 @@ class EM_Location extends EM_Object {
 				$this->to_object($location_array);
 		    }
 		}
+	}
+
+	function get_location_meta( $blog_id = false ){
+		if( !empty($this->blog_id) ) $blog_id = $this->blog_id; //if there's a blog id already, there's no doubt where to look for
+		if( empty($this->post_id) ) return array();
+		if( is_numeric($blog_id) && $blog_id > 0 && is_multisite() ){
+			// if in multisite mode, switch blogs quickly to get the right post meta.
+			switch_to_blog($blog_id);
+			$location_meta = get_post_meta($this->post_id);
+			restore_current_blog();
+			$this->blog_id = $blog_id;
+		}elseif( EM_MS_GLOBAL ){
+			// if a blog ID wasn't defined then we'll check the main blog, in case the location was created in the past
+			$this->ms_global_switch();
+			$location_meta = get_post_meta($this->post_id);
+			$this->ms_global_switch_back();
+		}else{
+			$location_meta = get_post_meta($this->post_id);
+		}
+		if( !is_array($location_meta) ) $location_meta = array();
+		return apply_filters('em_location_get_location_meta', $location_meta);
 	}
 	
 	/**
@@ -523,7 +544,7 @@ class EM_Location extends EM_Object {
 			if( empty($this->location_id) || !$loc_truly_exists ){
 				$this->previous_status = 0; //for sure this was previously status 0
 				if ( !$wpdb->insert(EM_LOCATIONS_TABLE, $location_array) ){
-					$this->add_error( sprintf(__('Something went wrong saving your %s to the index table. Please inform a site administrator about this.','events-manager'),__('location','events-manager')));
+					$this->log_db_error( __('location','events-manager'), EM_LOCATIONS_TABLE );
 				}else{
 					//success, so link the event with the post via an event id meta value for easy retrieval
 					$this->location_id = $wpdb->insert_id;
@@ -533,7 +554,7 @@ class EM_Location extends EM_Object {
 			}else{
 				$this->get_previous_status();
 				if ( $wpdb->update(EM_LOCATIONS_TABLE, $location_array, array('location_id'=>$this->location_id)) === false ){
-					$this->add_error( sprintf(__('Something went wrong updating your %s to the index table. Please inform a site administrator about this.','events-manager'),__('location','events-manager')));			
+					$this->log_db_error( __('location','events-manager'), EM_LOCATIONS_TABLE );
 				}else{
 					$this->feedback_message = sprintf(__('Successfully saved %s','events-manager'),__('Location','events-manager'));
 					//Also set the status here if status != previous status
@@ -554,6 +575,61 @@ class EM_Location extends EM_Object {
 		$this->compat_keys();
 		$result = count($this->errors) == 0;
 		return apply_filters('em_location_save_meta', count($this->errors) == 0, $this);
+	}
+
+	/**
+	 * Duplicates this event and returns the duplicated event. Will return false if there is a problem with duplication.
+	 * @return EM_Event
+	 */
+	function duplicate(){
+		global $wpdb;
+		//First, duplicate.
+		if( $this->can_manage('edit_locations','edit_others_locations') ){
+			$EM_Location = clone $this;
+			$EM_Location->location_id = null;
+			$EM_Location->post_id = null;
+			$EM_Location->ID = null;
+			$EM_Location->post_name = '';
+			do_action('em_location_duplicate_pre', $EM_Location, $this);
+			$EM_Location->duplicated = true;
+			$EM_Location->force_status = 'draft';
+			if( $EM_Location->save() ){
+				$EM_Location->feedback_message = sprintf(__("%s successfully duplicated.", 'events-manager'), __('Location','events-manager'));
+				//other non-EM post meta inc. featured image
+				$location_meta = $this->get_location_meta( $this->blog_id );
+				$new_location_meta = $EM_Location->get_location_meta( $EM_Location->blog_id );
+				$location_meta_inserts = array();
+				//Get custom fields and post meta - adapted from $this->load_post_meta()
+				foreach($location_meta as $location_meta_key => $location_meta_vals){
+					if( $location_meta_key == '_wpas_' ) continue; //allow JetPack Publicize to detect this as a new post when published
+					if( is_array($location_meta_vals) ){
+						if( !array_key_exists($location_meta_key, $new_location_meta) &&  !in_array($location_meta_key, array('_location_attributes', '_edit_last', '_edit_lock', '_location_owner_name','_location_owner_anonymous','_location_owner_email')) ){
+							foreach($location_meta_vals as $location_meta_val){
+								$location_meta_inserts[] = "({$EM_Location->post_id}, '{$location_meta_key}', '{$location_meta_val}')";
+							}
+						}
+					}
+				}
+				//save in one SQL statement
+				if( !empty($location_meta_inserts) ){
+					$wpdb->query('INSERT INTO '.$wpdb->postmeta." (post_id, meta_key, meta_value) VALUES ".implode(', ', $location_meta_inserts));
+				}
+				if( array_key_exists('_location_approvals_count', $location_meta) ) update_post_meta($EM_Location->post_id, '_location_approvals_count', 0);
+				//copy anything from the em_meta table too
+				$wpdb->query('INSERT INTO '.EM_META_TABLE." (object_id, meta_key, meta_value) SELECT '{$EM_Location->location_id}', meta_key, meta_value FROM ".EM_META_TABLE." WHERE object_id='{$this->location_id}'");
+				//set location to draft status
+				return apply_filters('em_location_duplicate', $EM_Location, $this);
+			}
+		}
+		//TODO add error notifications for duplication failures.
+		return apply_filters('em_location_duplicate', false, $this);
+	}
+
+	function duplicate_url($raw = false){
+		$url = add_query_arg(array('action'=>'location_duplicate', 'location_id'=>$this->location_id, '_wpnonce'=> wp_create_nonce('location_duplicate_'.$this->location_id)));
+		$url = apply_filters('em_location_duplicate_url', $url, $this);
+		$url = $raw ? esc_url_raw($url):esc_url($url);
+		return $url;
 	}
 	
 	function delete($force_delete = false){

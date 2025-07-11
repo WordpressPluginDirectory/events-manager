@@ -195,7 +195,7 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 	 * @return bool
 	 */
 	function attach() {
-		if ( $this->get_event()->is_recurrence() ) {
+		if ( $this->get_event()->is_repeated() ) {
 			$results = [];
 			$EM_Tickets = $this->get_event()->get_recurring_event()->get_tickets();
 			foreach ( $this->tickets as $EM_Ticket ) {

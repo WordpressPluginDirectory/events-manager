@@ -131,6 +131,8 @@ function em_create_events_table() {
 	global  $wpdb;
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
+	$charset_collate = $wpdb->get_charset_collate();
+
 	$table_name = $wpdb->prefix.'em_events';
 	$sql = "CREATE TABLE ".$table_name." (
 		event_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -169,7 +171,7 @@ function em_create_events_table() {
 		event_language varchar(14) NULL DEFAULT NULL,
 		event_translation tinyint(1) unsigned NOT NULL DEFAULT 0,
 		PRIMARY KEY  (event_id)
-		) DEFAULT CHARSET=utf8 ;";
+		) $charset_collate;";
 
 	if( $wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name ){
 		dbDelta($sql);
@@ -236,6 +238,7 @@ function em_create_recurrences_table() {
 function em_create_events_meta_table(){
 	global  $wpdb;
 	$table_name = $wpdb->prefix.'em_meta';
+	$charset_collate = $wpdb->get_charset_collate();
 
 	// Creating the events table
 	$sql = "CREATE TABLE ".$table_name." (
@@ -245,19 +248,25 @@ function em_create_events_meta_table(){
 		meta_value longtext,
 		meta_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		PRIMARY KEY  (meta_id)
-		) DEFAULT CHARSET=utf8 ";
+		) $charset_collate";
 
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
 	dbDelta($sql);
 	em_sort_out_table_nu_keys($table_name, array('object_id','meta_key'));
-	if( em_check_utf8mb4_tables() ) maybe_convert_table_to_utf8mb4( $table_name );
+	if( em_check_utf8mb4_tables() ) {
+		$collate = $wpdb->query( "ALTER TABLE $table_name CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" );
+		if ( $collate === false && $wpdb->last_error ) {
+			error_log( 'Could not convert ' . $table_name . ' to utf8mb4 - ' . $wpdb->last_error );
+		}
+	}
 }
 
 function em_create_locations_table() {
 
 	global  $wpdb;
 	$table_name = $wpdb->prefix.'em_locations';
+	$charset_collate = $wpdb->get_charset_collate();
 
 	// Creating the events table
 	$sql = "CREATE TABLE ".$table_name." (
@@ -282,7 +291,7 @@ function em_create_locations_table() {
 		location_language varchar(14) NULL DEFAULT NULL,
 		location_translation tinyint(1) unsigned NOT NULL DEFAULT 0,
 		PRIMARY KEY  (location_id)
-		) DEFAULT CHARSET=utf8 ;";
+		) $charset_collate;";
 
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
@@ -310,6 +319,7 @@ function em_create_bookings_table() {
 
 	global  $wpdb;
 	$table_name = $wpdb->prefix.'em_bookings';
+	$charset_collate = $wpdb->get_charset_collate();
 
 	$sql = "CREATE TABLE ".$table_name." (
 		booking_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -326,7 +336,7 @@ function em_create_bookings_table() {
  		booking_taxes decimal(14,4) NULL DEFAULT NULL,
 		booking_meta LONGTEXT NULL,
 		PRIMARY KEY  (booking_id)
-		) DEFAULT CHARSET=utf8 ;";
+		) $charset_collate;";
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 	dbDelta($sql);
 	em_sort_out_table_nu_keys($table_name, array('event_id','person_id','booking_status', 'booking_rsvp_status'));
@@ -337,6 +347,7 @@ function em_create_bookings_meta_table() {
 	
 	global  $wpdb;
 	$table_name = $wpdb->prefix.'em_bookings_meta';
+	$charset_collate = $wpdb->get_charset_collate();
 	
 	// Creating the events table
 	$sql = "CREATE TABLE ".$table_name." (
@@ -345,7 +356,7 @@ function em_create_bookings_meta_table() {
 		meta_key varchar(255) DEFAULT NULL,
 		meta_value longtext,
 		PRIMARY KEY  (meta_id)
-		) DEFAULT CHARSET=utf8 ";
+		) $charset_collate";
 	
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 	dbDelta($sql);
@@ -359,6 +370,7 @@ function em_create_tickets_table() {
 
 	global  $wpdb;
 	$table_name = $wpdb->prefix.'em_tickets';
+	$charset_collate = $wpdb->get_charset_collate();
 
 	// Creating the events table
 	$sql = "CREATE TABLE {$table_name} (
@@ -384,7 +396,7 @@ function em_create_tickets_table() {
 		multi_event_auto_enrol TINYINT(1) NULL DEFAULT NULL,
 		multi_event_ticket BIGINT(20) UNSIGNED NULL DEFAULT NULL,
 		PRIMARY KEY  (ticket_id)
-		) DEFAULT CHARSET=utf8 ;";
+		) $charset_collate;";
 
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 	dbDelta($sql);
@@ -396,6 +408,7 @@ function em_create_tickets_table() {
 function em_create_tickets_bookings_table() {
 	global  $wpdb;
 	$table_name = $wpdb->prefix.'em_tickets_bookings';
+	$charset_collate = $wpdb->get_charset_collate();
 
 	// Creating the events table
 	$sql = "CREATE TABLE {$table_name} (
@@ -407,7 +420,7 @@ function em_create_tickets_bookings_table() {
 		  ticket_booking_price decimal(14,4) NOT NULL,
 		  ticket_booking_order int(2) NULL,
 		  PRIMARY KEY  (ticket_booking_id)
-		) DEFAULT CHARSET=utf8 ;";
+		) $charset_collate;";
 
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 	dbDelta($sql);
@@ -418,7 +431,8 @@ function em_create_tickets_bookings_table() {
 function em_create_tickets_bookings_meta_table() {
 	global  $wpdb;
 	$table_name = $wpdb->prefix.'em_tickets_bookings_meta';
-	
+	$charset_collate = $wpdb->get_charset_collate();
+
 	// Creating the events table
 	$sql = "CREATE TABLE ".$table_name." (
 		meta_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -426,7 +440,7 @@ function em_create_tickets_bookings_meta_table() {
 		meta_key varchar(255) DEFAULT NULL,
 		meta_value longtext,
 		PRIMARY KEY  (meta_id)
-		) DEFAULT CHARSET=utf8 ";
+		) $charset_collate ";
 	
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 	dbDelta($sql);
@@ -1032,6 +1046,7 @@ function em_add_options() {
 function em_upgrade_current_installation(){
 	global $wpdb, $wp_locale, $EM_Notices;
 	$current_version = get_option('dbem_version', 0);
+	include_once( EM_DIR . '/classes/em-admin-notices.php' );
 	
 	// add review popup
 	$data = get_site_option('dbem_data', array());
@@ -1044,10 +1059,9 @@ function em_upgrade_current_installation(){
 		update_site_option('dbem_data', $data);
 	}
 	// temp promo
-	if( time() < 1729857600 && ( version_compare($current_version, '6.6.3', '<') || !empty($data['admin-modals']['review-nudge']) )  ) {
-		if( empty($data['admin-modals']) ) $data['admin-modals'] = array();
-		$data['admin-modals']['promo-popup'] = true;
-		update_site_option('dbem_data', $data);
+	if( time() < 1751659200 && ( version_compare($current_version, '7.0.4', '<') || !empty($data['admin-modals']['review-nudge']) )  ) {
+		$EM_Admin_Notice = new EM_Admin_Notice(array( 'name' => 'promo-popup', 'who' => 'admin', 'where' => 'all', 'raw_output' => true ));
+		EM_Admin_Notices::add($EM_Admin_Notice, is_multisite());
 	}
 	
 	// Check EM Pro update min
@@ -1777,12 +1791,14 @@ function em_upgrade_current_installation(){
 		if( version_compare( $current_version, '7.0', '<') ){
 			if ( EM_MS_GLOBAL ) {
 				// do this once to global tables
-				$done_already = $wpdb->get_var('SELECT event_id FROM ' . EM_EVENTS_TABLE . " WHERE event_type='repeating'");
+				$has_null_event_types = $wpdb->get_var('SELECT event_id FROM ' . EM_EVENTS_TABLE . " WHERE event_type IS NULL");
+                $done_already = !$has_null_event_types;
 			}
 			if ( empty( $done_already ) ) {
 				// Update event_type based on recurrence field
 				$wpdb->query("UPDATE " . EM_EVENTS_TABLE . " SET event_type = 
 		                CASE 
+		                    WHEN event_type IS NOT NULL AND event_type != '". EM_POST_TYPE_EVENT ."' THEN event_type
 		                    WHEN recurrence = 1 THEN 'repeating' 
 		                    WHEN recurrence_id IS NOT NULL AND recurrence != 1 THEN 'recurrence' 
 		                    ELSE '". EM_POST_TYPE_EVENT ."'
@@ -1791,13 +1807,16 @@ function em_upgrade_current_installation(){
 				// Migrate recurrence data to new table
 				$wpdb->query("
 			            INSERT INTO ". EM_EVENT_RECURRENCES_TABLE ." ( event_id, recurrence_type, recurrence_freq, recurrence_interval, recurrence_byday, recurrence_byweekno, recurrence_start_date, recurrence_start_time, recurrence_end_date, recurrence_end_time, recurrence_duration, recurrence_order, recurrence_timezone, recurrence_status )
-			            SELECT event_id, 'include', recurrence_freq, recurrence_interval, recurrence_byday, recurrence_byweekno, event_start_date, event_start_time, event_end_date, event_end_time, recurrence_days, 1, event_timezone, event_status FROM " . EM_EVENTS_TABLE . " WHERE recurrence = 1 AND event_translation != 1
+			            SELECT event_id, 'include', recurrence_freq, recurrence_interval, recurrence_byday, recurrence_byweekno, event_start_date, event_start_time, event_end_date, event_end_time, recurrence_days, 1, event_timezone, event_status FROM " . EM_EVENTS_TABLE . " e WHERE recurrence = 1 AND event_translation != 1
+			            AND recurrence_set_id IS NULL AND NOT EXISTS ( SELECT 1 FROM " . EM_EVENT_RECURRENCES_TABLE . " er WHERE er.event_id = e.event_id )
 		            ");
 				// update events table with the new recurrence set id
 				$wpdb->query("UPDATE " . EM_EVENTS_TABLE . " e JOIN " . EM_EVENT_RECURRENCES_TABLE . " r ON e.recurrence_id = r.event_id SET e.recurrence_set_id = r.recurrence_set_id WHERE e.recurrence_id IS NOT NULL");
 			}
 			// copy over new values to post meta
 			// Copy event_type and recurrence_set_id to postmeta for all records with a post_id
+            // first delete any existing meta, JUST in case we're doing this twice and so we don't end up with duplicate meta
+			$wpdb->query( " DELETE FROM {$wpdb->postmeta} WHERE meta_key IN ( '_event_type', '_recurrence_set_id' ) AND post_id IN ( SELECT ID FROM {$wpdb->posts} WHERE post_type IN ('". EM_POST_TYPE_EVENT ."', 'event-recurring' ) ) ");
 			$wpdb->query("
 			    INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value)
 			    SELECT e.post_id, '_event_type', e.event_type FROM " . EM_EVENTS_TABLE . " e WHERE e.event_type IS NOT NULL

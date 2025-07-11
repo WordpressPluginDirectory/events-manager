@@ -2,7 +2,10 @@
 <!-- EMAIL OPTIONS -->
 <div class="em-menu-emails em-menu-group" <?php if( !defined('EM_SETTINGS_TABS') || !EM_SETTINGS_TABS) : ?>style="display:none;"<?php endif; ?>>
 	
-	<?php if ( !is_multisite() ) { em_admin_option_box_email(); } ?>
+	<?php
+		$email_subject_tip = __('You can disable this email by leaving the subject blank.','events-manager');
+		if ( !is_multisite() ) { em_admin_option_box_email(); }
+	?>
 
 	<?php if( get_option('dbem_rsvp_enabled') ): ?>
 	<div  class="postbox "  id="em-opt-booking-emails">
@@ -11,7 +14,6 @@
 	    <?php do_action('em_options_page_booking_email_templates_options_top'); ?>
 		<table class='form-table'>
 			<?php
-			$email_subject_tip = __('You can disable this email by leaving the subject blank.','events-manager');
 			em_options_input_text ( __( 'Email events admin?', 'events-manager'), 'dbem_bookings_notify_admin', __( "If you would like every event booking confirmation email sent to an administrator write their email here (leave blank to not send an email).", 'events-manager').' '.__('For multiple emails, separate by commas (e.g. email1@test.com,email2@test.com,etc.)','events-manager') );
 			em_options_radio_binary ( __( 'Email event owner?', 'events-manager'), 'dbem_bookings_contact_email', __( 'Check this option if you want the event contact to receive an email when someone books places. An email will be sent when a booking is first made (regardless if confirmed or pending)', 'events-manager') );
 			do_action('em_options_page_booking_email_templates_options_subtop');

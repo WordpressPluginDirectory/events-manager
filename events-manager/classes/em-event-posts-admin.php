@@ -218,7 +218,7 @@ class EM_Event_Posts_Admin{
 		switch ( $column ) {
 			case 'event-id':
 				echo $EM_Event->event_id;
-				if ( defined('EM_DEBUG') && EM_DEBUG && $EM_Event->is_recurrence() ) {
+				if ( defined('EM_DEBUG') && EM_DEBUG && $EM_Event->is_recurrence( true ) ) {
 					echo ' | Set #' . $EM_Event->recurrence_set_id;
 				}
 				break;
@@ -273,9 +273,9 @@ class EM_Event_Posts_Admin{
 					<?php endif;
 					echo ( $EM_Event->is_recurrence() || $EM_Event->is_recurring() ) ? '<br />':''; // decide here in case bookings disabled
 				}
-				if ( ( $EM_Event->is_recurrence() || $EM_Event->is_recurring() ) && current_user_can('edit_recurring_events','edit_others_recurring_events') ) {
+				if ( ( $EM_Event->is_repeated() || $EM_Event->is_recurring() ) && current_user_can('edit_recurring_events','edit_others_recurring_events') ) {
 					$actions = array();
-					if ( !$EM_Event->is_recurring() ) {
+					if ( $EM_Event->is_repeated() ) {
 						if ( $EM_Event->get_recurring_event()->can_manage( 'edit_recurring_events', 'edit_others_recurring_events' ) ) {
 							$actions[] = '<a href="' . admin_url() . 'post.php?action=edit&amp;post=' . $EM_Event->get_recurring_event()->post_id . '">' . sprintf( esc_html__( 'Edit %s', 'events-manager' ), esc_html__( 'Repeating Events', 'events-manager' ) ) . '</a>';
 							$actions[] = '<a class="em-detach-link" href="' . esc_url( $EM_Event->get_detach_url() ) . '">' . esc_html__( 'Detach', 'events-manager' ) . '</a>';
@@ -443,7 +443,7 @@ class EM_Event_Recurring_Posts_Admin{
 			global $post, $EM_Event;
 			$EM_Event = em_get_event($post, 'post_id');
 			$actions['duplicate'] = '<a href="'.$EM_Event->duplicate_url().'" title="'.sprintf(__('Duplicate %s','events-manager'), __('Event','events-manager')).'">'.__('Duplicate','events-manager').'</a>';
-			if ( get_option('dbem_recurrence_convert_enabled') ) {
+			if ( get_option('dbem_recurrence_enabled') && get_option('dbem_recurrence_convert_enabled') ) {
 				$convert_url = esc_url( add_query_arg( ['action' => 'convert_to_recurrence', 'event_id' => $EM_Event->event_id, 'nonce' => 'x'] ) );
 				$convert_nonce = wp_create_nonce('convert_to_recurrence_'.$EM_Event->event_id);
 				$actions['convert'] = '<a href="'. $convert_url .'" class="em-convert-recurrence-link" data-nonce="' . $convert_nonce . '">'. esc_html__('Convert Recurring', 'events-manager') . '</a>';

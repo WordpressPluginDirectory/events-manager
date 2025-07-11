@@ -427,9 +427,9 @@ class EM_Object {
 			}
 			if( get_option('dbem_events_current_are_past') ){
 				if ( $timezone_scope ) {
-					$conditions['scope'] = " ( $event_start_col BETWEEN CAST('$scope' AS $cast) AND CAST('$date_end' AS $cast) )";
+					$conditions['scope'] = " ( $event_start_col BETWEEN CAST('$date_start' AS $cast) AND CAST('$date_end' AS $cast) )";
 				} else {
-					$conditions['scope'] = "$event_start_col = CAST('$date_start' AS $cast)";
+					$conditions['scope'] = "$event_start_col = CAST('$scope' AS $cast)";
 				}
 			} else{
 				if ( $timezone_scope ) {
@@ -1067,7 +1067,7 @@ class EM_Object {
 					$x_by[] = $accepted_fields[$field];
 				}elseif( in_array($field,$accepted_fields) ){
 					$x_by[] = $field;
-				}elseif( array_key_exists( $key, $accepted_fields) ){
+				}elseif( !is_numeric($key) && array_key_exists( $key, $accepted_fields) ){
 					$x_by[] = $field;
 				}else{
 					unset($x_by[$key]);
@@ -1475,7 +1475,7 @@ class EM_Object {
 						$array[$key] = (int) $string;
 					}elseif( self::array_is_numeric($string) ){
 						$array[$key] = $string;
-					}elseif( !is_array($string) && preg_match('/^( ?[\-0-9] ?,?)+$/', $string) ){
+					}elseif( $string && !is_array($string) && preg_match('/^( ?[\-0-9] ?,?)+$/', $string) ){
 					    $array[$key] = explode(',', str_replace(' ','',$string));
 					}else{
 						//No format we accept
@@ -1891,5 +1891,28 @@ class EM_Object {
 			}
 		}
 		return $processed_meta;
+	}
+
+	public function log_db_error( $type, $table ) {
+		global $wpdb;
+		$error = sprintf(__('Something went wrong saving your %s to the index table. Please inform a site administrator about this.','events-manager'), $type);
+		$this->add_error( $error );
+		if ( $wpdb->last_error != '' ) {
+			error_log( $table . ' SQL failed: '. $wpdb->last_error );
+		}
+		if ( is_super_admin() ) {
+            // check if post_content is not utf8mb4
+			$error = '';
+			if ( !empty($wpdb->last_error) ) {
+				$error .= '<strong>Admins Further Info:</strong><br>' . $wpdb->last_error;
+			}
+			$cols = $wpdb->get_row("SHOW FULL COLUMNS FROM ". $table ." WHERE FIELD='post_content'", ARRAY_A);
+			if ( !empty($cols['Collation']) && !preg_match('/^utf8mb4/', $cols['Collation']) ) {
+				$error .= '<br>' . sprintf( 'Please convert the %s table to utf8mb4 to avoid problems with this event.' , '<code>'.$table.'</code>' );;
+			}
+			if ( $error ) {
+				$this->add_error( $error );
+			}
+		}
 	}
 }

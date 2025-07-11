@@ -259,7 +259,7 @@ $limit $offset
 				$output .= self::get_pagination_links($args, $locations_count);
 			}
 		}elseif( $args['no_results_msg'] !== false ){
-			$output = !empty($args['no_results_msg']) ? $args['no_results_msg'] : get_option('dbem_no_locations_message');
+			$output = !empty($args['no_results_msg']) ? esc_html($args['no_results_msg']) : get_option('dbem_no_locations_message');
 		}
 		//FIXME check if reference is ok when restoring object, due to changes in php5 v 4
 		$EM_Location_old= $EM_Location;

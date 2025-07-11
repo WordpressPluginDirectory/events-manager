@@ -41,7 +41,7 @@ document.addEventListener("em_booking_form_js_loaded", function( e ) {
 	// add a listener to close the recurring booking picker upon a successful booking
 	container.addEventListener( 'em_booking_success', ( e ) => {
 		if ( e.detail.response.success ) {
-			e.currentTarget.closest('.em-booking-recurrence-form')?.querySelector( '.em-booking-recurrence-picker' )?.classList.add( 'hidden' );
+			e.target.closest('.em-booking-recurrence-form')?.querySelector( '.em-booking-recurrence-picker' )?.classList.add( 'hidden' );
 		}
 	});
 

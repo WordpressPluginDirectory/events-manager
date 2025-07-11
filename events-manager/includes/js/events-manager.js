@@ -1436,35 +1436,32 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		// Recurse recurrenceSets by recurrence set (.em-recurrence-set) to begin with
 		recurrenceSets.querySelectorAll('.em-recurrence-set').forEach( function ( recurrenceSet ) {
 			if ( !recurrenceSet.matches('.em-recurrence-type-include .em-recurrence-set:first-child') ) {
-				// only applies to recurrences without the 'on' frequency
-				if ( recurrenceSet.querySelector('select.em-recurrence-frequency')?.value !== 'on' ) {
-					// loop each flatpickr input and set placeholders and detect if default value has changed
-					recurrenceSetPrimary.querySelectorAll('.em-recurrence-advanced .em-datepicker .em-date-input.flatpickr-input').forEach(function (input) {
-						let datePicker = input.closest('.em-datepicker');
-						let value = input._flatpickr.altInput.value;
-						let modifiedDefault = input._flatpickr._inputData.some( input => input.value !== input.dataset.undo );
+				// loop each flatpickr input and set placeholders and detect if default value has changed
+				recurrenceSetPrimary.querySelectorAll('.em-recurrence-advanced .em-datepicker .em-date-input.flatpickr-input').forEach(function (input) {
+					let datePicker = input.closest('.em-datepicker');
+					let value = input._flatpickr.altInput.value;
+					let modifiedDefault = input._flatpickr._inputData.some( input => input.value !== input.dataset.undo );
 
-						// get the text format directly, we assume it's the same as the datepicker type for events, it's an EM setting (if dev customizations change the template, they'll need to account for it here)
-						let datesSelector = '.em-recurrence-dates .em-date-input.form-control';
-						if (datePicker.classList.contains('em-datepicker-range')) {
-							recurrenceSet.querySelectorAll(datesSelector).forEach(function (dp) {
-								dp.previousElementSibling.placeholder ||= dp.placeholder;
-								dp.placeholder = value ? value : dp.previousElementSibling.placeholder;
-								if ( dp.value === '' && modifiedDefault ) {
-									dp.closest('.em-recurrence-set').dataset.primaryModified = '1';
-								}
-							});
-						} else if (datePicker.classList.contains('em-datepicker-until')) {
-							datesSelector += input.classList.contains('em-date-input-start') ? '.em-date-input-start' : '.em-date-input-end';
-							recurrenceSet.querySelectorAll(datesSelector).forEach(function (dp) {
-								dp.placeholder = value ? value : dp.previousElementSibling.placeholder;
-								if ( dp.value === '' && modifiedDefault ) {
-									dp.closest('.em-recurrence-set').dataset.primaryModified = '1';
-								}
-							});
-						}
-					});
-				}
+					// get the text format directly, we assume it's the same as the datepicker type for events, it's an EM setting (if dev customizations change the template, they'll need to account for it here)
+					let datesSelector = '.em-recurrence-dates .em-date-input.form-control';
+					if (datePicker.classList.contains('em-datepicker-range')) {
+						recurrenceSet.querySelectorAll(datesSelector).forEach(function (dp) {
+							dp.previousElementSibling.placeholder ||= dp.placeholder;
+							dp.placeholder = value ? value : dp.previousElementSibling.placeholder;
+							if ( dp.value === '' && modifiedDefault ) {
+								dp.closest('.em-recurrence-set').dataset.primaryModified = '1';
+							}
+						});
+					} else if (datePicker.classList.contains('em-datepicker-until')) {
+						datesSelector += input.classList.contains('em-date-input-start') ? '.em-date-input-start' : '.em-date-input-end';
+						recurrenceSet.querySelectorAll(datesSelector).forEach(function (dp) {
+							dp.placeholder = value ? value : dp.previousElementSibling.placeholder;
+							if ( dp.value === '' && modifiedDefault ) {
+								dp.closest('.em-recurrence-set').dataset.primaryModified = '1';
+							}
+						});
+					}
+				});
 			}
 		});
 
@@ -1732,6 +1729,31 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 				updateRecurrenceSummary( recurrenceSet );
 			} else if ( recurrenceSet?.querySelector('select.recurrence_freq')?.value === 'on' ) {
 				// account for 'on' frequency changes
+				if ( e.target.closest('.em-datepicker.em-on-selector') ) {
+					// update the regular range datepicker to reflect date range from the 'on' selector datepicker
+					let selectedDates = e.target.closest('.em-date-input')?._flatpickr?.selectedDates;
+					if ( selectedDates ) {
+						selectedDates.sort(function(a, b) { return a - b; });
+						// set the dates
+
+						let datepickerDates = recurrenceSet.querySelector('.em-recurrence-dates.em-datepicker');
+						if ( datepickerDates )
+ 							if ( datepickerDates.classList.contains('em-datepicker-until') ) {
+								// we set start and end datepickers individually
+								datepickerDates.querySelector(`.em-date-input-start`)?._flatpickr?.setDate( selectedDates[0] );
+								datepickerDates.querySelector(`.em-date-input-end`)?._flatpickr?.setDate( selectedDates[selectedDates.length - 1] );
+							} else if ( datepickerDates.classList.contains('em-datepicker-range') ) {
+								// set an array of first/last selectedDates
+								let selectedDatesArray = [ selectedDates[0], selectedDates[selectedDates.length - 1] ];
+								datepickerDates.querySelector(`.em-date-input`)?._flatpickr?.setDate( selectedDatesArray );
+							}
+						if ( recurrenceSetType.classList.contains('em-recurrence-type-include') ) {
+							if ( recurrenceSet === recurrenceSet.parentElement?.firstElementChild ) {
+								setAdvancedDefaults();
+							}
+						}
+					}
+				}
 				setDateTimes();
 			}
 		});
@@ -1847,34 +1869,48 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 				let timeValues = { start: '', end: '', startIsSet: false, endIsSet: false };
 
 				// Get date values with a loop
-				let datepickerDates = recurrenceSet.querySelector('.em-recurrence-dates.em-datepicker');
-				if ( datepickerDates.classList.contains('em-datepicker-until') ) {
-					['start', 'end'].forEach(function(type) {
-						let dateInput = datepickerDates.querySelector(`.em-date-input-${type}`);
-						if (dateInput) {
+				if ( recurrenceSet.querySelector('select.recurrence_freq')?.value === 'on' ) {
+					// get the ON dates rather than the date range
+					let selectedDates = recurrenceSet.querySelector('.em-on-selector .em-date-input')?._flatpickr?.selectedDates;
+					if ( selectedDates ) {
+						selectedDates.sort(function(a, b) { return a - b; });
+						// get the first and last dates from the selected dates
+						dateValues['start'] = selectedDates[0];
+						dateValues['startIsSet'] = true;
+						dateValues['end'] = selectedDates[selectedDates.length - 1];
+						dateValues['endIsSet'] = true;
+					}
+				} else {
+					// not On dates so we look at traditional date range
+					let datepickerDates = recurrenceSet.querySelector('.em-recurrence-dates.em-datepicker');
+					if ( datepickerDates.classList.contains('em-datepicker-until') ) {
+						['start', 'end'].forEach(function(type) {
+							let dateInput = datepickerDates.querySelector(`.em-date-input-${type}`);
+							if (dateInput) {
+								if (dateInput._flatpickr && dateInput._flatpickr.altInput && dateInput._flatpickr.selectedDates.length) {
+									// If flatpickr has a selected date, use that
+									dateValues[type] = dateInput._flatpickr.altInput.value;
+									dateValues[type + 'IsSet'] = true;
+								} else if (dateInput.nextElementSibling) {
+									// Otherwise use the visible input's value or placeholder
+									dateValues[type] = dateInput.nextElementSibling.value ||
+									dateInput.nextElementSibling.placeholder;
+								}
+							}
+						});
+					} else if ( datepickerDates.classList.contains('em-datepicker-range') ) {
+						let dateInput = datepickerDates.querySelector(`.em-date-input`);
+						if ( dateInput ) {
+							// get the dates from flatpickr, formatted into the altinput format
 							if (dateInput._flatpickr && dateInput._flatpickr.altInput && dateInput._flatpickr.selectedDates.length) {
 								// If flatpickr has a selected date, use that
-								dateValues[type] = dateInput._flatpickr.altInput.value;
-								dateValues[type + 'IsSet'] = true;
+								dateValues['start'] = dateInput._flatpickr.altInput.value;
+								dateValues['startIsSet'] = true;
 							} else if (dateInput.nextElementSibling) {
 								// Otherwise use the visible input's value or placeholder
-								dateValues[type] = dateInput.nextElementSibling.value ||
+								dateValues['start'] = dateInput.nextElementSibling.value ||
 									dateInput.nextElementSibling.placeholder;
 							}
-						}
-					});
-				} else if ( datepickerDates.classList.contains('em-datepicker-range') ) {
-					let dateInput = datepickerDates.querySelector(`.em-date-input`);
-					if ( dateInput ) {
-						// get the dates from flatpickr, formatted into the altinput format
-						if (dateInput._flatpickr && dateInput._flatpickr.altInput && dateInput._flatpickr.selectedDates.length) {
-							// If flatpickr has a selected date, use that
-							dateValues['start'] = dateInput._flatpickr.altInput.value;
-							dateValues['startIsSet'] = true;
-						} else if (dateInput.nextElementSibling) {
-							// Otherwise use the visible input's value or placeholder
-							dateValues['start'] = dateInput.nextElementSibling.value ||
-								dateInput.nextElementSibling.placeholder;
 						}
 					}
 				}

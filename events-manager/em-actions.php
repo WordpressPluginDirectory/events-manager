@@ -288,6 +288,16 @@ function em_init_actions_start() {
 			$results = apply_filters('em_actions_locations_search_results', $results);
 			echo EM_Object::json_encode($results);
 			die();
+		} elseif ( $_REQUEST['action'] == 'location_duplicate' && wp_verify_nonce($_REQUEST['_wpnonce'],'location_duplicate_'.$EM_Location->location_id) ) {
+			$location = $EM_Location->duplicate();
+			if( $location === false ){
+				$EM_Notices->add_error( $EM_Location->errors, true );
+				wp_safe_redirect( em_wp_get_referer() );
+			}else{
+				$EM_Notices->add_confirm( $location->feedback_message, true );
+				wp_safe_redirect( $location->get_edit_url( false ) );
+			}
+			exit();
 		}
 		if( isset($result) && $result && !empty($_REQUEST['em_ajax']) ){
 			$return = array('result'=>true, 'success'=>true, 'message'=>$EM_Location->feedback_message);
@@ -648,9 +658,9 @@ function em_init_actions_start() {
 		//Convert event to recurring event
 		$EM_Event = em_get_event( absint($_REQUEST['event_id']) );
 		if( $EM_Event->convert_to_recurring() ){
-			$message = __('The repeating event has been converted into a recurring event.', 'events-manager') . ' ' . '<a href=" ' . $EM_Event->get_edit_url() . '">' . esc_html__('Edit Event', 'events-manager') . '</a>';
+			$message = __('The repeating event has been converted into a recurring event.', 'events-manager');
 			$EM_Notices->add_confirm( $message, true );
-			$redirect = add_query_arg( array('converted' => $EM_Event->event_id), remove_query_arg('event_id', em_wp_get_referer()) );
+			$redirect = add_query_arg( array('converted' => $EM_Event->event_id), $EM_Event->get_edit_url() );
 			wp_safe_redirect( $redirect );
 		}else{
 			$EM_Notices->add_error( $EM_Event->errors, true );

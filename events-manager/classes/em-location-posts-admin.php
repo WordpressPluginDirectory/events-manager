@@ -14,6 +14,9 @@ class EM_Location_Posts_Admin{
 		}
 		add_filter('manage_'.EM_POST_TYPE_LOCATION.'_posts_columns' , array('EM_Location_Posts_Admin','columns_add'));
 		add_filter('manage_'.EM_POST_TYPE_LOCATION.'_posts_custom_column' , array('EM_Location_Posts_Admin','columns_output'),10,2 );
+		// add duplication links for locations
+		$row_action_type = is_post_type_hierarchical( EM_POST_TYPE_LOCATION ) ? 'page_row_actions' : 'post_row_actions';
+		add_filter($row_action_type, array('EM_Location_Posts_Admin','row_actions'),10,2);
 	}
 	
 	public static function admin_head(){
@@ -79,6 +82,15 @@ class EM_Location_Posts_Admin{
 				echo $post->location_country;
 				break;
 		}
+	}
+
+	public static function row_actions($actions, $post){
+		if($post->post_type == EM_POST_TYPE_LOCATION){
+			global $post, $EM_Location;
+			$EM_Location = em_get_location($post, 'post_id');
+			$actions['duplicate'] = '<a href="'.$EM_Location->duplicate_url().'" title="'.sprintf(__('Duplicate %s','events-manager'), __('Location','events-manager')).'">'.__('Duplicate','events-manager').'</a>';
+		}
+		return $actions;
 	}
 }
 add_action('admin_init', array('EM_Location_Posts_Admin','init'));

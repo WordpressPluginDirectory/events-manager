@@ -8,7 +8,7 @@ class EM_Admin_Modals {
 		add_filter('admin_enqueue_scripts', 'EM_Admin_Modals::admin_enqueue_scripts', 100);
 		add_filter('wp_ajax_em-admin-popup-modal', 'EM_Admin_Modals::ajax');
 		add_filter('em_admin_notice_review-nudge_message', 'EM_Admin_Modals::review_notice');
-		if( time() < 1729857600 ) {
+		if( time() < 1751659200 ) {
 			add_filter( 'em_admin_notice_promo-popup_message', 'EM_Admin_Modals::promo_notice' );
 		}
 		add_filter( 'em_admin_notice_expired-reminder_message', 'EM_Admin_Modals::expired_reminder_notice' );
@@ -53,28 +53,6 @@ class EM_Admin_Modals {
 			if( $pro_license_active ){
 				$key = get_option('dbem_pro_api_key');
 				$pro_license_active = !(empty($key['until']) || $key['until'] > strtotime('+10 months'));
-			}
-			if( time() < 1729857600 && !empty($data['admin-modals']['promo-popup']) && !$pro_license_active) {
-				if( $data['admin-modals']['promo-popup'] == 1 || ($data['admin-modals']['promo-popup'] == 2 && ($show_plugin_pages || $show_network_admin) ) ) {
-					// enqueue script and load popup action
-					if( empty($data['admin-modals']['promo-popup-count']) ){
-						$data['admin-modals']['promo-popup-count'] = 0;
-					}
-					if( $data['admin-modals']['promo-popup-count'] <= 1 ) {
-						if( !wp_script_is('events-manager-admin') ) EM_Scripts_and_Styles::admin_enqueue(true);
-						add_filter('admin_footer', 'EM_Admin_Modals::promo_popup');
-						$data['admin-modals']['promo-popup-count']++;
-						update_site_option('dbem_data', $data);
-					}else{
-						// move it into a regular admin notice and stop displaying
-						unset($data['admin-modals']['promo-popup-count']);
-						unset($data['admin-modals']['promo-popup']);
-						update_site_option('dbem_data', $data);
-						// notify user of new update
-						$EM_Admin_Notice = new EM_Admin_Notice(array( 'name' => 'promo-popup', 'who' => 'admin', 'where' => 'plugin' ));
-						EM_Admin_Notices::add($EM_Admin_Notice, is_multisite());
-					}
-				}
 			}
 		}
 		
@@ -210,17 +188,15 @@ class EM_Admin_Modals {
 			<div class="em-modal-popup">
 				<header>
 					<a class="em-close-modal dismiss-modal" href="#"></a><!-- close modal -->
-					<div class="em-modal-title">Final Days - Upcoming Price Plan Changes, 30% Off Now!</div>
+					<div class="em-modal-title">...</div>
 				</header>
 				<div class="em-modal-content has-image" style="--font-size:16px;">
 					<div>
-						<p>Pardon the interruption.... we'd like to make sure you're aware of some upcoming price plan changes, <a href="https://em.cm/promo2024-09">see our announcement</a>.</p>
-						<p>We are introducing a new add-on soon, and will soon be selling some of our upcoming add-ons separately. We will be introducing a new all-inclusive plan, which you can get now at up to 32% discount.</p>
-						<p>We hope you're enjoying the plugin and if you're at all considering going Pro, you still have time to make the best of this limited opportunity!</p>
+						...
 					</div>
 					<div class="image">
 						<img src="<?php echo EM_DIR_URI . '/includes/images/events-manager.svg'; ?>">
-						<a href="https://em.cm/promo2024-09-gopro" class="button button-primary input" target="_blank" style="margin:10px auto; --accent-color:#429543; --accent-color-hover:#429543;">Go Pro!</a>
+						<a href="https://eventsmanagerpro.com/gopro/" class="button button-primary input" target="_blank" style="margin:10px auto; --accent-color:#429543; --accent-color-hover:#429543;">Go Pro!</a>
 					</div>
 				</div><!-- content -->
 				<footer class="em-submit-section input">
@@ -239,16 +215,17 @@ class EM_Admin_Modals {
 	public static function promo_notice(){
 		ob_start();
 		?>
-		<div style="display: grid; grid-template-columns: 80px auto; grid-gap: 20px;">
-			<div style="text-align: center; padding-left: 10px; padding-top:10px;">
+		<div style="display: grid; grid-template-columns: 80px auto; grid-gap: 20px; margin: 15px 0;">
+			<div style="text-align: center;  align-self: center; padding-left: 10px; padding-top:10px;">
 				<img src="<?php echo EM_DIR_URI . '/includes/images/events-manager.svg'; ?>" style="width: 100%;">
 			</div>
 			<div>
-				<h3>Final Days - Upcoming Price Plan Changes, 30% Off Now!</h3>
-				<p>Pardon the interruption.... we'd like to make sure you're aware of some upcoming price plan changes, <a href="https://em.cm/promo2024-09">see our announcement</a>.</p>
-				<p>We are introducing a new add-on soon, and will soon be selling some of our upcoming add-ons separately. We will be introducing a new all-inclusive plan, which you can get now at up to 32% discount.</p>
-				<p>We hope you're enjoying the plugin and if you're at all considering going Pro, you still have time to make the best of this limited opportunity!</p>
-				<a href="https://em.cm/promo2024-03-gopro-n" class="button button-primary input" target="_blank" style="margin-right:10px; --accent-color:#429543; --accent-color-hover:#429543;">Go Pro!</a>
+				<h3 style="margin: 0 0 5px; padding-bottom:0;">Flash Sale - Up to 25% Off!</h3>
+				<p>To celebrate the version 7 update, we're offering Events Manager Pro and Pro+ licenses with up to 25% off, offer valid only a few days!</p>
+				<div>
+					<a href="https://em.cm/promo2025-07-n" class="button button-primary input" target="_blank" style="margin-right:10px; --accent-color:#429543; --accent-color-hover:#429543;">Go Pro!</a>
+					<a href="<?php echo esc_url( admin_url('admin-ajax.php?action=em_dismiss_admin_notice&notice=promo-popup&redirect=1&nonce='. wp_create_nonce('em_dismiss_admin_noticepromo-popup'.get_current_user_id()) ) ); ?>" class="button button-secondary"><?php esc_html_e('Dismiss', 'events-manager'); ?></a>
+				</div>
 			</div>
 		</div><!-- content -->
 		<?php

@@ -34,6 +34,8 @@ class EM_ML_IO {
         //Duplication
 	    add_action('em_event_duplicate', 'EM_ML_IO::event_duplicate', 100, 2);
         add_filter('em_event_duplicate_url','EM_ML_IO::event_duplicate_url',10, 2);
+	    add_action('em_location_duplicate', 'EM_ML_IO::location_duplicate', 100, 2);
+	    add_filter('em_location_duplicate_url','EM_ML_IO::location_duplicate_url',10, 2);
     }
     
     /**
@@ -231,6 +233,56 @@ class EM_ML_IO {
 					$EM_ML_DUPLICATING = true;
 					$event->event_parent = $event_id; // change parent to new event
 					$event->duplicate();
+					$EM_ML_DUPLICATING = false;
+				}
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Changes the event id of the link for duplication so that it duplicates the original event instead of a translation.
+	 * Translation plugins should hook into em_event_duplicate, checking to make sure it is the original translation and then duplicating the translations of the original event.
+	 * @param string $url
+	 * @param EM_Event $EM_Event
+	 * @return string
+	 */
+	public static function location_duplicate_url($url, $EM_Location){
+		if( !EM_ML::is_original($EM_Location) ){
+			$EM_Location = EM_ML::get_original($EM_Location);
+			$url = add_query_arg(array('action'=>'location_duplicate', 'location_id'=>$EM_Location->location_id, '_wpnonce'=> wp_create_nonce('location_duplicate_'.$EM_Location->location_id)));
+			//this gets escaped later
+		}
+		return $url;
+	}
+
+	/**
+	 * When an location is duplicated, we need to get the original location's translations and copy them as duplicates of the current location.
+	 * An assumption is made here, which is that the location that was duplicated already is the original, since in ML mode we should be only duplicating the original language.
+	 *
+	 * @param EM_Location|false $result
+	 * @param EM_Location $EM_Location
+	 * @return EM_Location|boolean
+	 */
+	public static function location_duplicate($result, $EM_Location){
+		global $EM_ML_DUPLICATING;
+		// chehck we're on a newer WPML version, if we're using WPML, this will be depracated locationually
+		if( defined('EM_WPML_VERSION') && version_compare(EM_WPML_VERSION, '2.0.2.1', '<=') ) return $result;
+		if( $result !== false && empty($EM_ML_DUPLICATING) ){
+			if( !EM_ML::is_original($EM_Location) ) return $result; // we only duplicate the original location
+			//get the translation info of the duplicated location, for use later on
+			$location = $result; /* @var $location EM_Location */
+			$location_id = $location->location_id; // for use later
+			// get translations and loop through them to duplicate
+			$translations = EM_ML::get_location_translations($EM_Location);
+			foreach( $translations as $lang_code => $translation ){
+				//check that we're not in the original language, as that has been duplicated already
+				if( $translation->location_id != $EM_Location->location_id ){
+					//get the translation of original location that was duplicated if exists and duplicate it
+					$location = em_get_location($translation->location_id);
+					$EM_ML_DUPLICATING = true;
+					$location->location_parent = $location_id; // change parent to new location
+					$location->duplicate();
 					$EM_ML_DUPLICATING = false;
 				}
 			}

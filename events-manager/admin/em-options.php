@@ -143,7 +143,7 @@ function em_options_save(){
 			$wpdb->query('DROP TABLE '.EM_LOCATIONS_TABLE);
 			$wpdb->query('DROP TABLE '.EM_TICKETS_TABLE);
 			$wpdb->query('DROP TABLE '.EM_TICKETS_BOOKINGS_TABLE);
-			$wpdb->query('DROP TABLE '.EM_RECURRENCE_TABLE);
+			$wpdb->query('DROP TABLE '.EM_EVENT_RECURRENCES_TABLE);
 			$wpdb->query('DROP TABLE '.EM_META_TABLE);
 			
 			//delete options
@@ -176,15 +176,30 @@ function em_options_save(){
 	}
 	//Cleanup Event Orphans
 	if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'cleanup_event_orphans' && check_admin_referer('em_cleanup_event_orphans_'.get_current_user_id().'_wpnonce') && em_wp_is_super_admin() ){
-		//Firstly, get all orphans
 		global $wpdb;
-		$sql = 'SELECT event_id FROM '.EM_EVENTS_TABLE.' WHERE post_id > 0 AND post_id NOT IN (SELECT ID FROM ' .$wpdb->posts. ' WHERE post_type="'. EM_POST_TYPE_EVENT .'" OR post_type="event-recurring")';
-		if( EM_MS_GLOBAL ){
-			if( is_main_site() ){
-				$sql .= $wpdb->prepare(' AND (blog_id=%d or blog_id IS NULL)', get_current_blog_id());
-			}else{
-				$sql .= $wpdb->prepare(' AND blog_id=%d', get_current_blog_id());
+		//Firstly, get all orphans
+		if ( is_multisite() ) {
+			// in MS we need to select the subsite blog posts table, and either the global or blog events table depending if in MS GLobal mode
+			if ( !empty($_REQUEST['blog']) && is_numeric($_REQUEST['blog']) ) {
+				$blog_id = absint($_REQUEST['blog']);
+				switch_to_blog( $blog_id );
+				$events_table = EM_MS_GLOBAL ? EM_EVENTS_TABLE : $wpdb->prefix . 'em_events';
+				$sql = 'SELECT event_id FROM '.$events_table.' WHERE post_id > 0 AND post_id NOT IN (SELECT ID FROM ' .$wpdb->posts. ' WHERE post_type="'. EM_POST_TYPE_EVENT .'" OR post_type="event-recurring")';
+				// if global mode we also need a blog ID to match
+				if( EM_MS_GLOBAL ){
+					if( get_main_site_id() == $blog_id ){
+						$sql .= $wpdb->prepare(' AND (blog_id=%d or blog_id IS NULL)', $blog_id);
+					}else{
+						$sql .= $wpdb->prepare(' AND blog_id=%d', $blog_id);
+					}
+				}
+			} else {
+				$EM_Notices->add_error( 'Please supply a valid blog ID' );
+				wp_safe_redirect(em_wp_get_referer());
+				exit();
 			}
+		} else {
+			$sql = 'SELECT event_id FROM '.EM_EVENTS_TABLE.' WHERE post_id > 0 AND post_id NOT IN (SELECT ID FROM ' .$wpdb->posts. ' WHERE post_type="'. EM_POST_TYPE_EVENT .'" OR post_type="event-recurring")';
 		}
 		$results = $wpdb->get_col($sql);
 		$deleted_events = 0;
@@ -893,20 +908,20 @@ function em_admin_option_box_caps(){
 function em_admin_option_box_uninstall(){
 	global $save_button;
 	if( is_multisite() ){
-		$uninstall_url = admin_url().'network/admin.php?page=events-manager-options&amp;action=uninstall&amp;_wpnonce='.wp_create_nonce('em_uninstall_'.get_current_user_id().'_wpnonce');
-		$reset_url = admin_url().'network/admin.php?page=events-manager-options&amp;action=reset&amp;_wpnonce='.wp_create_nonce('em_reset_'.get_current_user_id().'_wpnonce');
-		$recheck_updates_url = admin_url().'network/admin.php?page=events-manager-options&amp;action=recheck_updates&amp;_wpnonce='.wp_create_nonce('em_recheck_updates_'.get_current_user_id().'_wpnonce');
-		$cleanup_event_orphans_url = admin_url().'network/admin.php?page=events-manager-options&amp;action=cleanup_event_orphans&amp;_wpnonce='.wp_create_nonce('em_cleanup_event_orphans_'.get_current_user_id().'_wpnonce');
-		$check_devs = admin_url().'network/admin.php?page=events-manager-options&amp;action=check_devs&amp;_wpnonce='.wp_create_nonce('em_check_devs_wpnonce');
-		$export_settings_url = admin_url().'network/admin.php?page=events-manager-options&amp;action=export_em_ms_settings&amp;_wpnonce='.wp_create_nonce('export_em_ms_settings');
+		$uninstall_url = admin_url().'network/admin.php?page=events-manager-options&action=uninstall&_wpnonce='.wp_create_nonce('em_uninstall_'.get_current_user_id().'_wpnonce');
+		$reset_url = admin_url().'network/admin.php?page=events-manager-options&action=reset&_wpnonce='.wp_create_nonce('em_reset_'.get_current_user_id().'_wpnonce');
+		$recheck_updates_url = admin_url().'network/admin.php?page=events-manager-options&action=recheck_updates&_wpnonce='.wp_create_nonce('em_recheck_updates_'.get_current_user_id().'_wpnonce');
+		$cleanup_event_orphans_url = admin_url().'network/admin.php?page=events-manager-options&action=cleanup_event_orphans&_wpnonce='.wp_create_nonce('em_cleanup_event_orphans_'.get_current_user_id().'_wpnonce').'&blog='.get_main_site_id();
+		$check_devs = admin_url().'network/admin.php?page=events-manager-options&action=check_devs&_wpnonce='.wp_create_nonce('em_check_devs_wpnonce');
+		$export_settings_url = admin_url().'network/admin.php?page=events-manager-options&action=export_em_ms_settings&_wpnonce='.wp_create_nonce('export_em_ms_settings');
 		$import_nonce = wp_create_nonce('import_em_ms_settings');
 	}else{
-		$uninstall_url = EM_ADMIN_URL.'&amp;page=events-manager-options&amp;action=uninstall&amp;_wpnonce='.wp_create_nonce('em_uninstall_'.get_current_user_id().'_wpnonce');
-		$reset_url = EM_ADMIN_URL.'&amp;page=events-manager-options&amp;action=reset&amp;_wpnonce='.wp_create_nonce('em_reset_'.get_current_user_id().'_wpnonce');
-		$recheck_updates_url = EM_ADMIN_URL.'&amp;page=events-manager-options&amp;action=recheck_updates&amp;_wpnonce='.wp_create_nonce('em_recheck_updates_'.get_current_user_id().'_wpnonce');
-		$cleanup_event_orphans_url= EM_ADMIN_URL.'&amp;page=events-manager-options&amp;action=cleanup_event_orphans&amp;_wpnonce='.wp_create_nonce('em_cleanup_event_orphans_'.get_current_user_id().'_wpnonce');
-		$check_devs = EM_ADMIN_URL.'&amp;page=events-manager-options&amp;action=check_devs&amp;_wpnonce='.wp_create_nonce('em_check_devs_wpnonce');
-		$export_settings_url = EM_ADMIN_URL.'&amp;page=events-manager-options&amp;action=export_em_settings&amp;_wpnonce='.wp_create_nonce('export_em_settings');
+		$uninstall_url = EM_ADMIN_URL.'&page=events-manager-options&action=uninstall&_wpnonce='.wp_create_nonce('em_uninstall_'.get_current_user_id().'_wpnonce');
+		$reset_url = EM_ADMIN_URL.'&page=events-manager-options&action=reset&_wpnonce='.wp_create_nonce('em_reset_'.get_current_user_id().'_wpnonce');
+		$recheck_updates_url = EM_ADMIN_URL.'&page=events-manager-options&action=recheck_updates&_wpnonce='.wp_create_nonce('em_recheck_updates_'.get_current_user_id().'_wpnonce');
+		$cleanup_event_orphans_url= EM_ADMIN_URL.'&page=events-manager-options&action=cleanup_event_orphans&_wpnonce='.wp_create_nonce('em_cleanup_event_orphans_'.get_current_user_id().'_wpnonce');
+		$check_devs = EM_ADMIN_URL.'&page=events-manager-options&action=check_devs&_wpnonce='.wp_create_nonce('em_check_devs_wpnonce');
+		$export_settings_url = EM_ADMIN_URL.'&page=events-manager-options&action=export_em_settings&_wpnonce='.wp_create_nonce('export_em_settings');
 		$import_nonce = wp_create_nonce('import_em_settings');
 	}
 	$reset_timezone_nonce = wp_create_nonce('reset_timezones');
@@ -1006,21 +1021,48 @@ function em_admin_option_box_uninstall(){
     		        <h4><?php esc_html_e( 'Database Cleanup', 'events-manager'); ?></h4>
     		    </td></tr>
 				<tr>
-    			    <th style="text-align:right;"><a href="<?php echo $cleanup_event_orphans_url; ?>" class="button-secondary admin-tools-db-cleanup"><?php _e('Remove Orphaned Events','events-manager'); ?></a></th>
-    			    <td>
-    			    	<?php 
-    			    		global $wpdb;
-    			    		$sql = 'SELECT count(*) FROM '.EM_EVENTS_TABLE.' WHERE post_id > 0 AND post_id NOT IN (SELECT ID FROM ' .$wpdb->posts. ' WHERE post_type="'. EM_POST_TYPE_EVENT .'" OR post_type="event-recurring")';
-    			    		if( EM_MS_GLOBAL ){
-    			    			if( is_main_site() ){
-    			    				$sql .= $wpdb->prepare(' AND (blog_id=%d or blog_id IS NULL)', get_current_blog_id());
-    			    			}else{
-    			    				$sql .= $wpdb->prepare(' AND blog_id=%d', get_current_blog_id());
-    			    			}
-    			    		}
-    			    		$results = $wpdb->get_var($sql);
-    			    		echo sprintf(esc_html__('Orphaned events may show on your event lists but not point to real event pages, and can be deleted. %d potentially orphaned events have been found.', 'events-manager'), $results);
-    			    	?>
+    			    <th style="text-align:right;">
+				        <a id="em-cleanup-orphans-button" href="<?php echo $cleanup_event_orphans_url; ?>"
+				           class="button-secondary admin-tools-db-cleanup"><?php _e( 'Remove Orphaned Events', 'events-manager' ); ?></a>
+			        </th>
+
+					<td>
+						<?php if ( is_multisite() ): ?>
+							<select id="em-cleanup-blog-selector">
+								<?php foreach ( get_sites() as $site ): ?>
+									<option value="<?php echo $site->blog_id; ?>" <?php selected( $site->blog_id, get_main_site_id() ); ?>><?php echo $site->blogname; ?></option>
+								<?php endforeach; ?>
+							</select>
+							<script>
+								jQuery( document ).ready( function ( $ ) {
+									$( '#em-cleanup-blog-selector' ).on( 'change', function () {
+										let url = '<?php echo remove_query_arg( 'blog', $cleanup_event_orphans_url ); ?>';
+										document.getElementById('em-cleanup-orphans-button').href = url + '&blog=' + $( this ).val();
+									} );
+								} );
+							</script>
+						<?php endif; ?>
+						<p>
+						<?php
+						if ( !is_multisite() ) {
+							global $wpdb;
+							$sql = 'SELECT count(*) FROM ' . EM_EVENTS_TABLE . ' WHERE post_id > 0 AND post_id NOT IN (SELECT ID FROM ' . $wpdb->posts . ' WHERE post_type="' . EM_POST_TYPE_EVENT . '" OR post_type="event-recurring")';
+							if ( EM_MS_GLOBAL ) {
+								if ( is_main_site() ) {
+									$sql .= $wpdb->prepare( ' AND (blog_id=%d or blog_id IS NULL)', get_current_blog_id() );
+								} else {
+									$sql .= $wpdb->prepare( ' AND blog_id=%d', get_current_blog_id() );
+								}
+							}
+							$results = $wpdb->get_var( $sql );
+							esc_html_e( 'Orphaned events may show on your event lists but not point to real event pages, and can be deleted.', 'events-manager' );
+							echo ' ' . sprintf( esc_html__( '%d potentially orphaned events have been found.', 'events-manager' ), $results );
+						} else {
+							esc_html_e( 'Orphaned events may show on your event lists but not point to real event pages, and can be deleted.', 'events-manager' );
+							echo '<br>';
+							esc_html_e( 'Select a blog and click the button next to it to clean up that specific blog. You must clean up one blog at a time.', 'events-manager' );
+						}
+						?></p>
     			    </td>
     			</tr>
 			</table>

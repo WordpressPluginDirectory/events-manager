@@ -55,6 +55,11 @@ class EM_Admin_Notice {
 	 * @var bool
 	 */
 	public $network = false;
+	/**
+	 * If set to true, output does not get enclosed in p tag
+	 * @var bool
+	 */
+	public $raw_output = false;
 	
 	public function __construct( $key, $type = false, $message = false, $where = false ){
 		//process the supplied data
@@ -173,7 +178,11 @@ class EM_Admin_Notice {
 		$url = add_query_arg( array('action' => $action, 'notice' => $this->name, 'nonce' => wp_create_nonce($action.$this->name.get_current_user_id()) ), admin_url('admin-ajax.php') );
 		?>
 		<div class="em-admin-notice notice notice-<?php echo esc_attr($this->what); ?> <?php if($this->dismissible) echo 'is-dismissible'?>" id="notice-<?php echo esc_attr($this->name); ?>" data-url="<?php echo esc_url($url); ?>">
-			<p><?php echo $this->message; ?></p>
+			<?php if ( $this->raw_output ) : ?>
+				<?php echo $this->message; ?>
+			<?php else: ?>
+				<p><?php echo $this->message; ?></p>
+			<?php endif; ?>
 		</div>
 		<?php
 		return true;

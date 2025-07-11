@@ -146,7 +146,7 @@
 							</td>
 							<td>
 								<?php 
-								if ( $EM_Event->is_recurrence() ) {
+								if ( $EM_Event->is_recurrence(true) ) {
 									$recurrence_delete_confirm = __('WARNING! You will delete ALL recurrences of this event, including booking history associated with any event in this recurrence. To keep booking information, go to the relevant single event and save it to detach it from this recurrence series.','events-manager');
 									$event = $EM_Event->get_recurring_event();
 									?>

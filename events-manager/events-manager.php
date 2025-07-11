@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Events Manager
-Version: 7.0.3
+Version: 7.0.5
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // Setting constants
-define('EM_VERSION', '7.0.3'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_VERSION', '7.0.5'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
 define('EM_PRO_MIN_VERSION', '3.6'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.6.0.2'); //self expanatory
 define('EM_FILE', __FILE__); //an absolute path to this directory
@@ -144,7 +144,7 @@ include( EM_DIR . '/classes/em-phone.php' );
 
 //Admin Files
 if( is_admin() ){
-	include( EM_DIR . '/classes/em-admin-notices.php' );
+	include_once( EM_DIR . '/classes/em-admin-notices.php' );
 	include( EM_DIR . '/admin/em-admin.php' );
 	include( EM_DIR . '/admin/em-admin-modals.php' );
 	include( EM_DIR . '/admin/em-bookings.php' );
@@ -248,6 +248,8 @@ function em_plugins_loaded(){
 	if( class_exists('\Thrive\Automator\Admin') ){
 		include( EM_DIR . '/integrations/thrive-automator/events-manager-thrive-automator.php' );
 	}
+	// duplicate posts - small so we just include it
+	include( EM_DIR . '/integrations/duplicate-post-plugins/duplicate-post-plugins.php' );
 }
 add_filter('plugins_loaded','em_plugins_loaded');
 
@@ -309,16 +311,12 @@ function em_init(){
 		define('EM_RSS_URI', $rss_url); //RSS PAGE URI
 	}
 	$EM_Mailer = new EM_Mailer();
-	//Upgrade/Install Routine
-	if( is_admin() && current_user_can('manage_options') ){
-		if( version_compare(EM_VERSION, get_option('dbem_version', 0), '>') || (is_multisite() && !EM_MS_GLOBAL && get_option('em_ms_global_install')) ){
-			require_once( dirname(__FILE__).'/em-install.php');
-			em_install();
-		}
-	}
 	//add custom functions.php file
 	locate_template('plugins/events-manager/functions.php', true);
 	//fire a loaded hook, most plugins should consider going through here to load anything EM related
+	if ( current_user_can('manage_options') ) {
+		em_upgrade_plugin_check();
+	}
 	do_action('events_manager_loaded');
 }
 add_filter('init','em_init',1);
@@ -874,13 +872,27 @@ function em_check_pro_compatability(){
 }
 add_action('plugins_loaded','em_check_pro_compatability', 1);
 
+function events_manager_plugin_loaded(){
+	do_action('events_manager_plugin_loaded');
+}
+add_action('plugins_loaded','events_manager_plugin_loaded');
+
+// Upgrade/Install logic
 $v6 = EM_Options::get('v6', null);
 if( $v6 !== null ){
 	include( EM_DIR . '/v6-migrate.php' );
 }
 
-function events_manager_plugin_loaded(){
-	do_action('events_manager_plugin_loaded');
+function em_upgrade_plugin_check() {
+	if( version_compare(EM_VERSION, get_option('dbem_version', 0), '>') || (is_multisite() && !EM_MS_GLOBAL && get_option('em_ms_global_install')) ){
+		require_once( dirname(__FILE__).'/em-install.php');
+		em_install();
+	}
 }
-add_action('plugins_loaded','events_manager_plugin_loaded');
+add_action( 'em_upgrade_plugin_check', 'em_upgrade_plugin_check' );
+
+function em_schedule_update_check( $upgrader, $options ) {
+	wp_schedule_single_event( time(), 'em_upgrade_plugin_check' );
+}
+add_action( 'upgrader_process_complete', 'em_schedule_update_check', 10, 2 );
 ?>

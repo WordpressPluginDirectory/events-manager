@@ -250,7 +250,7 @@ class Recurrence_Set extends EM_Object {
 			if ( $EM_Event->is_recurring( true ) ) {
 				$this->recurrence_set_id = $EM_Event->recurrence_set_id;
 				$this->event = $EM_Event; // add reference to EM_Event already
-			} elseif ( $EM_Event->is_recurrence() ) {
+			} elseif ( $EM_Event->is_recurrence( true ) ) {
 				$this->recurrence_set_id = $EM_Event->recurrence_set_id;
 			}
 		} elseif ( is_array($data) ) {
@@ -279,22 +279,28 @@ class Recurrence_Set extends EM_Object {
 		if ( in_array( $prop, $overridable_options ) && !empty( static::$field_shortcuts[$prop] ) ) {
 			$property = static::$field_shortcuts[$prop];
 			if ( $this->{$property} === null ) {
-				if ( $this->recurrence_type === 'include' ) {
-					if ( $this->recurrence_order == 1 ) {
-						// get default prop value from master recurrence set if not defined in this recurrence set
-						$value = $this->{$property};
-					} else {
-						$value = $this->get_event()->get_recurrence_set()->{$property};
-					}
-					if ( $value === null && in_array($prop, ['start_date', 'end_date', 'start_time', 'end_time', 'all_day', 'timezone']) ) {
-						$value = $this->get_event()->{'event_'.$prop};
-					}
+				if ( $this->recurrence_freq == 'on' && in_array($prop, ['start_date', 'end_date']) ) {
+					// we are dealing with On frequency, which is a definitive set of dates, cannot be overriden by a parent by definition
+					// get the first and last date, and we're done
+					$value = $prop === 'start_date' ? $this->recurrence_dates[0] : $this->recurrence_dates[ count($this->recurrence_dates ?? ['null']) - 1 ] ?? null;
 				} else {
-					// exclusion patterns will default to the whole range of dates, which is stored at an event level after get_post()
-					if ( in_array($prop, ['start_date', 'end_date', 'start_time', 'end_time', 'all_day', 'timezone']) ) {
-						$value = $this->get_event()->{'event_'.$prop};
+					if ( $this->recurrence_type === 'include' ) {
+						if ( $this->recurrence_order == 1 ) {
+							// get default prop value from master recurrence set if not defined in this recurrence set
+							$value = $this->{$property};
+						} else {
+							$value = $this->get_event()->get_recurrence_set()->{$property};
+						}
+						if ( $value === null && in_array($prop, ['start_date', 'end_date', 'start_time', 'end_time', 'all_day', 'timezone']) ) {
+							$value = $this->get_event()->{'event_'.$prop};
+						}
 					} else {
-						$value = $this->get_event()->get_recurrence_set()->{$prop};
+						// exclusion patterns will default to the whole range of dates, which is stored at an event level after get_post()
+						if ( in_array($prop, ['start_date', 'end_date', 'start_time', 'end_time', 'all_day', 'timezone']) ) {
+							$value = $this->get_event()->{'event_'.$prop};
+						} else {
+							$value = $this->get_event()->get_recurrence_set()->{$prop};
+						}
 					}
 				}
 			} else {
@@ -302,7 +308,12 @@ class Recurrence_Set extends EM_Object {
 			}
 		} elseif ( !empty($this->fields[$prop]) ) {
 			// allow read to protected values
-			$value = $this->{$prop};
+			if ( $this->recurrence_freq == 'on' && in_array($prop, ['recurrence_start_date', 'recurrence_end_date']) && $this->{$prop} === null ) {
+				// we are dealing with On frequency, which is a definitive set of dates, if not defined we default to first/last dates of this set
+				$value = $prop === 'recurrence_start_date' ? $this->recurrence_dates[0] : $this->recurrence_dates[ count($this->recurrence_dates ?? ['null']) - 1 ] ?? null;
+			} else {
+				$value = $this->{$prop};
+			}
 		} elseif ( in_array( $prop, ['rsvp_days', 'recurrence_rsvp_days'] ) ) {
 			// for now, in future we could let recurrence sets have their own rsvp settings
 			return $this->get_event()->recurrence_rsvp_days;
@@ -571,6 +582,8 @@ class Recurrence_Set extends EM_Object {
 				if ($this->interval > 1 ) {
 					$freq_desc .= sprintf (__("every %s years",'events-manager'), $this->interval);
 				}
+			}elseif ($this->freq == 'on')  {
+				$freq_desc = __("multiple dates", 'events-manager');
 			}else{
 				$freq_desc = "[ERROR: corrupted database record]";
 			}
@@ -659,6 +672,7 @@ class Recurrence_Set extends EM_Object {
 			$this->recurrence_freq = $recurrence_freq;
 			if ( $this->recurrence_freq === 'on' ) {
 				$this->recurrence_dates = ( !empty($_DATA['recurrence_dates']) && preg_match('/^\d{4}-\d{2}-\d{2}( ?, ?\d{4}-\d{2}-\d{2})*$/', $_DATA['recurrence_dates']) ) ? explode(',', str_replace(' ', '', $_DATA['recurrence_dates'])): null;
+				sort($this->recurrence_dates); // so they are sorted in ascending order
 			} else {
 				// interval is only saved/applicable if frequency is not 'on' i.e. not on specific user-defined dates
 				$this->recurrence_interval = ( !empty($_DATA['recurrence_interval']) && is_numeric($_DATA['recurrence_interval']) ) ? absint($_DATA['recurrence_interval']) : 1;
@@ -677,8 +691,14 @@ class Recurrence_Set extends EM_Object {
 		}
 		// advanced reschedulable date range
 		if ( $this->has_reschedule('dates') ) {
-			$this->recurrence_start_date = ( !empty($_DATA['recurrence_start_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_DATA['recurrence_start_date']) ) ? $_DATA['recurrence_start_date']:null;
-			$this->recurrence_end_date = ( !empty($_DATA['recurrence_end_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_DATA['recurrence_end_date']) ) ? $_DATA['recurrence_end_date']:null;
+			if ( $this->recurrence_freq === 'on' ) {
+				// save start and end dates for this set
+				$this->recurrence_start_date = is_array($this->recurrence_dates) ? $this->recurrence_dates[0] : null;
+				$this->recurrence_end_date = is_array($this->recurrence_dates) ? end($this->recurrence_dates) : null;
+			} else {
+				$this->recurrence_start_date = ( !empty($_DATA['recurrence_start_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_DATA['recurrence_start_date']) ) ? $_DATA['recurrence_start_date']:null;
+				$this->recurrence_end_date = ( !empty($_DATA['recurrence_end_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_DATA['recurrence_end_date']) ) ? $_DATA['recurrence_end_date']:null;
+			}
 		}
 		// order
 		$this->recurrence_order = ( !empty($_DATA['recurrence_order']) && is_numeric($_DATA['recurrence_order']) ) ? (int) $_DATA['recurrence_order']:0;

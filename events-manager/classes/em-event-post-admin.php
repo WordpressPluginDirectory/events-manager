@@ -51,7 +51,7 @@ class EM_Event_Post_Admin{
 				$warning .= "<p>". sprintf( esc_html__( 'Bookings to individual %s recurrences will be preserved unless you delete tickets or choose to reschedule and delete rescheduled recurrences.', 'events-manager'), $event_txt ) . '</p>';
 				$warning .= '<p><a href="'. esc_url( add_query_arg(array('scope'=>'all', 'recurring_event'=>$EM_Event->event_id), em_get_events_admin_url()) ).'">'. esc_html__('You can edit individual recurrences and disassociate them with this repeating event.','events-manager') . '</a></p>';
 				?><div class="notice notice-warning is-dismissible"><?php echo $warning; ?></div><?php
-			} elseif ( $EM_Event->is_recurrence() ) {
+			} elseif ( $EM_Event->is_repeated() ) {
 				$warning = "<p><strong>".__('WARNING: This is a recurrence in a set of repeating events.', 'events-manager')."</strong></p>";
 				$warning .= "<p>". sprintf(__('If you update this event data and save, it could get overwritten if you edit the repeating event template. To make it an independent, <a href="%s">detach it</a>.', 'events-manager'), $EM_Event->get_detach_url())."</p>";
 				$warning .= "<p>".sprintf(__('To manage the whole set, <a href="%s">edit the repeating event template</a>.', 'events-manager'),admin_url('post.php?action=edit&amp;post='.$EM_Event->get_recurring_event()->post_id))."</p>";

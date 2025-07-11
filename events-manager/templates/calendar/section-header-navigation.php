@@ -5,7 +5,7 @@
 /* @var array       $args           The $args passed onto the calendar template via EM_Calendar  */
 /* @var array       $calendar       The $calendar array of data passed on by EM_Calendar         */
 ?>
-<section class="em-cal-nav em-cal-nav-<?php echo $args['calendar_header']; ?>">
+<section class="em-cal-nav em-cal-nav-<?php echo esc_attr($args['calendar_header']); ?>">
 	<?php if( $args['has_advanced_trigger'] ): ?>
 		<button class="em-search-advanced-trigger em-clickable" data-search-advanced-id="em-search-advanced-<?php echo $id; ?>"  data-parent-trigger="em-search-advanced-trigger-<?php echo $id; ?>"></button>
 	<?php endif; ?>

@@ -228,15 +228,17 @@ class Recurrence_Sets extends \EM_Object implements \Iterator, \ArrayAccess, \Co
 		$EM_Event = $this->get_event();
 		$descriptions = [];
 		if ( $EM_Event ) {
-			if ( $include_dates ) {
-				$descriptions[] = sprintf( __( 'From %1$s to %2$s', 'events-manager' ), $EM_Event->start()->i18n( em_get_date_format() ), $EM_Event->end()->i18n( em_get_date_format() ) );
+			if ( !empty($this->default) ) {
+				if ( $include_dates ) {
+					$descriptions[] = sprintf( __( 'From %1$s to %2$s', 'events-manager' ), $EM_Event->start()->i18n( em_get_date_format() ), $EM_Event->end()->i18n( em_get_date_format() ) );
+				}
+				$pattern = ucfirst( $this->default->get_recurrence_description() );
+				$count = count( $this->include );
+				if ( $count > 1 ) {
+					$pattern .= ' + ' . sprintf( _n( '%d Pattern', '%d Patterns', $count - 1, 'events-manager' ), $count - 1 );
+				}
+				$descriptions[] = $pattern;
 			}
-			$pattern = ucfirst( $this->default->get_recurrence_description() );
-			$count = count( $this->include );
-			if ( $count > 1 ) {
-				$pattern .= ' + ' . sprintf( _n( '%d Pattern', '%d Patterns', $count -1, 'events-manager' ), $count -1 );
-			}
-			$descriptions[] = $pattern;
 		}
 
 		return implode( ', ', $descriptions );
