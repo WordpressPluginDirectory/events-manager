@@ -36,9 +36,9 @@ class Phone {
 		try {
 			$phoneUtil = static::get();
 			if ( !preg_match('/^\+/', $number) ) {
-				$phone = $phoneUtil->parse( $number, get_option('dbem_phone_default_country') );
+				$phone = $phoneUtil->parse( $number, em_get_option('dbem_phone_default_country') );
 			} else {
-				$phone = $phoneUtil->parse( $number, get_option('dbem_phone_default_country') );
+				$phone = $phoneUtil->parse( $number, em_get_option('dbem_phone_default_country') );
 			}
 			if( $phoneUtil->isValidNumber( $phone ) ) {
 				return $phoneUtil->format($phone, \libphonenumber\PhoneNumberFormat::INTERNATIONAL);
@@ -58,7 +58,7 @@ class Phone {
 		if( is_admin() && !empty($_REQUEST['page']) && $_REQUEST['page'] === 'events-manager-options' && PHP_VERSION_ID >= 80000 ) {
 			return true;
 		}
-		return $enabled_hardcoded && get_option('dbem_phone_enabled') && PHP_VERSION_ID >= 80000;
+		return $enabled_hardcoded && em_get_option('dbem_phone_enabled') && PHP_VERSION_ID >= 80000;
 	}
 	
 	/**

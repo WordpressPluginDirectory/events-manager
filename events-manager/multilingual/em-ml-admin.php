@@ -41,7 +41,7 @@ class EM_ML_Admin{
 			        }
 			    }
 		    }
-		    if( get_option('dbem_attributes_enabled', true) ){
+		    if( em_get_option('dbem_attributes_enabled', true) ){
 	    	    remove_meta_box('em-event-attributes', EM_POST_TYPE_EVENT, 'normal');
 			    remove_meta_box('em-event-attributes', 'event-recurring', 'normal');
 	    	    add_meta_box('em-event-attributes', __('Attributes','events-manager'), 'EM_ML_Admin::event_meta_box_attributes',EM_POST_TYPE_EVENT, 'normal','default');
@@ -63,7 +63,7 @@ class EM_ML_Admin{
 	        //remove other meta boxes
 	    	remove_meta_box('em-location-where', EM_POST_TYPE_LOCATION, 'normal');
 		    add_meta_box('em-location-where', __('Where','events-manager'), array('EM_ML_Admin','meta_box_location_where'),EM_POST_TYPE_LOCATION, 'normal','high');
-	    	if( get_option('dbem_location_attributes_enabled') ){
+	    	if( em_get_option('dbem_location_attributes_enabled') ){
 	    	    remove_meta_box('em-location-attributes', EM_POST_TYPE_LOCATION, 'normal');
 	    	    add_meta_box('em-location-attributes', __('Attributes','events-manager'), 'EM_ML_Admin::location_meta_box_attributes',EM_POST_TYPE_LOCATION, 'normal','default');
 	    	}

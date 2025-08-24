@@ -206,7 +206,7 @@ function wpfc_em_ajax() {
 					$event_day_counts[$date]++;
 				}
 				if( $event_day_counts[$date] <= $limit ){
-					$title = $EM_Event->output(get_option('dbem_emfc_full_calendar_event_format', '#_EVENTNAME'), 'raw');
+					$title = $EM_Event->output( $EM_Event->get_option('dbem_emfc_full_calendar_event_format', '#_EVENTNAME'), 'raw');
 					$allDay = $EM_Event->event_all_day == true;
 					if( $allDay ){
 						$start_date = $EM_Event->start()->format('Y-m-d\T00:00:00');
@@ -242,7 +242,7 @@ function wpfc_em_qtip_content( $content='' ){
 		global $EM_Event;
 		$EM_Event = em_get_event( absint($_REQUEST['event_id']) );
 		if( !empty($EM_Event->event_id) ){
-			$content = $EM_Event->output(get_option('dbem_emfc_qtips_format', '#_EXCERPT'));
+			$content = $EM_Event->output( $EM_Event->get_option('dbem_emfc_qtips_format', '#_EXCERPT'));
 		}
 	}
 	return $content;

@@ -9,5 +9,5 @@
  * 
  */ 
 $args['full'] = 1;
-$args['long_events'] = get_option('dbem_full_calendar_long_events');
+$args['long_events'] = em_get_option('dbem_full_calendar_long_events');
 echo EM_Calendar::output( apply_filters('em_content_calendar_args', $args) );

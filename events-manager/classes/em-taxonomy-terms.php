@@ -96,7 +96,7 @@ class EM_Taxonomy_Terms extends EM_Object implements Iterator, Countable{
 		if( empty($this->terms) ){
 			$EM_Taxonomy_Term = new $this->term_class();
 			$opt = 'dbem_default_'.$EM_Taxonomy_Term->option_name;
-			$default_category = EM_MS_GLOBAL && $this->is_ms_global ? get_blog_option( get_current_site()->blog_id, $opt ) : get_option($opt);
+			$default_category = EM_MS_GLOBAL && $this->is_ms_global ? get_blog_option( get_current_site()->blog_id, $opt ) : em_get_option($opt);
 			if( $default_category > 0 ){
 				$EM_Taxonomy_Term = new $this->term_class($default_category);
 				if( !empty($EM_Taxonomy_Term->slug) ){
@@ -231,7 +231,7 @@ class EM_Taxonomy_Terms extends EM_Object implements Iterator, Countable{
 			$args['page'] = $page;
 		}
 		//What format shall we output this to, or use default
-		$format = ( $args['format'] == '' ) ? get_option( 'dbem_'. self::$instance->terms_name .'_list_item_format' ) : $args['format'] ;
+		$format = ( $args['format'] == '' ) ? em_get_option( 'dbem_'. self::$instance->terms_name .'_list_item_format' ) : $args['format'] ;
 		
 		$output = "";
 		$terms_count = count($terms);
@@ -248,10 +248,10 @@ class EM_Taxonomy_Terms extends EM_Object implements Iterator, Countable{
 				$term_count++;
 			}
 			//Add headers and footers to output
-			if( $format == get_option( 'dbem_'. self::$instance->terms_name .'_list_item_format' ) ){
+			if( $format == em_get_option( 'dbem_'. self::$instance->terms_name .'_list_item_format' ) ){
 			    //we're using the default format, so if a custom format header or footer is supplied, we can override it, if not use the default
-			    $format_header = empty($args['format_header']) ? get_option('dbem_'. self::$instance->terms_name .'_list_item_format_header') : $args['format_header'];
-			    $format_footer = empty($args['format_footer']) ? get_option('dbem_'. self::$instance->terms_name .'_list_item_format_footer') : $args['format_footer'];
+			    $format_header = empty($args['format_header']) ? em_get_option('dbem_'. self::$instance->terms_name .'_list_item_format_header') : $args['format_header'];
+			    $format_footer = empty($args['format_footer']) ? em_get_option('dbem_'. self::$instance->terms_name .'_list_item_format_footer') : $args['format_footer'];
 			}else{
 			    //we're using a custom format, so if a header or footer isn't specifically supplied we assume it's blank
 			    $format_header = !empty($args['format_header']) ? $args['format_header'] : '' ;
@@ -264,7 +264,7 @@ class EM_Taxonomy_Terms extends EM_Object implements Iterator, Countable{
 				$output .= self::get_pagination_links($args, $terms_count);
 			}
 		} else {
-			$output = get_option ( 'dbem_no_'. self::$instance->terms_name .'_message' );
+			$output = em_get_option ( 'dbem_no_'. self::$instance->terms_name .'_message' );
 		}
 		//FIXME check if reference is ok when restoring object, due to changes in php5 v 4
 		if( !empty($EM_Taxonomy_Term_old ) ) $GLOBALS[self::$instance->term_class] = $EM_Taxonomy_Term_old;
@@ -276,7 +276,7 @@ class EM_Taxonomy_Terms extends EM_Object implements Iterator, Countable{
 		if( $search_action === false ) $search_action = self::$instance->ajax_search_action;
 		if( empty($default_args) && (!empty($args['ajax']) || !empty($_REQUEST['action']) && $_REQUEST['action'] == $search_action) ){
 			$default_args = self::get_default_search();
-			$default_args['limit'] = get_option('dbem_'. self::$instance->terms_name .'_default_limit');
+			$default_args['limit'] = em_get_option('dbem_'. self::$instance->terms_name .'_default_limit');
 		}
 		return parent::get_pagination_links($args, $count, $search_action, $default_args);
 	}
@@ -297,7 +297,7 @@ class EM_Taxonomy_Terms extends EM_Object implements Iterator, Countable{
 	public static function get_default_search( $array_or_defaults = array(), $array = array() ){
 		$defaults = array(
 			//added from get_terms, so they don't get filtered out
-			'orderby' => get_option('dbem_'. self::$instance->terms_name .'_default_orderby'), 'order' => get_option('dbem_'. self::$instance->terms_name .'_default_order'),
+			'orderby' => em_get_option('dbem_'. self::$instance->terms_name .'_default_orderby'), 'order' => em_get_option('dbem_'. self::$instance->terms_name .'_default_order'),
 			'hide_empty' => false, 'exclude' => array(), 'exclude_tree' => array(), 'include' => array(),
 			'number' => '', 'fields' => 'all', 'slug' => '', 'parent' => '',
 			'hierarchical' => true, 'child_of' => 0, 'get' => '', 'name__like' => '',

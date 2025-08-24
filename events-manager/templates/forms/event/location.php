@@ -4,7 +4,7 @@ $required = apply_filters('em_required_html','<i>*</i>');
 
 //determine location types (if neexed)
 $location_types = array();
-if( !get_option('dbem_require_location') ){
+if( !em_get_option('dbem_require_location') ){
 	$location_types[0] = array(
 		'selected' =>  $EM_Event->location_id === '0' || $EM_Event->location_id === 0,
 		'description' => esc_html__('No Location','events-manager'),
@@ -46,22 +46,22 @@ foreach( EM_Event_Locations\Event_Locations::get_types() as $event_location_type
 	<?php endif; ?>
 </div>
 <?php if( EM_Locations::is_enabled() ): ?>
-<div id="em-location-data" class="em-location-data em-location-where em-location-type em-location-type-place <?php if( count($location_types) == 1 ) echo 'em-location-type-single ';  em_template_classes('event-editor'); if( get_option( 'dbem_gmap_is_active' ) ) echo ' has-map'; ?>">
+<div id="em-location-data" class="em-location-data em-location-where em-location-type em-location-type-place <?php if( count($location_types) == 1 ) echo 'em-location-type-single ';  em_template_classes('event-editor'); if( em_get_option( 'dbem_gmap_is_active' ) ) echo ' has-map'; ?>">
 	<div id="location_coordinates" style='display: none;'>
 		<input id='location-latitude' name='location_latitude' type='text' value='<?php echo esc_attr($EM_Event->get_location()->location_latitude); ?>' size='15' >
 		<input id='location-longitude' name='location_longitude' type='text' value='<?php echo esc_attr($EM_Event->get_location()->location_longitude); ?>' size='15' >
 	</div>
 	<div class="em-location-data input">
-		<?php if( get_option('dbem_use_select_for_locations') || !$EM_Event->can_manage('edit_locations','edit_others_locations') ) : ?>
+		<?php if( em_get_option('dbem_use_select_for_locations') || !$EM_Event->can_manage('edit_locations','edit_others_locations') ) : ?>
 			<div class="input em-location-data-select">
 				<label for="location-select-id"><?php esc_html_e('Location','events-manager') ?> </label>
 				<select name="location_id" id='location-select-id' class="em-selectize">
 					<?php
-					if ( count($location_types) == 1 && !get_option('dbem_require_location') ){ // we don't consider optional locations as a type for ddm
+					if ( count($location_types) == 1 && !em_get_option('dbem_require_location') ){ // we don't consider optional locations as a type for ddm
 						?>
 						<option value="0"><?php esc_html_e('No Location','events-manager'); ?></option>
 						<?php
-					}elseif( empty(get_option('dbem_default_location')) ){
+					}elseif( empty(em_get_option('dbem_default_location')) ){
 						?>
 						<option value="0"><?php esc_html_e('Select Location','events-manager'); ?></option>
 						<?php
@@ -69,7 +69,7 @@ foreach( EM_Event_Locations\Event_Locations::get_types() as $event_location_type
 					$ddm_args = array('private'=>$EM_Event->can_manage('read_private_locations'));
 					$ddm_args['owner'] = (is_user_logged_in() && !current_user_can('read_others_locations')) ? get_current_user_id() : false;
 					$locations = EM_Locations::get($ddm_args);
-					$selected_location = !empty($EM_Event->location_id) || !empty($EM_Event->event_id) ? $EM_Event->location_id:get_option('dbem_default_location');
+					$selected_location = !empty($EM_Event->location_id) || !empty($EM_Event->event_id) ? $EM_Event->location_id:em_get_option('dbem_default_location');
 					foreach($locations as $EM_Location) {
 						$selected = ($selected_location == $EM_Location->location_id) ? "selected='selected' " : '';
 						if( $selected ) $found_location = true;
@@ -93,8 +93,8 @@ foreach( EM_Event_Locations\Event_Locations::get_types() as $event_location_type
 			global $EM_Location;
 			if( $EM_Event->location_id !== 0 ){
 				$EM_Location = $EM_Event->get_location();
-			}elseif(get_option('dbem_default_location') > 0){
-				$EM_Location = em_get_location(get_option('dbem_default_location'));
+			}elseif(em_get_option('dbem_default_location') > 0){
+				$EM_Location = em_get_location(em_get_option('dbem_default_location'));
 			}else{
 				$EM_Location = new EM_Location();
 			}
@@ -129,9 +129,9 @@ foreach( EM_Event_Locations\Event_Locations::get_types() as $event_location_type
 			<div class="input em-location-data-country">
 				<label for="location-country"><?php _e ( 'Country', 'events-manager')?> <?php echo $required; ?></label>
 				<select id="location-country" name="location_country" class="em-selectize">
-					<option value="0" <?php echo ( $EM_Location->location_country == '' && $EM_Location->location_id == '' && get_option('dbem_location_default_country') == '' ) ? 'selected="selected"':''; ?>><?php _e('none selected','events-manager'); ?></option>
+					<option value="0" <?php echo ( $EM_Location->location_country == '' && $EM_Location->location_id == '' && em_get_option('dbem_location_default_country') == '' ) ? 'selected="selected"':''; ?>><?php _e('none selected','events-manager'); ?></option>
 					<?php foreach(em_get_countries() as $country_key => $country_name): ?>
-					<option value="<?php echo esc_attr($country_key); ?>" <?php echo ( $EM_Location->location_country == $country_key || ($EM_Location->location_country == '' && $EM_Location->location_id == '' && get_option('dbem_location_default_country')==$country_key) ) ? 'selected="selected"':''; ?>><?php echo esc_html($country_name); ?></option>
+					<option value="<?php echo esc_attr($country_key); ?>" <?php echo ( $EM_Location->location_country == $country_key || ($EM_Location->location_country == '' && $EM_Location->location_id == '' && em_get_option('dbem_location_default_country')==$country_key) ) ? 'selected="selected"':''; ?>><?php echo esc_html($country_name); ?></option>
 					<?php endforeach; ?>
 				</select>
 			</div>
@@ -141,7 +141,7 @@ foreach( EM_Event_Locations\Event_Locations::get_types() as $event_location_type
 			</div>
 		<?php endif; ?>
 	</div>
-	<?php if ( get_option( 'dbem_gmap_is_active' ) ):?>
+	<?php if ( em_get_option( 'dbem_gmap_is_active' ) ):?>
 		<?php em_locate_template('forms/map-container.php',true); ?>
 	<?php endif; ?>
 </div>

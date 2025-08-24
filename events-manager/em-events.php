@@ -3,6 +3,8 @@
  * This file contains the event related hooks in the front end, as well as some event template tags
  */
 
+use EM\Archetypes;
+
 /**
  * Filters for page content and if an event replaces it with the relevant event data.
  * @param $data
@@ -12,13 +14,13 @@ function em_content($page_content) {
 	global $post, $EM_Event, $EM_Location, $EM_Notices;
 	$in_the_loop = !(defined('EM_CHECK_THE_LOOP') && EM_CHECK_THE_LOOP) || in_the_loop(); // check if we're in the loop... since this may break some themes, we're introducing it as a constant for themes that cause issues vs. breaking themes that already work.
 	if( empty($post) || empty($post->ID) || !$in_the_loop ) return $page_content; //fix for any other plugins calling the_content outside the loop
-	$events_page_id = get_option ( 'dbem_events_page' );
+	$event_page_ids = Archetypes::get_option_values('dbem_events_page');
 	$locations_page_id = get_option( 'dbem_locations_page' );
 	$categories_page_id = get_option( 'dbem_categories_page' );
 	$tags_page_id = get_option( 'dbem_tags_page' );
-	$edit_events_page_id = get_option( 'dbem_edit_events_page' );
+	$edit_events_page_ids = Archetypes::get_option_values( 'dbem_edit_events_page' );
 	$edit_locations_page_id = get_option( 'dbem_edit_locations_page' );
-	$edit_bookings_page_id = get_option( 'dbem_edit_bookings_page' );
+	$edit_bookings_page_ids = Archetypes::get_option_values( 'dbem_edit_bookings_page' );
 	$my_bookings_page_id = get_option( 'dbem_my_bookings_page' );
 	//general defaults
 	$args = array(				
@@ -27,26 +29,29 @@ function em_content($page_content) {
 		'id' => rand(100, getrandmax()),
 	);
 	$args['ajax'] = isset($args['ajax']) ? $args['ajax']:EM_AJAX_SEARCH;
-	if( !post_password_required() && in_array($post->ID, array($events_page_id, $locations_page_id, $categories_page_id, $edit_bookings_page_id, $edit_events_page_id, $edit_locations_page_id, $my_bookings_page_id, $tags_page_id)) ){
+	if( !post_password_required() && in_array($post->ID, [ $locations_page_id, $categories_page_id, $edit_locations_page_id, $my_bookings_page_id, $tags_page_id, ...array_values($edit_bookings_page_ids), ...array_values($edit_events_page_ids), ...array_values($event_page_ids) ] ) ){
 		get_post();
 		$content = apply_filters('em_content_pre', '', $page_content);
 		if( empty($content) ){
 			ob_start();
-			if ( $post->ID == $events_page_id && $events_page_id != 0 ) {
+			if ( in_array( $post->ID, $event_page_ids ) && $post->ID != 0 ) {
+				// get the archetype
+				$args['event_archetype'] = array_flip( $event_page_ids )[$post->ID];
+				Archetypes::set_current( $args['event_archetype'] );
 				if ( !empty($_REQUEST['calendar_day']) ) {
 					//Events for a specific day
 					$args['id'] = 2; // for easier reference in customizations
 					$args = EM_Events::get_post_search( array_merge($args, $_REQUEST) );
-					$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
+					$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_events_default_limit');
 					em_locate_template('templates/calendar-day.php',true, array('args'=>$args));
 				}elseif ( is_object($EM_Event)) {
 					$args['id'] = 6; // for easier reference in customizations
 					em_locate_template('templates/event-single.php',true, array('args'=>$args));	
 				}else{
 					// Multiple events page
-					$args['orderby'] = get_option('dbem_events_default_orderby');
-					$args['order'] = get_option('dbem_events_default_order');
-					if (get_option ( 'dbem_display_calendar_in_events_page' )){
+					$args['orderby'] = em_get_option('dbem_events_default_orderby');
+					$args['order'] = em_get_option('dbem_events_default_order');
+					if (em_get_option ( 'dbem_display_calendar_in_events_page' )){
 						$args['id'] = 1; // for easier reference in customizations
 						$args['long_events'] = 1;
 						em_locate_template('templates/events-calendar.php',true, array('args'=>$args));
@@ -60,18 +65,19 @@ function em_content($page_content) {
 						}
 						$args['id'] = 1; // for easier reference in customizations
 						if( empty($args['scope']) ){
-						    $args['scope'] = get_option('dbem_events_page_scope');
+						    $args['scope'] = em_get_option('dbem_events_page_scope');
 						}
-						$args['view'] = get_option('dbem_search_form_view');
-						$args['has_search'] = get_option('dbem_events_page_search_form');
-						$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
+						$args['view'] = em_get_option('dbem_search_form_view');
+						$args['has_search'] = em_get_option('dbem_events_page_search_form');
+						$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_events_default_limit');
 						em_output_events_view( $args );
 					}
 				}
+				Archetypes::revert_current();
 			}elseif( $post->ID == $locations_page_id && $locations_page_id != 0 ){
-				$args['orderby'] = get_option('dbem_locations_default_orderby');
-				$args['order'] = get_option('dbem_locations_default_order');
-				$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_locations_default_limit');
+				$args['orderby'] = em_get_option('dbem_locations_default_orderby');
+				$args['order'] = em_get_option('dbem_locations_default_order');
+				$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_locations_default_limit');
 				$args['id'] = 3; // for easier reference in customizations
 				if( EM_MS_GLOBAL && is_object($EM_Location) ){
 					em_locate_template('templates/location-single.php',true, array('args'=>$args));
@@ -80,34 +86,40 @@ function em_content($page_content) {
 					if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'search_locations' ){
 						$args = EM_Locations::get_post_search( array_merge($args, $_REQUEST) );
 					}
-					$args['has_search'] = get_option('dbem_locations_page_search_form');
+					$args['has_search'] = em_get_option('dbem_locations_page_search_form');
 					em_output_locations_view( $args );
 				}
 			}elseif( $post->ID == $categories_page_id && $categories_page_id != 0 ){
 				$args['id'] = 4; // for easier reference in customizations
-				$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_categories_default_limit');
+				$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_categories_default_limit');
 				if( !empty($args['ajax']) ){ echo '<div class="em-search-ajax">'; } //AJAX wrapper open
 				em_locate_template('templates/categories-list.php',true, array('args'=>$args));
 				if( !empty($args['ajax']) ) echo "</div>"; //AJAX wrapper close
 			}elseif( $post->ID == $tags_page_id && $tags_page_id != 0 ){
 				$args['id'] = 5; // for easier reference in customizations
-				$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_tags_default_limit');
+				$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_tags_default_limit');
 				if( !empty($args['ajax']) ){ echo '<div class="em-search-ajax">'; } //AJAX wrapper open
 				em_locate_template('templates/tags-list.php',true, array('args'=>$args));
 				if( !empty($args['ajax']) ) echo "</div>"; //AJAX wrapper close
-			}elseif( $post->ID == $edit_events_page_id && $edit_events_page_id != 0 ){
+			}elseif( in_array($post->ID, $edit_events_page_ids) && $post->ID != 0 ){
+				$args['event_archetype'] = array_flip( $edit_events_page_ids )[$post->ID];
+				Archetypes::set_current( $args['event_archetype'] );
 				em_events_admin();
+				Archetypes::revert_current();
 			}elseif( $post->ID == $edit_locations_page_id && $edit_locations_page_id != 0 ){
 				em_locations_admin();
 			}elseif( $post->ID == $my_bookings_page_id && $my_bookings_page_id != 0 ){
 				em_my_bookings();
-			}elseif( $post->ID == $edit_bookings_page_id && $edit_bookings_page_id != 0 ){
+			}elseif( in_array($post->ID, $edit_bookings_page_ids) && $post->ID != 0 ){
+				$args['event_archetype'] = array_flip( $edit_bookings_page_ids )[$post->ID];
+				Archetypes::set_current( $args['event_archetype'] );
 				em_bookings_admin();
+				Archetypes::revert_current();
 			}
 			$content = ob_get_clean();
 			//If disable rewrite flag is on, then we need to add a placeholder here
-			if( get_option('dbem_disable_title_rewrites') == 1 ){
-				$content = str_replace('#_PAGETITLE', em_content_page_title(''),get_option('dbem_title_html')) . $content;
+			if( em_get_option('dbem_disable_title_rewrites') == 1 ){
+				$content = str_replace('#_PAGETITLE', em_content_page_title(''),em_get_option('dbem_title_html')) . $content;
 			}
 			//Now, we either replace CONTENTS or just replace the whole page
 			if( preg_match('/CONTENTS/', $page_content) ){
@@ -157,22 +169,24 @@ function em_content_page_title($original_content, $id = null) {
 	if( empty($post) || empty($post->ID) || !$in_the_loop ) return $original_content; //fix for any other plugins calling the_content outside the loop
 	if ($id && $id !== $post->ID) return $original_content;
 	
-	$events_page_id = get_option ( 'dbem_events_page' );
+	$event_page_ids = Archetypes::get_option_values('dbem_events_page');
 	$locations_page_id = get_option( 'dbem_locations_page' );
-	$edit_events_page_id = get_option( 'dbem_edit_events_page' );
+	$edit_events_page_ids = Archetypes::get_option_values( 'dbem_edit_events_page' );
 	$edit_locations_page_id = get_option( 'dbem_edit_locations_page' );
-	$edit_bookings_page_id = get_option( 'dbem_edit_bookings_page' );
-	if( !empty($post->ID) && in_array($post->ID, array($events_page_id, $locations_page_id, $edit_events_page_id, $edit_locations_page_id, $edit_bookings_page_id))){
+	$edit_bookings_page_ids = Archetypes::get_option_values( 'dbem_edit_bookings_page' );
+	if( !empty($post->ID) && in_array($post->ID, [ $locations_page_id, $edit_locations_page_id, ...array_values($edit_bookings_page_ids), ...array_values($edit_events_page_ids), ...array_values($event_page_ids) ] ) ){
 		//override the titles with this filter if needed, preventing the following code from being run
 	    $content = apply_filters('em_content_page_title_pre', '', $original_content);
 		if( empty($content) ){
 			$content =  $original_content; //leave untouched by default
-			if ( $post->ID == $events_page_id ) {
+			if ( in_array( $post->ID, $event_page_ids ) && $post->ID != 0 ) {
+				$event_archetype = array_flip( $event_page_ids )[$post->ID];
+				Archetypes::set_current( $event_archetype );
 				if ( !empty( $_REQUEST['calendar_day'] ) ) {
 					$events = EM_Events::get(array('limit'=>2,'scope'=>$_REQUEST['calendar_day'],'owner'=>false));
-					if ( count($events) != 1 || get_option('dbem_display_calendar_day_single') == 1 ) {
+					if ( count($events) != 1 || em_get_option('dbem_display_calendar_day_single') == 1 ) {
 						//We only support dates for the calendar day list title, so we do a simple filter for the supplied calendar_day
-						$content = get_option ('dbem_list_date_title');
+						$content = em_get_option ('dbem_list_date_title');
 						preg_match_all("/#[A-Za-z0-9]+/", $content, $placeholders);
 						foreach($placeholders[0] as $placeholder) {
 							// matches all PHP date and time placeholders
@@ -182,17 +196,20 @@ function em_content_page_title($original_content, $id = null) {
 						}
 					}else{
 						$event = array_shift($events);
-						$content =  $event->output( get_option('dbem_event_page_title_format') );
+						$content =  $event->output( $event->em_get_option('dbem_event_page_title_format') );
 					}
-				}elseif ( EM_MS_GLOBAL && is_object($EM_Event) && !get_option('dbem_ms_global_events_links') ) {
+				}elseif ( EM_MS_GLOBAL && is_object($EM_Event) && !em_get_option('dbem_ms_global_events_links') ) {
 					// single event page
-					$content =  $EM_Event->output ( get_option ( 'dbem_event_page_title_format' ) );
+					$content =  $EM_Event->output ( $EM_Event->em_get_option ( 'dbem_event_page_title_format' ) );
 				}
+				Archetypes::revert_current();
 			}elseif( $post->ID == $locations_page_id ){
-				if( EM_MS_GLOBAL && is_object($EM_Location) && get_option('dbem_ms_global_locations_links') ){
-					$content = $EM_Location->output(get_option( 'dbem_location_page_title_format' ));
+				if( EM_MS_GLOBAL && is_object($EM_Location) && em_get_option('dbem_ms_global_locations_links') ){
+					$content = $EM_Location->output(em_get_option( 'dbem_location_page_title_format' ));
 				}
-			}elseif( $post->ID == $edit_events_page_id ){
+			}elseif( in_array($post->ID, $edit_events_page_ids) && $post->ID != 0 ){
+				$event_archetype = array_flip( $edit_events_page_ids )[$post->ID];
+				Archetypes::set_current( $event_archetype );
 				if( !empty($_REQUEST['action']) && $_REQUEST['action'] = 'edit' ){
 					if( is_object($EM_Event) && $EM_Event->event_id){					
 						if($EM_Event->is_recurring( true )){
@@ -204,6 +221,7 @@ function em_content_page_title($original_content, $id = null) {
 						$content = __( 'Add Event', 'events-manager');
 					}
 				}
+				Archetypes::revert_current();
 			}elseif( $post->ID == $edit_locations_page_id ){
 				if( !empty($_REQUEST['action']) && $_REQUEST['action'] = 'edit' ){
 					if( empty($EM_Location) || !is_object($EM_Location) ){
@@ -212,10 +230,13 @@ function em_content_page_title($original_content, $id = null) {
 						$content = __('Edit Location', 'events-manager');
 					}
 				}
-			}elseif( $post->ID == $edit_bookings_page_id){ 
+			}elseif( in_array($post->ID, $edit_bookings_page_ids) && $post->ID != 0 ){ 
+				$event_archetype = array_flip( $edit_bookings_page_ids )[$post->ID];
+				Archetypes::set_current( $event_archetype );
 				if( is_object($EM_Event) ){
 					$content = $EM_Event->name .' - '. $original_content;
 				}
+				Archetypes::revert_current();
 			}
 		}
 		return apply_filters('em_content_page_title', $content);
@@ -229,7 +250,7 @@ function em_content_wp_title($title, $sep = '', $seplocation = ''){
 	if( empty($post) || empty($post->ID) || !$in_the_loop ) return $title; //fix for any other plugins calling the_content outside the loop
 	//single event and location page titles get parsed for formats
 	if( is_single() && !empty($post->post_type) ){
-		if( $post->post_type == EM_POST_TYPE_EVENT ){
+		if( Archetypes::is_event($post) ){
 			$EM_Event = em_get_event($post);
 			return $EM_Event->output($title);
 		}elseif( $post->post_type == EM_POST_TYPE_LOCATION ){
@@ -291,17 +312,17 @@ function em_wp_the_title($data, $id = null){
 	if( empty($post) || empty($post->ID) || !$in_the_loop ) return $data; //fix for any other plugins calling the_content outside the loop
 	//because we're only editing the main title of the page here, we make sure we're in the main query
 	if( is_main_query() && $id == $post->ID ){
-	    $events_page_id = get_option ( 'dbem_events_page' );
+	    $event_page_ids = Archetypes::get_option_values('dbem_events_page');
 	    $locations_page_id = get_option( 'dbem_locations_page' );
-	    $edit_events_page_id = get_option( 'dbem_edit_events_page' );
+	    $edit_events_page_ids = Archetypes::get_option_values( 'dbem_edit_events_page' );
 	    $edit_locations_page_id = get_option( 'dbem_edit_locations_page' );
-	    $edit_bookings_page_id = get_option( 'dbem_edit_bookings_page' );
-		if( !empty($post->ID) && in_array($post->ID, array($events_page_id, $locations_page_id, $edit_events_page_id, $edit_locations_page_id, $edit_bookings_page_id)) ){
+	    $edit_bookings_page_ids = Archetypes::get_option_values( 'dbem_edit_bookings_page' );
+		if( !empty($post->ID) && in_array($post->ID, [ $locations_page_id, $edit_locations_page_id, ...array_values($edit_bookings_page_ids), ...array_values($edit_events_page_ids), ...array_values($event_page_ids) ] ) ){
 			if ( $wp_query->in_the_loop ) {
 				return apply_filters('em_wp_the_title', em_content_page_title($data, $id)) ;
 			}
 		}elseif( is_single() && !empty($post->post_type) ){
-			if( $post->post_type == EM_POST_TYPE_EVENT ){
+			if( Archetypes::is_event($post) ){
 				$EM_Event = em_get_event($post);
 				return apply_filters('em_wp_the_title', $EM_Event->output($data)) ;
 			}elseif( $post->post_type == EM_POST_TYPE_LOCATION ){
@@ -317,17 +338,17 @@ add_filter ( 'the_title', 'em_wp_the_title',10, 2 );
 
 function em_get_page_type(){
 	global $EM_Location, $EM_Category, $EM_Event, $wp_query, $post, $em_category_id, $em_tag_id;
-	$events_page_id = get_option ( 'dbem_events_page' );
+	$event_page_ids = Archetypes::get_option_values('dbem_events_page');
 	$locations_page_id = get_option( 'dbem_locations_page' );
 	$categories_page_id = get_option( 'dbem_categories_page' );
 	$has_post = is_object($post);
-	if ( !empty($events_page_id) && $has_post && $post->ID == $events_page_id ) {
+	if ( !empty($event_page_ids) && $has_post && in_array($post->ID, $event_page_ids) ) {
 		if ( $wp_query->get('calendar_day') ) {
 			return "calendar_day";
 		}else{
 			return is_object($EM_Event) ? "event" : "events";
 		}
-	}elseif( empty($events_page_id) ){
+	}elseif( empty($event_page_ids) ){
 		if( $wp_query->get('calendar_day') ){
 			return "calendar_day";
 		}

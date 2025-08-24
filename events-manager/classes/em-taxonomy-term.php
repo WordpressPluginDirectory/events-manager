@@ -115,7 +115,7 @@ class EM_Taxonomy_Term extends EM_Object {
 	
 	public function get_color(){
 		if( empty($this->term_id) ) {
-			$this->color = get_option('dbem_'.$this->option_name.'_default_color', '#80b538');
+			$this->color = em_get_option('dbem_'.$this->option_name.'_default_color', '#80b538');
 		} else {
 			if( empty($this->color) ){
 				$color = wp_cache_get($this->term_id, 'em_'.$this->option_name.'_colors');
@@ -124,7 +124,7 @@ class EM_Taxonomy_Term extends EM_Object {
 				}else{
 					global $wpdb;
 					$color = $wpdb->get_var('SELECT meta_value FROM '.EM_META_TABLE." WHERE object_id='{$this->term_id}' AND meta_key='". $this->option_name ."-bgcolor' LIMIT 1");
-					$this->color = ($color != '') ? $color:get_option('dbem_'.$this->option_name.'_default_color', '#80b538');
+					$this->color = ($color != '') ? $color:em_get_option('dbem_'.$this->option_name.'_default_color', '#80b538');
 					wp_cache_set($this->term_id, $this->color, 'em_'.$this->option_name.'_colors');
 				}
 			}
@@ -157,7 +157,7 @@ class EM_Taxonomy_Term extends EM_Object {
 	
 	
 	public function output_single($target = 'html'){
-		$format = get_option ( 'dbem_'. $this->option_name .'_page_format' );
+		$format = em_get_option ( 'dbem_'. $this->option_name .'_page_format' );
 		return apply_filters('em_'. $this->option_name .'_output_single', $this->output($format, $target), $this, $target);	
 	}
 	
@@ -237,7 +237,7 @@ class EM_Taxonomy_Term extends EM_Object {
 							if( self::array_is_numeric($image_size) && count($image_size) > 1 ){
 								if( $this->get_image_id() ){
 									//get a thumbnail
-									if( get_option('dbem_disable_thumbnails') ){
+									if( em_get_option('dbem_disable_thumbnails') ){
 										$image_attr = '';
 										$image_args = array();
 										if( empty($image_size[1]) && !empty($image_size[0]) ){
@@ -312,13 +312,13 @@ class EM_Taxonomy_Term extends EM_Object {
 					elseif ( $result == '#_'. $ph .'NEXTEVENTS' ){ $scope = 'future'; }
 					else{ $scope = 'all'; }
 				    $args = array($this->option_name=>$this->term_id, 'scope'=>$scope, 'pagination'=>1, 'ajax'=>0);
-				    $args['format_header'] = get_option('dbem_'. $this->option_name .'_event_list_item_header_format');
-				    $args['format_footer'] = get_option('dbem_'. $this->option_name .'_event_list_item_footer_format');
-				    $args['format'] = get_option('dbem_'. $this->option_name .'_event_list_item_format');
-				    $args['no_results_msg'] = get_option('dbem_'. $this->option_name .'_no_events_message'); 
-					$args['limit'] = get_option('dbem_'. $this->option_name .'_event_list_limit');
-					$args['orderby'] = get_option('dbem_'. $this->option_name .'_event_list_orderby');
-					$args['order'] = get_option('dbem_'. $this->option_name .'_event_list_order');
+				    $args['format_header'] = em_get_option('dbem_'. $this->option_name .'_event_list_item_header_format');
+				    $args['format_footer'] = em_get_option('dbem_'. $this->option_name .'_event_list_item_footer_format');
+				    $args['format'] = em_get_option('dbem_'. $this->option_name .'_event_list_item_format');
+				    $args['no_results_msg'] = em_get_option('dbem_'. $this->option_name .'_no_events_message'); 
+					$args['limit'] = em_get_option('dbem_'. $this->option_name .'_event_list_limit');
+					$args['orderby'] = em_get_option('dbem_'. $this->option_name .'_event_list_orderby');
+					$args['order'] = em_get_option('dbem_'. $this->option_name .'_event_list_order');
 					$args['page'] = (!empty($_REQUEST['pno']) && is_numeric($_REQUEST['pno']) )? $_REQUEST['pno'] : 1;
 					if( $target == 'email' ){
 						$args['pagination'] = 0;
@@ -328,9 +328,9 @@ class EM_Taxonomy_Term extends EM_Object {
 					break;
 				case '#_'. $ph .'NEXTEVENT':
 					$events = EM_Events::get( array($this->option_name=>$this->term_id, 'scope'=>'future', 'limit'=>1, 'orderby'=>'event_start_date,event_start_time') );
-					$replace = get_option('dbem_'. $this->option_name .'_no_event_message');
+					$replace = em_get_option('dbem_'. $this->option_name .'_no_event_message');
 					foreach($events as $EM_Event){
-						$replace = $EM_Event->output(get_option('dbem_'. $this->option_name .'_event_single_format'));
+						$replace = $EM_Event->output( $EM_Event->get_option('dbem_'. $this->option_name .'_event_single_format'));
 					}
 					break;
 				default:
@@ -367,7 +367,7 @@ class EM_Taxonomy_Term extends EM_Object {
 				if( self::array_is_numeric($image_size) && count($image_size) > 1 ){
 					if( $this->get_image_id() ){
 						//get a thumbnail
-						if( get_option('dbem_disable_thumbnails') ){
+						if( em_get_option('dbem_disable_thumbnails') ){
 							$image_attr = '';
 							$image_args = array();
 							if( empty($image_size[1]) && !empty($image_size[0]) ){

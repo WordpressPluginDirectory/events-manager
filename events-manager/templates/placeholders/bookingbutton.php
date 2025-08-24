@@ -5,24 +5,24 @@
  * 
  * $EM_Event - EM_Event object 
  */
-$notice_full = get_option('dbem_booking_button_msg_full');
-$notice_full = get_option('dbem_booking_button_msg_event_cancelled');
-$button_text = get_option('dbem_booking_button_msg_book');
-$button_already_booked = get_option('dbem_booking_button_msg_already_booked');
-$button_closed = get_option('dbem_booking_button_msg_closed');
-$button_cancel = get_option('dbem_booking_button_msg_cancel');
+$notice_full = em_get_option('dbem_booking_button_msg_full');
+$notice_full = em_get_option('dbem_booking_button_msg_event_cancelled');
+$button_text = em_get_option('dbem_booking_button_msg_book');
+$button_already_booked = em_get_option('dbem_booking_button_msg_already_booked');
+$button_closed = em_get_option('dbem_booking_button_msg_closed');
+$button_cancel = em_get_option('dbem_booking_button_msg_cancel');
 /* @var $EM_Event EM_Event */
 ?>
 <?php 
 if( is_user_logged_in() ){ //only show this to logged in users
 	ob_start();
 	if ( $EM_Event->event_active_status === 0 ) {
-		$notice_cancelled = get_option('dbem_booking_button_msg_event_cancelled');
+		$notice_cancelled = em_get_option('dbem_booking_button_msg_event_cancelled');
 		$status = 'event-cancelled'
 		?><span class="em-closed-button"><?php echo $notice_cancelled ?></span><?php
 	} else {
 		$EM_Booking = $EM_Event->get_bookings()->has_booking();
-		if( is_object($EM_Booking) && $EM_Booking->booking_status != 3 && get_option('dbem_bookings_user_cancellation') ){
+		if( is_object($EM_Booking) && $EM_Booking->booking_status != 3 && em_get_option('dbem_bookings_user_cancellation') ){
 			$status = 'cancel';
 			$booking_id = $EM_Booking->booking_id;
 			$nonce = wp_create_nonce('booking_cancel');

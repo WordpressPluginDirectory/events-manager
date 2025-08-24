@@ -2,8 +2,8 @@
 /* This general search will find matches within event_name, event_notes, and the location_name, address, town, state and country. */
 /* @var array $args */
 $classes = array();
-if( get_option('dbem_search_form_text_hide_m') ) $classes[] = 'hide-medium';
-if( get_option('dbem_search_form_text_hide_s') ) $classes[] = 'hide-small';
+if( em_get_option('dbem_search_form_text_hide_m') ) $classes[] = 'hide-medium';
+if( em_get_option('dbem_search_form_text_hide_s') ) $classes[] = 'hide-small';
 ?>
 <!-- START General Search -->
 <div class="em-search-text em-search-field input <?php echo implode(' ', $classes); ?>">

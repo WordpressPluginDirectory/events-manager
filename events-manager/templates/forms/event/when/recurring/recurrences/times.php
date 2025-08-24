@@ -4,7 +4,7 @@
 /* @var int $type */
 /* @var int $i */
 /* @var EM\Recurrences\Recurrence_Set $Recurrence_Set */
-$hours_format = get_option('dbem_time_24h') ? 'G:i':'g:i A';
+$hours_format = em_get_option('dbem_time_24h') ? 'G:i':'g:i A';
 $start_time_formatted = $Recurrence_Set->start->valid ? $Recurrence_Set->start->format($hours_format) : '';
 $end_time_formatted = $Recurrence_Set->end->valid ? $Recurrence_Set->end->format($hours_format) : '';
 $placeholder_start = $start_time_formatted ?: esc_attr__('Start Time', 'events-manager');

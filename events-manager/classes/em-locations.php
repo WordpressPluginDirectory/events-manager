@@ -28,7 +28,7 @@ class EM_Locations extends EM_Object {
 	 * @return bool
 	 */
 	public static function is_enabled(){
-		$location_types = get_option('dbem_location_types', array());
+		$location_types = em_get_option('dbem_location_types', array());
 		return !empty($location_types['location']);
 	}
 	
@@ -104,7 +104,7 @@ class EM_Locations extends EM_Object {
 		//Build ORDER BY and WHERE SQL statements here, after we've done all the pre-processing necessary
 		$conditions = self::build_sql_conditions($args);
 		$where = ( count($conditions) > 0 ) ? " WHERE " . implode ( " AND ", $conditions ):'';
-		$orderby = self::build_sql_orderby($args, $accepted_fields, get_option('dbem_events_default_order'));
+		$orderby = self::build_sql_orderby($args, $accepted_fields, em_get_option('dbem_events_default_order'));
 		$orderby_sql = ( count($orderby) > 0 ) ? 'ORDER BY '. implode(', ', $orderby) : '';
 		
 		//Build GROUP BY SQL statement, which will be very different if we group things due to how we need to filter out by event date
@@ -233,7 +233,7 @@ $limit $offset
 			$locations_count = self::$num_rows_found;
 		}
 		//What format shall we output this to, or use default
-		$format = empty($args['format']) ? get_option( 'dbem_location_list_item_format' ) : $args['format'] ;
+		$format = empty($args['format']) ? em_get_option( 'dbem_location_list_item_format' ) : $args['format'] ;
 		
 		$output = "";
 		$locations = apply_filters('em_locations_output_locations', $locations);	
@@ -242,10 +242,10 @@ $limit $offset
 				$output .= $EM_Location->output($format);
 			}
 			//Add headers and footers to output
-			if( $format == get_option( 'dbem_location_list_item_format' ) ){
+			if( $format == em_get_option( 'dbem_location_list_item_format' ) ){
 			    //we're using the default format, so if a custom format header or footer is supplied, we can override it, if not use the default
-			    $format_header = empty($args['format_header']) ? get_option('dbem_location_list_item_format_header') : $args['format_header'];
-			    $format_footer = empty($args['format_footer']) ? get_option('dbem_location_list_item_format_footer') : $args['format_footer'];
+			    $format_header = empty($args['format_header']) ? em_get_option('dbem_location_list_item_format_header') : $args['format_header'];
+			    $format_footer = empty($args['format_footer']) ? em_get_option('dbem_location_list_item_format_footer') : $args['format_footer'];
 			}else{
 			    //we're using a custom format, so if a header or footer isn't specifically supplied we assume it's blank
 			    $format_header = !empty($args['format_header']) ? $args['format_header'] : '' ;
@@ -259,7 +259,7 @@ $limit $offset
 				$output .= self::get_pagination_links($args, $locations_count);
 			}
 		}elseif( $args['no_results_msg'] !== false ){
-			$output = !empty($args['no_results_msg']) ? esc_html($args['no_results_msg']) : get_option('dbem_no_locations_message');
+			$output = !empty($args['no_results_msg']) ? esc_html($args['no_results_msg']) : em_get_option('dbem_no_locations_message');
 		}
 		//FIXME check if reference is ok when restoring object, due to changes in php5 v 4
 		$EM_Location_old= $EM_Location;
@@ -270,7 +270,7 @@ $limit $offset
 		//get default args if we're in a search, supply to parent since we can't depend on late static binding until WP requires PHP 5.3 or later
 		if( empty($default_args) && (!empty($args['ajax']) || !empty($_REQUEST['action']) && $_REQUEST['action'] == $search_action) ){
 			$default_args = self::get_default_search();
-			$default_args['limit'] = get_option('dbem_locations_default_limit'); //since we're paginating, get the default limit, which isn't obtained from get_default_search()
+			$default_args['limit'] = em_get_option('dbem_locations_default_limit'); //since we're paginating, get the default limit, which isn't obtained from get_default_search()
 		}
 		return parent::get_pagination_links($args, $count, $search_action, $default_args);
 	}
@@ -412,7 +412,7 @@ $limit $offset
 	 * @see EM_Object::build_sql_orderby()
 	 */
 	 public static function build_sql_orderby( $args, $accepted_fields, $default_order = 'ASC' ){
-		$orderby = parent::build_sql_orderby($args, $accepted_fields, get_option('dbem_events_default_order'));
+		$orderby = parent::build_sql_orderby($args, $accepted_fields, em_get_option('dbem_events_default_order'));
 		$orderby = self::build_sql_ambiguous_fields_helper($orderby); //fix ambiguous fields
 		return apply_filters( 'em_locations_build_sql_orderby', $orderby, $args, $accepted_fields, $default_order );
 	}
@@ -433,7 +433,7 @@ $limit $offset
 	 * @see EM_Object::build_sql_groupby_orderby()
 	 */
 	 public static function build_sql_groupby_orderby($args, $accepted_fields, $default_order = 'ASC' ){
-	    $group_orderby = parent::build_sql_groupby_orderby($args, $accepted_fields, get_option('dbem_events_default_order'));
+	    $group_orderby = parent::build_sql_groupby_orderby($args, $accepted_fields, em_get_option('dbem_events_default_order'));
 		//fix ambiguous fields and give them scope of events table
 		$group_orderby = self::build_sql_ambiguous_fields_helper($group_orderby);
 		return apply_filters( 'em_locations_build_sql_groupby_orderby', $group_orderby, $args, $accepted_fields, $default_order );

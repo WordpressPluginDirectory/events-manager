@@ -121,7 +121,7 @@ class Events_Bookings extends List_Table {
 		}elseif( $col == 'event_name_summary'){
 			if( $this->format == 'html' ){
 				$val = '<strong><a href="' . $EM_Event->get_bookings_url() . '">' . esc_html($EM_Event->event_name)  . '</a></strong> - ' . esc_html__('Booked Spaces','events-manager') . ': ' . $EM_Event->get_bookings()->get_booked_spaces() . '/' . $EM_Event->get_spaces();
-				if( get_option('dbem_bookings_approval') == 1 ) {
+				if( em_get_option('dbem_bookings_approval') == 1 ) {
 					$val .=  ' | ' . esc_html__('Pending','events-manager') . ': ' . $EM_Event->get_bookings()->get_pending_spaces();
 				}
 			}else{

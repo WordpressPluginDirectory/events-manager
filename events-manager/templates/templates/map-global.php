@@ -9,7 +9,7 @@
 /* @var array $args */
 if( empty($args['id']) ) $args['id'] = rand(100, getrandmax()); // prevent warnings
 $id = esc_attr($args['id']); // once
-if (get_option('dbem_gmap_is_active') == '1') {
+if (em_get_option('dbem_gmap_is_active') == '1') {
 	?>
 	<div class="em em-location-map-container"  style='position:relative; <?php if( $args['width'] ) echo 'width:'. esc_attr($args['width']).';'; ?> <?php if( $args['height'] ) echo 'height: '. esc_attr($args['height']) .';' ?>'>
 		<div class='em-locations-map' id='em-locations-map-<?php echo $id; ?>' style="width:100%; height:100%">

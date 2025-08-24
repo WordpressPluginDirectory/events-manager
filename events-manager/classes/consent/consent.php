@@ -26,7 +26,7 @@ class Consent {
 	
 	public static function hooks(){
 		//BOOKINGS
-		if( get_option('dbem_data_'. static::$prefix .'_bookings') == 1 || ( get_option('dbem_data_' . static::$prefix . '_bookings') == 2 && !is_user_logged_in() ) ){
+		if( em_get_option('dbem_data_'. static::$prefix .'_bookings') == 1 || ( em_get_option('dbem_data_' . static::$prefix . '_bookings') == 2 && !is_user_logged_in() ) ){
 			add_action('em_booking_form_footer', [ static::class, 'checkbox' ], 9, 0); //supply 0 args since arg is $EM_Event and callback will think it's an event submission form
 			add_action('em_booking_form_after_user_details', [ static::class, 'checkbox' ], 9, 0); //supply 0 args since arg is $EM_Event and callback will think it's an event submission form
 			add_filter('em_booking_get_post', [ static::class, 'em_booking_get_post' ], 10, 2);
@@ -34,14 +34,14 @@ class Consent {
 			add_filter('em_booking_save', [ static::class, 'em_booking_save' ], 10, 2);
 		}
 		//EVENTS
-		if( get_option('dbem_data_' . static::$prefix . '_events') == 1 || ( get_option('dbem_data_' . static::$prefix . '_events') == 2 && !is_user_logged_in() ) ){
+		if( em_get_option('dbem_data_' . static::$prefix . '_events') == 1 || ( em_get_option('dbem_data_' . static::$prefix . '_events') == 2 && !is_user_logged_in() ) ){
 			add_action('em_front_event_form_footer', [ static::class, 'event_checkbox' ], 9, 1);
 			add_action('em_event_get_post_meta', [ static::class, 'cpt_get_post' ], 10, 2);
 			add_action('em_event_validate', [ static::class, 'cpt_validate' ], 10, 2);
 			add_action('em_event_save', [ static::class, 'cpt_save' ], 10, 2);
 		}
 		//LOCATIONS
-		if( get_option('dbem_data_' . static::$prefix . '_locations') == 1 || ( get_option('dbem_data_' . static::$prefix . '_events') == 2 && !is_user_logged_in() ) ){
+		if( em_get_option('dbem_data_' . static::$prefix . '_locations') == 1 || ( em_get_option('dbem_data_' . static::$prefix . '_events') == 2 && !is_user_logged_in() ) ){
 			add_action('em_front_location_form_footer', [ static::class, 'location_checkbox' ], 9, 1);
 			add_action('em_location_get_post_meta', [ static::class, 'cpt_get_post' ], 10, 2);
 			add_action('em_location_validate', [ static::class, 'cpt_validate' ], 10, 2);
@@ -68,7 +68,7 @@ class Consent {
 			if( $EM_Person->{ static::$options['meta_key'] . '_revoked' } ) {
 				// if not revoked we can only assume they consented by default (in the event user had not previously consented)
 				$consented = false;
-			} elseif( get_option('dbem_data_' . static::$prefix . '_default') ) {
+			} elseif( em_get_option('dbem_data_' . static::$prefix . '_default') ) {
 				$consented = true;
 			}
 		}
@@ -76,11 +76,11 @@ class Consent {
 	}
 	
 	public static function get_error_booking() {
-		return get_option('dbem_data_' . static::$prefix . '_bookings_error');
+		return em_get_option('dbem_data_' . static::$prefix . '_bookings_error');
 	}
 	
 	public static function get_error_cpt() {
-		return get_option('dbem_data_' . static::$prefix . '_cpt_error');
+		return em_get_option('dbem_data_' . static::$prefix . '_cpt_error');
 	}
 	
 	/**
@@ -104,7 +104,7 @@ class Consent {
 	}
 	
 	public static function get_label() {
-		return get_option( static::$options['label'] );
+		return em_get_option( static::$options['label'] );
 	}
 	
 	/**
@@ -118,8 +118,8 @@ class Consent {
 		// check if consent was previously given and check box if true
 		if( is_user_logged_in() ){
 			$consent_given_already = get_user_meta( get_current_user_id(), static::$options['meta_key'], true );
-			if( !empty($consent_given_already) && get_option( static::$options['remember'] ) == 1 ) return; //ignore if consent given as per settings
-			if( !empty($consent_given_already) && get_option( static::$options['remember'] ) == 2 ) $checked = true;
+			if( !empty($consent_given_already) && em_get_option( static::$options['remember'] ) == 1 ) return; //ignore if consent given as per settings
+			if( !empty($consent_given_already) && em_get_option( static::$options['remember'] ) == 2 ) $checked = true;
 		}
 		if( empty($checked) && !empty($_REQUEST[ static::$options['param'] ]) ) $checked = true;
 		// output checkbox
@@ -167,7 +167,7 @@ class Consent {
 		if( is_user_logged_in() && ($EM_Booking->person_id == get_current_user_id() || $EM_Booking->person_id === null) ){
 			//check if consent was previously given and ignore if settings dictate so
 			$consent_given_already = get_user_meta( get_current_user_id(), static::$options['meta_key'], true );
-			if( $consent_given_already && get_option( static::$options['remember'] ) == 1 ) {
+			if( $consent_given_already && em_get_option( static::$options['remember'] ) == 1 ) {
 				return $result;
 			} //ignore if consent given as per settings
 		}
@@ -236,7 +236,7 @@ class Consent {
 		if( is_user_logged_in() ){
 			//check if consent was previously given and ignore if settings dictate so
 			$consent_given_already = get_user_meta( get_current_user_id(), static::$options['meta_key'], true );
-			if( !empty($consent_given_already) && get_option( static::$options['remember'] ) == 1 ) return $result; //ignore if consent given as per settings
+			if( !empty($consent_given_already) && em_get_option( static::$options['remember'] ) == 1 ) return $result; //ignore if consent given as per settings
 		}
 		$attributes = get_class($EM_Object) == 'EM_Event' ? 'event_attributes':'location_attributes';
 		if( empty($EM_Object->{$attributes}[ '_' . static::$options['meta_key'] ]) && static::$required ){
@@ -255,7 +255,7 @@ class Consent {
 	public static function cpt_save( $result, $EM_Object ){
 		$attributes = get_class($EM_Object) == 'EM_Event' ? 'event_attributes':'location_attributes';
 		if( $result && !empty($EM_Object->{$attributes}['_' . static::$prefix])){
-			if( !get_option('dbem_events_anonymous_submissions') || $EM_Object->post_author != get_option('dbem_events_anonymous_user') ){
+			if( !em_get_option('dbem_events_anonymous_submissions') || $EM_Object->post_author != em_get_option('dbem_events_anonymous_user') ){
 				update_user_meta( $EM_Object->post_author, static::$options['meta_key'], current_time( 'mysql', true ) );
 			}
 		} elseif ( $result && !static::$required ) {

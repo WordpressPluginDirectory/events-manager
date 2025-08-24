@@ -87,20 +87,20 @@ class Uploader {
 	);
 
 	public static function init() {
-		static::$default_options['max_file_size'] = get_option('dbem_uploads_max_file_size');
+		static::$default_options['max_file_size'] = em_get_option('dbem_uploads_max_file_size');
 		if ( static::$default_options['max_file_size'] > wp_max_upload_size() ) {
 			static::$default_options['max_file_size'] = wp_max_upload_size();
 		}
-		static::$default_options['max_files'] = get_option('dbem_uploads_max_files');
-		static::$default_options['allow_multiple'] = get_option('dbem_uploads_allow_multiple');
-		static::$default_options['type'] = get_option('dbem_uploads_type');
-		$extensions = str_replace( ' ', '', get_option('dbem_uploads_extensions') );
+		static::$default_options['max_files'] = em_get_option('dbem_uploads_max_files');
+		static::$default_options['allow_multiple'] = em_get_option('dbem_uploads_allow_multiple');
+		static::$default_options['type'] = em_get_option('dbem_uploads_type');
+		$extensions = str_replace( ' ', '', em_get_option('dbem_uploads_extensions') );
 		static::$default_options['extensions'] = !empty($extensions) ? explode(',', $extensions) : [];
 
-		static::$default_options['image_min_width'] = get_option('dbem_image_min_width');
-		static::$default_options['image_max_width'] = get_option('dbem_image_max_width');
-		static::$default_options['image_min_height'] = get_option('dbem_image_min_height');
-		static::$default_options['image_max_height'] = get_option('dbem_image_max_height');
+		static::$default_options['image_min_width'] = em_get_option('dbem_image_min_width');
+		static::$default_options['image_max_width'] = em_get_option('dbem_image_max_width');
+		static::$default_options['image_min_height'] = em_get_option('dbem_image_min_height');
+		static::$default_options['image_max_height'] = em_get_option('dbem_image_max_height');
 
 		do_action('em_uploads_uploader_init');
 	}
@@ -752,7 +752,7 @@ class Uploader {
 		<script type="application/json" class="em-uploader-options">
 			<?php
 			$json_options = array(
-				'maxFileSize' => get_option('dbem_image_max_size'),
+				'maxFileSize' => em_get_option('dbem_image_max_size'),
 			);
 			echo json_encode($json_options);
 			?>

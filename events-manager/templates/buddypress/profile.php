@@ -8,13 +8,13 @@ if( user_can($bp->displayed_user->id,'edit_events') ){
 	<?php
 	$args = array(
 		'owner'=>$bp->displayed_user->id, 
-		'format_header' => get_option('dbem_bp_events_list_format_header'),
-		'format' => get_option('dbem_bp_events_list_format'),
-		'format_footer' => get_option('dbem_bp_events_list_format_footer'),
+		'format_header' => em_get_option('dbem_bp_events_list_format_header'),
+		'format' => em_get_option('dbem_bp_events_list_format'),
+		'format_footer' => em_get_option('dbem_bp_events_list_format_footer'),
 		'no_results_msg' => false,
 		'pagination'=>1
 	);
-	$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
+	$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_events_default_limit');
 	echo EM_Events::output($args);
 	if( EM_Events::$num_rows_found == 0 ){
 		//no events output on last function
@@ -27,7 +27,7 @@ if( user_can($bp->displayed_user->id,'edit_events') ){
 		<?php
 	}
 }
-if( get_option('dbem_rsvp_enabled') ){
+if( em_get_option('dbem_rsvp_enabled') ){
 	?>
 	<h4><?php _e("Events I'm Attending", 'events-manager'); ?></h4>
 	<?php

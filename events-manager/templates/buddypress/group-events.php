@@ -10,7 +10,7 @@
 	$events_count = count ( $EM_Events );
 	$future_count = EM_Events::count( array('status'=>1, 'owner' =>get_current_user_id(), 'scope' => 'future'));
 	$pending_count = EM_Events::count( array('status'=>0, 'owner' =>get_current_user_id(), 'scope' => 'all') );
-	$use_events_end = get_option('dbem_use_event_end');
+	$use_events_end = em_get_option('dbem_use_event_end');
 	echo $EM_Notices;
 	?>
 	<div class="tablenav">
@@ -81,12 +81,12 @@
 								?>
 							</strong>
 							<?php 
-							if( $EM_Event->can_manage('manage_bookings','manage_others_bookings') && get_option('dbem_rsvp_enabled') == 1 && $EM_Event->rsvp == 1 ){
+								if( $EM_Event->can_manage('manage_bookings','manage_others_bookings') && $EM_Event->get_option('dbem_rsvp_enabled') == 1 && $EM_Event->rsvp == 1 ){
 								?>
 								<br/>
 								<a href="<?php echo $url ?>bookings/?event_id=<?php echo $EM_Event->event_id ?>"><?php echo __("Bookings",'events-manager'); ?></a> &ndash;
 								<?php _e("Booked",'events-manager'); ?>: <?php echo $EM_Event->get_bookings()->get_booked_spaces()."/".$EM_Event->get_spaces(); ?>
-								<?php if( get_option('dbem_bookings_approval') == 1 ): ?>
+									<?php if( $EM_Event->get_option('dbem_bookings_approval') == 1 ): ?>
 									| <?php _e("Pending",'events-manager') ?>: <?php echo $EM_Event->get_bookings()->get_pending_spaces(); ?>
 								<?php endif;
 							}

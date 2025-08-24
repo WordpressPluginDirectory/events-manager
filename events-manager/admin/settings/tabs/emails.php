@@ -111,12 +111,15 @@
 		</p>
 		<table class='form-table'>
 			<?php
-			em_options_radio_binary ( __( 'Disable new registration email?', 'events-manager'), 'dbem_email_disable_registration', __( 'Check this option if you want to prevent the WordPress registration email from going out when a user anonymously books an event.', 'events-manager') );
-			
-			em_options_input_text ( __( 'Registration email subject', 'events-manager'), 'dbem_bookings_email_registration_subject' );
-			em_options_textarea ( __( 'Registration email', 'events-manager'), 'dbem_bookings_email_registration_body', sprintf(__('%s is replaced by username, %s is replaced by the user password and %s is replaced by a link to create a password.','events-manager'),'<code>%username%</code>','<code>%password%</code>','<code>%passwordurl%</code>') );
-			echo $save_button;
+			em_options_radio_binary ( __( 'Disable new registration email?', 'events-manager'), 'dbem_email_disable_registration', __( 'Check this option if you want to prevent the WordPress registration email from going out when a user anonymously books an event.', 'events-manager'), '', '.em-emails-registration-templates' );
 			?>
+			<tbody class="em-emails-registration-templates">
+				<?php
+				em_options_input_text ( __( 'Registration email subject', 'events-manager'), 'dbem_bookings_email_registration_subject' );
+				em_options_textarea ( __( 'Registration email', 'events-manager'), 'dbem_bookings_email_registration_body', sprintf(__('%s is replaced by username, %s is replaced by the user password and %s is replaced by a link to create a password.','events-manager'),'<code>%username%</code>','<code>%password%</code>','<code>%passwordurl%</code>') );
+				?>
+			<tbody>
+			<?php echo $save_button; ?>
 		</table>
 	</div> <!-- . inside -->
 	</div> <!-- .postbox -->

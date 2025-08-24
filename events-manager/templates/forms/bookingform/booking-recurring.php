@@ -15,8 +15,8 @@
 $id = $EM_Event->event_id;
 ?>
 <section class="em-booking-recurring" data-event="<?php echo $EM_Event->event_id; ?>">
-	<?php if ( get_option('dbem_recurrence_picker', 'select') === 'select' ) : ?>
-		<div class="em-booking-recurrence-picker mode-<?php echo esc_attr( get_option('dbem_recurrence_picker' ) ); ?>">
+	<?php if ( em_get_option('dbem_recurrence_picker', 'select') === 'select' ) : ?>
+		<div class="em-booking-recurrence-picker mode-<?php echo esc_attr( em_get_option('dbem_recurrence_picker' ) ); ?>">
 			<select class="em-selectize" name="booking_recurrence_selection">
 				<option value="0"><?php esc_html_e('Select a date', 'events-manager'); ?></option>
 				<?php foreach( EM_Events::get( ['scope' => 'future', 'recurrence' => $EM_Event->event_id, 'limit' => false ] ) as $event ) : ?>
@@ -26,7 +26,7 @@ $id = $EM_Event->event_id;
 			</select>
 		</div>
 	<?php else: ?>
-		<div class="em-booking-recurrence-picker mode-<?php echo esc_attr( get_option('dbem_recurrence_picker' ) ); ?>" data-nonce="<?php echo wp_create_nonce('booking_recurrences'); ?>">
+		<div class="em-booking-recurrence-picker mode-<?php echo esc_attr( em_get_option('dbem_recurrence_picker' ) ); ?>" data-nonce="<?php echo wp_create_nonce('booking_recurrences'); ?>">
 			<?php include em_locate_template( 'forms/bookingform/recurring/calendar.php' ); ?>
 			<?php include em_locate_template( 'forms/bookingform/recurring/booking-recurrences.php' ); ?>
 		</div>

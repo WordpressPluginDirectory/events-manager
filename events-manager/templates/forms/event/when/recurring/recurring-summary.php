@@ -23,7 +23,7 @@
 			<span class="end-time time"><?php echo ' @ ' . $EM_Event->end()->i18n( em_get_hour_format() ); ?></span>
 		</div>
 
-		<?php if( get_option('dbem_timezone_enabled') || ( $EM_Event->event_timezone && $EM_Event->event_timezone !== get_option('timezone_string') ) ): ?>
+		<?php if( em_get_option('dbem_timezone_enabled') || ( $EM_Event->event_timezone && $EM_Event->event_timezone !== em_get_option('timezone_string') ) ): ?>
 		<!-- Timezone section - now adjacent to times -->
 		<div class="recurring-timezone">
 			<span class="label">Default Timezone:</span>

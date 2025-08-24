@@ -60,10 +60,10 @@ class EM_ML{
 			if( is_admin() ){
 				include(EM_DIR.'/multilingual/em-ml-admin.php');
 			}
-			if( get_option('dbem_rsvp_enabled') ){
+			if( em_get_option('dbem_rsvp_enabled') ){
 				include(EM_DIR.'/multilingual/em-ml-bookings.php');
 			}
-			if( get_option('dbem_locations_enabled') ){
+			if( em_get_option('dbem_locations_enabled') ){
 				include(EM_DIR.'/multilingual/em-ml-io-locations.php');
 			}
 			//change some localized script vars
@@ -83,7 +83,7 @@ class EM_ML{
     public static function em_wp_localize_script($em_localized_js){
         $em_localized_js['ajaxurl'] = admin_url('admin-ajax.php?em_lang='.self::$current_language);
         $em_localized_js['locationajaxurl'] = admin_url('admin-ajax.php?action=locations_search&em_lang='.self::$current_language);
-		if( get_option('dbem_rsvp_enabled') ){
+		if( em_get_option('dbem_rsvp_enabled') ){
 		    $em_localized_js['bookingajaxurl'] = admin_url('admin-ajax.php?em_lang='.self::$current_language);
 		}
 	    if( !empty($em_localized_js['event_detach_warning']) ){
@@ -158,7 +158,7 @@ class EM_ML{
 	 * @return mixed
 	 */
 	public static function get_option($option, $lang = null, $return_original = true){
-	    if( !self::$is_ml ) return get_option($option);
+	    if( !self::$is_ml ) return em_get_option($option);
 		return EM_ML_Options::get_option($option, $lang, $return_original);
 	}
 

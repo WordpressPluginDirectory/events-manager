@@ -1,4 +1,7 @@
 <?php
+
+use EM\Archetypes;
+
 /**
  * @author marcus
  * Standard events calendar widget
@@ -18,7 +21,8 @@ class EM_Widget_Calendar extends WP_Widget {
     		'long_events' => 0,
     		'category' => 0,
 		    'scope' => 'all',
-		    'calendar_size' => get_option('dbem_calendar_default', 'auto'),
+		    'calendar_size' => em_get_option('dbem_calendar_default', 'auto'),
+			'event_archetype' => '',
     	);
 	    $widget_ops = array('description' => "Display your events in a calendar widget.");
 	    parent::__construct(false, 'Events Calendar', $widget_ops);
@@ -29,12 +33,13 @@ class EM_Widget_Calendar extends WP_Widget {
     function wp_loaded() {
 		$this->name = __('Events Calendar','events-manager');
         $this->defaults['title'] = __('Calendar','events-manager');
-        $this->widget_options['description'] = __("Display your events in a calendar widget.", 'events-manager');
+        $this->widem_get_options['description'] = __("Display your events in a calendar widget.", 'events-manager');
     }
 
     /** @see WP_Widget::widget */
     function widget($args, $instance) {
     	$instance = array_merge($this->defaults, $instance);
+	    $instance['event_archetype'] = $instance['event_archetype'] === '' ? EM_POST_TYPE_EVENT : $instance['event_archetype'];
 
     	echo $args['before_widget'];
     	if( !empty($instance['title']) ){
@@ -67,6 +72,7 @@ class EM_Widget_Calendar extends WP_Widget {
 	    $new_instance['scope'] = ($new_instance['scope'] == 'future') ? 'future':$this->defaults['scope'];
 	    $allowed_sizes = apply_filters('em_calendar_output_sizes', array('large', 'medium', 'small'));
 	    $new_instance['calendar_size'] = in_array( $new_instance['calendar_size'], $allowed_sizes) ? $new_instance['calendar_size'] : $this->defaults['calendar_size'];
+	    $new_instance['event_archetype'] = (!$new_instance['event_archetype']) ? EM_POST_TYPE_EVENT:$new_instance['event_archetype'];
     	return $new_instance;
     }
 
@@ -91,6 +97,17 @@ class EM_Widget_Calendar extends WP_Widget {
             <input type="text" id="<?php echo $this->get_field_id('category'); ?>" name="<?php echo $this->get_field_name('category'); ?>" size="3" value="<?php echo esc_attr($instance['category']); ?>" /><br />
             <em><?php _e('1,2,3 or 2 (0 = all)','events-manager'); ?> </em>
         </p>
+	    <?php if ( Archetypes::$types ) : ?>
+	    <p>
+		    <label for="<?php echo $this->get_field_id('event_archetype'); ?>"><?php _e('Archetype','events-manager'); ?>: </label>
+		    <select id="<?php echo $this->get_field_id('event_archetype'); ?>" name="<?php echo $this->get_field_name('event_archetype'); ?>">
+			    <option value="auto" <?php selected($instance['event_archetype'], ''); ?>><?php esc_html_e('Default', 'events-manager'); ?></option>
+			    <?php foreach(Archetypes::$types as $type => $archetype) : ?>
+			    <option value="<?php echo $type; ?>" <?php selected($instance['event_archetype'], $type); ?>><?php echo $archetype['label']; ?></option>
+			    <?php endforeach; ?>
+		    </select>
+	    </p>
+	    <?php endif; ?>
 	    <p>
 		    <label for="<?php echo $this->get_field_id('calendar_size'); ?>"><?php _e('Calendar Size','events-manager'); ?>: </label>
 		    <select id="<?php echo $this->get_field_id('calendar_size'); ?>" name="<?php echo $this->get_field_name('calendar_size'); ?>">

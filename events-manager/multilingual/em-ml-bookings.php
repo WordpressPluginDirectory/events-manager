@@ -133,7 +133,7 @@ class EM_ML_Bookings {
 	        $EM_Event = EM_ML::get_translation($EM_Booking->get_event(), $lang);
 	        //check that we're not already dealing with the translated event
 	        if( $EM_Event->post_id != $EM_Booking->get_event()->post_id ){
-	            //below is copied script from EM_Booking::email_messages() replacing get_option with EM_ML_Options::get_option() supplying the booking language 
+	            //below is copied script from EM_Booking::email_messages() replacing em_get_option with EM_ML_Options::get_option() supplying the booking language 
         	    switch( $EM_Booking->booking_status ){
         	    	case 0:
         	    	case 5: //TODO remove offline status from here and move to pro

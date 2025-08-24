@@ -28,7 +28,7 @@ class Privacy extends Consent {
 	}
 	
 	public static function get_label() {
-		$label = get_option( static::$options['label'] );
+		$label = em_get_option( static::$options['label'] );
 		// buddyboss fix since bb v1.6.0
 		if( has_filter( 'the_privacy_policy_link', 'bp_core_change_privacy_policy_link_on_private_network') ) $bb_fix = remove_filter('the_privacy_policy_link', 'bp_core_change_privacy_policy_link_on_private_network', 999999);
 		// replace privacy policy text %s with link to policy page

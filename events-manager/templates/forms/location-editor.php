@@ -43,7 +43,7 @@ $id = rand(); // not related to searches, so we'll just add an ID for good pract
 		<section>
 			<h3 class="location-form-details"><?php esc_html_e( 'Details', 'events-manager'); ?></h3>
 			<div class="inside location-form-details">
-				<?php if( get_option('dbem_events_form_editor') && function_exists('wp_editor') ): ?>
+				<?php if( em_get_option('dbem_events_form_editor') && function_exists('wp_editor') ): ?>
 					<?php wp_editor($EM_Location->post_content, 'em-editor-content', array('textarea_name'=>'content') ); ?>
 				<?php else: ?>
 					<textarea name="content" rows="10" style="width:100%"><?php echo $EM_Location->post_content; ?></textarea>
@@ -54,7 +54,7 @@ $id = rand(); // not related to searches, so we'll just add an ID for good pract
 		</section>
 		
 		<section class="input">
-		<?php if(get_option('dbem_location_attributes_enabled')){ em_locate_template('forms/location/attributes-public.php',true); } ?>
+		<?php if(em_get_option('dbem_location_attributes_enabled')){ em_locate_template('forms/location/attributes-public.php',true); } ?>
 		</section>
 		
 		<?php if( $EM_Location->can_manage('upload_event_images','upload_event_images') ): ?>

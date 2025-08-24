@@ -1,5 +1,6 @@
 <?php
 namespace EM\Admin;
+use EM\Archetypes;
 use EM_DateTime;
 
 class Dashboard {
@@ -7,11 +8,11 @@ class Dashboard {
 	protected static $footer_js;
 	
 	public static function init() {
-		if( get_option('dbem_booking_charts_wpdashboard') ){
+		if( em_get_option('dbem_booking_charts_wpdashboard') ){
 			add_action( 'wp_dashboard_setup', array( static::class, 'wp_dashboard_setup') );
 			add_action( 'admin_print_scripts', array( static::class, 'enqueue_scripts'), 10, 1 );
 		}
-		if( get_option('dbem_booking_charts_frontend') && !is_admin() ){
+		if( em_get_option('dbem_booking_charts_frontend') && !is_admin() ){
 			add_action( 'em_enqueue_scripts', array( static::class, 'enqueue_scripts'), 10, 1 );
 		}
 		add_action( 'wp_ajax_em_chart_bookings', array( static::class, 'ajax'), 10, 1 );
@@ -40,7 +41,7 @@ class Dashboard {
 				wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd' . $min . '.js', array(), EM_VERSION, true );
 				\EM_Scripts_and_Styles::admin_enqueue( true );
 			}
-		} elseif ( get_option( 'dbem_booking_charts_frontend' ) ) {
+		} elseif ( em_get_option( 'dbem_booking_charts_frontend' ) ) {
 			// we assume it's the bookings admin page if this class was loaded
 			$min = \EM_Scripts_and_Styles::min_suffix();
 			wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd' . $min . '.js', array( 'moment' ), EM_VERSION );
@@ -53,7 +54,7 @@ class Dashboard {
 	
 	public static function ajax(){
 		if( !empty($_REQUEST['_nonce']) && !empty($_REQUEST['view']) ) {
-			if( get_option('dbem_booking_charts_wpdashboard') || get_option('dbem_booking_charts_dashboard') || get_option('dbem_booking_charts_event') ){
+			if( em_get_option('dbem_booking_charts_wpdashboard') || em_get_option('dbem_booking_charts_dashboard') || em_get_option('dbem_booking_charts_event') ){
 				$args = static::get_post_args();
 				$nonce_action = 'em-chart-'.$args['view'];
 				if( $args['view'] === 'event' || $args['view'] === 'ticket' ){
@@ -77,6 +78,9 @@ class Dashboard {
 	
 	public static function get_post_args(){
 		$args = static::get_default_args();
+		if ( Archetypes::is_event( $_REQUEST['event_archetype'] ?? '' ) ) {
+			$args['event_archetype'] = $_REQUEST['event_archetype'];
+		}
 		if( !empty($_REQUEST['mode']) && in_array($_REQUEST['mode'], array('day','week','month','year')) ){
 			$args['mode'] = $_REQUEST['mode'];
 		}
@@ -152,7 +156,8 @@ class Dashboard {
 			),
 			'show_filters' => false,
 			'status' => array('1'),
-			'type' => 'line'
+			'type' => 'line',
+			'event_archetype' => Archetypes::get_current(),
 		), $args);
 	}
 	
@@ -233,6 +238,8 @@ class Dashboard {
 					$conditions['event'] = $wpdb->prepare( ' event_id = %d ', $EM_Event->event_id );
 				}
 			}
+		} elseif ( !empty($args['event_archetype']) && Archetypes::is_event($args['event_archetype'], false) ){
+			$conditions['event_archetype'] = $wpdb->prepare( ' event_id IN ( SELECT event_id FROM '. EM_EVENTS_TABLE .' WHERE event_archetype=%s )', $args['event_archetype'] );
 		}
 		if( !empty($args['status']) && \EM_Object::array_is_numeric($args['status']) ){
 			$conditions['status'] = $wpdb->prepare( ' booking_status IN ('. implode(',', array_fill(0,count($args['status']), '%d')) .')', $args['status'] );
@@ -363,7 +370,7 @@ class Dashboard {
 				'labels' => array(),
 				'datasets' => array(),
 			),
-			'currency' => get_option('dbem_bookings_currency'),
+			'currency' => em_get_option('dbem_bookings_currency'),
 			'locale' => str_replace('_', '-', \EM_ML::$current_language),
 			'compare' => count($scopes) > 1 || count($selectors) > 1,
 			'compareType' => false,
@@ -1056,6 +1063,7 @@ class Dashboard {
 						</div>
 					</section>
 				</div>
+				<input type="hidden" name="event_archetype" value="<?php echo esc_attr($args['event_archetype']); ?>">
 				<input type="hidden" name="view" value="<?php echo esc_attr($args['view']); ?>">
 				<?php if( $args['view'] === 'event' || $args['view'] === 'ticket' ): ?>
 					<input type="hidden" name="_nonce" value="<?php echo esc_attr(wp_create_nonce('em-chart-'.$args['view'].'-'. $args[$args['view']])); ?>">

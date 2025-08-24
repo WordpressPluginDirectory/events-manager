@@ -170,7 +170,8 @@ function em_maps() {
 		var refresh_map_location = function(){
 			var location_latitude = jQuery('#location-latitude').val();
 			var location_longitude = jQuery('#location-longitude').val();
-			if( !(location_latitude == 0 && location_longitude == 0) ){
+			let hasCoords = location_latitude != 0 || location_longitude != 0;
+			if( hasCoords ){
 				var position = new google.maps.LatLng(location_latitude, location_longitude); //the location coords
 				marker.setPosition(position);
 				var mapTitle = (jQuery('input#location-name').length > 0) ? jQuery('input#location-name').val():jQuery('input#title').val();
@@ -200,7 +201,8 @@ function em_maps() {
 			if(jQuery('#em-map').length > 0){
 				jQuery('#em-map-404 .em-loading-maps').show();
 				jQuery.getJSON(document.URL,{ em_ajax_action:'get_location', id:id }, function(data){
-					if( data.location_latitude!=0 && data.location_longitude!=0 ){
+					let hasCoords = data.location_latitude != 0 && data.location_longitude != 0;
+					if( hasCoords ){
 						loc_latlng = new google.maps.LatLng(data.location_latitude, data.location_longitude);
 						marker.setPosition(loc_latlng);
 						marker.setTitle( data.location_name );
@@ -222,7 +224,7 @@ function em_maps() {
 				});
 			}
 		};
-		jQuery('#location-select-id, input#location-id').on('change', function(){get_map_by_id(jQuery(this).val());} );
+		jQuery('#location-select-id, input#location-id').on('change', function() { get_map_by_id( jQuery(this).val() ); } );
 		jQuery('#location-name, #location-town, #location-address, #location-state, #location-postcode, #location-country').on('change', function(){
 			//build address
 			if( jQuery(this).prop('readonly') === true ) return;
@@ -246,6 +248,7 @@ function em_maps() {
 			jQuery('#em-map-404 .em-loading-maps').show();
 			//search!
 			if( address != '' && jQuery('#em-map').length > 0 ){
+				let geocoder = new google.maps.Geocoder();
 				geocoder.geocode( { 'address': address }, function(results, status) {
 					if (status == google.maps.GeocoderStatus.OK) {
 						jQuery('#location-latitude').val(results[0].geometry.location.lat());
@@ -255,6 +258,20 @@ function em_maps() {
 				});
 			}
 		});
+		// Check if we are on a location editing page, and if address was previously entered, if so we check location coords
+		let location_latitude = jQuery('#location-latitude').val();
+		let location_longitude = jQuery('#location-longitude').val();
+		let hasCoords = location_latitude != 0 || location_longitude != 0;
+		if ( !hasCoords  ) {
+			// check if there's any address items that were added previously
+			if ( document.getElementById('location-address')?.value != '' && (document.getElementById('location-address')?.value != '' || document.getElementById('location-town')?.value != '' || document.getElementById('location-state')?.value != '' || document.getElementById('location-postcode')?.value != '' ) ) {
+				// trigger a change so we reload the address and coords
+				jQuery('#location-address').trigger('change');
+				if ( 'google_maps_resave_location' in EM ) {
+					alert(EM.google_maps_resave_location);
+				}
+			}
+		}
 
 		//Load map
 		if(jQuery('#em-map').length > 0){

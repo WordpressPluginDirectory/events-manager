@@ -3,8 +3,8 @@
 /* @var EM_Booking $EM_Booking */
 /* @var EM_Event $EM_Event */
 if( $EM_Booking->get_spaces() > 0 ){
-	$show_subsections = get_option('dbem_bookings_summary_subsections');
-	$itemize_taxes    = get_option('dbem_bookings_summary_taxes_itemized'); // display tickets without taxes and apply taxes to pre_ discount/surcharges manually here so it all adds up
+	$show_subsections = em_get_option('dbem_bookings_summary_subsections');
+	$itemize_taxes    = em_get_option('dbem_bookings_summary_taxes_itemized'); // display tickets without taxes and apply taxes to pre_ discount/surcharges manually here so it all adds up
 	$price_summary    = $EM_Booking->get_price_summary_array(); //we should now have an array of information including base price, taxes and post/pre tax discounts, show subtotals section if there's more than one item here
 	if( !empty($price_summary['discounts_pre_tax']) ){
 		// if we have discounts pre-tax, it's very difficult to accurately show discounts and/or subsequent surcharges with tax adjustments as they affect the total price, and would also confuse users with adjusted discounts with tax included/excluded
@@ -14,7 +14,7 @@ if( $EM_Booking->get_spaces() > 0 ){
 	$base_price = $EM_Booking->get_price_base();
 	$total_price = $EM_Booking->get_price();
 	$total_price_formatted = $EM_Booking->get_price( true );
-	$display_taxes = ($itemize_taxes || get_option('dbem_bookings_summary_subtotal_exc_taxes')) && !empty($price_summary['taxes']['amount']); // will we be displaying taxes? useful so we can decide if we also display a subtotal
+	$display_taxes = ($itemize_taxes || em_get_option('dbem_bookings_summary_subtotal_exc_taxes')) && !empty($price_summary['taxes']['amount']); // will we be displaying taxes? useful so we can decide if we also display a subtotal
 }else{
 	$itemize_taxes         = false;
 	$display_taxes         = false;
@@ -22,7 +22,7 @@ if( $EM_Booking->get_spaces() > 0 ){
 	$base_price            = 0;
 	$total_price           = 0;
 	$total_price_formatted = $EM_Event->format_price(0);
-	$currency              = get_option('dbem_bookings_currency','USD');
+	$currency              = em_get_option('dbem_bookings_currency','USD');
 }
 ?>
 <div class="em-booking-summary <?php if( empty($EM_Booking) ) echo 'no-booking'; ?>" id="em-booking-summary-<?php echo esc_attr($EM_Event->event_id); ?>"
@@ -70,7 +70,7 @@ if( $EM_Booking->get_spaces() > 0 ){
 		
 		// Subtotal - calculate now in case we don't display subtotals at all due to taxes not being displayed and no extra charges
 		do_action( 'em_booking_form_summary_before_subtotals', $EM_Booking );
-		if ( $itemize_taxes || get_option('dbem_bookings_summary_subtotal_exc_taxes') ) {
+		if ( $itemize_taxes || em_get_option('dbem_bookings_summary_subtotal_exc_taxes') ) {
 			$base_tax = 0;
 			$subtotal_raw = $base_price;
 		} else {
@@ -248,7 +248,7 @@ if( $EM_Booking->get_spaces() > 0 ){
 		<?php do_action('em_booking_form_summary_after_total', $EM_Booking); ?>
 	<?php else: ?>
 		<?php do_action('em_booking_form_summary_before_none'); ?>
-		<?php echo esc_html( get_option('dbem_bookings_summary_message') ); ?>
+		<?php echo esc_html( em_get_option('dbem_bookings_summary_message') ); ?>
 		<?php do_action('em_booking_form_summary_after_none'); ?>
 	<?php endif; ?>
 	<?php do_action('em_booking_form_summary_bottom', $EM_Booking); ?>

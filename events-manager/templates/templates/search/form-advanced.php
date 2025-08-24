@@ -28,7 +28,7 @@
 		</div>
 	</section>
     <?php endif; ?>
-	<?php if( get_option('dbem_categories_enabled') && !empty($args['search_categories']) ): ?>
+	<?php if( em_get_option('dbem_categories_enabled') && !empty($args['search_categories']) ): ?>
 		<section class="em-search-section-categories em-search-advanced-section">
 			<?php if( !empty($args['category_label']) ) : ?><header><?php echo esc_html($args['category_label']); ?></header><?php endif; ?>
 			<div class="em-search-section-content">
@@ -36,7 +36,7 @@
 			</div>
 		</section>
 	<?php endif; ?>
-	<?php if( get_option('dbem_tags_enabled') && !empty($args['search_tags']) ): ?>
+	<?php if( em_get_option('dbem_tags_enabled') && !empty($args['search_tags']) ): ?>
 		<section  class="em-search-section-tags em-search-advanced-section ">
 			<?php if( !empty($args['tag_label']) ) : ?><header><?php echo esc_html($args['tag_label']); ?></header><?php endif; ?>
 			<div class="em-search-section-content">

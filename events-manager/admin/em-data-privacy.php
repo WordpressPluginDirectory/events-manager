@@ -33,13 +33,13 @@ class EM_Data_Privacy {
 	}
 
 	public static function register_eraser( $erasers ) {
-		if( get_option('dbem_data_privacy_erase_bookings') ){
+		if( em_get_option('dbem_data_privacy_erase_bookings') ){
 			$erasers['events-manager-bookings'] = array(
 				'eraser_friendly_name' =>  __( 'Events Manager', 'events-manager' ) . ' - ' . __('Bookings', 'events-manager'),
 				'callback' => 'EM_Data_Privacy::erase_bookings',
 			);
 		}
-		if( get_option('dbem_data_privacy_erase_events') ){
+		if( em_get_option('dbem_data_privacy_erase_events') ){
 			$erasers['events-manager-recurring-events'] = array(
 				'eraser_friendly_name' =>  __( 'Events Manager', 'events-manager' ) . ' - ' . __('Recurring Events', 'events-manager'),
 				'callback' => 'EM_Data_Privacy::erase_recurring_events',
@@ -49,7 +49,7 @@ class EM_Data_Privacy {
 				'callback' => 'EM_Data_Privacy::erase_events',
 			);
 		}
-		if( get_option('dbem_data_privacy_erase_locations') ){
+		if( em_get_option('dbem_data_privacy_erase_locations') ){
 			$erasers['events-manager-locations'] = array(
 				'eraser_friendly_name' =>  __( 'Events Manager', 'events-manager' ) . ' - ' . __('Locations', 'events-manager'),
 				'callback' => 'EM_Data_Privacy::erase_locations',
@@ -65,7 +65,7 @@ class EM_Data_Privacy {
 		$messages = array();
 		$user = get_user_by('email', $email_address); //is user or no-user?
 
-		if( $user !== false && get_option('dbem_data_privacy_erase_bookings') == 2 ){
+		if( $user !== false && em_get_option('dbem_data_privacy_erase_bookings') == 2 ){
 			//we're only deleting anonymous bookings, and letting WP handle user/booking deletion the traditional way for registered accounts
 			$done = true;
 		}else{
@@ -107,7 +107,7 @@ class EM_Data_Privacy {
 		$items_removed = $items_retained = false;
 		$messages = array();
 
-		if( $user !== false && get_option('dbem_data_privacy_erase_events') == 2 ){
+		if( $user !== false && em_get_option('dbem_data_privacy_erase_events') == 2 ){
 			//we're only deleting anonymous events, and letting WP handle CPT deletion the traditional way for registered accounts
 			$done = true;
 		}else{
@@ -118,12 +118,12 @@ class EM_Data_Privacy {
 				$EM_Event = em_get_event($post_id, 'post_id');
 				//erase the location first
 				$EM_Location = $EM_Event->get_location();
-				if( $EM_Location->location_id && get_option('dbem_data_privacy_erase_locations', 2) ){
+				if( $EM_Location->location_id && em_get_option('dbem_data_privacy_erase_locations', 2) ){
 					//prior to 5.9.3 locations submitted alongside anonymous events didn't store email info, so for older locations we can only assume if the location is guest submitted and only linked to this one event
-					$user_probably_owns_location = $user === false && empty($EM_Location->owner_email) && $EM_Location->location_owner == get_option('dbem_events_anonymous_user');
+					$user_probably_owns_location = $user === false && empty($EM_Location->owner_email) && $EM_Location->location_owner == em_get_option('dbem_events_anonymous_user');
 					if( $user_probably_owns_location ){
 						//depending on settings delete location only if it has no other events (eventually if we're deleting the last event of this user with the same location, it'll only have one event)
-						if( get_option('dbem_data_privacy_erase_locations', 2) == 1 ||  EM_Events::count(array('location_id' => $EM_Location->location_id, 'status' => 'all')) <= 1 ){
+						if( em_get_option('dbem_data_privacy_erase_locations', 2) == 1 ||  EM_Events::count(array('location_id' => $EM_Location->location_id, 'status' => 'all')) <= 1 ){
 							if( $EM_Location->delete(true) ){
 								$items_removed = true;
 							}else{
@@ -184,13 +184,13 @@ class EM_Data_Privacy {
 			'exporter_friendly_name' =>  __( 'Events Manager', 'events-manager' ) . ' - ' .__( 'Further Information', 'events-manager' ),
 			'callback' => 'EM_Data_Privacy::export_user',
 		);
-		if( get_option('dbem_data_privacy_export_bookings') ){
+		if( em_get_option('dbem_data_privacy_export_bookings') ){
 			$exporters['events-manager-bookings'] = array(
 				'exporter_friendly_name' =>  __( 'Events Manager', 'events-manager' ) . ' - ' . __('Bookings', 'events-manager'),
 				'callback' => 'EM_Data_Privacy::export_bookings',
 			);
 		}
-		if( get_option('dbem_data_privacy_export_events') ){
+		if( em_get_option('dbem_data_privacy_export_events') ){
 			$exporters['events-manager-recurring-events'] = array(
 				'exporter_friendly_name' =>  __( 'Events Manager', 'events-manager' ) . ' - ' . __('Recurring Events', 'events-manager'),
 				'callback' => 'EM_Data_Privacy::export_recurring_events',
@@ -200,7 +200,7 @@ class EM_Data_Privacy {
 				'callback' => 'EM_Data_Privacy::export_events',
 			);
 		}
-		if( get_option('dbem_data_privacy_export_locations') ){
+		if( em_get_option('dbem_data_privacy_export_locations') ){
 			$exporters['events-manager-locations'] = array(
 				'exporter_friendly_name' =>  __( 'Events Manager', 'events-manager' ) . ' - ' . __('Locations', 'events-manager'),
 				'callback' => 'EM_Data_Privacy::export_locations',
@@ -249,7 +249,7 @@ class EM_Data_Privacy {
 
 		//check if we're only exporting bookings to those who made anonymous bookings
 		$user = get_user_by('email', $email_address); //is user or no-user?
-		if( $user !== false && get_option('dbem_data_privacy_export_bookings') == 2 ) return array( 'data' => $export_items, 'done' => true ); //return if user is registered and we're only exporting anon bookings
+		if( $user !== false && em_get_option('dbem_data_privacy_export_bookings') == 2 ) return array( 'data' => $export_items, 'done' => true ); //return if user is registered and we're only exporting anon bookings
 
 		$bookings = self::get_bookings($email_address, $page);
 
@@ -304,7 +304,7 @@ class EM_Data_Privacy {
 				if( !empty($booking_notes) ){
 					$booking_notes_data = array();
 					foreach( $booking_notes as $booking_note ){
-						$booking_notes_data[] = date(get_option('date_format'), $booking_note['timestamp']) .' - '. $booking_note['note'];
+						$booking_notes_data[] = date(em_get_option('date_format'), $booking_note['timestamp']) .' - '. $booking_note['note'];
 					}
 					$export_item['data']['notes'] = array('name' => __( 'Booking Notes', 'events-manager'), 'value' => implode('<br><br>', $booking_notes_data));
 				}
@@ -336,7 +336,7 @@ class EM_Data_Privacy {
 		$items_count = 0;
 
 		//check if we're only exporting events to those who submitted anonymously
-		if( $user !== false && get_option('dbem_data_privacy_export_events') == 2 ) return array( 'data' => $export_items, 'done' => true ); //return if user is registered and we're only exporting anon events
+		if( $user !== false && em_get_option('dbem_data_privacy_export_events') == 2 ) return array( 'data' => $export_items, 'done' => true ); //return if user is registered and we're only exporting anon events
 
 		//prepare some location stuff for use within events
 		$locations_export_default = array(
@@ -380,7 +380,7 @@ class EM_Data_Privacy {
 				$export_item['data'][] = array('name' => __('Location','events-manager'), 'value' => $EM_Location->location_name . ', '. $EM_Location->get_full_address() .', '. $EM_Location->location_country);
 				//put this location as a new export item
 				$already_exported = in_array($EM_Location->location_id, $locations_exported);
-				$user_probably_owns_location = $user === false && empty($EM_Location->owner_email) && $EM_Location->location_owner == get_option('dbem_events_anonymous_user');
+				$user_probably_owns_location = $user === false && empty($EM_Location->owner_email) && $EM_Location->location_owner == em_get_option('dbem_events_anonymous_user');
 				$user_submitted_location = $user === false && $EM_Location->owner_email == $email_address;
 				$user_owns_location = $user !== false && $EM_Location->location_owner == $user->ID;
 				if( !$already_exported && ($user_owns_location || $user_submitted_location || $user_probably_owns_location) ){

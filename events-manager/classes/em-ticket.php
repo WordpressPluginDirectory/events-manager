@@ -471,7 +471,7 @@ class EM_Ticket extends EM_Object {
 		if( preg_match('/^[0-9]*\.[0-9]+$/', $price) || preg_match('/^[0-9]+$/', $price) ){
 			$this->ticket_price = (float) $price;
 		}else{
-			$this->ticket_price = (float) str_replace( array( get_option('dbem_bookings_currency_thousands_sep'), get_option('dbem_bookings_currency_decimal_point') ), array('','.'), $price );
+			$this->ticket_price = (float) str_replace( array( em_get_option('dbem_bookings_currency_thousands_sep'), em_get_option('dbem_bookings_currency_decimal_point') ), array('','.'), $price );
 		}
 		//Sort out date/time limits
 		$this->ticket_start = ( !empty($post['ticket_start']) ) ? wp_kses_data($post['ticket_start']):'';
@@ -673,9 +673,9 @@ class EM_Ticket extends EM_Object {
 		if( $this->is_available($ignore_member_restrictions, $ignore_guest_restrictions) ){
 			$return = true;
 		}else{
-			if( get_option('dbem_bookings_tickets_show_unavailable') ){
+			if( $this->get_event()->get_option('dbem_bookings_tickets_show_unavailable') ){
 				$return =  true;
-				if( $this->members && !get_option('dbem_bookings_tickets_show_member_tickets') ){
+				if( $this->members && !$this->get_event()->get_option('dbem_bookings_tickets_show_member_tickets') ){
 					$return = false;
 				}
 			}
@@ -691,7 +691,7 @@ class EM_Ticket extends EM_Object {
 	 */
 	function get_price($format = false){
 		$price = $this->price;
-		if( get_option('dbem_bookings_tax_auto_add') ){
+		if( $this->get_event()->get_option('dbem_bookings_tax_auto_add') ){
 			$price = $this->get_price_with_tax();
 		}
 		$price = apply_filters('em_ticket_get_price',$price,$this);
@@ -734,7 +734,7 @@ class EM_Ticket extends EM_Object {
 		if( $format ){
 			$digits = strlen(substr(strrchr($price, "."), 1));
 			$precision = ( $digits > 2 ) ? 4 : 2;
-			$price = number_format( $price, $precision, get_option('dbem_bookings_currency_decimal_point','.'), '');
+			$price = number_format( $price, $precision, em_get_option('dbem_bookings_currency_decimal_point','.'), '');
 		}
 		return $price;
 	}
@@ -754,7 +754,7 @@ class EM_Ticket extends EM_Object {
 	function get_available_spaces(){
 		$event_available_spaces = $this->get_event()->get_bookings()->get_available_spaces();
 		$ticket_available_spaces = $this->get_spaces() - $this->get_booked_spaces();
-		if( get_option('dbem_bookings_approval_reserved')){
+		if( $this->get_event()->get_option('dbem_bookings_approval_reserved')){
 		    $ticket_available_spaces = $ticket_available_spaces - $this->get_pending_spaces();
 		}
 		$return = ($ticket_available_spaces <= $event_available_spaces) ? $ticket_available_spaces:$event_available_spaces;
@@ -786,7 +786,7 @@ class EM_Ticket extends EM_Object {
 	function get_booked_spaces( $force_refresh = false ){
 		global $wpdb;
 		if( !array_key_exists($this->event_id, $this->pending_spaces) || $force_refresh ){
-			$status_cond = !get_option('dbem_bookings_approval') ? 'booking_status IN (0,1)' : 'booking_status = 1';
+			$status_cond = !$this->get_event()->get_option('dbem_bookings_approval') ? 'booking_status IN (0,1)' : 'booking_status = 1';
 			$sub_sql = 'SELECT booking_id FROM '.EM_BOOKINGS_TABLE." WHERE event_id=%d AND $status_cond";
 			$sql = 'SELECT SUM(ticket_booking_spaces) FROM '.EM_TICKETS_BOOKINGS_TABLE. " WHERE booking_id IN ($sub_sql) AND ticket_id=%d";
 			$booked_spaces = $wpdb->get_var($wpdb->prepare($sql, $this->event_id, $this->ticket_id));
@@ -1063,7 +1063,7 @@ class EM_Ticket extends EM_Object {
 	 */
 	function get_spaces_options($zero_value = true, $default_value = 0){
 		$available_spaces = $this->get_available_spaces();
-		$max_spaces = get_option('dbem_bookings_form_max');
+		$max_spaces = $this->get_event()->get_option('dbem_bookings_form_max');
 		if( EM_Bookings::$disable_restrictions && $max_spaces > $available_spaces ) $available_spaces = $max_spaces;
 		if( $this->is_available() ) {
 		    $min_spaces = $this->get_spaces_minimum();
@@ -1201,8 +1201,8 @@ class EM_Ticket extends EM_Object {
 	 * Can the user manage this event?
 	 */
 	function can_manage( $owner_capability = false, $admin_capability = false, $user_to_check = false ){
-		if( $this->ticket_id == '' && !is_user_logged_in() && get_option('dbem_events_anonymous_submissions') ){
-			$user_to_check = get_option('dbem_events_anonymous_user');
+		if( $this->ticket_id == '' && !is_user_logged_in() && $this->get_event()->get_option('dbem_events_anonymous_submissions') ){
+			$user_to_check = $this->get_event()->get_option('dbem_events_anonymous_user');
 		}
 		return $this->get_event()->can_manage('manage_bookings','manage_others_bookings', $user_to_check);
 	}

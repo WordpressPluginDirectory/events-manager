@@ -1,5 +1,9 @@
 <?php
 //Function composing the options subpanel
+use EM\Archetypes;
+use EM\Archetypes_Admin;
+use EM\Exception;
+
 function em_options_save(){
 	global $EM_Notices; /* @var EM_Notices $EM_Notices */
 	/*
@@ -9,75 +13,90 @@ function em_options_save(){
 	if( current_user_can('manage_options') && !empty($_POST['em-submitted']) && check_admin_referer('events-manager-options','_wpnonce') ){
 		//Build the array of options here
 		EM_Formats::remove_filters(true); // just in case
-		
-		// fix some known empty issues, such as phone multiselectors
-		if ( !isset($_POST['dbem_phone_countries_include']) ) $_POST['dbem_phone_countries_include'] = [];
-		if ( !isset($_POST['dbem_phone_countries_exclude']) ) $_POST['dbem_phone_countries_exclude'] = [];
-		
-		foreach ($_POST as $postKey => $postValue){
-			if( $postKey != 'dbem_data' && substr($postKey, 0, 5) == 'dbem_' ){
-				//TODO some more validation/reporting
-				$numeric_options = array('dbem_locations_default_limit','dbem_events_default_limit');
-				if( in_array($postKey, array('dbem_bookings_notify_admin','dbem_event_submitted_email_admin','dbem_js_limit_events_form','dbem_js_limit_search','dbem_js_limit_general','dbem_css_limit_include','dbem_css_limit_exclude','dbem_search_form_geo_distance_options')) ){ $postValue = str_replace(' ', '', $postValue); } //clean up comma separated emails, no spaces needed
-				if( in_array($postKey,$numeric_options) && !is_numeric($postValue) ){
-					//Do nothing, keep old setting.
-				}elseif( ($postKey == 'dbem_category_default_color' || $postKey == 'dbem_tag_default_color') && !sanitize_hex_color($postValue) ){
-					$EM_Notices->add_error( sprintf(esc_html_x('Colors must be in a valid %s format, such as #FF00EE.', 'hex format', 'events-manager'), '<a href="http://en.wikipedia.org/wiki/Web_colors">hex</a>').' '. esc_html__('This setting was not changed.', 'events-manager'), true);					
-				}elseif( $postKey == 'dbem_oauth' && is_array($postValue) ){
-					foreach($postValue as $postValue_key=>$postValue_val){
-						$postValue_val = em_options_save_kses_deep( $postValue_val );
-						EM_Options::set($postValue_key, wp_unslash($postValue_val), 'dbem_oauth');
-					}
-				}else{
-					//TODO slashes being added?
-					if( is_array($postValue) ){
-					    foreach($postValue as $postValue_key=>$postValue_val) $postValue[$postValue_key] = wp_unslash($postValue_val);
+
+		// only run this if saving main CPT options
+		if ( defined('EM_SETTINGS_ARCHETYPES_MERGED') && EM_SETTINGS_ARCHETYPES_MERGED || Archetypes::get_current() === Archetypes::$event['cpt'] ) {
+			// fix some known empty issues, such as phone multiselectors
+			if ( !isset($_POST['dbem_phone_countries_include']) ) $_POST['dbem_phone_countries_include'] = [];
+			if ( !isset($_POST['dbem_phone_countries_exclude']) ) $_POST['dbem_phone_countries_exclude'] = [];
+
+			foreach ($_POST as $postKey => $postValue){
+				if( $postKey != 'dbem_data' && substr($postKey, 0, 5) == 'dbem_' ){
+					//TODO some more validation/reporting
+					$numeric_options = array('dbem_locations_default_limit','dbem_events_default_limit');
+					if( in_array($postKey, array('dbem_bookings_notify_admin','dbem_event_submitted_email_admin','dbem_js_limit_events_form','dbem_js_limit_search','dbem_js_limit_general','dbem_css_limit_include','dbem_css_limit_exclude','dbem_search_form_geo_distance_options')) ){ $postValue = str_replace(' ', '', $postValue); } //clean up comma separated emails, no spaces needed
+					if( in_array($postKey,$numeric_options) && !is_numeric($postValue) ){
+						//Do nothing, keep old setting.
+					}elseif( ($postKey == 'dbem_category_default_color' || $postKey == 'dbem_tag_default_color') && !sanitize_hex_color($postValue) ){
+						$EM_Notices->add_error( sprintf(esc_html_x('Colors must be in a valid %s format, such as #FF00EE.', 'hex format', 'events-manager'), '<a href="http://en.wikipedia.org/wiki/Web_colors">hex</a>').' '. esc_html__('This setting was not changed.', 'events-manager'), true);
+					}elseif( $postKey == 'dbem_oauth' && is_array($postValue) ){
+						foreach($postValue as $postValue_key=>$postValue_val){
+							$postValue_val = em_options_save_kses_deep( $postValue_val );
+							EM_Options::set($postValue_key, wp_unslash($postValue_val), 'dbem_oauth');
+						}
 					}else{
-					    $postValue = wp_unslash($postValue);
+						//TODO slashes being added?
+						if( is_array($postValue) ){
+						    foreach($postValue as $postValue_key=>$postValue_val) $postValue[$postValue_key] = wp_unslash($postValue_val);
+						}else{
+						    $postValue = wp_unslash($postValue);
+						}
+						$postValue = em_options_save_kses_deep( $postValue );
+						update_option($postKey, $postValue);
 					}
-					$postValue = em_options_save_kses_deep( $postValue );
-					update_option($postKey, $postValue);
-				}
-			}elseif( $postKey == 'dbem_data' && is_array($postValue) ){
-				foreach( $postValue as $postK => $postV ){
-					//TODO slashes being added?
-					if( is_array($postV) ){
-						foreach($postV as $postValue_key=>$postValue_val) $postV[$postValue_key] = wp_unslash($postValue_val);
-					}else{
-						$postV = wp_unslash($postV);
+				}elseif( $postKey == 'dbem_data' && is_array($postValue) ){
+					foreach( $postValue as $postK => $postV ){
+						//TODO slashes being added?
+						if( is_array($postV) ){
+							foreach($postV as $postValue_key=>$postValue_val) $postV[$postValue_key] = wp_unslash($postValue_val);
+						}else{
+							$postV = wp_unslash($postV);
+						}
+						$postV = em_options_save_kses_deep( $postV );
+						EM_Options::set( $postK, $postV );
 					}
-					$postV = em_options_save_kses_deep( $postV );
-					EM_Options::set( $postK, $postV );
 				}
 			}
-		}
-		
-		// check formatting mode and optimize autoloading of formats from wp_options, first we make it all auto-loadable
-		global $wpdb;
-		$formats_to_autoload = EM_Formats::get_default_formats( true );
-		array_walk($formats_to_autoload, 'sanitize_key');
-		$wpdb->query("UPDATE {$wpdb->options} SET autoload='yes' WHERE option_name IN ('". implode("','", $formats_to_autoload) ."')");
-		if( get_option('dbem_advanced_formatting') < 2 ){
-			// now we make only the ones that we're loading from files directly non-autoloadable
-			$formats_to_not_autoload = EM_Formats::get_default_formats();
-			array_walk($formats_to_not_autoload, 'sanitize_key');
-			$wpdb->query("UPDATE {$wpdb->options} SET autoload='no' WHERE option_name IN ('". implode("','", $formats_to_not_autoload) ."')");
-		}// if set to 2 then we're just autoloading everything anyway
-		if( get_option('dbem_advanced_formatting') == 1 ){
-			$wpdb->query("UPDATE {$wpdb->options} SET autoload='yes' WHERE option_name='dbem_advanced_formatting_modes'");
-		}else{
-			$wpdb->query("UPDATE {$wpdb->options} SET autoload='no' WHERE option_name='dbem_advanced_formatting_modes'");
-		}
-		
-		//set capabilities
-		if( !empty($_POST['em_capabilities']) && is_array($_POST['em_capabilities']) && (!is_multisite() || is_multisite() && em_wp_is_super_admin()) ){
-			global $em_capabilities_array, $wp_roles;
-			if( is_multisite() && is_network_admin() && $_POST['dbem_ms_global_caps'] == 1 ){
-			    //apply_caps_to_blog
-				global $current_site,$wpdb;
-				$blog_ids = $wpdb->get_col('SELECT blog_id FROM '.$wpdb->blogs.' WHERE site_id='.$current_site->id);
-				foreach($blog_ids as $blog_id){
-					switch_to_blog($blog_id);
+
+			// check formatting mode and optimize autoloading of formats from wp_options, first we make it all auto-loadable
+			global $wpdb;
+			$formats_to_autoload = EM_Formats::get_default_formats( true );
+			array_walk($formats_to_autoload, 'sanitize_key');
+			$wpdb->query("UPDATE {$wpdb->options} SET autoload='yes' WHERE option_name IN ('". implode("','", $formats_to_autoload) ."')");
+			if( get_option('dbem_advanced_formatting') < 2 ){
+				// now we make only the ones that we're loading from files directly non-autoloadable
+				$formats_to_not_autoload = EM_Formats::get_default_formats();
+				array_walk($formats_to_not_autoload, 'sanitize_key');
+				$wpdb->query("UPDATE {$wpdb->options} SET autoload='no' WHERE option_name IN ('". implode("','", $formats_to_not_autoload) ."')");
+			}// if set to 2 then we're just autoloading everything anyway
+			if( get_option('dbem_advanced_formatting') == 1 ){
+				$wpdb->query("UPDATE {$wpdb->options} SET autoload='yes' WHERE option_name='dbem_advanced_formatting_modes'");
+			}else{
+				$wpdb->query("UPDATE {$wpdb->options} SET autoload='no' WHERE option_name='dbem_advanced_formatting_modes'");
+			}
+
+			//set capabilities
+			if( !empty($_POST['em_capabilities']) && is_array($_POST['em_capabilities']) && (!is_multisite() || is_multisite() && em_wp_is_super_admin()) ){
+				global $em_capabilities_array, $wp_roles;
+				if( is_multisite() && is_network_admin() && $_POST['dbem_ms_global_caps'] == 1 ){
+				    //apply_caps_to_blog
+					global $current_site,$wpdb;
+					$blog_ids = $wpdb->get_col('SELECT blog_id FROM '.$wpdb->blogs.' WHERE site_id='.$current_site->id);
+					foreach($blog_ids as $blog_id){
+						switch_to_blog($blog_id);
+					    //normal blog role application
+						foreach( $wp_roles->role_objects as $role_name => $role ){
+							foreach( array_keys($em_capabilities_array) as $capability){
+								if( !empty($_POST['em_capabilities'][$role_name][$capability]) ){
+									$role->add_cap($capability);
+								}else{
+									$role->remove_cap($capability);
+								}
+							}
+						}
+						restore_current_blog();
+					}
+				}elseif( !is_network_admin() ){
 				    //normal blog role application
 					foreach( $wp_roles->role_objects as $role_name => $role ){
 						foreach( array_keys($em_capabilities_array) as $capability){
@@ -86,18 +105,6 @@ function em_options_save(){
 							}else{
 								$role->remove_cap($capability);
 							}
-						}
-					}
-					restore_current_blog();
-				}
-			}elseif( !is_network_admin() ){
-			    //normal blog role application
-				foreach( $wp_roles->role_objects as $role_name => $role ){
-					foreach( array_keys($em_capabilities_array) as $capability){
-						if( !empty($_POST['em_capabilities'][$role_name][$capability]) ){
-							$role->add_cap($capability);
-						}else{
-							$role->remove_cap($capability);
 						}
 					}
 				}
@@ -112,6 +119,7 @@ function em_options_save(){
 			$referrer_array = explode('#', $referrer);
 			$referrer = esc_url_raw($referrer_array[0] . '#' . $_REQUEST['tab_path']);
 		}
+		$referrer = apply_filters('em_options_save_redirect', $referrer);
 		wp_safe_redirect($referrer);
 		exit();
 	}
@@ -555,10 +563,35 @@ function em_admin_options_page() {
 	}else{
 	    $general_tab_link = $pages_tab_link = $formats_tab_link = $bookings_tab_link = $emails_tab_link = '';
 	}
+	$current_archetype = ($_REQUEST['post_type'] ?? '') === Archetypes::$event['cpt'] ? 'all' : Archetypes::get_current();
 	?>
-	<style type="text/css">.postbox h3 { cursor:pointer; }</style>
-	<div class="wrap <?php if(empty($tabs_enabled)) echo 'tabs-active' ?>">
+	<style type="text/css">
+		.postbox h3 { cursor:pointer; }
+		<?php foreach ( Archetypes::$types as $type => $archetype ) : ?>
+		.wp-admin #em-options-page[data-archetype="<?php echo esc_attr( $type ); ?>"] .em-archetype-options > .em-archetype-option[data-archetype="<?php echo esc_attr( $type ); ?>"] {
+			display: block;
+			visibility: visible;
+		}
+		<?php endforeach; ?>
+	</style>
+	<div id="em-options-page" class="wrap <?php if(empty($tabs_enabled)) echo 'tabs-active' ?>" data-archetype="<?php echo $current_archetype; ?>" data-archetype-mode="<?php echo defined('EM_SETTINGS_ARCHETYPES_MERGED') && EM_SETTINGS_ARCHETYPES_MERGED ? 'merged' : 'single'; ?>">
 		<h1 id="em-options-title"><?php _e ( 'Event Manager Options', 'events-manager'); ?></h1>
+		<?php if ( !empty( Archetypes::$types ) ) : $i = 0; ?>
+		<ul class="subsubsub em-archetype-tabs">
+			<li class="archetype-view-all"><?php echo esc_html( sprintf( __('%s Options', 'events-manager'), __('Archetype', 'events-manager') ) ); ?>:
+				<a data-archetype="all" class="current">
+					<?php echo esc_html( sprintf( __('%s Options', 'events-manager'), __('All', 'events-manager') ) ); ?>
+					<em><?php echo ' (' . esc_html__('Default', 'events-manager') . ' - ' . Archetypes::$event['label'] . ')'; ?></em>
+				</a> |
+			</li>
+			<?php foreach ( Archetypes::$types as $type => $archetype ) : $i++ ?>
+				<li class="archetype-view-<?php echo esc_attr($type); ?>">
+					<a data-archetype="<?php echo esc_attr($type); ?>"><?php echo esc_attr($archetype['label']); ?></a>
+					<?php if ( $i < count( Archetypes::$types ) ) : ?>|<?php endif; ?>
+				</li>
+			<?php endforeach; ?>
+		</ul>
+		<?php endif; ?>
 		<h2 class="nav-tab-wrapper">
 			<a href="<?php echo $general_tab_link; ?>#general" id="em-menu-general" class="nav-tab nav-tab-active"><?php _e('General','events-manager'); ?></a>
 			<a href="<?php echo $pages_tab_link; ?>#pages" id="em-menu-pages" class="nav-tab"><?php _e('Pages','events-manager'); ?></a>
@@ -576,6 +609,14 @@ function em_admin_options_page() {
 			}
 			?>
 		</h2>
+		<div class="em-options-archetypes-description">
+			<span class="em-icon em-icon-info"></span>
+			<div>
+				<p><?php esc_html_e('You are currently viewing options for an archetype. These can override the default options with the follwoing available options.', 'events-manager'); ?></p>
+				<p><?php echo sprintf( esc_html__('If you want to edit general options for Events Manager, visit the main %s.', 'events-manager'), '<a href="'. em_admin_url( EM_POST_TYPE_EVENT ) .'&page=events-manager-options">'. esc_html__('Settings Page', 'events-manager') .'</a>' ); ?></p>
+				<p><strong>Archetypes are in beta</strong> - if you have suggestions for useful overrideale options that aren't here, let us know in our support forums!</p>
+			</div>
+		</div>
 		<form id="em-options-form" method="post" action="">
 			<div class="metabox-holder">         
 			<!-- // TODO Move style in css -->
@@ -634,9 +675,9 @@ function em_admin_options_page() {
 			*/ ?>
 
 			<p class="submit">
-				<input type="submit" class="button-primary" name="Submit" value="<?php esc_attr_e( 'Save Changes', 'events-manager'); ?>" />
-				<input type="hidden" name="em-submitted" value="1" />
-				<input type="hidden" name="_wpnonce" value="<?php echo wp_create_nonce('events-manager-options'); ?>" />
+				<input type="submit" class="button-primary" name="Submit" value="<?php esc_attr_e( 'Save Changes', 'events-manager'); ?>">
+				<input type="hidden" name="em-submitted" value="1">
+				<input type="hidden" name="_wpnonce" value="<?php echo wp_create_nonce('events-manager-options'); ?>" <?php if ( $current_archetype !== 'all' ) : ?>disabled<?php endif; ?>>
 			</p>  
 			
 			</div> <!-- .metabox-sortables -->

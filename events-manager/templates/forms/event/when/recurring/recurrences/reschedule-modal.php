@@ -4,7 +4,7 @@
 /* @var int $type */
 /* @var int $i */
 /* @var EM\Recurrences\Recurrence_Set $Recurrence_Set */
-$can_cancel = get_option('dbem_event_status_enabled') && array_key_exists( 0, EM_Event::get_active_statuses() );
+$can_cancel = em_get_option('dbem_event_status_enabled') && array_key_exists( 0, EM_Event::get_active_statuses() );
 ?>
 <div class="<?php em_template_classes('recurrence-set-reshedule-modal', 'modal'); ?> only-include-type">
 	<div class="em-modal-popup">

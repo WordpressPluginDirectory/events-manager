@@ -23,7 +23,7 @@ $reschedule_warnings = !empty($EM_Event->event_id) && $EM_Event->is_recurring( t
 		<div class="event-rsvp-options-tickets <?php if( $reschedule_warnings ) echo 'em-recurrence-reschedule'; ?>">
 			<?php
 			//output title
-			if( get_option('dbem_bookings_tickets_single') && count($EM_Tickets->tickets) == 1 ){
+			if( em_get_option('dbem_bookings_tickets_single') && count($EM_Tickets->tickets) == 1 ){
 				?>
 				<h4><?php esc_html_e('Ticket Options','events-manager'); ?></h4>
 				<?php
@@ -47,12 +47,12 @@ $reschedule_warnings = !empty($EM_Event->event_id) && $EM_Event->is_recurring( t
 			}
 			$container_classes = array();
 			if( $reschedule_warnings && empty($_REQUEST['recreate_tickets']) ) $container_classes[] = 'reschedule-hidden';
-			if( get_option('dbem_bookings_tickets_ordering') ) $container_classes[] = 'em-tickets-sortable';
+			if( em_get_option('dbem_bookings_tickets_ordering') ) $container_classes[] = 'em-tickets-sortable';
 			?>
 			<div id="em-tickets-form" class="em-tickets-form <?php echo implode(' ', $container_classes); ?>">
 			<?php
 			//output ticket options
-			if( get_option('dbem_bookings_tickets_single') && count($EM_Tickets->tickets) == 1 ){
+			if( em_get_option('dbem_bookings_tickets_single') && count($EM_Tickets->tickets) == 1 ){
 				$col_count = 1;
 				$EM_Ticket = $EM_Tickets->get_first();
 				include( em_locate_template('forms/ticket-form.php') ); //in future we'll be accessing forms/event/bookings-ticket-form.php directly
@@ -116,12 +116,12 @@ $reschedule_warnings = !empty($EM_Event->event_id) && $EM_Event->is_recurring( t
 										<span class="ticket_max"><?php echo ( !empty($EM_Ticket->max) ) ? esc_html($EM_Ticket->max):'-'; ?></span>
 									</td>
 									<td class="ticket-time">
-										<span class="ticket_start ticket-dates-from-normal"><?php echo ( !empty($EM_Ticket->start) ) ? $EM_Ticket->start()->format(get_option('dbem_date_format')):''; ?></span>
+										<span class="ticket_start ticket-dates-from-normal"><?php echo ( !empty($EM_Ticket->start) ) ? $EM_Ticket->start()->format(em_get_option('dbem_date_format')):''; ?></span>
 										<span class="ticket_start_recurring_days ticket-dates-from-recurring"><?php if( !empty($EM_Ticket->ticket_meta['recurrences']) ) echo $EM_Ticket->ticket_meta['recurrences']['start_days']; ?></span>
 										<span class="ticket_start_recurring_days_text ticket-dates-from-recurring <?php if( !empty($EM_Ticket->ticket_meta['recurrences']) && !is_numeric($EM_Ticket->ticket_meta['recurrences']['start_days']) ) echo 'hidden'; ?>"><?php _e('day(s)','events-manager'); ?></span>
 										<span class="ticket_start_time"><?php echo ( !empty($EM_Ticket->start) ) ? $EM_Ticket->start()->format( em_get_hour_format() ):''; ?></span>
 										<br />
-										<span class="ticket_end ticket-dates-from-normal"><?php echo ( !empty($EM_Ticket->end) ) ? $EM_Ticket->end()->format(get_option('dbem_date_format')):''; ?></span>
+										<span class="ticket_end ticket-dates-from-normal"><?php echo ( !empty($EM_Ticket->end) ) ? $EM_Ticket->end()->format(em_get_option('dbem_date_format')):''; ?></span>
 										<span class="ticket_end_recurring_days ticket-dates-from-recurring"><?php if( !empty($EM_Ticket->ticket_meta['recurrences']) ) echo $EM_Ticket->ticket_meta['recurrences']['end_days']; ?></span>
 										<span class="ticket_end_recurring_days_text ticket-dates-from-recurring <?php if( !empty($EM_Ticket->ticket_meta['recurrences']) && !is_numeric($EM_Ticket->ticket_meta['recurrences']['end_days']) ) echo 'hidden'; ?>"><?php _e('day(s)','events-manager'); ?></span>
 										<span class="ticket_end_time"><?php echo ( !empty($EM_Ticket->end) ) ? $EM_Ticket->end()->format( em_get_hour_format() ):''; ?></span>
@@ -167,7 +167,7 @@ $reschedule_warnings = !empty($EM_Event->event_id) && $EM_Event->is_recurring( t
 			<?php endif; ?>
 		</div>
 		<div id="em-booking-options" class="em-booking-options">
-		<?php if( !get_option('dbem_bookings_tickets_single') || count($EM_Ticket->get_event()->get_tickets()->tickets) > 1 ): ?>
+		<?php if( !em_get_option('dbem_bookings_tickets_single') || count($EM_Ticket->get_event()->get_tickets()->tickets) > 1 ): ?>
 		<h4><?php esc_html_e('Event Options','events-manager'); ?></h4>
 		<p>
 			<label><?php esc_html_e('Total Spaces','events-manager'); ?></label>

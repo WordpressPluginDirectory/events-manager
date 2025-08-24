@@ -5,7 +5,7 @@
 		<?php echo esc_html($args['town_label']); ?>
 	</label>
 	<select name="town" class="em-search-town em-selectize" id="em-search-town-<?php echo absint($args['id']); ?>">
-		<option value=''><?php echo esc_html(get_option('dbem_search_form_towns_label')); ?></option>
+		<option value=''><?php echo esc_html(em_get_option('dbem_search_form_towns_label')); ?></option>
 		<?php
 		global $wpdb;
 		$em_towns = $cond = array();

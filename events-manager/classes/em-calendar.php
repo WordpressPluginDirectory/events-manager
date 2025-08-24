@@ -35,7 +35,7 @@ class EM_Calendar extends EM_Object {
 			$calendar_array['format'] = $args['format'];
 		} else {
 			// get the default format, future iterations will also deduce the format for different display styles.
-			$calendar_array['format'] = get_option('dbem_calendar_large_pill_format');
+			$calendar_array['format'] = em_get_option('dbem_calendar_large_pill_format');
 		}
 		$timezone = $args['calendar_timezone'] ?: false;
 
@@ -91,7 +91,7 @@ class EM_Calendar extends EM_Object {
 		$long_events = $args['long_events'];
 		$limit = $args['limit']; //limit arg will be used per day and not for events search
 
-		$start_of_week = get_option('start_of_week');
+		$start_of_week = em_get_option('start_of_week');
 
 		if( !(is_numeric($month) && $month <= 12 && $month > 0) )   {
 			$month = date('m', current_time('timestamp'));
@@ -189,9 +189,9 @@ class EM_Calendar extends EM_Object {
 			'small' => array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'),
 		    'large' => array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'),
 		);
-        if( get_option('dbem_full_calendar_abbreviated_weekdays') ) $weekdays['large'] = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
-		if( get_option('dbem_small_calendar_abbreviated_weekdays') ) $weekdays['small'] = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
-		$day_initials_lengths = array('large' => get_option('dbem_full_calendar_initials_length'), 'small' => get_option('dbem_small_calendar_initials_length'));
+        if( em_get_option('dbem_full_calendar_abbreviated_weekdays') ) $weekdays['large'] = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+		if( em_get_option('dbem_small_calendar_abbreviated_weekdays') ) $weekdays['small'] = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+		$day_initials_lengths = array('large' => em_get_option('dbem_full_calendar_initials_length'), 'small' => em_get_option('dbem_small_calendar_initials_length'));
 
 		foreach( $day_initials_lengths as $size => $day_initials_length ){
 			// re-order weekdays for start day of week being first in array
@@ -298,8 +298,8 @@ class EM_Calendar extends EM_Object {
 		$args['limit'] = $limit;
 
 		// prepare to output
-		$event_title_format = get_option('dbem_small_calendar_event_title_format');
-		$event_title_separator_format = get_option('dbem_small_calendar_event_title_separator');
+		$event_title_format = em_get_option('dbem_small_calendar_event_title_format');
+		$event_title_separator_format = em_get_option('dbem_small_calendar_event_title_separator');
 
 		$eventful_days= array();
 		$eventful_days_count = array();
@@ -309,7 +309,7 @@ class EM_Calendar extends EM_Object {
 				$event = apply_filters('em_calendar_output_loop_start', $event);
 				// first, we will ignore any past events that are still loaded within the month (these would be 'earlier today')
 				if( $args['scope'] === 'future' ){
-					$event_cutoff = get_option('dbem_events_current_are_past') ? $event['event_start']:$event['event_end']; // remember, this is UTC, not local!
+					$event_cutoff = em_get_option('dbem_events_current_are_past') ? $event['event_start']:$event['event_end']; // remember, this is UTC, not local!
 					$EM_DateTime = new EM_DateTime($event_cutoff, 'UTC');
 					if( $scope_datetime_start > $EM_DateTime ){
 						continue;
@@ -365,8 +365,8 @@ class EM_Calendar extends EM_Object {
 		$day_link_args = self::get_query_args( array_intersect_key($original_args, EM_Events::get_post_search($args, true) ));
 		if( !empty($day_link_args['limit']) ) unset($day_link_args['limit']);
 		//get event link
-		if( get_option("dbem_events_page") > 0 ){
-			$event_page_link = get_permalink(get_option("dbem_events_page")); //PAGE URI OF EM
+		if( em_get_option("dbem_events_page") > 0 ){
+			$event_page_link = get_permalink(em_get_option("dbem_events_page")); //PAGE URI OF EM
 		}else{
 			if( $wp_rewrite->using_permalinks() ){
 				$event_page_link = trailingslashit(home_url()).EM_POST_TYPE_EVENT_SLUG.'/'; //don't use EM_URI here, since ajax calls this before EM_URI is defined.
@@ -384,14 +384,14 @@ class EM_Calendar extends EM_Object {
 					if( !$limit || count($events_titles) < $limit ){
 						$events_titles[] = $event->output($event_title_format);
 					}else{
-						$events_titles[] = get_option('dbem_display_calendar_events_limit_msg');
+						$events_titles[] = em_get_option('dbem_display_calendar_events_limit_msg');
 						break;
 					}
 				}
 				$calendar_array['cells'][$day_key]['link_title'] = implode( $event_title_separator_format, $events_titles);
 
 				//Get the link to this calendar day
-				if( $eventful_days_count[$day_key] > 1 || !get_option('dbem_calendar_direct_links')  ){
+				if( $eventful_days_count[$day_key] > 1 || !em_get_option('dbem_calendar_direct_links')  ){
 					if( $wp_rewrite->using_permalinks() && !defined('EM_DISABLE_PERMALINKS') ){
 						$calendar_array['cells'][$day_key]['link'] = trailingslashit($event_page_link_parts[0]).$day_key."/";
 						if( !empty($event_page_link_parts[1]) ) $calendar_array['cells'][$day_key]['link'] .= '?' . $event_page_link_parts[1];
@@ -479,7 +479,7 @@ class EM_Calendar extends EM_Object {
 
 	public static function output($base_args = array(), $wrapper = true) {
 		//Let month and year REQUEST override for non-JS users
-		$base_args['limit'] = !empty($base_args['limit']) ? $base_args['limit'] : get_option('dbem_display_calendar_events_limit'); //limit arg will be used per day and not for events search
+		$base_args['limit'] = !empty($base_args['limit']) ? $base_args['limit'] : em_get_option('dbem_display_calendar_events_limit'); //limit arg will be used per day and not for events search
 		if( !empty($_REQUEST['mo']) || !empty($base_args['mo']) ){
 			$base_args['month'] = ($_REQUEST['mo']) ? $_REQUEST['mo']:$base_args['mo'];
 		}
@@ -710,7 +710,7 @@ class EM_Calendar extends EM_Object {
 		$defaults = array(
 			'recurring' => false, //we don't initially look for recurring events only events and recurrences of recurring events
 			//'full' => 0, //Will display a full calendar with event names
-			'calendar_size' => get_option('dbem_calendar_size', 'auto'),
+			'calendar_size' => em_get_option('dbem_calendar_size', 'auto'),
 			'long_events' => 0, //Events that last longer than a day
 			'scope' => 'all',
 			'status' => 1, //approved events only
@@ -719,10 +719,10 @@ class EM_Calendar extends EM_Object {
 			'country' => false,
 			'region' => false,
 			'blog' => get_current_blog_id(),
-			'orderby' => get_option('dbem_display_calendar_orderby'),
-			'order' => get_option('dbem_display_calendar_order'),
+			'orderby' => em_get_option('dbem_display_calendar_orderby'),
+			'order' => em_get_option('dbem_display_calendar_order'),
 			'number_of_weeks' => false, //number of weeks to be displayed in the calendar
-		    'limit' => get_option('dbem_display_calendar_events_limit'),
+		    'limit' => em_get_option('dbem_display_calendar_events_limit'),
 			'post_id' => false,
 			// calendar-specific overrides
 			'view' => 'calendar',
@@ -732,8 +732,8 @@ class EM_Calendar extends EM_Object {
 			'has_search' => false, // by default no search
 			'css_classes' => false,
 			'calendar_event_style' => 'pill', // default is pill view
-			'calendar_preview_mode' => get_option('dbem_calendar_preview_mode'), //modal, tooltips, none
-			'calendar_preview_mode_date' => get_option('dbem_calendar_preview_mode_date'), //modal, none
+			'calendar_preview_mode' => em_get_option('dbem_calendar_preview_mode'), //modal, tooltips, none
+			'calendar_preview_mode_date' => em_get_option('dbem_calendar_preview_mode_date'), //modal, none
 			'calendar_nav_nofollow' => false,
 			'calendar_nav' => true,
 			'calendar_header' => 'normal',
@@ -764,9 +764,9 @@ class EM_Calendar extends EM_Object {
 		}
 
 		// decide long events default based on size
-		$defaults['long_events'] = !isset($array['calendar_size']) || $array['calendar_size'] === 'large' ? get_option('dbem_full_calendar_long_events') : get_option('dbem_small_calendar_long_events');
+		$defaults['long_events'] = !isset($array['calendar_size']) || $array['calendar_size'] === 'large' ? em_get_option('dbem_full_calendar_long_events') : em_get_option('dbem_small_calendar_long_events');
 		if( !empty($array['calendar_size']) ){
-			$defaults['long_events'] = $array['calendar_size'] == 'small' ? get_option('dbem_small_calendar_long_events') : get_option('dbem_full_calendar_long_events');
+			$defaults['long_events'] = $array['calendar_size'] == 'small' ? em_get_option('dbem_small_calendar_long_events') : em_get_option('dbem_full_calendar_long_events');
 		}
 		//specific functionality
 		if(is_multisite()){

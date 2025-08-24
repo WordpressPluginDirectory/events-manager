@@ -19,7 +19,7 @@ function bp_em_format_notifications( $action, $item_id, $secondary_item_id, $tot
 	switch ( $action ) {
 		case 'pending_booking':
 			//Count pending bookings
-			if( get_option('dbem_bookings_approval')){ 
+			if( em_get_option('dbem_bookings_approval')){ 
 				if ( $total_items > 1 ) {
 					return '<a href="' . $bp->loggedin_user->domain . $bp->events->slug . '/my-bookings/" title="' . __( 'My Bookings', 'events-manager') . '">' . __('You have a pending booking','events-manager'). '</a>';
 				} else {
@@ -70,9 +70,9 @@ add_action( 'xprofile_screen_display_profile', 'bp_em_remove_screen_notification
 function bp_em_add_booking_notification($result, $EM_Booking){
 	global $bp;
 	if( !function_exists('bp_notifications_add_notification') ) return $result; //no need if notifications are disabled
-	if( get_option('dbem_bookings_approval') && $EM_Booking->get_status() == 0 ){
+	if( em_get_option('dbem_bookings_approval') && $EM_Booking->get_status() == 0 ){
 		$action = 'pending_booking';
-	}elseif( $EM_Booking->get_status() == 1 || (get_option('dbem_bookings_approval') && $EM_Booking->get_status() == 0) ){
+	}elseif( $EM_Booking->get_status() == 1 || (em_get_option('dbem_bookings_approval') && $EM_Booking->get_status() == 0) ){
 		$action = 'confirmed_booking';
 	}elseif( $EM_Booking->get_status() == 3 ){
 		$action = 'cancelled_booking';

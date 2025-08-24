@@ -99,7 +99,7 @@ class BP_EM_Component extends BP_Component {
 			'position' => 10
 		);
 		
-		if( get_option('dbem_rsvp_enabled') ) { // Only if bookings enabled
+		if( em_get_option('dbem_rsvp_enabled') ) { // Only if bookings enabled
 			$sub_nav[] = array(
 				'name' => __( 'Events I\'m Attending', 'events-manager'),
 				'slug' => 'attending',
@@ -123,7 +123,7 @@ class BP_EM_Component extends BP_Component {
 			);
 		}
 		
-		if( $can_manage_locations && get_option('dbem_locations_enabled') ){
+		if( $can_manage_locations && em_get_option('dbem_locations_enabled') ){
 			$sub_nav[] = array(
 				'name' => __( 'My Locations', 'events-manager'),
 				'slug' => 'my-locations',
@@ -135,7 +135,7 @@ class BP_EM_Component extends BP_Component {
 			);
 		}
 		
-		if( $can_manage_bookings && get_option('dbem_rsvp_enabled') ){
+		if( $can_manage_bookings && em_get_option('dbem_rsvp_enabled') ){
 			$sub_nav[] = array(
 				'name' => __( 'My Event Bookings', 'events-manager'),
 				'slug' => 'my-bookings',
@@ -224,7 +224,7 @@ class BP_EM_Component extends BP_Component {
 				);
 			}
 			
-			if( $can_manage_locations && get_option('dbem_locations_enabled') ){
+			if( $can_manage_locations && em_get_option('dbem_locations_enabled') ){
 				$wp_admin_nav[] = array(
 					'parent' => 'my-em-' . $this->id,
 					'id'     => 'my-em-' . $this->id .'-my-locations',
@@ -233,7 +233,7 @@ class BP_EM_Component extends BP_Component {
 				);
 			}
 			
-			if( $can_manage_bookings && get_option('dbem_rsvp_enabled') ){
+			if( $can_manage_bookings && em_get_option('dbem_rsvp_enabled') ){
 				$wp_admin_nav[] = array(
 					'parent' => 'my-em-' . $this->id,
 					'id'     => 'my-em-' . $this->id .'-my-bookings',
@@ -302,7 +302,7 @@ if( !is_admin() || ( defined('DOING_AJAX') && !empty($_REQUEST['is_public'])) ){
 		global $bp;
 	    return $bp->events->link.'my-events/';
 	}
-	if( !get_option('dbem_edit_events_page') ){
+	if( !em_get_option('dbem_edit_events_page') ){
 		add_filter('em_event_get_edit_url','em_bp_rewrite_edit_url',10,2);
 		add_filter('em_get_events_admin_url','em_bp_rewrite_edit_url',10,2);
 	}	
@@ -311,7 +311,7 @@ if( !is_admin() || ( defined('DOING_AJAX') && !empty($_REQUEST['is_public'])) ){
 		global $bp;
 		return $bp->events->link.'my-bookings/?event_id='.$EM_Event->event_id;
 	}
-	if( !get_option('dbem_edit_bookings_page') ){
+	if( !em_get_option('dbem_edit_bookings_page') ){
 		add_filter('em_event_get_bookings_url','em_bp_rewrite_bookings_url',10,2);
 	}
 	
@@ -319,7 +319,7 @@ if( !is_admin() || ( defined('DOING_AJAX') && !empty($_REQUEST['is_public'])) ){
 		global $bp;
 		return $bp->events->link.'my-locations/?action=edit&location_id='.$EM_Location->location_id;
 	}
-	if( !get_option('dbem_edit_locations_page') ){
+	if( !em_get_option('dbem_edit_locations_page') ){
 		add_filter('em_location_get_edit_url','em_bp_rewrite_edit_location_url',10,2);
 	}
 }

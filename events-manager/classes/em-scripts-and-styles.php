@@ -41,11 +41,11 @@ class Scripts_and_Styles {
 		global $wp_query;
 		static::register();
 		$pages = array( //pages which EM needs CSS or JS
-			'events' => get_option('dbem_events_page'),
-			'edit-events' => get_option('dbem_edit_events_page'),
-			'edit-locations' => get_option('dbem_edit_locations_page'),
-			'edit-bookings' => get_option('dbem_edit_bookings_page'),
-			'my-bookings' => get_option('dbem_my_bookings_page')
+			'events' => em_get_option('dbem_events_page'),
+			'edit-events' => em_get_option('dbem_edit_events_page'),
+			'edit-locations' => em_get_option('dbem_edit_locations_page'),
+			'edit-bookings' => em_get_option('dbem_edit_bookings_page'),
+			'my-bookings' => em_get_option('dbem_my_bookings_page')
 		);
 		$pages = apply_filters('em_scripts_and_styles_public_enqueue_pages', $pages);
 		$obj = $wp_query->get_queried_object();
@@ -58,22 +58,22 @@ class Scripts_and_Styles {
 
 		//Decide whether or not to include certain JS files and dependencies
 		$script_deps = array();
-		if( get_option('dbem_js_limit') ){
+		if( em_get_option('dbem_js_limit') ){
 			//determine what script dependencies to include, and which to not include
 			if( is_page($pages) ){
 				$script_deps['jquery'] = 'jquery';
 			}
-			if( (!empty($pages['events']) && is_page($pages['events']) && ( get_option('dbem_events_page_search_form') || (EM_MS_GLOBAL && !get_site_option('dbem_ms_global_events_links', true)) )) || get_option('dbem_js_limit_search') === '0' || in_array($obj_id, explode(',', get_option('dbem_js_limit_search')))  ){
+			if( (!empty($pages['events']) && is_page($pages['events']) && ( em_get_option('dbem_events_page_search_form') || (EM_MS_GLOBAL && !get_site_option('dbem_ms_global_events_links', true)) )) || em_get_option('dbem_js_limit_search') === '0' || in_array($obj_id, explode(',', em_get_option('dbem_js_limit_search')))  ){
 				//events page only needs datepickers
 				$script_deps['jquery-ui-core'] = 'jquery-ui-core';
 				$script_deps['jquery-ui-datepicker'] = 'jquery-ui-datepicker';
 			}
-			if( (!empty($pages['edit-events']) && is_page($pages['edit-events'])) || get_option('dbem_js_limit_events_form') === '0' || in_array($obj_id, explode(',', get_option('dbem_js_limit_events_form'))) ){
+			if( (!empty($pages['edit-events']) && is_page($pages['edit-events'])) || em_get_option('dbem_js_limit_events_form') === '0' || in_array($obj_id, explode(',', em_get_option('dbem_js_limit_events_form'))) ){
 				//submit/edit event pages require
 				$script_deps['jquery-ui-core'] = 'jquery-ui-core';
 				$script_deps['jquery-ui-datepicker'] = 'jquery-ui-datepicker';
 			}
-			if( (!empty($pages['edit-bookings']) && is_page($pages['edit-bookings'])) || get_option('dbem_js_limit_edit_bookings') === '0' || in_array($obj_id, explode(',', get_option('dbem_js_limit_edit_bookings'))) ){
+			if( (!empty($pages['edit-bookings']) && is_page($pages['edit-bookings'])) || em_get_option('dbem_js_limit_edit_bookings') === '0' || in_array($obj_id, explode(',', em_get_option('dbem_js_limit_edit_bookings'))) ){
 				//edit booking pages require a few more ui scripts
 				$script_deps['jquery-ui-core'] = 'jquery-ui-core';
 				$script_deps['jquery-ui-widget'] = 'jquery-ui-widget';
@@ -81,12 +81,12 @@ class Scripts_and_Styles {
 				$script_deps['jquery-ui-sortable'] = 'jquery-ui-sortable';
 				$script_deps['jquery-ui-dialog'] = 'jquery-ui-dialog';
 			}
-			if( !empty($obj->post_type) && ($obj->post_type == EM_POST_TYPE_EVENT || $obj->post_type == EM_POST_TYPE_LOCATION) ){
+			if( in_array( $obj->post_type ?? '', Archetypes::get_cpts() ) ){
 				$script_deps['jquery'] = 'jquery';
 			}
 			//check whether to load our general script or not
 			if( empty($script_deps) ){
-				if( get_option('dbem_js_limit_general') === "0" || in_array($obj_id, explode(',', get_option('dbem_js_limit_general'))) ){
+				if( em_get_option('dbem_js_limit_general') === "0" || in_array($obj_id, explode(',', em_get_option('dbem_js_limit_general'))) ){
 					$script_deps['jquery'] = 'jquery';
 				}
 			}
@@ -111,16 +111,16 @@ class Scripts_and_Styles {
 		// list tables dependencies
 		/*
 		$style_deps = array();
-		if( (!empty($pages['edit-bookings']) && is_page($pages['edit-bookings'])) || get_option('dbem_js_limit_edit_bookings') === '0' || in_array($obj_id, explode(',', get_option('dbem_js_limit_edit_bookings'))) ){
+		if( (!empty($pages['edit-bookings']) && is_page($pages['edit-bookings'])) || em_get_option('dbem_js_limit_edit_bookings') === '0' || in_array($obj_id, explode(',', em_get_option('dbem_js_limit_edit_bookings'))) ){
 			$script_deps[] = 'list-tables';
 			$style_deps[] = 'list-tables';
 		}
 		*/
 		//Now decide on showing the CSS file
-		if( get_option('dbem_css_limit') ){
-			$includes = get_option('dbem_css_limit_include');
-			$excludes = get_option('dbem_css_limit_exclude');
-			if( (!empty($pages) && is_page($pages)) || (!empty($obj->post_type) && in_array($obj->post_type, array(EM_POST_TYPE_EVENT, EM_POST_TYPE_LOCATION))) || $includes === "0" || in_array($obj_id, explode(',', $includes)) ){
+		if( em_get_option('dbem_css_limit') ){
+			$includes = em_get_option('dbem_css_limit_include');
+			$excludes = em_get_option('dbem_css_limit_exclude');
+			if( (!empty($pages) && is_page($pages)) || (!empty($obj->post_type) && in_array($obj->post_type, Archetypes::get_cpts())) || $includes === "0" || in_array($obj_id, explode(',', $includes)) ){
 				$include = true;
 			}
 			if( $excludes === '0' || (!empty($obj_id) && in_array($obj_id, explode(',', $excludes))) ){
@@ -136,12 +136,12 @@ class Scripts_and_Styles {
 
 	public static function inline_enqueue(){
 		// check if we want to override our theme basic styles as per styling options
-		if( get_option('dbem_css_theme') ){
+		if( em_get_option('dbem_css_theme') ){
 			$css = array();
-			if( get_option('dbem_css_theme_font_family') == 1 ) $css[] = '--font-family : inherit;';
-			if( get_option('dbem_css_theme_font_weight') == 1 ) $css[] = '--font-weight : inherit;';
-			if( get_option('dbem_css_theme_font_size') == 1 )   $css[] = '--font-size : 1em;';
-			if( get_option('dbem_css_theme_line_height') == 1 ) $css[] = '--line-height : inherit;';
+			if( em_get_option('dbem_css_theme_font_family') == 1 ) $css[] = '--font-family : inherit;';
+			if( em_get_option('dbem_css_theme_font_weight') == 1 ) $css[] = '--font-weight : inherit;';
+			if( em_get_option('dbem_css_theme_font_size') == 1 )   $css[] = '--font-size : 1em;';
+			if( em_get_option('dbem_css_theme_line_height') == 1 ) $css[] = '--line-height : inherit;';
 			if( !empty($css) ){
 				wp_add_inline_style( 'events-manager', 'body .em { '. implode(' ', $css) .' }' );
 			}
@@ -149,11 +149,11 @@ class Scripts_and_Styles {
 	}
 
 	public static function admin_enqueue( $hook_suffix = false ){
-		if( $hook_suffix == 'post.php' || $hook_suffix === true || (!empty($_GET['page']) && substr($_GET['page'],0,14) == 'events-manager') || (!empty($_GET['post_type']) && in_array($_GET['post_type'], array(EM_POST_TYPE_EVENT,EM_POST_TYPE_LOCATION,'event-recurring'))) ){
+		if( $hook_suffix == 'post.php' || $hook_suffix === true || (!empty($_GET['page']) && substr($_GET['page'],0,14) == 'events-manager') || (!empty($_GET['post_type']) && in_array($_GET['post_type'], Archetypes::get_cpts())) ){
 			if( $hook_suffix == 'post.php' && empty($_GET['post_type']) && !empty($_GET['post']) ){
 				// don't load if the post being edited isn't an EM one
 				$post = get_post($_GET['post']);
-				if( !in_array($post->post_type, array(EM_POST_TYPE_EVENT,EM_POST_TYPE_LOCATION,'event-recurring')) ) return;
+				if( !in_array( $post->post_type, Archetypes::get_cpts() ) ) return;
 			}
 			static::register();
 			wp_enqueue_style( 'wp-color-picker' );
@@ -200,12 +200,12 @@ class Scripts_and_Styles {
 	}
 
 	public static function get_minified_extension_css( $minified = true ) {
-		if( !get_option('dbem_css_minified', false) ) return ''; // force non-minified file for now, because AVAST AVG is giving a false positive and wreaking havoc
+		if( !em_get_option('dbem_css_minified', false) ) return ''; // force non-minified file for now, because AVAST AVG is giving a false positive and wreaking havoc
 		return static::get_minified_extension( $minified );
 	}
 
 	public static function get_minified_extension_js( $minified = true ) {
-		if( !get_option('dbem_js_minified', false) ) return ''; // force non-minified file for now, because AVAST AVG is giving a false positive and wreaking havoc
+		if( !em_get_option('dbem_js_minified', false) ) return ''; // force non-minified file for now, because AVAST AVG is giving a false positive and wreaking havoc
 		return static::get_minified_extension( $minified );
 	}
 
@@ -232,11 +232,11 @@ class Scripts_and_Styles {
 		$em_localized_js = array(
 			'ajaxurl' => admin_url('admin-ajax.php'),
 			'locationajaxurl' => admin_url('admin-ajax.php?action=locations_search'),
-			'firstDay' => get_option('start_of_week'),
+			'firstDay' => em_get_option('start_of_week'),
 			'locale' => $locale_code,
-			'dateFormat' => 'yy-mm-dd', //get_option('dbem_date_format_js', 'yy-mm-dd'), // DEPRECATED (legacy jQuery UI datepicker) - prevents blank datepickers if no option set
+			'dateFormat' => 'yy-mm-dd', //em_get_option('dbem_date_format_js', 'yy-mm-dd'), // DEPRECATED (legacy jQuery UI datepicker) - prevents blank datepickers if no option set
 			'ui_css' => plugins_url('includes/css/jquery-ui/build.min.css', EM_FILE),
-			'show24hours' => get_option('dbem_time_24h'),
+			'show24hours' => em_get_option('dbem_time_24h'),
 			'is_ssl' => is_ssl(),
 			'autocomplete_limit' => apply_filters('em_locations_autocomplete_limit', 10),
 			'calendar' => array(
@@ -244,7 +244,7 @@ class Scripts_and_Styles {
 			),
 			'phone' => false,
 			'datepicker' => array(
-				'format' => get_option('dbem_datepicker_format', 'Y-m-d'),
+				'format' => em_get_option('dbem_datepicker_format', 'Y-m-d'),
 			),
 			'search' => array(
 				'breakpoints' => array( 'small' => 650, 'medium' => 850, 'full' => false, ) // reorder this array for efficiency if you override it, so smallest is first, largest or false is last
@@ -273,7 +273,7 @@ class Scripts_and_Styles {
 		];
 		*/
 		// uploads
-		if( get_option('dbem_uploads_ui') ) {
+		if( em_get_option('dbem_uploads_ui') ) {
 			$em_localized_js['assets']['input.em-uploader'] = [
 				// each type has key for id of script/link (prefixed automatically by -css/js) and either url or for JS possible array of url and event fired onload for script, third value can also be a locale
 				'js' => [
@@ -341,16 +341,16 @@ class Scripts_and_Styles {
 		if( Phone::is_enabled() ) {
 			$em_localized_js['phone'] = array(
 				'error' => __('Please enter a valid phone number.', 'events-manager'),
-				'detectJS' => get_option('dbem_phone_detect') == true,
+				'detectJS' => em_get_option('dbem_phone_detect') == true,
 				//'initialCountry' => 'US',
 				'options' => array(
-					'initialCountry' => get_option('dbem_phone_default_country', 'US'),
-					'separateDialCode' => get_option('dbem_phone_show_selected_code') == true,
-					'showFlags' => get_option('dbem_phone_show_flags') == true,
-					'onlyCountries' => get_option('dbem_phone_countries_include') ?: array(),
-					'excludeCountries' => get_option('dbem_phone_countries_exclude') ?: array(),
-					//'preferredCountries' => get_option('dbem_phone_countries_preferred'), // not working in 23.x due to search
-					//'nationalMode' => get_option('dbem_phone_national_format') == true,
+					'initialCountry' => em_get_option('dbem_phone_default_country', 'US'),
+					'separateDialCode' => em_get_option('dbem_phone_show_selected_code') == true,
+					'showFlags' => em_get_option('dbem_phone_show_flags') == true,
+					'onlyCountries' => em_get_option('dbem_phone_countries_include') ?: array(),
+					'excludeCountries' => em_get_option('dbem_phone_countries_exclude') ?: array(),
+					//'preferredCountries' => em_get_option('dbem_phone_countries_preferred'), // not working in 23.x due to search
+					//'nationalMode' => em_get_option('dbem_phone_national_format') == true,
 				),
 			);
 		}
@@ -359,18 +359,18 @@ class Scripts_and_Styles {
 			$em_localized_js['datepicker']['locale'] = static::$locale;
 		}
 		//maps api key
-		if( get_option('dbem_gmap_is_active') ){
-			if( get_option('dbem_google_maps_browser_key') ){
-				$em_localized_js['google_maps_api'] = get_option('dbem_google_maps_browser_key');
+		if( em_get_option('dbem_gmap_is_active') ){
+			if( em_get_option('dbem_google_maps_browser_key') ){
+				$em_localized_js['google_maps_api'] = em_get_option('dbem_google_maps_browser_key');
 			}
-			if( get_option('dbem_google_maps_styles') ){
-				$em_localized_js['google_maps_styles'] = json_decode(get_option('dbem_google_maps_styles'));
+			if( em_get_option('dbem_google_maps_styles') ){
+				$em_localized_js['google_maps_styles'] = json_decode(em_get_option('dbem_google_maps_styles'));
 			}
 		}
 		//debug mode
 		if( defined('WP_DEBUG') && WP_DEBUG ) $em_localized_js['ui_css'] = plugins_url('includes/css/jquery-ui/build.css', EM_FILE);
 		//booking-specific stuff
-		if( get_option('dbem_rsvp_enabled') ){
+		if( em_get_option('dbem_rsvp_enabled') ){
 			$offset = defined('EM_BOOKING_MSG_JS_OFFSET') ? EM_BOOKING_MSG_JS_OFFSET : 30;
 			$em_localized_js = array_merge($em_localized_js, array(
 				'bookingInProgress' => __('Please wait while the booking is being submitted.','events-manager'),
@@ -383,38 +383,38 @@ class Scripts_and_Styles {
 				'bookings' => array(
 					'submit_button' => array(
 						'text' => array(
-							'default' => get_option('dbem_bookings_submit_button'),
-							'free' => get_option('dbem_bookings_submit_button'),
-							'payment' => get_option('dbem_bookings_submit_button_paid'),
-							'processing' => get_option('dbem_bookings_submit_button_processing'),
+							'default' => em_get_option('dbem_bookings_submit_button'),
+							'free' => em_get_option('dbem_bookings_submit_button'),
+							'payment' => em_get_option('dbem_bookings_submit_button_paid'),
+							'processing' => em_get_option('dbem_bookings_submit_button_processing'),
 						),
 					),
 					'update_listener' => implode( ',', apply_filters('em_booking_form_js_fields_change_match', array() )), // if anything here matches a field in the booking form, em_booking_form_updated JS Event will be triggered
 				),
 				//booking button
-				'bb_full' =>  get_option('dbem_booking_button_msg_full'),
-				'bb_book' => get_option('dbem_booking_button_msg_book'),
-				'bb_booking' => get_option('dbem_booking_button_msg_booking'),
-				'bb_booked' => get_option('dbem_booking_button_msg_booked'),
-				'bb_error' => get_option('dbem_booking_button_msg_error'),
-				'bb_cancel' => get_option('dbem_booking_button_msg_cancel'),
-				'bb_canceling' => get_option('dbem_booking_button_msg_canceling'),
-				'bb_cancelled' => get_option('dbem_booking_button_msg_cancelled'),
-				'bb_cancel_error' => get_option('dbem_booking_button_msg_cancel_error'),
+				'bb_full' =>  em_get_option('dbem_booking_button_msg_full'),
+				'bb_book' => em_get_option('dbem_booking_button_msg_book'),
+				'bb_booking' => em_get_option('dbem_booking_button_msg_booking'),
+				'bb_booked' => em_get_option('dbem_booking_button_msg_booked'),
+				'bb_error' => em_get_option('dbem_booking_button_msg_error'),
+				'bb_cancel' => em_get_option('dbem_booking_button_msg_cancel'),
+				'bb_canceling' => em_get_option('dbem_booking_button_msg_canceling'),
+				'bb_cancelled' => em_get_option('dbem_booking_button_msg_cancelled'),
+				'bb_cancel_error' => em_get_option('dbem_booking_button_msg_cancel_error'),
 			));
 			// Cancellation warning
-			if( get_option('dbem_event_status_enabled') ){
+			if( em_get_option('dbem_event_status_enabled') ){
 				$cancellation_text = __('If you choose to cancel your event, after you save this event, no further bookings will be possible for this event.', 'events-manager');
 				$additionals_text = '';
-				if( get_option('dbem_event_cancelled_bookings') ){
+				if( em_get_option('dbem_event_cancelled_bookings') ){
 					$additionals_text .= '\n- ' . __('Bookings will be automatically cancelled.', 'events-manager');
-					if( get_option('dbem_event_cancelled_bookings_email') ){
+					if( em_get_option('dbem_event_cancelled_bookings_email') ){
 						$additionals_text .= '\n- ' . __('Booking cancellation emails will be sent.', 'events-manager');
 					}else{
 						$additionals_text .= ' ' . __('Booking cancellation emails are not sent.', 'events-manager');
 					}
 				}
-				if( get_option('dbem_event_cancelled_email') ){
+				if( em_get_option('dbem_event_cancelled_email') ){
 					$additionals_text .= '\n- ' . __('All confirmed and pending bookings will be emailed a general event cancellation notification.', 'events-manager');
 				}
 				if( !empty($additionals_text) ){
@@ -426,13 +426,13 @@ class Scripts_and_Styles {
 				);
 			}
 		}
-		$em_localized_js['txt_search'] = get_option('dbem_search_form_text_label',__('Search','events-manager'));
+		$em_localized_js['txt_search'] = em_get_option('dbem_search_form_text_label',__('Search','events-manager'));
 		$em_localized_js['txt_searching'] = __('Searching...','events-manager');
 		$em_localized_js['txt_loading'] = __('Loading...','events-manager');
 
 		//logged in messages that visitors shouldn't need to see
-		if( is_user_logged_in() || is_page(get_option('dbem_edit_events_page')) ){
-			if( get_option('dbem_recurrence_enabled') || get_option('dbem_repeating_enabled') ){
+		if( is_user_logged_in() || is_page(em_get_option('dbem_edit_events_page')) ){
+			if( em_get_option('dbem_recurrence_enabled') || em_get_option('dbem_repeating_enabled') ){
 				if( !empty($_REQUEST['action']) && ($_REQUEST['action'] == 'edit' || $_REQUEST['action'] == 'event_save') && !empty($_REQUEST['event_id']) ){
 					$em_localized_js['event_recurrence_bookings'] = __('Are you sure you want to continue?', 'events-manager') .PHP_EOL;
 					$em_localized_js['event_recurrence_bookings'] .= __('Modifications to event tickets will cause all bookings to individual recurrences of this event to be deleted.', 'events-manager');
@@ -441,13 +441,14 @@ class Scripts_and_Styles {
 				$delete_text = ( !EMPTY_TRASH_DAYS ) ? __('This cannot be undone.','events-manager'):__('All events will be moved to trash.','events-manager');
 				$em_localized_js['delete_recurrence_warning'] = __('Are you sure you want to delete all recurrences of this event?', 'events-manager').' '.$delete_text;
 			}
-			if( get_option('dbem_rsvp_enabled') ){
+			if( em_get_option('dbem_rsvp_enabled') ){
 				$em_localized_js['disable_bookings_warning'] = __('Are you sure you want to disable bookings? If you do this and save, you will lose all previous bookings. If you wish to prevent further bookings, reduce the number of spaces available to the amount of bookings you currently have', 'events-manager');
-				$em_localized_js['booking_warning_cancel'] = get_option('dbem_booking_warning_cancel');
+				$em_localized_js['booking_warning_cancel'] = em_get_option('dbem_booking_warning_cancel');
 			}
 		}
 		//load admin/public only vars
 		if( is_admin() ){
+			$em_localized_js['event_post_types'] = Archetypes::get_cpts(['location']); // all but location
 			$em_localized_js['event_post_type'] = EM_POST_TYPE_EVENT;
 			$em_localized_js['location_post_type'] = EM_POST_TYPE_LOCATION;
 			if( !empty($_GET['page']) && $_GET['page'] == 'events-manager-options' ){

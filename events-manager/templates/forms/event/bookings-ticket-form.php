@@ -111,7 +111,7 @@ $price = $EM_Ticket->ticket_price === null ? '' : $EM_Ticket->get_price_precise(
 				<input class="em-time-input em-time-end ticket-times-to-normal" type="text" size="8" maxlength="8" name="em_tickets[<?php echo $col_count; ?>][ticket_end_time]" value="<?php echo ( !empty($EM_Ticket->ticket_end) ) ? $EM_Ticket->end()->format( em_get_hour_format() ):''; ?>" >
 			</div>
 		</div>
-		<?php if( !get_option('dbem_bookings_tickets_single') || count($EM_Ticket->get_event()->get_tickets()->tickets) > 1 ): ?>
+		<?php if( !em_get_option('dbem_bookings_tickets_single') || count($EM_Ticket->get_event()->get_tickets()->tickets) > 1 ): ?>
 		<div class="ticket-required inline-inputs">
 			<label title="<?php esc_attr_e('If checked every booking must select one or the minimum number of this ticket.','events-manager'); ?>" class="inline-right"><?php esc_html_e('Required?','events-manager') ?></label>
 			<?php

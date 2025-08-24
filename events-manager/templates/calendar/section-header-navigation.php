@@ -17,7 +17,7 @@
 				<span class="toggle"></span>
 			</form>
 		<?php else: ?>
-			<?php echo esc_html($EM_DateTime->i18n(get_option('dbem_full_calendar_month_format'))); ?>
+			<?php echo esc_html($EM_DateTime->i18n(em_get_option('dbem_full_calendar_month_format'))); ?>
 		<?php endif; ?>
 	</div>
 	<?php

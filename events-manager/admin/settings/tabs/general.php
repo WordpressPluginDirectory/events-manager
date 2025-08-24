@@ -1,70 +1,102 @@
-<?php if( !function_exists('current_user_can') || !current_user_can('manage_options') ) return; ?>
+<?php
+use EM\Archetypes;
+
+if( !function_exists('current_user_can') || !current_user_can('manage_options') ) return;
+global $events_placeholder_tip, $locations_placeholder_tip, $categories_placeholder_tip, $bookings_placeholder_tip;
+?>
 <!-- GENERAL OPTIONS -->
 <div class="em-menu-general em-menu-group em">
+
+	<?php if ( !is_multisite() || is_network_admin() || get_site_option('dbem_ms_archetypes_enabled') ) : ?>
+		<?php include( EM_DIR . '/admin/settings/archetype-editor.php'); ?>
+	<?php endif; ?>
+	
 	<div  class="postbox " id="em-opt-general"  >
 	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div> <h3><span><?php _e ( 'General Options', 'events-manager'); ?> </span></h3>
 	<div class="inside">
         <table class="form-table">
-            <?php em_options_radio_binary ( __( 'Disable thumbnails?', 'events-manager'), 'dbem_thumbnails_enabled', __( 'Select yes to disable Events Manager from enabling thumbnails (some themes may already have this enabled, which we cannot be turned off here).','events-manager') );  ?>					
-			<tr class="em-header">
-				<td colspan="2">
-					<h4><?php echo sprintf(__('%s Settings','events-manager'),__('Event','events-manager')); ?></h4>
-				</td>
-			</tr>
-			<?php
-			em_options_radio_binary ( __( 'Enable Timezone Support?', 'events-manager'), 'dbem_timezone_enabled', sprintf(__( 'Each event can have its own timezone if enabled. If set to no, then all newly created events will have the blog timezone, which currently is set to %s','events-manager'), '<code>'.EM_DateTimeZone::create()->getName().'</code>'), '', '.event-timezone-option' );
-			em_options_radio_binary ( __( 'Enable Event Status?', 'events-manager'), 'dbem_event_status_enabled', sprintf(__( 'Events can have a status associated with them, such as a cancelled event, which can then be filtered out of search listings. By default, or if disabled, events have an %s status.','events-manager'), '<code>'. __('Active', 'events-manager') .'</code>'), '', '.event-active-status-option' );
-			?>
-			<tr class="event-timezone-option">
-				<th>
-					<label for="event-timezone"><?php esc_html_e('Default Timezone', 'events-manager'); ?></label>
-				</th>
-				<td>
-					<select id="event-timezone" name="dbem_timezone_default">
-						<?php echo wp_timezone_choice( get_option('dbem_timezone_default') ); ?>
-					</select><br />
-					<i><?php esc_html_e('When creating a new event, this timezone will be applied by default.','events-manager'); ?></i>
-				</td>
-			</tr>
-			<?php
-			em_options_radio_binary ( __( 'Enable recurrence?', 'events-manager'), 'dbem_recurrence_enabled', __( 'Recurring events allow you to create one event page with recurring dates on the same page. Recurrences have their own bookings assigned to them, but can be linked with shared tickets.','events-manager'), '', '#row_dbem_recurrence_picker' );
-			//EM\Scripts_and_Styles::add_js_var('recurrencesDisableWarning', __('Are you sure you want to disable recurring events? If you do so, any recurrences you currently have enabled will stop showing, and de-sync from the recurring events should you re-save them whilst recurrences are disabled.', 'events-manager') );
-			em_options_radio_binary ( __( 'Enable repeated events?', 'events-manager'), 'dbem_repeating_enabled', __( 'Repeated events are similar to recurrences, but each event is independent of each other with its own page on your site and entirely separate bookings. You can mass-edit the recurrences by editing your repeating event.','events-manager') );
-			//EM\Scripts_and_Styles::add_js_var('repeatedDisableWarning', __('Are you sure you want to disable repeated events? If you do so, any recurrences you currently have enabled will become nornal events, and de-sync from the recurring events should you re-save them whilst recurrences are disabled.', 'events-manager') );
-			em_options_radio_binary ( __( 'Enable bookings?', 'events-manager'), 'dbem_rsvp_enabled', __( 'Select yes to allow bookings and tickets for events.','events-manager') );     
-			em_options_radio_binary ( __( 'Enable tags?', 'events-manager'), 'dbem_tags_enabled', __( 'Select yes to enable the tag features','events-manager') );
-			if( !(EM_MS_GLOBAL && !is_main_site()) ){
-				em_options_radio_binary ( __( 'Enable categories?', 'events-manager'), 'dbem_categories_enabled', __( 'Select yes to enable the category features','events-manager') );     
-				if( get_option('dbem_categories_enabled') ){
-					/*default category*/
-					$category_options = array();
-					$category_options[0] = __('no default category','events-manager');
-					$EM_Categories = EM_Categories::get();
-					foreach($EM_Categories as $EM_Category){
-				 		$category_options[$EM_Category->id] = $EM_Category->name;
-				 	}
-				 	echo "<tr><th>".__( 'Default Category', 'events-manager')."</th><td>";
-					wp_dropdown_categories(array( 'hide_empty' => 0, 'name' => 'dbem_default_category', 'hierarchical' => true, 'taxonomy' => EM_TAXONOMY_CATEGORY, 'selected' => get_option('dbem_default_category'), 'show_option_none' => __('None','events-manager'), 'class'=>''));
-					echo "</br><em>" .__( 'This option allows you to select the default category when adding an event.','events-manager').' '.__('If an event does not have a category assigned when editing, this one will be assigned automatically.','events-manager')."</em>";
-					echo "</td></tr>";
+	        <tbody data-group="general-options-events">
+	            <?php em_options_radio_binary ( __( 'Disable thumbnails?', 'events-manager'), 'dbem_thumbnails_enabled', __( 'Select yes to disable Events Manager from enabling thumbnails (some themes may already have this enabled, which we cannot be turned off here).','events-manager') ); ?>
+				<tr class="em-header">
+					<td colspan="2">
+						<h4><?php echo sprintf(__('%s Settings','events-manager'),__('Event','events-manager')); ?></h4>
+					</td>
+				</tr>
+				<?php
+				em_options_select( __('Default List Scope','events-manager'), 'dbem_events_default_scope', em_get_scopes(), __('Default scope to show your events in shortcodes, widgets and any other displays where scope is not defined. Events page and archive scopes can be defined in the %s settings section.','events-manager') );
+				em_options_radio_binary ( __( 'Enable Timezone Support?', 'events-manager'), 'dbem_timezone_enabled', sprintf(__( 'Each event can have its own timezone if enabled. If set to no, then all newly created events will have the blog timezone, which currently is set to %s','events-manager'), '<code>'.EM_DateTimeZone::create()->getName().'</code>'), '', '.event-timezone-option' );
+				?>
+	            <tr class="event-timezone-option">
+		            <th>
+			            <label for="event-timezone"><?php esc_html_e('Default Timezone', 'events-manager'); ?></label>
+		            </th>
+		            <td>
+			            <div class="em-default-option">
+				            <select id="event-timezone" name="dbem_timezone_default">
+					            <?php echo wp_timezone_choice( get_option('dbem_timezone_default') ); ?>
+				            </select>
+			            </div>
+			            <?php
+			            $archetype_options = em_options_get_archetype_options('dbem_events_page');
+			            ?>
+			            <?php if( !empty($archetype_options['archetypes']) ): ?>
+				            <div class="em-archetype-options">
+					            <?php foreach ( $archetype_options['archetypes'] as $type => $opts ): ?>
+						            <div class="em-archetype-option" id='dbem_events_page_row_<?php echo $type ?>' data-archetype="<?php echo $type ?>">
+							            <select id="event-timezone-<?php echo esc_attr($type); ?>" name="<?php echo esc_attr($opts['name']);?>">
+								            <option value="" <?php echo $opts['value'] === '' || $opts['value'] === null ? 'selected':''; ?>><?php esc_html_e('Default', 'events-manager'); ?></option>
+								            <?php echo wp_timezone_choice( $opts['value'] ); ?>
+							            </select>
+						            </div>
+					            <?php endforeach; ?>
+				            </div>
+			            <?php endif; ?>
+			            <br>
+			            <i><?php esc_html_e('When creating a new event, this timezone will be applied by default.','events-manager'); ?></i>
+		            </td>
+	            </tr>
+	            <?php
+				em_options_radio_binary ( __( 'Enable Event Status?', 'events-manager'), 'dbem_event_status_enabled', sprintf(__( 'Events can have a status associated with them, such as a cancelled event, which can then be filtered out of search listings. By default, or if disabled, events have an %s status.','events-manager'), '<code>'. __('Active', 'events-manager') .'</code>'), '', '.event-active-status-option' );
+				em_options_radio_binary ( __( 'Enable recurrence?', 'events-manager'), 'dbem_recurrence_enabled', __( 'Recurring events allow you to create one event page with recurring dates on the same page. Recurrences have their own bookings assigned to them, but can be linked with shared tickets.','events-manager'), '', '#row_dbem_recurrence_picker' );
+				//EM\Scripts_and_Styles::add_js_var('recurrencesDisableWarning', __('Are you sure you want to disable recurring events? If you do so, any recurrences you currently have enabled will stop showing, and de-sync from the recurring events should you re-save them whilst recurrences are disabled.', 'events-manager') );
+				em_options_radio_binary ( __( 'Enable repeated events?', 'events-manager'), 'dbem_repeating_enabled', __( 'Repeated events are similar to recurrences, but each event is independent of each other with its own page on your site and entirely separate bookings. You can mass-edit the recurrences by editing your repeating event.','events-manager') );
+				//EM\Scripts_and_Styles::add_js_var('repeatedDisableWarning', __('Are you sure you want to disable repeated events? If you do so, any recurrences you currently have enabled will become nornal events, and de-sync from the recurring events should you re-save them whilst recurrences are disabled.', 'events-manager') );
+				em_options_radio_binary ( __( 'Enable bookings?', 'events-manager'), 'dbem_rsvp_enabled', __( 'Select yes to allow bookings and tickets for events.','events-manager') );
+				em_options_radio_binary ( __( 'Enable tags?', 'events-manager'), 'dbem_tags_enabled', __( 'Select yes to enable the tag features','events-manager') );
+				if( !(EM_MS_GLOBAL && !is_main_site()) ){
+					em_options_radio_binary ( __( 'Enable categories?', 'events-manager'), 'dbem_categories_enabled', __( 'Select yes to enable the category features','events-manager') );
+					if( get_option('dbem_categories_enabled') ){
+						/*default category*/
+						$category_options = array();
+						$category_options[0] = __('no default category','events-manager');
+						$EM_Categories = EM_Categories::get();
+						foreach($EM_Categories as $EM_Category){
+					        $category_options[$EM_Category->id] = $EM_Category->name;
+					    }
+					    echo "<tr><th>".__( 'Default Category', 'events-manager')."</th><td>";
+						wp_dropdown_categories(array( 'hide_empty' => 0, 'name' => 'dbem_default_category', 'hierarchical' => true, 'taxonomy' => EM_TAXONOMY_CATEGORY, 'selected' => get_option('dbem_default_category'), 'show_option_none' => __('None','events-manager'), 'class'=>''));
+						echo "</br><em>" .__( 'This option allows you to select the default category when adding an event.','events-manager').' '.__('If an event does not have a category assigned when editing, this one will be assigned automatically.','events-manager')."</em>";
+						echo "</td></tr>";
+					}
 				}
-			}
-			em_options_radio_binary ( sprintf(__( 'Enable %s attributes?', 'events-manager'),__('event','events-manager')), 'dbem_attributes_enabled', __( 'Select yes to enable the attributes feature','events-manager') );
-			em_options_radio_binary ( sprintf(__( 'Enable %s custom fields?', 'events-manager'),__('event','events-manager')), 'dbem_cp_events_custom_fields', __( 'Custom fields are the same as attributes, except you cannot restrict specific values, users can add any kind of custom field name/value pair. Only available in the WordPress admin area.','events-manager') );
-			if( get_option('dbem_attributes_enabled') ){
-				em_options_textarea ( sprintf(__( '%s Attributes', 'events-manager'),__('Event','events-manager')), 'dbem_placeholders_custom', sprintf(__( "You can also add event attributes here, one per line in this format <code>#_ATT{key}</code>. They will not appear on event pages unless you insert them into another template below, but you may want to store extra information about an event for other uses. <a href='%s'>More information on placeholders.</a>", 'events-manager'), EM_ADMIN_URL .'&amp;page=events-manager-help') );
-			}
-			do_action('em_settings_general_events_footer');
+				em_options_radio_binary ( sprintf(__( 'Enable %s attributes?', 'events-manager'),__('event','events-manager')), 'dbem_attributes_enabled', __( 'Select yes to enable the attributes feature','events-manager') );
+				em_options_radio_binary ( sprintf(__( 'Enable %s custom fields?', 'events-manager'),__('event','events-manager')), 'dbem_cp_events_custom_fields', __( 'Custom fields are the same as attributes, except you cannot restrict specific values, users can add any kind of custom field name/value pair. Only available in the WordPress admin area.','events-manager') );
+				if( get_option('dbem_attributes_enabled') ){
+					em_options_textarea ( sprintf(__( '%s Attributes', 'events-manager'),__('Event','events-manager')), 'dbem_placeholders_custom', sprintf(__( "You can also add event attributes here, one per line in this format <code>#_ATT{key}</code>. They will not appear on event pages unless you insert them into another template below, but you may want to store extra information about an event for other uses. <a href='%s'>More information on placeholders.</a>", 'events-manager'), EM_ADMIN_URL .'&amp;page=events-manager-help') );
+				}
+				do_action('em_settings_general_events_footer');
+				?>
+	        </tbody>
+	        <tbody data-group="general-options-locations">
+				<tr class="em-header">
+					<td colspan="2">
+						<h4><?php echo sprintf(__('%s Settings','events-manager'),__('Location','events-manager')); ?></h4>
+					</td>
+				</tr>
+				<?php
+				em_options_radio_binary ( __( 'Enable locations?', 'events-manager'), 'dbem_locations_enabled', __( 'If you disable locations, bear in mind that you should remove your location page, shortcodes and related placeholders from your <a href="#formats" class="nav-tab-link" rel="#em-menu-formats">formats</a>.','events-manager'), '', '.em-location-type-option' );
 			?>
-			<tr class="em-header">
-				<td colspan="2">
-					<h4><?php echo sprintf(__('%s Settings','events-manager'),__('Location','events-manager')); ?></h4>
-				</td>
-			</tr>
-			<?php
-			em_options_radio_binary ( __( 'Enable locations?', 'events-manager'), 'dbem_locations_enabled', __( 'If you disable locations, bear in mind that you should remove your location page, shortcodes and related placeholders from your <a href="#formats" class="nav-tab-link" rel="#em-menu-formats">formats</a>.','events-manager'), '', '.em-location-type-option' );
-			?>
-	        <tbody class="em-location-type-option">
+	        <tbody class="em-location-type-option" data-group="general-options-locations">
 		        <?php
 		        em_options_radio_binary ( __( 'Require locations for events?', 'events-manager'), 'dbem_require_location', __( 'Setting this to no will allow you to submit events without locations. You can use the <code>{no_location}...{/no_location}</code> or <code>{has_location}..{/has_location}</code> conditional placeholder to selectively display location information.','events-manager') );
 		        ?>
@@ -72,19 +104,51 @@
 			        <th scope="row"><?php esc_html_e('Location Types', 'events-manager'); ?></th>
 			        <td>
 				        <?php
+				        $archetype_options = em_options_get_archetype_options('dbem_location_types');
 				        $location_types = get_option('dbem_location_types', array());
 				        ?>
-				        <label>
-				            <input type="checkbox" name="dbem_location_types[location]" value="1" <?php if( !empty($location_types['location']) ) echo 'checked'; ?> data-trigger=".em-location-type-option-physical" class="em-trigger">
-					        <?php esc_html_e('Physicial Locations', 'events-manager'); ?>
-				        </label>
-				        <?php foreach (EM_Event_Locations\Event_Locations::get_types() as $event_location_type => $EM_Event_Location_Class): /* @var EM_Event_Locations\Event_Location $EM_Event_Location_Class */ ?>
-					        <br>
+				        <div class="em-default-option option-checkboxes">
 					        <label>
-						        <input type="checkbox" name="dbem_location_types[<?php echo esc_attr($event_location_type); ?>]" value="1" <?php if( !empty($location_types[$event_location_type]) ) echo 'checked'; ?> data-trigger=".em-location-type-option-<?php echo esc_attr($event_location_type); ?>" class="em-trigger">
-						        <?php echo $EM_Event_Location_Class::get_label('plural'); ?>
+					            <input type="checkbox" name="dbem_location_types[location]" value="1" <?php if( !empty($location_types['location']) ) echo 'checked'; ?> data-trigger=".em-location-type-option-physical" class="em-trigger">
+						        <?php esc_html_e('Physicial Locations', 'events-manager'); ?>
 					        </label>
-				        <?php endforeach; ?>
+					        <?php foreach (EM_Event_Locations\Event_Locations::get_types() as $event_location_type => $EM_Event_Location_Class): /* @var EM_Event_Locations\Event_Location $EM_Event_Location_Class */ ?>
+						        <br>
+						        <label>
+							        <input type="checkbox" name="dbem_location_types[<?php echo esc_attr($event_location_type); ?>]" value="1" <?php if( !empty($location_types[$event_location_type]) ) echo 'checked'; ?> data-trigger=".em-location-type-option-<?php echo esc_attr($event_location_type); ?>" class="em-trigger">
+							        <?php echo $EM_Event_Location_Class::get_label('plural'); ?>
+						        </label>
+					        <?php endforeach; ?>
+				        </div>
+
+				        <?php if( !empty($archetype_options['archetypes']) ): ?>
+				        <div class="em-archetype-options">
+					        <?php foreach ( $archetype_options['archetypes'] as $type => $atts ): ?>
+					        <div class="em-archetype-option option-checkboxes" data-archetype="<?php echo $type ?>"  <?php if ( empty($atts['value']) ) echo 'data-default'; ?>>
+						        <label>
+							        <input type="checkbox" name="<?php echo esc_attr($atts['name']); ?>[location]" value="1" <?php if( !empty($atts['value']['location']) ) echo 'checked'; ?>
+									        <?php echo !empty($location_types['location']) ? 'data-default' : ''; ?>
+							               data-trigger=".em-location-type-option-physical" class="em-trigger" >
+							        <?php esc_html_e('Physicial Locations', 'events-manager'); ?>
+						        </label>
+						        <?php foreach (EM_Event_Locations\Event_Locations::get_types() as $event_location_type => $EM_Event_Location_Class): /* @var EM_Event_Locations\Event_Location $EM_Event_Location_Class */ ?>
+							        <br>
+							        <label>
+								        <input type="checkbox" name="<?php echo esc_attr($atts['name']); ?>[<?php echo esc_attr($event_location_type); ?>]" value="1" <?php if( !empty($atts['value'][$event_location_type]) ) echo 'checked'; ?>
+										        <?php echo !empty($location_types[$event_location_type]) ? 'data-default' : ''; ?>
+								               data-trigger=".em-location-type-option-<?php echo esc_attr($event_location_type); ?>" class="em-trigger">
+								        <?php echo $EM_Event_Location_Class::get_label('plural'); ?>
+							        </label>
+						        <?php endforeach; ?>
+						        <br>
+						        <div class="em-archetype-checkbox-buttons">
+							        <button type="button" class="button-secondary em-archetype-checkbox-default" <?php if ( empty($atts['value']) ) echo 'disabled'; ?>><?php esc_html_e('Use Defaults', 'events-manager'); ?></button>
+							        <button type="button" class="button-secondary em-archetype-checkbox-override" <?php if ( empty($atts['value']) ) echo 'disabled'; ?>><?php esc_html_e('Override Defaults', 'events-manager'); ?></button>
+						        </div>
+					        </div>
+					        <?php endforeach; ?>
+				        </div>
+				        <?php endif; ?>
 				        <p><em><?php echo sprintf( esc_html__('You can allow different location types which can be assigned to an event. For more information see our %s.', 'events-manager'), '<a href="http://wp-events-plugin.com/documentation/location-types/" target="_blank">'.esc_html__('documentation', 'events-manager').'</a>'); ?></em></p>
 			        </td>
 		        </tr>

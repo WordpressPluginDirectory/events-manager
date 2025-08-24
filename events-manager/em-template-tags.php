@@ -10,6 +10,8 @@
  * ---------------------------------------------------------------------
  */
 
+use EM\Archetypes;
+
 /**
  * Returns a html list of events filtered by the array or query-string of arguments supplied. 
  * @param array|string $args
@@ -23,7 +25,7 @@ function em_get_events( $args = array() ){
 		$args = (array) $args;
 	}
 	$args['ajax'] = isset($args['ajax']) ? $args['ajax']:(!defined('EM_AJAX') || EM_AJAX );
-	$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
+	$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_events_default_limit');
 	if( empty($args['format']) && empty($args['format_header']) && empty($args['format_footer']) ){
 		ob_start();
 		if( !empty($args['ajax']) ){ echo '<div class="em-search-ajax">'; } //open AJAX wrapper
@@ -55,7 +57,7 @@ function em_get_locations( $args = array() ){
 		$args = (array) $args;
 	}
 	$args['ajax'] = isset($args['ajax']) ? $args['ajax']:(!defined('EM_AJAX') || EM_AJAX );
-	$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_locations_default_limit');
+	$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_locations_default_limit', $args['event_archetype'] ?? null );
 	if( empty($args['format']) && empty($args['format_header']) && empty($args['format_footer']) ){
 		ob_start();
 		if( !empty($args['ajax']) ){ echo '<div class="em-search-ajax">'; } //open AJAX wrapper
@@ -137,7 +139,7 @@ function em_events_list_grouped( $args = array() ){ echo em_get_events_list_grou
  * @return string
  */
 function em_get_link( $text = '' ) {
-	$text = ($text == '') ? get_option ( "dbem_events_page_title" ) : $text;
+	$text = ($text == '') ? em_get_option ( "dbem_events_page_title" ) : $text;
 	$text = ($text == '') ? __('Events','events-manager') : $text; //In case options aren't there....
 	return '<a href="'.esc_url(EM_URI).'" title="'.esc_attr($text).'">'.esc_html($text).'</a>';
 }
@@ -177,8 +179,9 @@ function em_rss_link($text = "RSS"){ echo em_get_rss_link($text); }
  */
 function em_event_form($args = array()){
 	global $EM_Event;
-	if( get_option('dbem_css_editors') ) echo '<div class="css-event-form">';
-	if( !is_user_logged_in() && get_option('dbem_events_anonymous_submissions') && em_locate_template('forms/event-editor-guest.php') ){
+	$archetype = $args['event_archetype'] ?? null;
+	if( em_get_option('dbem_css_editors', $archetype) ) echo '<div class="css-event-form">';
+	if( !is_user_logged_in() && em_get_option('dbem_events_anonymous_submissions', $archetype) && em_locate_template('forms/event-editor-guest.php') ){
 		em_locate_template('forms/event-editor-guest.php',true, array('args'=>$args));
 	}else{
 	    if( !empty($_REQUEST['success']) ){
@@ -187,9 +190,9 @@ function em_event_form($args = array()){
 		if( empty($EM_Event->event_id) ){
 			$EM_Event = ( is_object($EM_Event) && get_class($EM_Event) == 'EM_Event') ? $EM_Event : new EM_Event();
 			//Give a default location & category
-			$default_cat = get_option('dbem_default_category');
-			$default_loc = get_option('dbem_default_location');
-			if( get_option('dbem_categories_enabled') && is_numeric($default_cat) && $default_cat > 0 && !empty($EM_Event->get_categories()->categories) ){
+			$default_cat = em_get_option('dbem_default_category', $archetype);
+			$default_loc = em_get_option('dbem_default_location', $archetype);
+			if( em_get_option('dbem_categories_enabled', $archetype) && is_numeric($default_cat) && $default_cat > 0 && !empty($EM_Event->get_categories()->categories) ){
 				$EM_Category = new EM_Category($default_cat);
 				$EM_Event->get_categories()->categories[] = $EM_Category;
 			}
@@ -203,7 +206,7 @@ function em_event_form($args = array()){
 		em_locate_template('forms/event-editor.php',true, array('args'=>$args));
 		EM_Events::add_editor_js_vars();
 	}
-	if( get_option('dbem_css_editors') ) echo '</div>';
+	if( em_get_option('dbem_css_editors', $archetype) ) echo '</div>';
 	wp_enqueue_style('dashicons');
 }
 
@@ -225,6 +228,7 @@ function em_get_event_form( $args = array() ){
  */
 function em_events_admin($args = array()){
 	global $EM_Event, $EM_Notices, $bp;
+	$archetype = $args['event_archetype'] ?? null;
 	if( is_user_logged_in() && current_user_can('edit_events') ){
 		if( (!empty($_GET['action']) && $_GET['action']=='edit') || (!empty($_POST['action']) && $_POST['action']=='event_save') ){
 			if( empty($_REQUEST['redirect_to']) ){
@@ -232,7 +236,7 @@ function em_events_admin($args = array()){
 			}
 			em_event_form();
 		}else{
-			if( get_option('dbem_css_editors') ) echo '<div class="css-events-admin">';
+			if( em_get_option('dbem_css_editors', $archetype) ) echo '<div class="css-events-admin">';
 		    //get listing options for $args
 			$limit = ( !empty($_REQUEST['limit']) ) ? $_REQUEST['limit'] : 20;//Default limit
 			$page = ( !empty($_REQUEST['pno']) ) ? $_REQUEST['pno']:1;
@@ -301,14 +305,14 @@ function em_events_admin($args = array()){
 				'offset' => $offset,
 				'show_add_new' => $show_add_new
 			));
-			if( get_option('dbem_css_editors') ) echo '</div>';
+			if( em_get_option('dbem_css_editors') ) echo '</div>';
 		}
-	}elseif( !is_user_logged_in() && get_option('dbem_events_anonymous_submissions') ){
+	}elseif( !is_user_logged_in() && em_get_option('dbem_events_anonymous_submissions') ){
 		em_event_form($args);
 	}else{
-		if( get_option('dbem_css_editors') ) echo '<div class="css-events-admin">';
+		if( em_get_option('dbem_css_editors') ) echo '<div class="css-events-admin">';
 		echo '<div class="css-events-admin-login">'. apply_filters('em_event_submission_login', __("You must log in to view and manage your events.",'events-manager')) . '</div>';
-		if( get_option('dbem_css_editors') ) echo '</div>';
+		if( em_get_option('dbem_css_editors') ) echo '</div>';
 	}
 }
 /**
@@ -346,10 +350,14 @@ function em_get_event_search_form( $args = array() ){
  */
 function em_location_form($args = array()){
 	global $EM_Location;
-	if( get_option('dbem_css_editors') ) echo '<div class="css-location-form">';
+	if( em_get_option('dbem_css_editors') ) echo '<div class="css-location-form">';
 	$EM_Location = ( is_object($EM_Location) && get_class($EM_Location) == 'EM_Location') ? $EM_Location : new EM_Location();
 	em_locate_template('forms/location-editor.php',true);
-	if( get_option('dbem_css_editors') ) echo '</div>';
+	if( em_get_option('dbem_css_editors') ) echo '</div>';
+	if ( !empty($EM_Location->location_id) && !$EM_Location->location_longitude && !$EM_Location->location_latitude ) {
+		// in case maps are loaded again
+		EM_Scripts_and_Styles::add_js_var('google_maps_resave_location', esc_html__('Location map and coordinates have been updated. Please re-save your location to update the map.','events-manager') );
+	}
 }
 /**
  * Retreives the location submission form for guests and members.
@@ -366,7 +374,7 @@ function em_get_location_form( $args = array() ){
  * @param array $args
  */
 function em_locations_admin($args = array()){
-	global $EM_Location;
+	$archetype = $args['event_archetype'] ?? null;
 	if( is_user_logged_in() && current_user_can('edit_locations') ){
 		if( !empty($_GET['action']) && $_GET['action']=='edit' ){
 			if( empty($_REQUEST['redirect_to']) ){
@@ -374,7 +382,7 @@ function em_locations_admin($args = array()){
 			}
 			em_location_form();
 		}else{
-			if( get_option('dbem_css_editors') ) echo '<div class="css-locations-admin">';
+			if( em_get_option('dbem_css_editors') ) echo '<div class="css-locations-admin">';
 			$limit = ( !empty($_REQUEST['limit']) ) ? $_REQUEST['limit'] : 20;//Default limit
 			$page = ( !empty($_REQUEST['pno']) ) ? $_REQUEST['pno']:1;
 			$offset = ( $page > 1 ) ? ($page-1)*$limit : 0;
@@ -412,12 +420,12 @@ function em_locations_admin($args = array()){
 				'offset' => $offset,
 				'show_add_new' => true
 			));
-			if( get_option('dbem_css_editors') ) echo '</div>';
+			if( em_get_option('dbem_css_editors') ) echo '</div>';
 		}
 	}else{
-		if( get_option('dbem_css_editors') ) echo '<div class="css-locations-admin">';
+		if( em_get_option('dbem_css_editors', $archetype) ) echo '<div class="css-locations-admin">';
 		echo '<div class="css-locations-admin-login">'. __("You must log in to view and manage your locations.",'events-manager') .'</div>';
-		if( get_option('dbem_css_editors') ) echo '</div>';
+		if( em_get_option('dbem_css_editors', $archetype) ) echo '</div>';
 	}
 }
 /**
@@ -451,16 +459,15 @@ function em_get_location_search_form( $args = array() ){
 
 //Bookings Pages
 function em_bookings_admin(){
-	if( get_option('dbem_css_rsvpadmin') ) echo '<div class="css-bookings-admin">';
+	if( em_get_option('dbem_css_rsvpadmin') ) echo '<div class="css-bookings-admin">';
 	if( is_user_logged_in() && current_user_can('manage_bookings') ){
-		global $wpdb, $current_user, $EM_Notices;
 		include_once(EM_DIR.'/admin/em-bookings.php');
 		include_once(EM_DIR.'/admin/em-admin.php');
 		em_bookings_page();
 	}else{
 		echo '<div class="css-bookings-admin-login">'. __("You must log in to view and manage your bookings.",'events-manager') .'</div>';
 	}
-	if( get_option('dbem_css_rsvpadmin') ) echo '</div>';
+	if( em_get_option('dbem_css_rsvpadmin') ) echo '</div>';
 }
 function em_get_bookings_admin(){
 	ob_start();
@@ -469,9 +476,9 @@ function em_get_bookings_admin(){
 }
 
 function em_my_bookings(){
-	if( get_option('dbem_css_rsvp') ) echo '<div class="css-my-bookings">';
+	if( em_get_option('dbem_css_rsvp') ) echo '<div class="css-my-bookings">';
 	em_locate_template('templates/my-bookings.php', true);
-	if( get_option('dbem_css_rsvp') ) echo '</div>';
+	if( em_get_option('dbem_css_rsvp') ) echo '</div>';
 }
 function em_get_my_bookings(){
 	ob_start();
@@ -506,7 +513,7 @@ function em_is_event( $data, $object_required = false ){
 		$post_type = $data;
 	}
 	if( !empty($post_type) ){
-		$is_event_post_type = $post_type == EM_POST_TYPE_EVENT || $post_type == 'event-recurring';
+		$is_event_post_type = Archetypes::is_event( $post_type );
 		return $is_event_post_type && (!$object_required || !empty($is_event_object));
 	}
 	return false;

@@ -851,7 +851,7 @@ class Recurrence_Set extends EM_Object {
 		$post_fields = $meta_fields = [];
 		if ( $EM_Event->is_repeating() ) {
 			$post_fields = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->posts . ' WHERE ID=' . $EM_Event->post_id, ARRAY_A ); //post to copy
-			$post_fields['post_type'] = 'event'; //make sure we'll save events, not recurrence templates
+			$post_fields['post_type'] = $EM_Event->event_archetype; //make sure we'll save events, not recurrence templates
 			$meta_fields_map = $wpdb->get_results( 'SELECT meta_key,meta_value FROM ' . $wpdb->postmeta . ' WHERE post_id=' . $EM_Event->post_id, ARRAY_A );
 			$meta_fields = array ();
 			//convert meta_fields into a cleaner array
@@ -1725,7 +1725,7 @@ class Recurrence_Set extends EM_Object {
 				break;
 				case 'weekly':
 					//sort out week one, get starting days and then days that match time span of event (i.e. remove past events in week 1)
-					$start_of_week = get_option( 'start_of_week' ); //Start of week depends on WordPress
+					$start_of_week = em_get_option( 'start_of_week' ); //Start of week depends on WordPress
 					//then get the timestamps of weekdays during this first week, regardless if within event range
 					$start_weekday_dates = array (); //Days in week 1 where there would events, regardless of event date range
 					$weekdays = explode( ",", $this->byday ); //what days of the week (or if monthly, one value at index 0)

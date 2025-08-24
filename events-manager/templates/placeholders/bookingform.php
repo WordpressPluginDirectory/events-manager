@@ -28,7 +28,7 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 	<?php
 		do_action('em_booking_form_top', $EM_Event); // do not delete
 	?>
-	<?php if( $already_booked && !get_option('dbem_bookings_double') ): //Double bookings not allowed ?>
+	<?php if( $already_booked && !em_get_option('dbem_bookings_double') ): //Double bookings not allowed ?>
 		<?php do_action('em_booking_form_status_already_booked', $EM_Event); // do not delete ?>
 	<?php elseif( !$EM_Event->event_rsvp ): //bookings not enabled ?>
 		<?php do_action('em_booking_form_status_disabled', $EM_Event); // do not delete ?>
@@ -46,7 +46,7 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 			}
 		?>
 		<?php 
-		if( !is_user_logged_in() && get_option('dbem_bookings_login_form') ){
+		if( !is_user_logged_in() && em_get_option('dbem_bookings_login_form') ){
 			//User is not logged in, show login form (enabled on settings page)
 			em_locate_template('forms/bookingform/login.php',true, array('EM_Event'=>$EM_Event));
 		}
@@ -66,17 +66,17 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 				?>
 				<?php do_action('em_booking_form_before_tickets_section', $EM_Event, $EM_Booking); // do not delete ?>
 				<section class="em-booking-form-section-tickets" id="em-booking-form-section-tickets-<?php echo $id; ?>">
-					<?php if( get_option('dbem_bookings_header_tickets') ): ?>
-				    <h3 class="em-booking-section-title em-booking-form-tickets-title"><?php echo esc_html(get_option('dbem_bookings_header_tickets')); ?></h3>
+					<?php if( em_get_option('dbem_bookings_header_tickets') ): ?>
+				    <h3 class="em-booking-section-title em-booking-form-tickets-title"><?php echo esc_html(em_get_option('dbem_bookings_header_tickets')); ?></h3>
 					<?php endif; ?>
 					<div class="em-booking-form-tickets em-booking-section">
 					<?php
 						// Tickets Form
-						if( $show_tickets && ($can_book || get_option('dbem_bookings_tickets_show_loggedout')) ){ //show if more than 1 ticket, or if in forced ticket list view mode
+						if( $show_tickets && ($can_book || em_get_option('dbem_bookings_tickets_show_loggedout')) ){ //show if more than 1 ticket, or if in forced ticket list view mode
 							do_action('em_booking_form_before_tickets', $EM_Event, $EM_Booking); // do not delete
 							//Show multiple tickets form to user, or single ticket list if settings enable this
 							
-							if ( $available_tickets_count == 1 && !get_option('dbem_bookings_tickets_single_form')) {
+							if ( $available_tickets_count == 1 && !em_get_option('dbem_bookings_tickets_single_form')) {
 								$EM_Ticket = $EM_Event->get_bookings()->get_available_tickets()->get_first();
 								em_locate_template('forms/bookingform/ticket-single.php', true, array('EM_Event' => $EM_Event, 'EM_Ticket' => $EM_Ticket, 'id' => $id));
 							} else {
@@ -99,11 +99,11 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 					?>
 					<?php do_action('em_booking_form_before_registration_info', $EM_Event, $EM_Booking); // do not delete ?>
 					<section class="em-booking-form-section-details" id="em-booking-form-section-details-<?php echo $id; ?>">
-						<?php if( get_option('dbem_bookings_header_reg_info') ): ?>
-						<h3 class="em-booking-section-title em-booking-form-details-title"><?php echo get_option('dbem_bookings_header_reg_info'); ?></h3>
+						<?php if( em_get_option('dbem_bookings_header_reg_info') ): ?>
+						<h3 class="em-booking-section-title em-booking-form-details-title"><?php echo em_get_option('dbem_bookings_header_reg_info'); ?></h3>
 						<?php endif; ?>
 						<div class="em-booking-form-details em-booking-section">
-							<?php if( !is_user_logged_in() && get_option('dbem_bookings_login_form') ): ?>
+							<?php if( !is_user_logged_in() && em_get_option('dbem_bookings_login_form') ): ?>
 							<div class="em-login-trigger">
 								<?php echo sprintf(esc_html__('Do you already have an account with us? %s','events-manager'), '<a href="#">'. esc_html__('Sign In', 'events-manager') .'</a>'); ?>
 							</div>
@@ -127,12 +127,12 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 					/*
 					 * BOOKING SUMMARY
 					 */
-					if( get_option('dbem_bookings_summary') && (!$EM_Event->is_free() || get_option('dbem_bookings_summary_free')) ){
+					if( em_get_option('dbem_bookings_summary') && (!$EM_Event->is_free() || em_get_option('dbem_bookings_summary_free')) ){
 						do_action('em_booking_form_before_summary', $EM_Event, $EM_Booking); // do not delete
 						?>
 						<section class="em-booking-form-section-summary" id="em-booking-form-section-summary-<?php echo $id; ?>">
-							<?php if( get_option('dbem_bookings_header_summary') ): ?>
-							<h3 class="em-booking-section-title em-booking-form-summary-title"><?php echo get_option('dbem_bookings_header_summary'); ?></h3>
+							<?php if( em_get_option('dbem_bookings_header_summary') ): ?>
+							<h3 class="em-booking-section-title em-booking-form-summary-title"><?php echo em_get_option('dbem_bookings_header_summary'); ?></h3>
 							<?php endif; ?>
 							<?php do_action('em_booking_form_summary_header', $EM_Event, $EM_Booking); // do not delete ?>
 							<div class="em-booking-form-summary em-booking-section no-booking">
@@ -156,11 +156,11 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 					?>
 					<?php do_action('em_booking_form_before_confirm', $EM_Event, $EM_Booking); // do not delete	?>
 					<section class="em-booking-form-section-confirm" id="em-booking-form-section-confirm-<?php echo $id; ?>">
-						<?php if( get_option('dbem_bookings_header_confirm') ): ?>
-						<h3 class="em-booking-section-title em-booking-form-confirm-title em-booking-form-confirm-title-paid <?php if ( $EM_Booking->get_spaces() == 0 || $EM_Booking->get_price() == 0 ) echo 'hidden'; ?>"><?php echo esc_html( get_option('dbem_bookings_header_confirm') ); ?></h3>
+						<?php if( em_get_option('dbem_bookings_header_confirm') ): ?>
+						<h3 class="em-booking-section-title em-booking-form-confirm-title em-booking-form-confirm-title-paid <?php if ( $EM_Booking->get_spaces() == 0 || $EM_Booking->get_price() == 0 ) echo 'hidden'; ?>"><?php echo esc_html( em_get_option('dbem_bookings_header_confirm') ); ?></h3>
 						<?php endif; ?>
-						<?php if( get_option('dbem_bookings_header_confirm_free') ): ?>
-						<h3 class="em-booking-section-title em-booking-form-confirm-title em-booking-form-confirm-title-free <?php if ( $EM_Booking->get_spaces() == 0 || $EM_Booking->get_price() > 0 ) echo 'hidden'; ?>"><?php echo esc_html( get_option('dbem_bookings_header_confirm_free') ); ?></h3>
+						<?php if( em_get_option('dbem_bookings_header_confirm_free') ): ?>
+						<h3 class="em-booking-section-title em-booking-form-confirm-title em-booking-form-confirm-title-free <?php if ( $EM_Booking->get_spaces() == 0 || $EM_Booking->get_price() > 0 ) echo 'hidden'; ?>"><?php echo esc_html( em_get_option('dbem_bookings_header_confirm_free') ); ?></h3>
 						<?php endif; ?>
 						<?php do_action('em_booking_form_confirm_header', $EM_Event, $EM_Booking); // do not delete ?>
 						<?php if( has_action('em_booking_form_confirm') ): ?>
@@ -178,7 +178,7 @@ do_action('em_booking_form_start', $EM_Event); // do not delete
 					<?php do_action('em_booking_form_after_confirm', $EM_Event, $EM_Booking); // do not delete ?>
 
 				<?php else: ?>
-					<p class="em-booking-form-details"><?php echo get_option('dbem_booking_feedback_log_in'); ?></p>
+					<p class="em-booking-form-details"><?php echo em_get_option('dbem_booking_feedback_log_in'); ?></p>
 				<?php endif; ?>
 				<?php do_action('em_booking_form_bottom', $EM_Event, $EM_Booking); // do not delete ?>
 			</form>  

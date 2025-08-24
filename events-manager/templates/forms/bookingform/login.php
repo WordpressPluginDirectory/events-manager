@@ -30,7 +30,7 @@
 					<div class="em-login-links">
 						<?php
 						//Signup Links
-						if ( get_option('users_can_register') ) {
+						if ( em_get_option('users_can_register') ) {
 							if ( function_exists('bp_get_signup_page') ) { //Buddypress
 								$register_link = bp_get_signup_page();
 							}elseif ( file_exists( ABSPATH."/wp-signup.php" ) ) { //MU + WP3

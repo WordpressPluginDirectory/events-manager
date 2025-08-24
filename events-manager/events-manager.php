@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Events Manager
-Version: 7.0.5
+Version: 7.1.1
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
@@ -29,8 +29,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 // Setting constants
-define('EM_VERSION', '7.0.5'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
-define('EM_PRO_MIN_VERSION', '3.6'); //self expanatory
+define('EM_VERSION', '7.1.1'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_PRO_MIN_VERSION', '3.7'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.6.0.2'); //self expanatory
 define('EM_FILE', __FILE__); //an absolute path to this directory
 define('EM_DIR', dirname( __FILE__ )); //an absolute path to this directory
@@ -50,7 +50,29 @@ if( is_multisite() && get_site_option('dbem_ms_global_table') ){
 	define('EM_MS_GLOBAL',false);
 }
 
-//DEBUG MODE - currently not public, not fully tested
+/**
+ * Gets an option from the WordPress options table, by default the option requested is directly retrieved via the WordPress get_option function.
+ *
+ * Options that can be customized on a per-archetype basis can override the filters in this function to provide archetype–specific functionality.
+ *
+ * The only caveat with the additional parameters is that the default option cannot be equal to an archetype name, unless the archetype name is also supplied as the third parameter.
+ *
+ * @param $option
+ * @param mixed ...$args May consist of the default option value and then the archetype name, otherwise one or the other is supported.
+ *
+ * @return mixed|null
+ */
+function em_get_option ( $option, ...$args ) {
+	if ( class_exists('\EM\Archetypes') ) {
+		$value = \EM\Archetypes::get_option( $option, ...$args );
+	} else {
+		_doing_it_wrong( __FUNCTION__, __( 'Calling em_get_option() too early whilst EM\Archetypes class is not available.', 'events-manager' ), '7.1' );
+		$value = get_option( $option );
+	}
+	return apply_filters( 'em_get_option', $value, $option, $args );
+}
+
+// DEBUG MODE - currently not public, not fully tested
 if( !defined('WP_DEBUG') && get_option('dbem_wp_debug') ){
 	define('WP_DEBUG',true);
 }
@@ -88,7 +110,10 @@ include( EM_DIR . '/classes/em-taxonomy-frontend.php' );
 include( EM_DIR . '/classes/uploads/em-uploads-api.php' );
 include( EM_DIR . '/classes/uploads/em-uploads-uploader.php' );
 //set up events as posts
-include( EM_DIR . '/em-posts.php' );
+include( EM_DIR . '/classes/em-archetypes.php' );
+include( EM_DIR . '/classes/em-taxonomies.php' );
+
+//include( EM_DIR . '/em-posts.php' );
 //Template Tags & Template Logic
 include( EM_DIR . '/em-actions.php' );
 include( EM_DIR . '/em-events.php' );

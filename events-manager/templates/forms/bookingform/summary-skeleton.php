@@ -2,8 +2,8 @@
 // set up init vars
 /* @var EM_Booking $EM_Booking */
 /* @var EM_Event $EM_Event */
-$show_subsections = get_option('dbem_bookings_summary_subsections');
-$itemize_taxes    = get_option('dbem_bookings_summary_taxes_itemized') && get_option('dbem_bookings_tax') > 0;
+$show_subsections = em_get_option('dbem_bookings_summary_subsections');
+$itemize_taxes    = em_get_option('dbem_bookings_summary_taxes_itemized') && em_get_option('dbem_bookings_tax') > 0;
 ?>
 
 <template class="em-booking-summary-skeleton" id="em-booking-summary-skeleton-<?php echo esc_attr($EM_Event->event_id); ?>">

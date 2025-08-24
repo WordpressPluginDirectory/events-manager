@@ -299,7 +299,7 @@ class EM_DateTime extends DateTime {
 	 */
 	public function setStartOfWeek(){
 		$day = $this->format('w');
-		$start_of_week = get_option('start_of_week');
+		$start_of_week = em_get_option('start_of_week');
 		$offset = $day - $start_of_week;
 		if( $offset<0) {
 			$offset += 7;
@@ -427,7 +427,7 @@ class EM_DateTime extends DateTime {
 	 * @return string[]
 	 */
 	public function get_week_dates( $scope = 'week' ) {
-		$start_of_week = get_option('start_of_week');
+		$start_of_week = em_get_option('start_of_week');
 		$days_of_week = array( 0 => 'Sunday', 1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday');
 		$EM_DateTime = $this->copy(); // so we don't modify this $EM_DateTime
 		$today_day_of_week = $EM_DateTime->format('w');

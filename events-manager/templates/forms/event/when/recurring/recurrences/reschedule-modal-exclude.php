@@ -3,7 +3,7 @@
 /* @var int $id */
 /* @var int $type */
 /* @var EM_Event $EM_Event */
-$can_cancel = get_option('dbem_event_status_enabled') && array_key_exists( 0, EM_Event::get_active_statuses() );
+$can_cancel = $EM_Event->get_option('dbem_event_status_enabled') && array_key_exists( 0, EM_Event::get_active_statuses() );
 ?>
 <div class="<?php em_template_classes('recurrence-set-reshedule-modal', 'modal'); ?> only-exclude-type">
 	<div class="em-modal-popup">
@@ -31,7 +31,7 @@ $can_cancel = get_option('dbem_event_status_enabled') && array_key_exists( 0, EM
 							}
 						?>
 					</span>
-					<?php  if( get_option('dbem_event_status_enabled') && array_key_exists( 0, EM_Event::get_active_statuses() ) ) : ob_start(); ?>
+     <?php  if( $EM_Event->get_option('dbem_event_status_enabled') && array_key_exists( 0, EM_Event::get_active_statuses() ) ) : ob_start(); ?>
 					<select class="inline" name="recurrences[exclude_reschedule][action]" data-nostyle>
 						<option value="cancel"><?php esc_html_e('Cancelled', 'events-manager') ?></option>
 						<option value="delete"><?php esc_html_e( 'Deleted' ); ?></option>

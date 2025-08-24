@@ -34,7 +34,7 @@
 					#_EVENTPRICERANGE
 				</div>
 				<a href="#em-event-booking-form" class="button input with-icon-right">
-					<?php esc_html_e(get_option('dbem_booking_button_msg_book')); ?>
+					<?php esc_html_e(em_get_option('dbem_booking_button_msg_book')); ?>
 					<span class="em-icon-ticket em-icon"></span>
 				</a>
 				{/bookings_open}

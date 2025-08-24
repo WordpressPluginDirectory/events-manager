@@ -1,4 +1,7 @@
 <?php
+
+use EM\Archetypes;
+
 /**
  * Performs actions on init. This works for both ajax and normal requests, the return results depends if an em_ajax flag is passed via POST or GET.
  */
@@ -13,7 +16,7 @@ function em_init_actions_start() {
 			if(isset($_REQUEST['id'])){
 				$EM_Location = new EM_Location( absint($_REQUEST['id']), 'location_id' );
 				$location_array = $EM_Location->to_array();
-				$location_array['location_balloon'] = $EM_Location->output( get_option('dbem_location_baloon_format') );
+				$location_array['location_balloon'] = $EM_Location->output( em_get_option('dbem_location_baloon_format') );
 		     	echo EM_Object::json_encode($location_array);
 			}
 			die();
@@ -23,7 +26,7 @@ function em_init_actions_start() {
 			$json_locations = array();
 			foreach($EM_Locations as $location_key => $EM_Location) {
 				$json_locations[$location_key] = $EM_Location->to_array();
-				$json_locations[$location_key]['location_balloon'] = $EM_Location->output(get_option('dbem_map_text_format'));
+				$json_locations[$location_key]['location_balloon'] = $EM_Location->output( em_get_option('dbem_map_text_format') );
 			}
 			echo EM_Object::json_encode($json_locations);
 		 	die();
@@ -37,7 +40,7 @@ function em_init_actions_start() {
 			foreach($EM_Events as $EM_Event) {
 				$EM_Location = $EM_Event->get_location();
 				$location_array = $EM_Event->get_location()->to_array();
-				$location_array['location_balloon'] = $EM_Location->output(get_option('dbem_map_text_format'));
+				$location_array['location_balloon'] = $EM_Location->output(em_get_option('dbem_map_text_format'));
 				$json_locations[] = $location_array;
 			}
 			echo EM_Object::json_encode($json_locations);
@@ -115,12 +118,12 @@ function em_init_actions_start() {
 				//Success notice
 				if( is_user_logged_in() ){
 					if( empty($_REQUEST['event_id']) ){
-						$EM_Notices->add_confirm( $EM_Event->output(get_option('dbem_events_form_result_success')), true);
+						$EM_Notices->add_confirm( $EM_Event->output( $EM_Event->get_option('dbem_events_form_result_success')), true);
 					}else{
-					    $EM_Notices->add_confirm( $EM_Event->output(get_option('dbem_events_form_result_success_updated')), true);
+					    $EM_Notices->add_confirm( $EM_Event->output( $EM_Event->get_option('dbem_events_form_result_success_updated')), true);
 					}
 				}else{
-					$EM_Notices->add_confirm( $EM_Event->output(get_option('dbem_events_anonymous_result_success')), true);
+					$EM_Notices->add_confirm( $EM_Event->output( $EM_Event->get_option('dbem_events_anonymous_result_success')), true);
 				}
 				$redirect = !empty($_REQUEST['redirect_to']) ? $_REQUEST['redirect_to'] : em_wp_get_referer();
 				$redirect = em_add_get_params($redirect, array('success'=>1), false, false);
@@ -245,10 +248,10 @@ function em_init_actions_start() {
 			}
 		}elseif( !empty($_REQUEST['action']) && $_REQUEST['action'] == "locations_search" && (!empty($_REQUEST['term']) || !empty($_REQUEST['q'])) ){
 			$results = array();
-			if( is_user_logged_in() || ( get_option('dbem_events_anonymous_submissions') && user_can(get_option('dbem_events_anonymous_user'), 'read_others_locations') ) ){
+			if( is_user_logged_in() || ( em_get_option('dbem_events_anonymous_submissions') && user_can(em_get_option('dbem_events_anonymous_user'), 'read_others_locations') ) ){
 				$location_cond = (is_user_logged_in() && !current_user_can('read_others_locations')) ? "AND location_owner=".get_current_user_id() : '';
-				if( !is_user_logged_in() && get_option('dbem_events_anonymous_submissions') ){
-					if( !user_can(get_option('dbem_events_anonymous_user'),'read_private_locations') ){
+				if( !is_user_logged_in() && em_get_option('dbem_events_anonymous_submissions') ){
+					if( !user_can(em_get_option('dbem_events_anonymous_user'),'read_private_locations') ){
 						$location_cond = " AND location_private=0";	
 					}
 				}elseif( is_user_logged_in() && !current_user_can('read_private_locations') ){
@@ -315,8 +318,9 @@ function em_init_actions_start() {
 	$booking_ajax_actions = array('booking_add', 'booking_add_one', 'booking_cancel', 'booking_save', 'booking_set_status', 'booking_resend_email', 'booking_modify_person', 'bookings_add_note', 'booking_form', 'booking_form_summary', 'booking_rsvp_change', 'booking_set_rsvp_status');
 	$booking_nopriv_actions = array('booking_add', 'booking_form_summary');
 	$booking_actions = array_merge( $booking_ajax_actions, array_keys($booking_allowed_actions) );
-	if( !empty($_REQUEST['action']) && in_array($_REQUEST['action'], $booking_actions) && (is_user_logged_in() || (in_array($_REQUEST['action'], $booking_nopriv_actions) && get_option('dbem_bookings_anonymous'))) ){
+	if( !empty($_REQUEST['action']) && in_array($_REQUEST['action'], $booking_actions) && (is_user_logged_in() || (in_array($_REQUEST['action'], $booking_nopriv_actions) && em_get_option('dbem_bookings_anonymous'))) ){
 		global $EM_Event, $EM_Booking, $EM_Person;
+		Archetypes::set_current( $EM_Event->event_archetype );
 		//Load the booking object, with saved booking if requested
 		$EM_Booking = ( !empty($_REQUEST['booking_id']) ) ? em_get_booking($_REQUEST['booking_id']) : em_get_booking();
 		if( !empty($EM_Booking->event_id) ){
@@ -332,7 +336,7 @@ function em_init_actions_start() {
 			//ADD/EDIT Booking
 			ob_start();
 			if( (!defined('WP_CACHE') || !WP_CACHE) && !isset($GLOBALS["wp_fastest_cache"]) ) em_verify_nonce('booking_add');
-			if( !is_user_logged_in() || get_option('dbem_bookings_double') || !$EM_Event->get_bookings()->has_booking(get_current_user_id()) ){
+			if( !is_user_logged_in() || $EM_Booking->get_option('dbem_bookings_double') || !$EM_Event->get_bookings()->has_booking(get_current_user_id()) ){
 				if ( $EM_Event->event_status != 1 || $EM_Event->event_active_status != 1 ) {
 					$EM_Notices->add_error( __('This event is not available or has been cancelled', 'events-manager') ); // uncommon, not needed for custom error.
 				} else {
@@ -345,7 +349,7 @@ function em_init_actions_start() {
 						$EM_Bookings = $EM_Event->get_bookings();
 						if( $registration && $EM_Bookings->add($EM_Booking) ){
 						    if( is_user_logged_in() && is_multisite() && !is_user_member_of_blog(get_current_user_id(), get_current_blog_id()) ){
-						        add_user_to_blog(get_current_blog_id(), get_current_user_id(), get_option('default_role'));
+						        add_user_to_blog(get_current_blog_id(), get_current_user_id(), get_option('default_role')); // WP Default role
 						    }
 							$result = true;
 							$EM_Notices->add_confirm( $EM_Bookings->feedback_message );
@@ -365,7 +369,7 @@ function em_init_actions_start() {
 					}
 				}
 			}else{
-				$feedback = get_option('dbem_booking_feedback_already_booked');
+				$feedback = $EM_Booking->get_option('dbem_booking_feedback_already_booked');
 				$EM_Notices->add_error( $feedback );
 			}
 			ob_clean();
@@ -375,7 +379,7 @@ function em_init_actions_start() {
 			if ( $EM_Event->event_status != 1 || $EM_Event->event_active_status != 1 ) {
 				$EM_Notices->add_error( __('This event is not available or has been cancelled.', 'events-manager') ); // uncommon, not needed for custom error.
 			} else {
-				if( get_option('dbem_bookings_double') || !$EM_Event->get_bookings()->has_booking(get_current_user_id()) ){
+				if( $EM_Booking->get_option('dbem_bookings_double') || !$EM_Event->get_bookings()->has_booking(get_current_user_id()) ){
 					$EM_Booking = em_get_booking(array('person_id'=>get_current_user_id(), 'event_id'=>$EM_Event->event_id, 'booking_spaces'=>1)); //new booking
 					// get first ticket that's available
 					foreach( $EM_Event->get_bookings()->get_available_tickets() as $EM_Ticket ){
@@ -406,11 +410,11 @@ function em_init_actions_start() {
 							$feedback = $EM_Event->get_bookings()->feedback_message;
 						}
 					}else{
-						$EM_Notices->add_error( get_option('dbem_booking_feedback_full') );
-						$feedback = get_option('dbem_booking_feedback_full');
+						$EM_Notices->add_error( $EM_Booking->get_option('dbem_booking_feedback_full') );
+						$feedback = $EM_Booking->get_option('dbem_booking_feedback_full');
 					}
 				}else{
-					$feedback = get_option('dbem_booking_feedback_already_booked');
+					$feedback = $EM_Booking->get_option('dbem_booking_feedback_already_booked');
 					$EM_Notices->add_error( $feedback );
 				}
 			}
@@ -426,7 +430,7 @@ function em_init_actions_start() {
 						$result = true;
 						if( !defined('DOING_AJAX') ){
 							if( $EM_Booking->person->ID == get_current_user_id() ){
-								$EM_Notices->add_confirm(get_option('dbem_booking_feedback_cancelled'), true );
+								$EM_Notices->add_confirm( $EM_Booking->get_option('dbem_booking_feedback_cancelled'), true );
 							}else{
 								$EM_Notices->add_confirm( $EM_Booking->feedback_message, true );
 							}
@@ -623,14 +627,15 @@ function em_init_actions_start() {
 			$EM_Booking->get_post();
 			// wrap in main tag as we only need what's inside by JS
 			echo '<main>';
-				if( get_option('dbem_bookings_summary') ){
+				if( $EM_Booking->get_option('dbem_bookings_summary') ){
 					em_locate_template('forms/bookingform/summary.php', true, array('EM_Event' => $EM_Event, 'EM_Booking' => $EM_Booking));
 				}
 				echo $EM_Booking->output_intent_html();
 			echo '</main>';
 			exit();
 		}
-	
+		Archetypes::revert_current();
+		
 		if( $result && defined('DOING_AJAX') ){
 			$return = array('result'=>true, 'success'=>true, 'message'=>$feedback);
 			header( 'Content-Type: application/javascript; charset=UTF-8', true ); //add this for HTTP -> HTTPS requests which assume it's a cross-site request
@@ -642,12 +647,12 @@ function em_init_actions_start() {
 			echo EM_Object::json_encode(apply_filters('em_action_'.$_REQUEST['action'], $return, $EM_Booking));
 			die();
 		}
-	}elseif( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'booking_add' && !is_user_logged_in() && !get_option('dbem_bookings_anonymous')){
+	}elseif( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'booking_add' && !is_user_logged_in() && !em_get_option('dbem_bookings_anonymous')){
 		global $EM_Booking;
 		$EM_Booking = ( !empty($_REQUEST['booking_id']) ) ? em_get_booking($_REQUEST['booking_id']) : em_get_booking();
-		$EM_Notices->add_error( get_option('dbem_booking_feedback_log_in') );
+		$EM_Notices->add_error( $EM_Booking->get_option('dbem_booking_feedback_log_in') );
 		if( defined('DOING_AJAX') ){
-			$return = array('result'=>false, 'success'=>false, 'message'=>get_option('dbem_booking_feedback_log_in'), 'errors'=>$EM_Notices->get_errors());
+			$return = array('result'=>false, 'success'=>false, 'message'=> $EM_Booking->get_option('dbem_booking_feedback_log_in'), 'errors'=>$EM_Notices->get_errors());
 			echo EM_Object::json_encode(apply_filters('em_action_'.$_REQUEST['action'], $return, $EM_Booking));
 			die();
 		}
@@ -687,7 +692,7 @@ function em_init_actions_start() {
 				//quick shortcut for quick html form manipulation
 				ob_start();
 				?>
-				<option value=''><?php echo get_option('dbem_search_form_states_label') ?></option>
+				<option value=''><?php echo em_get_option('dbem_search_form_states_label') ?></option>
 				<?php
 				foreach( $results as $result ){
 					echo "<option>{$result}</option>";
@@ -718,7 +723,7 @@ function em_init_actions_start() {
 				//quick shortcut for quick html form manipulation
 				ob_start();
 				?>
-				<option value=''><?php echo get_option('dbem_search_form_towns_label'); ?></option>
+				<option value=''><?php echo em_get_option('dbem_search_form_towns_label'); ?></option>
 				<?php			
 				foreach( $results as $result ){
 					echo "<option>$result</option>";
@@ -742,7 +747,7 @@ function em_init_actions_start() {
 				//quick shortcut for quick html form manipulation
 				ob_start();
 				?>
-				<option value=''><?php echo get_option('dbem_search_form_regions_label'); ?></option>
+				<option value=''><?php echo em_get_option('dbem_search_form_regions_label'); ?></option>
 				<?php	
 				foreach( $results as $result ){
 					echo "<option>{$result->value}</option>";
@@ -798,9 +803,8 @@ function em_ajax_search_and_pagination(){
 	if( $_REQUEST['action'] == 'search_events' ){
 		// new and default way of doing things
 		$view = !empty($_REQUEST['view']) && preg_match('/^[a-zA-Z0-9-_]+$/', $_REQUEST['view']) ? $_REQUEST['view'] : 'list';
-		$args['scope'] = get_option('dbem_events_page_scope');
 		$args = EM_Events::get_post_search($args);
-        if( get_option('dbem_search_form_cookies', true) ) {
+        if( em_get_option('dbem_search_form_cookies', true) ) {
 	        if ( empty( $_REQUEST['clear_search'] ) ) {
 		        // clear known unecesssary and empty keys
 		        $cookie_args = array();
@@ -824,7 +828,7 @@ function em_ajax_search_and_pagination(){
         }
 		$search_args = em_get_search_form_defaults($args);
 		$args = array_merge($search_args, $args);
-		$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
+		$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_events_default_limit');
 		em_output_events_view( $args, $view );
 	}elseif( $_REQUEST['action'] == 'search_locations'){
 		// new and default way of doing things
@@ -836,7 +840,7 @@ function em_ajax_search_and_pagination(){
 		switch( $view ){
 			case 'list':
 				$args = EM_Locations::get_post_search($args);
-				$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_locations_default_limit');
+				$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_locations_default_limit');
 				break;
 			case 'map':
 				$args = EM_Locations::get_post_search($args);
@@ -849,10 +853,9 @@ function em_ajax_search_and_pagination(){
 	}else{
 		if( $_REQUEST['action'] == 'search_events_grouped' && defined('DOING_AJAX') ) {
 			// legacy
-			$args['scope'] = get_option('dbem_events_page_scope');
 			$args = EM_Events::get_post_search($args);
             // set cookies if relevant
-			if( get_option('dbem_search_form_cookies', true) ) {
+			if( em_get_option('dbem_search_form_cookies', true) ) {
 				if ( empty( $_REQUEST['clear_search'] ) ) {
 					setcookie( 'em_search_events', base64_encode( json_encode( $args ) ), time() + MONTH_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
 				} else {
@@ -860,15 +863,15 @@ function em_ajax_search_and_pagination(){
 				}
 			}
             // set limit and output template
-			$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
+			$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_events_default_limit');
 			em_locate_template('templates/events-list-grouped.php', true, array('args' => $args)); //if successful, this template overrides the settings and defaults, including search
 		}elseif( $_REQUEST['action'] == 'search_tags' && defined('DOING_AJAX') ){
 			$args = EM_Tags::get_post_search($args);
-			$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_tags_default_limit');
+			$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_tags_default_limit');
 			em_locate_template('templates/tags-list.php', true, array('args'=>$args)); //if successful, this template overrides the settings and defaults, including search
 		}elseif( $_REQUEST['action'] == 'search_cats' && defined('DOING_AJAX') ){
 			$args = EM_Categories::get_post_search($args);
-			$args['limit'] = !empty($args['limit']) ? $args['limit'] : get_option('dbem_categories_default_limit');
+			$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_categories_default_limit');
 			em_locate_template('templates/categories-list.php', true, array('args'=>$args)); //if successful, this template overrides the settings and defaults, including search
 		}
 	}
@@ -890,8 +893,8 @@ add_action('wp_ajax_search_cats','em_ajax_search_and_pagination');
 Added in dev 5.4.4.2 but may delete in favour of Google autocomplete service
 function em_ajax_geocoding_search(){
 	//GeoNames
-	if( !empty($_REQUEST['q']) && get_option('dbem_geonames_username') ){
-		$url = 'http://api.geonames.org/searchJSON?username='.get_option('dbem_geonames_username').'&featureClass=p&style=full&maxRows=12&q=' . rawurlencode(utf8_encode($_REQUEST['q']));
+	if( !empty($_REQUEST['q']) && em_get_option('dbem_geonames_username') ){
+		$url = 'http://api.geonames.org/searchJSON?username='.em_get_option('dbem_geonames_username').'&featureClass=p&style=full&maxRows=12&q=' . rawurlencode(utf8_encode($_REQUEST['q']));
 		if( !empty($_REQUEST['country']) ){
 			$url .= '&countryBias=' . rawurlencode(utf8_encode($_REQUEST['country']));	
 		}

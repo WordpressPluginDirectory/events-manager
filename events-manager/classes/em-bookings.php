@@ -135,7 +135,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		$email = false;
 		//set status depending on approval settings
 		if( empty($EM_Booking->booking_status) ){ //if status is not set, give 1 or 0 depending on approval settings
-			$EM_Booking->booking_status = get_option('dbem_bookings_approval') ? 0:1;
+			$EM_Booking->booking_status = em_get_option('dbem_bookings_approval') ? 0:1;
 		}
 		$result = $EM_Booking->save(false);
 		if($result){
@@ -144,14 +144,14 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			if( $this->bookings === null ) $this->bookings = array();
 			$this->bookings[] = $EM_Booking;
 			$email = $EM_Booking->email();
-			if( get_option('dbem_bookings_approval') == 1 && $EM_Booking->booking_status == 0){
-				$this->feedback_message = get_option('dbem_booking_feedback_pending');
+			if( em_get_option('dbem_bookings_approval') == 1 && $EM_Booking->booking_status == 0){
+				$this->feedback_message = em_get_option('dbem_booking_feedback_pending');
 			}else{
-				$this->feedback_message = get_option('dbem_booking_feedback');
+				$this->feedback_message = em_get_option('dbem_booking_feedback');
 			}
 			if(!$email){
 				$EM_Booking->email_not_sent = true;
-				$this->feedback_message .= ' '.get_option('dbem_booking_feedback_nomail');
+				$this->feedback_message .= ' '.em_get_option('dbem_booking_feedback_nomail');
 				if( current_user_can('activate_plugins') ){
 					if( count($EM_Booking->get_errors()) > 0 ){
 						$this->feedback_message .= '<br/><strong>Errors:</strong> (only admins see this message)<br/><ul><li>'. implode('</li><li>', $EM_Booking->get_errors()).'</li></ul>';
@@ -163,7 +163,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			return apply_filters('em_bookings_add', true, $EM_Booking);
 		}else{
 			//Failure
-			$this->errors[] = "<strong>".get_option('dbem_booking_feedback_error')."</strong><br />". implode('<br />', $EM_Booking->errors);
+			$this->errors[] = "<strong>".em_get_option('dbem_booking_feedback_error')."</strong><br />". implode('<br />', $EM_Booking->errors);
 		}
 		return apply_filters('em_bookings_add', false, $EM_Booking);
 	}
@@ -194,7 +194,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			'tickets_count' =>  count($this->get_tickets()->tickets),
 			'available_tickets_count' =>  count( $this->get_available_tickets() ),
 			//decide whether user can book, event is open for bookings etc.
-			'can_book' =>  is_user_logged_in() || (get_option('dbem_bookings_anonymous') && !is_user_logged_in()),
+			'can_book' =>  is_user_logged_in() || (em_get_option('dbem_bookings_anonymous') && !is_user_logged_in()),
 			'is_open' =>  $this->is_open(), //whether there are any available tickets right now
 			'is_free' =>  $this->get_event()->is_free(),
 			'show_tickets' =>  true,
@@ -282,7 +282,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	function get_tickets( $force_reload = false ){
 		if( !is_object($this->tickets) || $force_reload ){
 			$this->tickets = new EM_Tickets($this->get_event());
-			if( get_option('dbem_bookings_tickets_single') && count($this->tickets->tickets) == 1 ){
+			if( em_get_option('dbem_bookings_tickets_single') && count($this->tickets->tickets) == 1 ){
 				//if in single ticket mode, then the event booking cut-off is the ticket end date
 		    	$EM_Ticket = $this->tickets->get_first();
 		    	$EM_Event = $this->get_event();
@@ -533,7 +533,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		}else{
 			$spaces = $this->get_spaces($force_refresh);
 			$available_spaces = $spaces - $this->get_booked_spaces($force_refresh);
-			if( get_option('dbem_bookings_approval_reserved') ){ //deduct reserved/pending spaces from available spaces
+			if( em_get_option('dbem_bookings_approval_reserved') ){ //deduct reserved/pending spaces from available spaces
 				$available_spaces -= $this->get_pending_spaces($force_refresh);
 			}
 		}
@@ -549,7 +549,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	function get_booked_spaces($force_refresh = false){
 		global $wpdb;
 		if( $this->booked_spaces === null || $force_refresh ){
-			$status_cond = !get_option('dbem_bookings_approval') ? 'booking_status IN (0,1)' : 'booking_status = 1';
+			$status_cond = !em_get_option('dbem_bookings_approval') ? 'booking_status IN (0,1)' : 'booking_status = 1';
 			$sql = 'SELECT SUM(booking_spaces) FROM '.EM_BOOKINGS_TABLE. " WHERE $status_cond AND event_id=".absint($this->event_id);
 			$booked_spaces = $wpdb->get_var($sql);
 			$this->booked_spaces = $booked_spaces > 0 ? $booked_spaces : 0;
@@ -562,7 +562,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	 * @return int
 	 */
 	function get_pending_spaces( $force_refresh = false ){
-		if( get_option('dbem_bookings_approval') == 0 ){
+		if( em_get_option('dbem_bookings_approval') == 0 ){
 			return apply_filters('em_bookings_get_pending_spaces', 0, $this);
 		}
 		global $wpdb;
@@ -582,7 +582,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	function get_bookings( $all_bookings = false ){
 		$confirmed = array();
 		foreach ( $this->load() as $EM_Booking ){
-			if( $EM_Booking->booking_status == 1 || (get_option('dbem_bookings_approval') == 0 && $EM_Booking->booking_status == 0) || $all_bookings ){
+			if( $EM_Booking->booking_status == 1 || ( $EM_Booking->get_option('dbem_bookings_approval') == 0 && $EM_Booking->booking_status == 0) || $all_bookings ){
 				$confirmed[] = $EM_Booking;
 			}
 		}
@@ -595,7 +595,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	 * @return EM_Bookings
 	 */
 	function get_pending_bookings(){
-		if( get_option('dbem_bookings_approval') == 0 ){
+		if( em_get_option('dbem_bookings_approval') == 0 ){
 			return new EM_Bookings();
 		}
 		$pending = array();
@@ -1068,7 +1068,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 				),
 				EM_EVENTS_TABLE => array(
 					// accepted args that would require events table to be joined
-					'args' => array('scope', 'timezone', 'recurring', 'private', 'private_only', 'post_id', 'mode', 'has_location', 'no_location', 'event_location_type', 'has_event_location', 'category', 'tag', 'event_status', 'month', 'year', 'owner', 'language','recurrence', 'recurrences', 'recurrence', 'recurring_event'),
+					'args' => array('event_archetype', 'type', 'scope', 'timezone', 'recurring', 'private', 'private_only', 'post_id', 'mode', 'has_location', 'no_location', 'event_location_type', 'has_event_location', 'category', 'tag', 'event_status', 'month', 'year', 'owner', 'language','recurrence', 'recurrences', 'recurrence', 'recurring_event'),
 					// any args that may have a specific empty value that still means it's 'set', could also be an array of empty value types
 					'empty_args' => array(),
 					// any args here that match the value or that within the array of values will be considered as ignored, for example scope 'all' doesn't actually require any SQL conditions
@@ -1145,7 +1145,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	 * @see wp-content/plugins/events-manager/classes/EM_Object#build_sql_orderby()
 	 */
 	public static function build_sql_orderby( $args, $accepted_fields, $default_order = 'ASC' ){
-		return apply_filters( 'em_bookings_build_sql_orderby', parent::build_sql_orderby($args, $accepted_fields, get_option('dbem_bookings_default_order','booking_date')), $args, $accepted_fields, $default_order );
+		return apply_filters( 'em_bookings_build_sql_orderby', parent::build_sql_orderby($args, $accepted_fields, em_get_option('dbem_bookings_default_order','booking_date')), $args, $accepted_fields, $default_order );
 	}
 	
 	/* Overrides EM_Object method to apply a filter to result

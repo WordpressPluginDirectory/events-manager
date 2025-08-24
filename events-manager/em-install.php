@@ -137,7 +137,8 @@ function em_create_events_table() {
 	$sql = "CREATE TABLE ".$table_name." (
 		event_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		post_id bigint(20) unsigned NULL DEFAULT NULL,
-        event_type VARCHAR(20) DEFAULT 'event',		
+        event_archetype VARCHAR(20) DEFAULT 'event',
+        event_type VARCHAR(20) DEFAULT 'single',
 		event_parent bigint(20) unsigned NULL DEFAULT NULL,
 		event_slug VARCHAR( 200 ) NULL DEFAULT NULL,
 		event_owner bigint(20) unsigned DEFAULT NULL,
@@ -192,7 +193,7 @@ function em_create_events_table() {
 		}
 		dbDelta($sql);
 	}
-	em_sort_out_table_nu_keys($table_name, array('event_status','event_active_status','post_id','blog_id','group_id','location_id','event_start', 'event_end', 'event_start_date', 'event_end_date', 'event_type'));
+	em_sort_out_table_nu_keys($table_name, array('event_status','event_active_status','post_id','blog_id','group_id','location_id','event_start', 'event_end', 'event_start_date', 'event_end_date', 'event_type', 'event_archetype'));
 	if( em_check_utf8mb4_tables() ) maybe_convert_table_to_utf8mb4( $table_name );
 }
 
@@ -511,6 +512,7 @@ function em_add_options() {
 		'dbem_events_default_orderby' => 'event_start_date,event_start_time,event_name',
 		'dbem_events_default_order' => 'ASC',
 		'dbem_events_default_limit' => 10,
+		'dbem_events_default_scope' => 'future', // found on general settings, overriding the event_page scope for general scope choices, due to defaulting issues in <7.0.6
 		//Event Search Options
 		'dbem_search_form_main' => 1,
 		'dbem_search_form_responsive' => $already_installed ? 'one-line' : 'multi-line',
@@ -930,7 +932,16 @@ function em_add_options() {
 		/*
 		 * Custom Post Options - set up to mimick old EM settings and install with minimal setup for most users
 		 */
-		//slugs
+		// CPTs
+		'dbem_cp_events_cpt' => 'event',
+		'dbem_cp_events_cpts' => 'events',
+		'dbem_cp_events_name' => __('Events','events-manager'),
+		'dbem_cp_events_name_single' => __('Event','events-manager'),
+		'dbem_cp_locations_cpt' => 'location',
+		'dbem_cp_locations_cpts' => 'locations',
+		'dbem_cp_locations_name' => __('Locations','events-manager'),
+		'dbem_cp_locations_name_single' => __('Location','events-manager'),
+		// slugs
 		'dbem_cp_events_slug' => 'events',
 		'dbem_cp_locations_slug' => 'locations',
 		'dbem_taxonomy_category_slug' => 'events/categories',
@@ -1028,6 +1039,22 @@ function em_add_options() {
 	//add new options
 	foreach($dbem_options as $key => $value){
 		add_option($key, $value);
+	}
+
+	// add MS options
+	if ( is_multisite() && get_site_option( 'dbem_version') && version_compare( get_site_option( 'dbem_version'), EM_VERSION, '<') ) {
+		$ms_options = array (
+			// archetype settings - restrictive to begin with
+			'dbem_archetypes_enabled' => 0,
+			'dbem_ms_archetypes_mode' => 'network',
+			'dbem_archetypes_rename_labels' => 0,
+			'dbem_archetypes_rename_slugs' => 0,
+			'dbem_archetypes_rename_cpts' => 0,
+		);
+		foreach ( $ms_options as $key => $value ) {
+			add_site_option( $key, $value );
+		}
+		update_site_option( 'dbem_version', EM_VERSION );
 	}
 		
 	//set time localization for first time depending on current settings
@@ -1798,10 +1825,10 @@ function em_upgrade_current_installation(){
 				// Update event_type based on recurrence field
 				$wpdb->query("UPDATE " . EM_EVENTS_TABLE . " SET event_type = 
 		                CASE 
-		                    WHEN event_type IS NOT NULL AND event_type != '". EM_POST_TYPE_EVENT ."' THEN event_type
+		                    WHEN event_type IS NOT NULL AND event_type != 'event' THEN event_type
 		                    WHEN recurrence = 1 THEN 'repeating' 
 		                    WHEN recurrence_id IS NOT NULL AND recurrence != 1 THEN 'recurrence' 
-		                    ELSE '". EM_POST_TYPE_EVENT ."'
+		                    ELSE 'single'
 		                END
 			        ");
 				// Migrate recurrence data to new table
@@ -1844,6 +1871,15 @@ function em_upgrade_current_installation(){
 					EM_Admin_Notices::add($EM_Admin_Notice, is_multisite());
 				}
 			}
+		}
+		if ( version_compare( $current_version, '7.1', '<' ) ) {
+			// revert event type to EM_POST_TYPE_EVENT
+			$wpdb->query( $wpdb->prepare("UPDATE " . EM_EVENTS_TABLE . " SET event_type = 'single' WHERE event_type = %s", EM_POST_TYPE_EVENT ) );
+			if( get_option('dbem_cp_events_template') === '' ){
+				update_option('dbem_cp_events_template', 'post');
+			}
+			$message = 'Events Manager 7.1 now allows you to rename your events and locations or create completely new event types, called Archetypes. Now you can create Workshops, Talks, Excursions or whatever your heart desires with different custom settings/features, all running off Events Manager! Enable this in <a href="'. EM_ADMIN_URL .'&amp;page=events-manager-options#general+archetypes' .'"><em>Events > Settings > Archetypes</em></a>';
+			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
 		}
 	}
 }

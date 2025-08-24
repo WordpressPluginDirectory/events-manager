@@ -432,7 +432,7 @@ class Recurrence_Sets extends \EM_Object implements \Iterator, \ArrayAccess, \Co
 					//recurring events may have a cut-off date x days before or after the recurrence start dates
 					$this->default->recurrence_rsvp_days = null;
 					$this->default->recurrence_rsvp_time = null;
-					if ( get_option( 'dbem_bookings_tickets_single' ) && count( $EM_Event->get_tickets()->tickets ) == 1 ) {
+					if ( em_get_option( 'dbem_bookings_tickets_single' ) && count( $EM_Event->get_tickets()->tickets ) == 1 ) {
 						//if in single ticket mode then ticket cut-off date determines event cut-off date
 						$EM_Ticket = $EM_Event->get_tickets()->get_first();
 						if ( !empty( $EM_Ticket->ticket_meta['recurrences'] ) ) {
@@ -551,7 +551,7 @@ class Recurrence_Sets extends \EM_Object implements \Iterator, \ArrayAccess, \Co
 		$EM_Event->event_all_day = $dates['all_day'];
 
 		// we need to update the event object RSVP cut-off date as well
-		if( get_option('dbem_bookings_tickets_single') && count($EM_Event->get_tickets()->tickets) == 1 ){
+		if( $EM_Event->get_option('dbem_bookings_tickets_single') && count($EM_Event->get_tickets()->tickets) == 1 ){
 			//single ticket mode will use the ticket end date/time as cut-off date/time
 			$EM_Ticket = $EM_Event->get_tickets()->get_first();
 			$EM_Event->event_rsvp_date = null;
@@ -647,7 +647,7 @@ class Recurrence_Sets extends \EM_Object implements \Iterator, \ArrayAccess, \Co
 	 * @return string
 	 */
 	public static function get_reschedule_action ( $action = null ) {
-		$can_cancel = get_option( 'dbem_event_status_enabled' ) && array_key_exists( 0, EM_Event::get_active_statuses() );
+		$can_cancel = em_get_option( 'dbem_event_status_enabled' ) && array_key_exists( 0, EM_Event::get_active_statuses() );
 		$reschedule_possibilities = $can_cancel ? [ 'delete', 'cancel' ] : [ 'delete' ];
 		// cancel if not defined, delete if cancellations not possible
 		return in_array( $action, $reschedule_possibilities ) ? $action : ( $can_cancel ? 'cancel' : 'delete' );

@@ -15,13 +15,13 @@
 		</header>
 		<div class="em-modal-content <?php em_template_classes('calendar-preview', 'events-widget'); /* we're adding some subcomponent class names not generic 'em' and 'pixelbones' classes */ ?>">
 			<?php foreach( $cell_data['events'] as $EM_Event ): /* @var EM_Event $EM_Event */ ?>
-				<?php echo $EM_Event->output( get_option('dbem_calendar_preview_modal_date_format') ); ?>
+				<?php echo $EM_Event->output( $EM_Event->get_option('dbem_calendar_preview_modal_date_format') ); ?>
 			<?php endforeach; ?>
 		</div><!-- content -->
-		<?php if( $cell_data['events_count'] > count($cell_data['events']) && get_option('dbem_display_calendar_events_limit_msg') != '' ): ?>
+		<?php if( $cell_data['events_count'] > count($cell_data['events']) && em_get_option('dbem_display_calendar_events_limit_msg') != '' ): ?>
 		<footer>
 			<div class="em-cal-day-limit input"><a href="<?php echo esc_url($cell_data['link']); ?>" class="button">
-					<?php echo str_replace('%COUNT%', $cell_data['events_count'] - $args['limit'], get_option('dbem_display_calendar_events_limit_msg')); ?></a>
+					<?php echo str_replace('%COUNT%', $cell_data['events_count'] - $args['limit'], em_get_option('dbem_display_calendar_events_limit_msg')); ?></a>
 			</div>
 		</footer>
 		<?php endif; ?>

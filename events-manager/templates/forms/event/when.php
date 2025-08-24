@@ -7,7 +7,7 @@ $classes = array();
 $id = rand();
 ?>
 <div class="em event-form-when input" id="em-form-when">
-	<?php if ( get_option('dbem_recurrence_enabled') || ( $EM_Event->is_repeating() ) ): ?>
+	<?php if ( em_get_option('dbem_recurrence_enabled') || ( $EM_Event->is_repeating() ) ): ?>
 		<?php if ( $EM_Event->is_recurring( true ) ): ?>
 			<input type="hidden" id="em-recurrence-checkbox-<?php echo $id; ?>" class="em-recurrence-checkbox event_type" name="event_type" value="<?php echo $EM_Event->is_repeating() ? 'repeating':'recurring'; ?>">
 			<p>
@@ -22,7 +22,7 @@ $id = rand();
 		<?php elseif ( !$EM_Event->event_id ): ?>
 			<p class="em-event-type">
 				<label data-nostyle>
-					<?php if (  !is_admin() && get_option('dbem_recurrence_enabled') && get_option('dbem_repeating_enabled') ):  ?>
+					<?php if (  !is_admin() && em_get_option('dbem_recurrence_enabled') && em_get_option('dbem_repeating_enabled') ):  ?>
 						<?php ob_start(); ?>
 						<select id="em-recurrence-checkbox-<?php echo $id; ?>" class="em-recurrence-checkbox event_type inline" name="event_type" data-nostyle>
 							<option value="single"><?php esc_html_e('Single', 'events-manager'); ?></option>
@@ -42,7 +42,7 @@ $id = rand();
 	<?php endif; ?>
 
 	<div class="em-event-datetimes single-event-data">
-		<?php if( get_option('dbem_dates_range_double_inputs', false) ): ?>
+		<?php if( em_get_option('dbem_dates_range_double_inputs', false) ): ?>
 			<?php include( em_locate_template('forms/event/when/dates-separate.php') ); ?>
 		<?php else: ?>
 			<?php include( em_locate_template('forms/event/when/dates.php') ); ?>
@@ -50,12 +50,12 @@ $id = rand();
 		<?php include( em_locate_template('forms/event/when/times.php') ); ?>
 		<?php include( em_locate_template('forms/event/when/timezone.php') ); ?>
 		<p class="multi-day-event-info"><?php esc_html_e( 'This event spans every day between the beginning and end date, with start/end times applying to each day.', 'events-manager'); ?></p>
-		<?php if( get_option('dbem_event_status_enabled') ) : ?>
+		<?php if( em_get_option('dbem_event_status_enabled') ) : ?>
 			<?php include( em_locate_template('forms/event/when/active-status.php') ); ?>
 		<?php endif; ?>
 	</div>
 
-	<?php if ( get_option('dbem_recurrence_enabled') || ( $EM_Event->is_repeating() ) ): ?>
+	<?php if ( em_get_option('dbem_recurrence_enabled') || ( $EM_Event->is_repeating() ) ): ?>
 		<?php include em_locate_template('forms/event/when/recurring/recurring-summary.php'); ?>
 	<?php endif; ?>
 </div>

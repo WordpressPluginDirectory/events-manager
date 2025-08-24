@@ -40,7 +40,7 @@
 							<th class='manage-column' scope='col'><?php _e('Date', 'events-manager'); ?></th>
 							<th class='manage-column' scope='col'><?php _e('Spaces', 'events-manager'); ?></th>
 							<th class='manage-column' scope='col'><?php _e('Status', 'events-manager'); ?></th>
-							<?php if( get_option('dbem_bookings_rsvp') && get_option('dbem_bookings_rsvp_my_bookings') ): ?>
+							<?php if( em_get_option('dbem_bookings_rsvp') && em_get_option('dbem_bookings_rsvp_my_bookings') ): ?>
 							<th class='manage-column' scope='col'><?php _e('RSVP', 'events-manager'); ?></th>
 							<?php endif; ?>
 							<th class='manage-column' scope='col'>&nbsp;</th>
@@ -60,12 +60,12 @@
 								?>
 								<tr>
 									<td><?php echo $EM_Event->output("#_EVENTLINK"); ?></td>
-									<td><?php echo $EM_Event->start()->i18n( get_option('dbem_date_format') ); ?></td>
+									<td><?php echo $EM_Event->start()->i18n( em_get_option('dbem_date_format') ); ?></td>
 									<td><?php echo $EM_Booking->get_spaces() ?></td>
 									<td>
 										<?php echo $EM_Booking->get_status(); ?>
 									</td>
-									<?php if( get_option('dbem_bookings_rsvp') && get_option('dbem_bookings_rsvp_my_bookings') ): ?>
+									<?php if( em_get_option('dbem_bookings_rsvp') && em_get_option('dbem_bookings_rsvp_my_bookings') ): ?>
 										<td>
 											<?php echo $EM_Booking->get_rsvp_status( true ); ?>
 										</td>
@@ -73,8 +73,8 @@
 									<td>
 										<?php
 										$cancel_links = array();
-										$show_rsvp = get_option('dbem_bookings_rsvp') && get_option('dbem_bookings_rsvp_my_bookings_buttons');
-										$show_cancel_rsvp = $EM_Booking->can_rsvp(0) && get_option('dbem_bookings_rsvp_sync_cancel');
+										$show_rsvp = em_get_option('dbem_bookings_rsvp') && em_get_option('dbem_bookings_rsvp_my_bookings_buttons');
+										$show_cancel_rsvp = $EM_Booking->can_rsvp(0) && em_get_option('dbem_bookings_rsvp_sync_cancel');
 										if( !$show_cancel_rsvp && (!in_array($EM_Booking->booking_status, array(2,3)) && $EM_Booking->can_cancel()) ){
 											$cancel_url = em_add_get_params($_SERVER['REQUEST_URI'], array('action'=>'booking_cancel', 'booking_id'=>$EM_Booking->booking_id, '_wpnonce'=>$nonce));
 											$cancel_links[] = '<a class="em-bookings-cancel" href="'. esc_url($cancel_url) .'" onclick="if( !confirm(EM.booking_warning_cancel) ){ return false; }">'.__('Cancel','events-manager').'</a>';

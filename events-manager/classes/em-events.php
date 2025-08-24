@@ -1,5 +1,6 @@
 <?php
 use EM_Event_Locations\Event_Locations;
+use EM\Archetypes;
 //TODO EM_Events is currently static, better we make this non-static so we can loop sets of events, and standardize with other objects.
 /**
  * Use this class to query and manipulate sets of events. If dealing with more than one event, you probably want to use this class in some way.
@@ -105,7 +106,7 @@ class EM_Events extends EM_Object {
 		//Build ORDER BY and WHERE SQL statements here, after we've done all the pre-processing necessary
 		$conditions = self::build_sql_conditions($args);
 		$where = ( count($conditions) > 0 ) ? " WHERE " . implode ( " AND ", $conditions ):'';
-		$orderby = self::build_sql_orderby($args, $accepted_fields, get_option('dbem_events_default_order'));
+		$orderby = self::build_sql_orderby($args, $accepted_fields, em_get_option('dbem_events_default_order'));
 		$orderby_sql = ( count($orderby) > 0 ) ? 'ORDER BY '. implode(', ', $orderby) : '';
 		
 		//Build GROUP BY SQL statement, which will be very different if we group things due to how we need to filter out by event date
@@ -266,21 +267,22 @@ $orderby_sql";
 	
 	/**
 	 * Will delete given an array of event_ids or EM_Event objects
-	 * @param unknown_type $id_array
+	 * @param EM_Event[]|int[] $id_array
 	 */
 	public static function delete( $array ){
-		global $wpdb;
 		//Detect array type and generate SQL for event IDs
 		$results = array();
-		if( !empty($array) && @get_class(current($array)) != 'EM_Event' ){
-			$events = self::get($array);
-		}else{
-			$events = $array;
-		}
 		$event_ids = array();
-		foreach ($events as $EM_Event){
-		    $event_ids[] = $EM_Event->event_id;
-			$results[] = $EM_Event->delete();
+		if ( is_array( $array ) ) {
+			if( !empty($array) && !( current($array) instanceof EM_Event ) ) {
+				$events = self::get($array);
+			}
+			foreach ($events as $EM_Event){
+				if ( !empty($EM_Event->event_id) ) {
+					$event_ids[] = $EM_Event->event_id;
+					$results[] = $EM_Event->delete();
+				}
+			}
 		}
 		//TODO add better error feedback on events delete fails
 		return apply_filters('em_events_delete',  in_array(false, $results), $event_ids);
@@ -318,7 +320,7 @@ $orderby_sql";
 			$events_count = self::$num_rows_found;
 		}
 		//What format shall we output this to, or use default
-		$format = ( empty($args['format']) ) ? get_option( 'dbem_event_list_item_format' ) : $args['format'] ;
+		$format = ( empty($args['format']) ) ? em_get_option( 'dbem_event_list_item_format' ) : $args['format'] ;
 		
 		$output = "";
 		
@@ -328,10 +330,10 @@ $orderby_sql";
 				$output .= $EM_Event->output($format);
 			} 
 			//Add headers and footers to output
-			if( $format == get_option( 'dbem_event_list_item_format' ) ){
+			if( $format == em_get_option( 'dbem_event_list_item_format' ) ){
 			    //we're using the default format, so if a custom format header or footer is supplied, we can override it, if not use the default
-			    $format_header = empty($args['format_header']) ? get_option('dbem_event_list_item_format_header') : $args['format_header'];
-			    $format_footer = empty($args['format_footer']) ? get_option('dbem_event_list_item_format_footer') : $args['format_footer'];
+			    $format_header = empty($args['format_header']) ? em_get_option('dbem_event_list_item_format_header') : $args['format_header'];
+			    $format_footer = empty($args['format_footer']) ? em_get_option('dbem_event_list_item_format_footer') : $args['format_footer'];
 			}else{
 			    //we're using a custom format, so if a header or footer isn't specifically supplied we assume it's blank
 			    $format_header = !empty($args['format_header']) ? $args['format_header'] : '' ;
@@ -343,7 +345,7 @@ $orderby_sql";
 				$output .= self::get_pagination_links($args, $events_count);
 			}
 		}elseif( $args['no_results_msg'] !== false ){
-			$output = !empty($args['no_results_msg']) ? esc_html($args['no_results_msg']) : get_option('dbem_no_events_message');
+			$output = !empty($args['no_results_msg']) ? esc_html($args['no_results_msg']) : em_get_option('dbem_no_events_message');
 		}
 		
 		//TODO check if reference is ok when restoring object, due to changes in php5 v 4
@@ -366,16 +368,16 @@ $orderby_sql";
 	 */
 	public static function output_grouped( $args = array() ){
 		//Reset some args to include pagination for if pagination is requested.
-		$args['limit'] = isset($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
+		$args['limit'] = isset($args['limit']) ? $args['limit'] : em_get_option('dbem_events_default_limit');
 		$args['page'] = (!empty($args['page']) && is_numeric($args['page']) )? $args['page'] : 1;
 		$args['page'] = (!empty($args['pagination']) && !empty($_REQUEST['pno']) && is_numeric($_REQUEST['pno']) )? $_REQUEST['pno'] : $args['page'];
 		$args['offset'] = ($args['page']-1) * $args['limit'];
 		$args['orderby'] = 'event_start_date,event_start_time,event_name'; // must override this to display events in right cronology.
 		$long_events = !empty($args['long_events']);
 
-		$args['mode'] = !empty($args['mode']) ? $args['mode'] : get_option('dbem_event_list_groupby');
-		$args['header_format'] = !empty($args['header_format']) ? $args['header_format'] :  get_option('dbem_event_list_groupby_header_format', '<h2>#s</h2>');
-		$args['date_format'] = !empty($args['date_format']) ? $args['date_format'] :  get_option('dbem_event_list_groupby_format','');
+		$args['mode'] = !empty($args['mode']) ? $args['mode'] : em_get_option('dbem_event_list_groupby');
+		$args['header_format'] = !empty($args['header_format']) ? $args['header_format'] :  em_get_option('dbem_event_list_groupby_header_format', '<h2>#s</h2>');
+		$args['date_format'] = !empty($args['date_format']) ? $args['date_format'] :  em_get_option('dbem_event_list_groupby_format','');
 		$args = apply_filters('em_events_output_grouped_args', self::get_default_search($args));
 		//Reset some vars for counting events and displaying set arrays of events
 		$atts = (array) $args;
@@ -434,11 +436,11 @@ $orderby_sql";
 					}
 					break;
 				case 'weekly':
-					$format = (!empty($args['date_format'])) ? $args['date_format']:get_option('date_format');
+					$format = (!empty($args['date_format'])) ? $args['date_format']:em_get_option('date_format');
 					$events_dates = array();
 					foreach($EM_Events as $EM_Event){
 						//obtain start of the week as per WordPress general settings
-			   			$start_of_week = get_option('start_of_week');
+			   			$start_of_week = em_get_option('start_of_week');
 						$day_of_week = $EM_Event->start()->format('w');
 						$offset = $day_of_week - $start_of_week;
 						if($offset<0){ $offset += 7; }
@@ -455,14 +457,14 @@ $orderby_sql";
 					}
 					$events_dates = apply_filters('em_events_output_grouped_events_dates', $events_dates, $args);
 					foreach ($events_dates as $date => $events){
-						$dates_formatted = $EM_DateTime->modify($date)->i18n($format). get_option('dbem_dates_separator') . $EM_DateTime->add('P6D')->i18n($format);
+						$dates_formatted = $EM_DateTime->modify($date)->i18n($format). em_get_option('dbem_dates_separator') . $EM_DateTime->add('P6D')->i18n($format);
 						echo str_replace('#s', $dates_formatted, $args['header_format']);
 						echo self::output($events, $atts);
 					}
 					break;
 				default: //daily
 					//go through the events and put them into a daily array
-					$format = (!empty($args['date_format'])) ? $args['date_format']:get_option('date_format');
+					$format = (!empty($args['date_format'])) ? $args['date_format']:em_get_option('date_format');
 					$events_dates = array();
 					foreach($EM_Events as $EM_Event){
 						$EM_DateTime = $EM_Event->start()->copy()->setTime(0,0,0); /* @var EM_DateTime $EM_DateTime */
@@ -486,14 +488,14 @@ $orderby_sql";
 			//Show the pagination links (unless there's less than $limit events)
 			if( !empty($args['pagination']) && !empty($args['limit']) && $events_count > $args['limit'] ){
 				$default_args = self::get_default_search();
-				$default_args['limit'] = get_option('dbem_events_default_limit');
-				$default_args['mode'] = get_option('dbem_event_list_groupby');
-				$default_args['header_format'] = get_option('dbem_event_list_groupby_header_format', '<h2>#s</h2>');
-				$default_args['date_format'] = get_option('dbem_event_list_groupby_format','');
+				$default_args['limit'] = em_get_option('dbem_events_default_limit');
+				$default_args['mode'] = em_get_option('dbem_event_list_groupby');
+				$default_args['header_format'] = em_get_option('dbem_event_list_groupby_header_format', '<h2>#s</h2>');
+				$default_args['date_format'] = em_get_option('dbem_event_list_groupby_format','');
 				echo self::get_pagination_links($args, $events_count, 'search_events', $default_args);
 			}
 		}elseif( $args['no_results_msg'] !== false ){
-			echo !empty($args['no_results_msg']) ? esc_html($args['no_results_msg']) : get_option('dbem_no_events_message');
+			echo !empty($args['no_results_msg']) ? esc_html($args['no_results_msg']) : em_get_option('dbem_no_events_message');
 		}
 		return apply_filters('em_events_output_grouped', ob_get_clean(), $EM_Events, $args, $events_count);
 	}
@@ -502,7 +504,7 @@ $orderby_sql";
 		//get default args if we're in a search, supply to parent since we can't depend on late static binding until WP requires PHP 5.3 or later
 		if( empty($default_args) && (!empty($args['ajax']) || !empty($_REQUEST['action']) && $_REQUEST['action'] == $search_action) ){
 			$default_args = self::get_default_search();
-			$default_args['limit'] = get_option('dbem_events_default_limit');
+			$default_args['limit'] = em_get_option('dbem_events_default_limit');
 		}
 		return parent::get_pagination_links($args, $count, $search_action, $default_args);
 	}
@@ -553,7 +555,7 @@ $orderby_sql";
 		//continue with conditions
 		$conditions = parent::build_sql_conditions($args);
 		//specific location query conditions if locations are enabled
-		if( get_option('dbem_locations_enabled') ){
+		if( em_get_option('dbem_locations_enabled') ){
 			//events with or without locations
 			if( !empty($args['has_location']) ){
 				$conditions['has_location'] = '('.EM_EVENTS_TABLE.'.location_id IS NOT NULL AND '.EM_EVENTS_TABLE.'.location_id != 0)';
@@ -579,7 +581,7 @@ $orderby_sql";
 		}
 		//search conditions
 		if( !empty($args['search']) ){
-			if( get_option('dbem_locations_enabled') ){
+			if( em_get_option('dbem_locations_enabled') ){
 				$like_search = array('event_name',EM_EVENTS_TABLE.'.post_content','location_name','location_address','location_town','location_postcode','location_state','location_country','location_region');
 			}else{
 				$like_search = array('event_name',EM_EVENTS_TABLE.'.post_content');
@@ -654,7 +656,7 @@ $orderby_sql";
 			}
 		}
 		// active status filters
-		if ( get_option('dbem_event_status_enabled') ) {
+		if ( em_get_option('dbem_event_status_enabled') ) {
 			$active_statuses = array( 'include' => array(), 'exclude' => array() );
 			// get individual status search args
 			$active_status_map = array('active' => 1, 'cancelled' => 0 );
@@ -695,7 +697,7 @@ $orderby_sql";
 		foreach( array_keys($EM_Location->fields) as $field_name ){
 			if( !in_array($field_name, $event_fields) ) $location_fields[] = $field_name;
 		}
-		if( get_option('dbem_locations_enabled') ){
+		if( em_get_option('dbem_locations_enabled') ){
 			$accepted_fields = array_merge($event_fields, $location_fields);
 		}else{
 			//if locations disabled then we don't accept location-specific fields
@@ -711,7 +713,7 @@ $orderby_sql";
 	 * @see EM_Object::build_sql_orderby()
 	 */
 	public static function build_sql_orderby( $args, $accepted_fields, $default_order = 'ASC' ){
-	    $orderby = parent::build_sql_orderby($args, $accepted_fields, get_option('dbem_events_default_order'));
+	    $orderby = parent::build_sql_orderby($args, $accepted_fields, em_get_option('dbem_events_default_order'));
 		$orderby = self::build_sql_ambiguous_fields_helper($orderby); //fix ambiguous fields
 		return apply_filters( 'em_events_build_sql_orderby', $orderby, $args, $accepted_fields, $default_order );
 	}
@@ -732,7 +734,7 @@ $orderby_sql";
 	 * @see EM_Object::build_sql_groupby_orderby()
 	 */
 	public static function build_sql_groupby_orderby($args, $accepted_fields, $default_order = 'ASC' ){
-	    $group_orderby = parent::build_sql_groupby_orderby($args, $accepted_fields, get_option('dbem_events_default_order'));
+	    $group_orderby = parent::build_sql_groupby_orderby($args, $accepted_fields, em_get_option('dbem_events_default_order'));
 		//fix ambiguous fields and give them scope of events table
 		$group_orderby = self::build_sql_ambiguous_fields_helper($group_orderby);
 		return apply_filters( 'em_events_build_sql_groupby_orderby', $group_orderby, $args, $accepted_fields, $default_order );
@@ -758,8 +760,8 @@ $orderby_sql";
 		$defaults = array(
 			'recurring' => false, //we don't initially look for recurring events only events and recurrences of recurring events
 			'recurrence_set' => false, // get a specific set of event recurrences within a recurrence
-			'orderby' => get_option('dbem_events_default_orderby'),
-			'order' => get_option('dbem_events_default_order'),
+			'orderby' => em_get_option('dbem_events_default_orderby'),
+			'order' => em_get_option('dbem_events_default_order'),
 			'groupby' => false,
 			'groupby_orderby' => 'event_start_date, event_start_time', //groups according to event start time, i.e. by default shows earliest event in a scope
 			'groupby_order' => 'ASC', //groups according to event start time, i.e. by default shows earliest event in a scope
@@ -783,11 +785,13 @@ $orderby_sql";
 			'location_status' => false, //search events with locations of a specific publish status
 			'event_location_type' => false,
 			'has_event_location' => false,
-			'cancelled' => get_option('dbem_events_include_status_cancelled') ? null : false, // include cancelled events
+			'cancelled' => em_get_option('dbem_events_include_status_cancelled') ? null : false, // include cancelled events
 			'active' => null,
 			'active_status' => null,
 			'event_type' => false,
+			'event_archetype' => Archetypes::get_current(),
 		);
+		// if event_archetype is not set, we
 		//sort out whether defaults were supplied or just the array of search values
 		if( empty($array) ){
 			$array = $array_or_defaults;
@@ -823,13 +827,13 @@ $orderby_sql";
 		}
 		$args = parent::get_default_search($defaults,$array);
 		//do some post-parnet cleaning up here if locations are enabled or disabled
-		if( !get_option('dbem_locations_enabled') ){
+		if( !em_get_option('dbem_locations_enabled') ){
 			//locations disabled, wipe any args to do with locations so they're ignored
 			$location_args = array('town', 'state', 'country', 'region', 'has_location', 'no_location', 'location_status', 'location', 'geo', 'near', 'location_id');
 			foreach( $location_args as $arg ) $args[$arg] = false;
 		}
 		// cancelled status
-		$args['cancelled'] === null ? get_option('dbem_events_include_status_cancelled') : $args['cancelled'];
+		$args['cancelled'] === null ? em_get_option('dbem_events_include_status_cancelled') : $args['cancelled'];
 		return apply_filters('em_events_get_default_search', $args, $array, $defaults);
 	}
 }

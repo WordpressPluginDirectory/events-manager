@@ -58,7 +58,7 @@
 				
 			<?php
 			if ( empty($EM_Events) ) {
-				echo get_option ( 'dbem_no_events_message' );
+				echo em_get_option ( 'dbem_no_events_message' );
 			} else {
 			?>
 					
@@ -72,7 +72,7 @@
 						*/ ?>
 						<th><?php _e ( 'Name', 'events-manager'); ?></th>
 						<th>&nbsp;</th>
-						<?php if( get_option('dbem_locations_enabled') ): ?>
+						<?php if( em_get_option('dbem_locations_enabled') ): ?>
 						<th><?php _e ( 'Location', 'events-manager'); ?></th>
 						<?php endif; ?>
 						<th colspan="2"><?php _e ( 'Date and time', 'events-manager'); ?></th>
@@ -105,12 +105,12 @@
 									<a class="row-title" href="<?php echo esc_url($EM_Event->get_edit_url()); ?>"><?php echo esc_html($EM_Event->event_name); ?></a>
 								</strong>
 								<?php 
-								if( get_option('dbem_rsvp_enabled') == 1 && $EM_Event->event_rsvp == 1 ){
+								if( em_get_option('dbem_rsvp_enabled') == 1 && $EM_Event->event_rsvp == 1 ){
 									?>
 									<br/>
 									<a href="<?php echo $EM_Event->get_bookings_url(); ?>"><?php esc_html_e("Bookings",'events-manager'); ?></a> &ndash;
 									<?php esc_html_e("Booked",'events-manager'); ?>: <?php echo $EM_Event->get_bookings()->get_booked_spaces()."/".$EM_Event->get_spaces(); ?>
-									<?php if( get_option('dbem_bookings_approval') == 1 ): ?>
+										<?php if( em_get_option('dbem_bookings_approval') == 1 ): ?>
 										| <?php _e("Pending",'events-manager') ?>: <?php echo $EM_Event->get_bookings()->get_pending_spaces(); ?>
 									<?php endif;
 								}
@@ -126,7 +126,7 @@
 									<strong>+</strong>
 								</a>
 							</td>
-							<?php if( get_option('dbem_locations_enabled') ): ?>
+							<?php if( em_get_option('dbem_locations_enabled') ): ?>
 								<td>
 									<?php
 									if( $EM_Event->has_location() ){

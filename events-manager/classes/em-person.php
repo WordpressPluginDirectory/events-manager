@@ -55,7 +55,7 @@ class EM_Person extends WP_User{
 			if( !is_main_site() ){
 				//not the main blog, force single blog search
 				$blog_condition = "AND e.blog_id=".get_current_blog_id();
-			}elseif(is_main_site() && !get_option('dbem_ms_global_events')){
+			}elseif(is_main_site() && !em_get_option('dbem_ms_global_events')){
 				$blog_condition = "AND (e.blog_id=".get_current_blog_id().' OR e.blog_id IS NULL)';
 			}
 		}
@@ -65,7 +65,7 @@ class EM_Person extends WP_User{
 			$status_condition = " AND booking_status IN (".implode(',', $status).")";
 		}
 		$EM_Booking = em_get_booking(); //empty booking for fields
-		$results = $wpdb->get_results("SELECT b.".implode(', b.', array_keys($EM_Booking->fields))." FROM ".EM_BOOKINGS_TABLE." b, ".EM_EVENTS_TABLE." e WHERE e.event_id=b.event_id AND person_id={$this->ID} {$blog_condition} {$status_condition} ORDER BY ".get_option('dbem_bookings_default_orderby','event_start_date')." ".get_option('dbem_bookings_default_order','ASC'),ARRAY_A);
+		$results = $wpdb->get_results("SELECT b.".implode(', b.', array_keys($EM_Booking->fields))." FROM ".EM_BOOKINGS_TABLE." b, ".EM_EVENTS_TABLE." e WHERE e.event_id=b.event_id AND person_id={$this->ID} {$blog_condition} {$status_condition} ORDER BY ".em_get_option('dbem_bookings_default_orderby','event_start_date')." ".em_get_option('dbem_bookings_default_order','ASC'),ARRAY_A);
 		$bookings = array();
 		if($ids_only){
 			foreach($results as $booking_data){
@@ -93,8 +93,8 @@ class EM_Person extends WP_User{
 	}
 	
 	function get_bookings_url(){
-		if( get_option('dbem_edit_bookings_page') && (!is_admin() || !empty($_REQUEST['is_public'])) ){
-			$my_bookings_page = get_permalink(get_option('dbem_edit_bookings_page'));
+		if( em_get_option('dbem_edit_bookings_page') && (!is_admin() || !empty($_REQUEST['is_public'])) ){
+			$my_bookings_page = get_permalink(em_get_option('dbem_edit_bookings_page'));
 			$bookings_link = em_add_get_params($my_bookings_page, array('person_id'=>$this->ID, 'event_id'=>null, 'ticket_id'=>null, 'booking_id'=>null), false);
 		}else{
 			$bookings_link = EM_ADMIN_URL. "&page=events-manager-bookings&person_id=".$this->ID;

@@ -12,7 +12,7 @@
 			</div>
 		</header>
 		<div class="em-modal-content">
-			<?php echo $EM_Event->output( get_option('dbem_calendar_preview_modal_event_format')); ?>
+			<?php echo $EM_Event->output( $EM_Event->get_option('dbem_calendar_preview_modal_event_format')); ?>
 		</div><!-- content -->
 	
 	</div><!-- modal -->

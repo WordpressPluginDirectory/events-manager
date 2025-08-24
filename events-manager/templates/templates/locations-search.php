@@ -9,7 +9,7 @@
  */
 /* @var $args array */
 $args['search_action'] = 'search_locations';
-$args['search_url'] = get_option('dbem_locations_page') ? get_permalink(get_option('dbem_locations_page')):EM_URI;
+$args['search_url'] = em_get_option('dbem_locations_page') ? get_permalink(em_get_option('dbem_locations_page')):EM_URI;
 $args['css_classes'][] = 'em-locations-search';
 $args['css_classes_advanced'][] = 'em-locations-search-advanced';
 em_locate_template('templates/search.php', true, array('args'=>$args));

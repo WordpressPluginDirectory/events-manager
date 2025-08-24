@@ -5,7 +5,7 @@
 		<?php echo esc_html($args['region_label']); ?>
 	</label>
 	<select name="region" class="em-search-region em-selectize" id="em-search-region-<?php echo absint($args['id']); ?>">
-		<option value=''><?php echo esc_html(get_option('dbem_search_form_regions_label')); ?></option>
+		<option value=''><?php echo esc_html(em_get_option('dbem_search_form_regions_label')); ?></option>
 		<?php
 		global $wpdb;
 		$em_states = $cond = array();

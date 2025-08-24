@@ -6,21 +6,21 @@ class EM_Location_Post {
 			//override single page with formats? 
 			add_filter('the_content', array('EM_Location_Post','the_content'));
 			//override excerpts?
-			if( get_option('dbem_cp_locations_excerpt_formats') ){
+			if( em_get_option('dbem_cp_locations_excerpt_formats') ){
 			    add_filter('get_the_excerpt', array('EM_Location_Post','the_excerpt'), 9);
 			}
 			//excerpts can trigger the_content which isn't ideal, so we disable the_content between the first and last excerpt calls within WP logic
 			add_filter('get_the_excerpt', array('EM_Location_Post','disable_the_content'), 1);
 			add_filter('get_the_excerpt', array('EM_Location_Post','enable_the_content'), 100);
 			//display as page or other template?
-			if( get_option('dbem_cp_locations_template') ){
+			if( em_get_option('dbem_cp_locations_template') ){
 				add_filter('single_template',array('EM_Location_Post','single_template'));
 			}
 			//add classes to body and post_class()
-			if( get_option('dbem_cp_locations_post_class') ){
+			if( em_get_option('dbem_cp_locations_post_class') ){
 			    add_filter('post_class', array('EM_Location_Post','post_class'), 10, 3);
 			}
-			if( get_option('dbem_cp_locations_body_class') ){
+			if( em_get_option('dbem_cp_locations_body_class') ){
 			    add_filter('body_class', array('EM_Location_Post','body_class'), 10, 3);
 			}
 		}
@@ -36,10 +36,10 @@ class EM_Location_Post {
 		global $post;
 		if( !locate_template('single-'.EM_POST_TYPE_LOCATION.'.php') && $post->post_type == EM_POST_TYPE_LOCATION ){
 			//do we have a default template to choose for events?
-			if( get_option('dbem_cp_locations_template') == 'page' ){
+			if( em_get_option('dbem_cp_locations_template') == 'page' ){
 				$post_templates = array('page.php','index.php');
 			}else{
-			    $post_templates = array(get_option('dbem_cp_locations_template'));
+			    $post_templates = array(em_get_option('dbem_cp_locations_template'));
 			}
 			if( !empty($post_templates) ){
 			    $post_template = locate_template($post_templates,false);
@@ -52,7 +52,7 @@ class EM_Location_Post {
 	public static function post_class( $classes, $class, $post_id ){
 	    $post = get_post($post_id);
 	    if( $post->post_type == EM_POST_TYPE_LOCATION ){
-	        foreach( explode(' ', get_option('dbem_cp_locations_post_class')) as $class ){
+	        foreach( explode(' ', em_get_option('dbem_cp_locations_post_class')) as $class ){
 	            $classes[] = esc_attr($class);
 	        }
 	    }
@@ -61,7 +61,7 @@ class EM_Location_Post {
 	
 	public static function body_class( $classes ){
 	    if( em_is_location_page() ){
-	        foreach( explode(' ', get_option('dbem_cp_locations_body_class')) as $class ){
+	        foreach( explode(' ', em_get_option('dbem_cp_locations_body_class')) as $class ){
 	            $classes[] = esc_attr($class);
 	        }
 	    }
@@ -75,7 +75,7 @@ class EM_Location_Post {
 		global $post;
 		if( $post->post_type == EM_POST_TYPE_LOCATION ){
 			$EM_Location = em_get_location($post);
-			$output = !empty($EM_Location->post_excerpt) ? get_option('dbem_location_excerpt_format'):get_option('dbem_location_excerpt_alt_format');
+			$output = !empty($EM_Location->post_excerpt) ? em_get_option('dbem_location_excerpt_format'):em_get_option('dbem_location_excerpt_alt_format');
 			$content = $EM_Location->output($output);
 		}
 		return $content;
@@ -95,12 +95,12 @@ class EM_Location_Post {
 		global $post, $EM_Location;
 		if( !empty($post) && $post->post_type == EM_POST_TYPE_LOCATION ){
 			if( is_archive() || is_search() ){
-				if( get_option('dbem_cp_locations_archive_formats') ){
+				if( em_get_option('dbem_cp_locations_archive_formats') ){
 					$EM_Location = em_get_location($post);
-					$content = $EM_Location->output(get_option('dbem_location_list_item_format'));
+					$content = $EM_Location->output(em_get_option('dbem_location_list_item_format'));
 				}
 			}else{
-				if( get_option('dbem_cp_locations_formats') && !post_password_required() ){
+				if( em_get_option('dbem_cp_locations_formats') && !post_password_required() ){
 					$EM_Location = em_get_location($post);
 					if( !empty($_REQUEST['preview']) ){
 						//we don't do extra checks here because WP will have already done the work for us here...
@@ -129,13 +129,13 @@ class EM_Location_Post {
 				$wp_query->query_vars['orderby'] = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby']:'title';
 				$wp_query->query_vars['order'] = (!empty($_REQUEST['order'])) ? $_REQUEST['order']:'ASC';
 			}else{
-			  	if( get_option('dbem_locations_default_archive_orderby') == 'title'){
+			  	if( em_get_option('dbem_locations_default_archive_orderby') == 'title'){
 			  		$wp_query->query_vars['orderby'] = 'title';
 			  	}else{
 				  	$wp_query->query_vars['orderby'] = 'meta_value_num';
-				  	$wp_query->query_vars['meta_key'] = get_option('dbem_locations_default_archive_orderby','_location_country');	  		
+				  	$wp_query->query_vars['meta_key'] = em_get_option('dbem_locations_default_archive_orderby','_location_country');	  		
 			  	}
-				$wp_query->query_vars['order'] = get_option('dbem_locations_default_archive_order','ASC');
+				$wp_query->query_vars['order'] = em_get_option('dbem_locations_default_archive_order','ASC');
 			}
 		}
 	}

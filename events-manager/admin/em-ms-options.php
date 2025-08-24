@@ -114,7 +114,7 @@ function em_ms_admin_options_page() {
 					<div class="inside">
 			            <table class="form-table">
 							<?php 
-							em_options_radio_binary ( __( 'Enable global tables mode?', 'events-manager'), 'dbem_ms_global_table', __( 'Setting this to yes will make all events save in the main site event tables (EM must also be activated). This allows you to share events across different blogs, such as showing events in your network whilst allowing users to display and manage their events within their own blog. Bear in mind that activating this will mean old events created on the sub-blogs will not be accessible anymore, and if you switch back they will be but new events created during global events mode will only remain on the main site.','events-manager') );
+							em_options_radio_binary ( __( 'Enable global tables mode?', 'events-manager'), 'dbem_ms_global_table', __( 'Setting this to yes will make all events save in the main site event tables (EM must also be activated). This allows you to share events across different blogs, such as showing events in your network whilst allowing users to display and manage their events within their own blog. Bear in mind that activating this will mean old events created on the sub-blogs will not be accessible anymore, and if you switch back they will be but new events created during global events mode will only remain on the main site.','events-manager'), '', '.em-ms-local-options', true );
 							?>
 							<tbody class="em-global-options">
 							<?php
@@ -144,6 +144,8 @@ function em_ms_admin_options_page() {
 						    
 					</div> <!-- . inside --> 
 				</div> <!-- .postbox --> 
+				
+				<?php include( EM_DIR . '/admin/settings/archetype-editor.php'); ?>
 				
 				<?php 
 				//including shared MS/non-MS boxes

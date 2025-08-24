@@ -6,7 +6,7 @@
 /* @var EM\Recurrences\Recurrence_Set $Recurrence_Set */
 $timezone = $i !== 'N%' ? $Recurrence_Set->start()->getTimezone()->getValue() : '';
 ?>
-<?php if( get_option('dbem_timezone_enabled') || ( $Recurrence_Set->recurrence_timezone && $Recurrence_Set->recurrence_timezone !== get_option('timezone_string') ) ): ?>
+<?php if( em_get_option('dbem_timezone_enabled') || ( $Recurrence_Set->recurrence_timezone && $Recurrence_Set->recurrence_timezone !== em_get_option('timezone_string') ) ): ?>
 	<p class="em-timezone em-recurrence-timezone">
 		<label for="recurrence-timezone-<?php echo $i . '-' . $id; ?>" data-nostyle><?php esc_html_e('Timezone', 'events-manager'); ?></label>
 		<select id="recurrence-timezone-<?php echo $i . '-' . $id; ?>" name="recurrences[<?php echo esc_attr($type); ?>][<?php echo esc_attr($i); ?>][recurrence_timezone]" class="em-selectize recurrence_timezone" data-undo="<?php echo esc_attr($timezone) ?>">

@@ -23,6 +23,8 @@ class EM_MS_Globals {
 
 	function get_globals(){
 		$globals = array(
+			// archetypes
+			'dbem_ms_archetypes_enabled', 'dbem_ms_archetypes_mode', 'dbem_archetypes_rename_labels', 'dbem_archetypes_rename_slugs', 'dbem_archetypes_rename_cpts',
 			//multisite settings
 			'dbem_ms_global_table', 'dbem_ms_global_caps',
 			'dbem_ms_global_events', 'dbem_ms_global_events_links','dbem_ms_events_slug',

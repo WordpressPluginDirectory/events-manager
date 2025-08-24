@@ -313,7 +313,7 @@ class EM_Ticket_Bookings extends EM_Tickets_Bookings {
 			$available_spaces += $spaces_previously_consumed;
 		}
 		if ( !$override_availability && $available_spaces < $spaces_needed ) {
-			$this->add_error(get_option('dbem_booking_feedback_full'));
+			$this->add_error( $this->get_booking()->get_option('dbem_booking_feedback_full'));
 		}
 		// check if ticket is available to the user the booking is associated to
 		// TODO current implementation won't work because we're trying to validate potentially a guest that beomes a user, therefore a guest ticket can be booked by someone that isn't a user yet but at this point they have a valid ID and validation fails. We need to triple check this new way without the is_available.
@@ -326,7 +326,7 @@ class EM_Ticket_Bookings extends EM_Tickets_Bookings {
 		}
 		if( !$override_availability && !$this->get_ticket()->is_available(false, false, false, $user) ){
 			$message = __('The ticket %s is no longer available.', 'events-manager');
-			$this->add_error(get_option('dbem_booking_feedback_ticket_unavailable', sprintf($message, "'".$this->get_ticket()->name."'")));
+			$this->add_error( $this->get_booking()->get_option('dbem_booking_feedback_ticket_unavailable', sprintf($message, "'".$this->get_ticket()->name."'")));
 		}
 		return apply_filters( static::$n .'_validate', empty($this->errors), $this, $override_availability);
 	}

@@ -1,8 +1,8 @@
 <?php
 /* @var $args array */
 $classes = array();
-if( get_option('dbem_search_form_dates_hide_m') ) $classes[] = 'hide-medium';
-if( get_option('dbem_search_form_dates_hide_s') ) $classes[] = 'hide-small';
+if( em_get_option('dbem_search_form_dates_hide_m') ) $classes[] = 'hide-medium';
+if( em_get_option('dbem_search_form_dates_hide_s') ) $classes[] = 'hide-small';
 ?>
 <!-- START Date Search -->
 <div class="em-search-scope em-search-field em-datepicker em-datepicker-range input <?php echo implode(' ', $classes); ?>" data-separator="<?php echo esc_attr($args['scope_seperator']); ?>"  data-format="<?php echo esc_attr($args['scope_format']); ?>">

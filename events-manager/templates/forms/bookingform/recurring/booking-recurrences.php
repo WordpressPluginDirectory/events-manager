@@ -20,7 +20,7 @@ if ( $multiday  ) {
 	<h3><?php echo esc_html($title); ?></h3>
 	<?php
 		if ( !empty($recurrences) ) {
-			if( get_option('dbem_timezone_enabled') || $EM_Event->event_timezone !== get_option('timezone_string') ): ?>
+			if( em_get_option('dbem_timezone_enabled') || $EM_Event->event_timezone !== em_get_option('timezone_string') ): ?>
 			<p class="em-timezone">
 				<label for="recurrence-timezone-<?php echo $id; ?>"><span class="em-icon em-icon-map"></span>&nbsp;&nbsp;<?php esc_html_e('Timezone', 'events-manager'); ?></label>
 				<select id="recurrence-timezone-<?php echo $id; ?>" name="recurrence_timezone" class="em-selectize recurrence_timezone">

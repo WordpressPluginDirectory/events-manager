@@ -1,5 +1,7 @@
 <?php
 
+use EM\Archetypes;
+
 if( !class_exists('EM_Permalinks') ){
 	class EM_Permalinks {
 		static $em_queryvars = array (
@@ -24,7 +26,7 @@ if( !class_exists('EM_Permalinks') ){
 
 		public static function init () {
 			add_filter( 'pre_update_option_dbem_events_page', array ( 'EM_Permalinks', 'option_update' ) );
-			if ( get_option( 'dbem_flush_needed' ) ) {
+			if ( em_get_option( 'dbem_flush_needed' ) ) {
 				add_filter( 'wp_loaded', array (
 					'EM_Permalinks',
 					'flush'
@@ -62,13 +64,13 @@ if( !class_exists('EM_Permalinks') ){
 
 		public static function post_type_archive_link ( $link, $post_type ) {
 			if ( $post_type == EM_POST_TYPE_EVENT ) {
-				if ( get_option( 'dbem_events_page' ) ) {
-					$new_link = get_permalink( get_option( 'dbem_events_page' ) );
+				if ( em_get_option( 'dbem_events_page' ) ) {
+					$new_link = get_permalink( em_get_option( 'dbem_events_page' ) );
 				}
 			}
 			if ( $post_type == EM_POST_TYPE_LOCATION ) {
-				if ( get_option( 'dbem_locations_page' ) ) {
-					$new_link = get_permalink( get_option( 'dbem_locations_page' ) );
+				if ( em_get_option( 'dbem_locations_page' ) ) {
+					$new_link = get_permalink( em_get_option( 'dbem_locations_page' ) );
 				}
 			}
 			if ( !empty( $new_link ) ) {
@@ -111,7 +113,7 @@ if( !class_exists('EM_Permalinks') ){
 		public static function rewrite_rules_array ( $rules ) {
 			global $wpdb;
 			//get the slug of the event page
-			$events_page_id = get_option( 'dbem_events_page' );
+			$events_page_id = em_get_option( 'dbem_events_page' );
 			$events_page = get_post( $events_page_id );
 			$em_rules = array ();
 			if ( is_object( $events_page ) ) {
@@ -119,7 +121,7 @@ if( !class_exists('EM_Permalinks') ){
 				$events_slug = ( !empty( $events_slug ) ) ? trailingslashit( $events_slug ) : $events_slug;
 				$events_pagename = trim( $events_slug, '/' );
 				$em_rules[ $events_slug . '(\d{4}-\d{2}-\d{2})$' ] = 'index.php?pagename=' . $events_pagename . '&calendar_day=$matches[1]'; //event calendar date search
-				if ( $events_page_id != get_option( 'page_on_front' ) && EM_POST_TYPE_EVENT_SLUG != $events_slug ) { //ignore this rule if events page is the home page
+				if ( $events_page_id != em_get_option( 'page_on_front' ) && EM_POST_TYPE_EVENT_SLUG != $events_slug ) { //ignore this rule if events page is the home page
 					$em_rules[ $events_slug . 'rss/?$' ] = 'index.php?post_type=' . EM_POST_TYPE_EVENT . '&feed=feed'; //rss page
 					$em_rules[ $events_slug . 'feed/?$' ] = 'index.php?post_type=' . EM_POST_TYPE_EVENT . '&feed=feed'; //compatible rss page
 				}
@@ -162,8 +164,8 @@ if( !class_exists('EM_Permalinks') ){
 				$events_slug = EM_POST_TYPE_EVENT_SLUG;
 				$em_rules[ $events_slug . '/(\d{4}-\d{2}-\d{2})$' ] = 'index.php?post_type=' . EM_POST_TYPE_EVENT . '&calendar_day=$matches[1]'; //event calendar date search
 				$em_rules[ $events_slug . '/(\d{4}-\d{2}-\d{2})/page/?([0-9]{1,})/?$' ] = 'index.php?post_type=' . EM_POST_TYPE_EVENT . '&calendar_day=$matches[1]&paged=$matches[2]'; //event calendar date search paged
-				if ( get_option( 'dbem_rsvp_enabled' ) ) {
-					if ( !get_option( 'dbem_my_bookings_page' ) || !is_object( get_post( get_option( 'dbem_my_bookings_page' ) ) ) ) { //only added if bookings page isn't assigned
+				if ( em_get_option( 'dbem_rsvp_enabled' ) ) {
+					if ( !em_get_option( 'dbem_my_bookings_page' ) || !is_object( get_post( em_get_option( 'dbem_my_bookings_page' ) ) ) ) { //only added if bookings page isn't assigned
 						$em_rules[ $events_slug . '/my\-bookings$' ] = 'index.php?post_type=' . EM_POST_TYPE_EVENT . '&bookings_page=1'; //page for users to manage bookings
 					}
 				}
@@ -197,8 +199,8 @@ if( !class_exists('EM_Permalinks') ){
 			//Check the event category and tags pages, because if we're overriding the pages and they're not within the Events page hierarchy it may 404
 			//if taxonomy base permalink is same as page permalink
 			foreach ( array ( 'tags', 'categories' ) as $taxonomy_name ) {
-				if ( get_option( 'dbem_' . $taxonomy_name . '_enabled' ) ) {
-					$taxonomy_page_id = get_option( 'dbem_' . $taxonomy_name . '_page' );
+				if ( em_get_option( 'dbem_' . $taxonomy_name . '_enabled' ) ) {
+					$taxonomy_page_id = em_get_option( 'dbem_' . $taxonomy_name . '_page' );
 					$taxonomy_page = get_post( $taxonomy_page_id );
 					if ( is_object( $taxonomy_page ) ) {
 						//we are using a categories page, so we add it to permalinks if it's not a parent of the events page
@@ -225,7 +227,7 @@ if( !class_exists('EM_Permalinks') ){
 			}
 			//If in MS global mode and locations are linked on same site
 			if ( EM_MS_GLOBAL && !get_site_option( 'dbem_ms_global_locations_links', true ) ) {
-				$locations_page_id = get_option( 'dbem_locations_page' );
+				$locations_page_id = em_get_option( 'dbem_locations_page' );
 				$locations_page = get_post( $locations_page_id );
 				if ( is_object( $locations_page ) ) {
 					$locations_slug = preg_replace( '/\/$/', '', str_replace( trailingslashit( home_url() ), '', get_permalink( $locations_page_id ) ) );
@@ -233,7 +235,7 @@ if( !class_exists('EM_Permalinks') ){
 				}
 			}
 			// add ical CPT endpoints
-			if ( get_option( 'dbem_locations_enabled' ) ) {
+			if ( em_get_option( 'dbem_locations_enabled' ) ) {
 				$em_rules[ EM_POST_TYPE_LOCATION_SLUG . "/([^/]+)/ical/?$" ] = 'index.php?' . EM_POST_TYPE_LOCATION . '=$matches[1]&ical=1';
 			}
 			// add ical taxonomy endpoints
@@ -245,7 +247,7 @@ if( !class_exists('EM_Permalinks') ){
 			// add ical endpoint for events (last in case of subdierctory overlap
 			$em_rules[ EM_POST_TYPE_EVENT_SLUG . "/(.+)/ical/?$" ] = 'index.php?' . EM_POST_TYPE_EVENT . '=$matches[1]&ical=1';
 			//add RSS location CPT endpoint
-			if ( get_option( 'dbem_locations_enabled' ) ) {
+			if ( em_get_option( 'dbem_locations_enabled' ) ) {
 				$em_rules[ EM_POST_TYPE_LOCATION_SLUG . "/([^/]+)/rss/?$" ] = 'index.php?' . EM_POST_TYPE_LOCATION . '=$matches[1]&rss=1';
 			}
 			$em_rules = apply_filters( 'em_rewrite_rules_array', $em_rules );
@@ -261,7 +263,7 @@ if( !class_exists('EM_Permalinks') ){
 		public static function url () {
 			global $wp_rewrite;
 			$args = func_get_args();
-			$em_uri = get_permalink( get_option( "dbem_events_page" ) ); //PAGE URI OF EM
+			$em_uri = get_permalink( em_get_option( "dbem_events_page" ) ); //PAGE URI OF EM
 			if ( $wp_rewrite->using_permalinks() /*&& !defined('EM_DISABLE_PERMALINKS')*/ ) {
 				$event_link = trailingslashit( trailingslashit( $em_uri ) . implode( '/', $args ) );
 			}
@@ -277,7 +279,7 @@ if( !class_exists('EM_Permalinks') ){
 		 * @return mixed
 		 */
 		public static function option_update ( $val ) {
-			if ( get_option( 'dbem_events_page' ) != $val ) {
+			if ( em_get_option( 'dbem_events_page' ) != $val ) {
 				update_option( 'dbem_flush_needed', 1 );
 			}
 
@@ -302,8 +304,8 @@ if( !class_exists('EM_Permalinks') ){
 		public static function init_objects () {
 			global $wp_rewrite, $wp_query;
 			//check some homepage conditions
-			$events_page_id = get_option( 'dbem_events_page' );
-			if ( is_object( $wp_query ) && $wp_query->is_home && !$wp_query->is_posts_page && 'page' == get_option( 'show_on_front' ) && get_option( 'page_on_front' ) == $events_page_id ) {
+			$events_page_id = em_get_option( 'dbem_events_page' );
+			if ( is_object( $wp_query ) && $wp_query->is_home && !$wp_query->is_posts_page && 'page' == em_get_option( 'show_on_front' ) && em_get_option( 'page_on_front' ) == $events_page_id ) {
 				// comment long after this is written - pretty sure this prevents seach query and pagination issues on the home page when an event page is set as the home static page removing this causes issues with searches and pagination
 				$wp_query->is_page = true;
 				$wp_query->is_home = false; // WP will not technically expect this to be the home page, but the front page only
@@ -371,8 +373,8 @@ function em_get_my_bookings_url(){
 	if( !empty($bp->events->link) ){
 		//get member url
 		return $bp->events->link.'attending/';
-	}elseif( get_option('dbem_my_bookings_page') ){
-		return get_permalink(get_option('dbem_my_bookings_page'));
+	}elseif( em_get_option('dbem_my_bookings_page') ){
+		return get_permalink(em_get_option('dbem_my_bookings_page'));
 	}else{
 		if( $wp_rewrite->using_permalinks() && !defined('EM_DISABLE_PERMALINKS') ){
 			return trailingslashit(EM_URI)."my-bookings/";
@@ -386,11 +388,12 @@ function em_get_my_bookings_url(){
  * Gets the admin URL for editing events. If called from front-end and there's a front-end edit events page, that will be
  * returned, otherwise a url to the dashboard will be returned.
  */
-function em_get_events_admin_url(){
-    $admin_url = admin_url('edit.php?post_type=event');
+function em_get_events_admin_url( $archetype = null ){
+	$archetype = $archetype ?? Archetypes::get_current();
+    $admin_url = admin_url('edit.php?post_type='.$archetype);
     if( !is_admin() ){
-        if( get_option('dbem_edit_events_page') ){
-            $admin_url = get_permalink(get_option( 'dbem_edit_events_page' ));
+        if( em_get_option('dbem_edit_events_page') ){
+            $admin_url = get_permalink(em_get_option( 'dbem_edit_events_page' ));
         }
     }
     return apply_filters('em_get_events_admin_url', $admin_url);

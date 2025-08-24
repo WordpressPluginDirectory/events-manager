@@ -36,14 +36,14 @@
 		if ( $type !== 'exclude' ) {
 			include( em_locate_template('forms/event/when/recurring/recurrences/duration.php') );
 		}
-		if( get_option('dbem_dates_range_double_inputs', false) ){
+		if( em_get_option('dbem_dates_range_double_inputs', false) ){
 			include( em_locate_template('forms/event/when/recurring/recurrences/dates-separate.php') );
 		} else {
 			include( em_locate_template('forms/event/when/recurring/recurrences/dates.php') );
 		}
 		include( em_locate_template('forms/event/when/recurring/recurrences/times.php') );
 		include( em_locate_template('forms/event/when/recurring/recurrences/timezone.php') );
-		if( $type !== 'exclude' && get_option('dbem_event_status_enabled') ) {
+		if( $type !== 'exclude' && em_get_option('dbem_event_status_enabled') ) {
 			include( em_locate_template('forms/event/when/recurring/recurrences/status.php') );
 		}
 		?>

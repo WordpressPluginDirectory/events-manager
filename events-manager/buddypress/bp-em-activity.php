@@ -172,18 +172,18 @@ function bp_em_record_activity_booking_save( $result, $EM_Booking ){
 		$status = $EM_Booking->booking_status;
 		$EM_Event = $EM_Booking->get_event();
 		if( empty($EM_Event->group_id) ){
-			if( $status == 1 || (!get_option('dbem_bookings_approval') && $status < 2) ){
+			if( $status == 1 || (!$EM_Event->get_option('dbem_bookings_approval') && $status < 2) ){
 				$action = sprintf(__('%s is attending %s.','events-manager'), $user_link, $event_link );
-			}elseif( ($EM_Booking->previous_status == 1 || (!get_option('dbem_bookings_approval') && $EM_Booking->previous_status < 2)) && in_array($status, $rejected_statuses) ){
+			}elseif( ($EM_Booking->previous_status == 1 || (!$EM_Event->get_option('dbem_bookings_approval') && $EM_Booking->previous_status < 2)) && in_array($status, $rejected_statuses) ){
 				$action = sprintf(__('%s will not be attending %s anymore.','events-manager'), $user_link, $event_link );
 				//$action_type = 'cancelled_booking';
 			}
 		}else{
 			$group = new BP_Groups_Group($EM_Event->group_id);
 			$group_link = '<a href="'.bp_get_group_permalink($group).'">'.bp_get_group_name($group).'</a>';
-			if( $status == 1 || (!get_option('dbem_bookings_approval') && $status < 2) ){
+			if( $status == 1 || (!$EM_Event->get_option('dbem_bookings_approval') && $status < 2) ){
 				$action = sprintf(__('%s is attending %s of the group %s.','events-manager'), $user_link, $event_link, $group_link );
-			}elseif( ($EM_Booking->previous_status == 1 || (!get_option('dbem_bookings_approval') && $EM_Booking->previous_status < 2)) && in_array($status, $rejected_statuses) ){
+			}elseif( ($EM_Booking->previous_status == 1 || (!$EM_Event->get_option('dbem_bookings_approval') && $EM_Booking->previous_status < 2)) && in_array($status, $rejected_statuses) ){
 				$action = sprintf(__('%s will not be attending %s of group %s anymore.','events-manager'), $user_link, $event_link, $group_link );
 				//$action_type = 'cancelled_booking';
 			}

@@ -100,7 +100,7 @@ add_shortcode('events_map', 'em_get_events_map_shortcode');
  */
 function em_get_events_list_shortcode($args, $format='') {
 	$args = em_clean_shortcode_args( (array) $args, $format );
-	$args['limit'] = isset($args['limit']) ? $args['limit'] : get_option('dbem_events_default_limit');
+	$args['limit'] = isset($args['limit']) ? $args['limit'] : em_get_option('dbem_events_default_limit', $args['event_archetype'] ?? null);
 	$args['view'] = !empty($args['view']) ? $args['view'] : 'list';
 	// if AJAX is being used with formats, we can't accept arbitrary HTML via AJAX calls for security reasons, they must be generated server-side
 	if( !empty($args['format']) || !empty($args['format_header']) || !empty($args['format_footer']) ){
@@ -161,7 +161,7 @@ add_shortcode ( 'event', 'em_get_event_shortcode' );
 function em_get_locations_list_shortcode( $args, $format='' ) {
 	$args = em_clean_shortcode_args( (array) $args, $format );
 	$args['view'] = !empty($args['view']) ? $args['view'] : 'list';
-	$args['limit'] = isset($args['limit']) ? $args['limit'] : get_option('dbem_locations_default_limit');
+	$args['limit'] = isset($args['limit']) ? $args['limit'] : em_get_option('dbem_locations_default_limit', $args['event_archetype'] ?? null);
 	if( !empty($args['format']) || !empty($args['format_header']) || !empty($args['format_footer']) ){
 		// manually add page number and remove ajax
 		$args['ajax'] = false;
@@ -201,10 +201,10 @@ add_shortcode ( 'location', 'em_get_location_shortcode' );
 
 function em_get_categories_shortcode($args, $format=''){
 	$args = em_clean_shortcode_args( (array) $args, $format );
-	$args['orderby'] = !empty($args['orderby']) ? $args['orderby'] : get_option('dbem_categories_default_orderby');
-	$args['order'] = !empty($args['order']) ? $args['order'] : get_option('dbem_categories_default_order');
+	$args['orderby'] = !empty($args['orderby']) ? $args['orderby'] : em_get_option('dbem_categories_default_orderby', $args['event_archetype'] ?? null);
+	$args['order'] = !empty($args['order']) ? $args['order'] : em_get_option('dbem_categories_default_order', $args['event_archetype'] ?? null);
 	$args['pagination'] = isset($args['pagination']) ? $args['pagination'] : !isset($args['limit']);
-	$args['limit'] = isset($args['limit']) ? $args['limit'] : get_option('dbem_categories_default_limit');
+	$args['limit'] = isset($args['limit']) ? $args['limit'] : em_get_option('dbem_categories_default_limit', $args['event_archetype'] ?? null);
 	if( empty($args['id']) ) $args['id'] = rand(100, getrandmax());
 	if( empty($args['format']) && empty($args['format_header']) && empty($args['format_footer']) ){
 		ob_start();
@@ -243,10 +243,10 @@ add_shortcode ( 'event_category', 'em_get_event_category_shortcode' );
 
 function em_get_tags_shortcode($args, $format=''){
 	$args = em_clean_shortcode_args( (array) $args, $format );
-	$args['orderby'] = !empty($args['orderby']) ? $args['orderby'] : get_option('dbem_tags_default_orderby');
-	$args['order'] = !empty($args['order']) ? $args['order'] : get_option('dbem_tags_default_order');
+	$args['orderby'] = !empty($args['orderby']) ? $args['orderby'] : em_get_option('dbem_tags_default_orderby', $args['event_archetype'] ?? null);
+	$args['order'] = !empty($args['order']) ? $args['order'] : em_get_option('dbem_tags_default_order', $args['event_archetype'] ?? null);
 	$args['pagination'] = isset($args['pagination']) ? $args['pagination'] : !isset($args['limit']);
-	$args['limit'] = isset($args['limit']) ? $args['limit'] : get_option('dbem_tags_default_limit');
+	$args['limit'] = isset($args['limit']) ? $args['limit'] : em_get_option('dbem_tags_default_limit', $args['event_archetype'] ?? null);
 	if( empty($args['id']) ) $args['id'] = rand(100, getrandmax());
 	if( empty($args['format']) && empty($args['format_header']) && empty($args['format_footer']) ){
 		ob_start();

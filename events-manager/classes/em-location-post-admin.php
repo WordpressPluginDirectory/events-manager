@@ -179,7 +179,7 @@ class EM_Location_Post_Admin{
 		}
 		add_meta_box('em-location-where', __('Where','events-manager'), array('EM_Location_Post_Admin','meta_box_where'),EM_POST_TYPE_LOCATION, 'normal','high');
 		//add_meta_box('em-location-metadump', __('EM_Location Meta Dump','events-manager'), array('EM_Location_Post_Admin','meta_box_metadump'),EM_POST_TYPE_LOCATION, 'normal','high');
-		if( get_option('dbem_location_attributes_enabled') ){
+		if( em_get_option('dbem_location_attributes_enabled') ){
 			add_meta_box('em-location-attributes', __('Attributes','events-manager'), array('EM_Location_Post_Admin','meta_box_attributes'),EM_POST_TYPE_LOCATION, 'normal','default');
 		}
 		//anonymous submission meta
@@ -205,8 +205,13 @@ class EM_Location_Post_Admin{
 	}
 	
 	public static function meta_box_where(){
+		global $EM_Location;
 		?><input type="hidden" name="_emnonce" value="<?php echo wp_create_nonce('edit_location'); ?>" /><?php
-		em_locate_template('forms/location/where.php',true);		
+		em_locate_template('forms/location/where.php',true);
+		if ( !empty($EM_Location->location_id) && !$EM_Location->location_longitude && !$EM_Location->location_latitude ) {
+			// in case maps are loaded again
+			EM_Scripts_and_Styles::add_js_var('google_maps_resave_location', esc_html__('Location map and coordinates have been updated. Please re-save your location to update the map.','events-manager') );
+		}
 	}
 	
 	public static function meta_box_attributes(){

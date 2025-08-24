@@ -8,7 +8,7 @@
     	$body_class_tip = __('If you would like to add extra classes to your body html tag when a single %s page is displayed, enter it here. May be useful or necessary if your theme requires special class names for specific templates.','events-manager');
     	$post_class_tip = __('Same concept as the body classes option, but some themes also use the <code>post_class()</code> function within page content to differentiate styling between post types.','events-manager');
     	$format_override_tip = __("By using formats, you can control how your %s are displayed from within the Events Manager <a href='#formats' class='nav-tab-link' rel='#em-menu-formats'>Formatting</a> tab above without having to edit your theme files.",'events-manager');
-    	$page_templates = array(''=>__('Posts'), 'page' => __('Pages'), __('Theme Templates','events-manager') => array_flip(get_page_templates()));
+    	$page_templates = array('posts'=>__('Posts'), 'page' => __('Pages'), __('Theme Templates','events-manager') => array_flip(get_page_templates()));
     	?>
     	<div  class="postbox" id="em-opt-permalinks" >
 		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__('Permalink Slugs','events-manager')); ?></span></h3>
@@ -16,10 +16,11 @@
 			<p class="em-boxheader"><?php _e('You can change the permalink structure of your events, locations, categories and tags here. Be aware that you may want to set up redirects if you change your permalink structures to maintain SEO rankings.','events-manager'); ?></p>
         	<table class="form-table">
         	<?php
-        	em_options_input_text ( __( 'Events', 'events-manager'), 'dbem_cp_events_slug', sprintf(__('e.g. %s - you can use / Separators too', 'events-manager'), '<strong>'.home_url().'/<code>'.esc_html(get_option('dbem_cp_events_slug',EM_POST_TYPE_EVENT_SLUG)).'</code>/2012-olympics/</strong>'), EM_POST_TYPE_EVENT_SLUG );
+	        /*
 			if( get_option('dbem_locations_enabled')  && !(EM_MS_GLOBAL && get_site_option('dbem_ms_mainblog_locations') && !is_main_site()) ){
             	em_options_input_text ( __( 'Locations', 'events-manager'), 'dbem_cp_locations_slug', sprintf(__('e.g. %s - you can use / Separators too', 'events-manager'), '<strong>'.home_url().'/<code>'.esc_html(get_option('dbem_cp_locations_slug',EM_POST_TYPE_LOCATION_SLUG)).'</code>/wembley-stadium/</strong>'), EM_POST_TYPE_LOCATION_SLUG );
 			}
+	        */
         	if( get_option('dbem_categories_enabled') && !(EM_MS_GLOBAL && !is_main_site()) ){
         		em_options_input_text ( __( 'Event Categories', 'events-manager'), 'dbem_taxonomy_category_slug', sprintf(__('e.g. %s - you can use / Separators too', 'events-manager'), '<strong>'.home_url().'/<code>'.esc_html(get_option('dbem_taxonomy_category_slug',EM_TAXONOMY_CATEGORY_SLUG)).'</code>/sports/</strong>'), EM_TAXONOMY_CATEGORY_SLUG );
         	}
@@ -53,14 +54,10 @@
 		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo sprintf(__('%s List/Archives','events-manager'),__('Event','events-manager')); ?></span></h3>
 		<div class="inside">
         	<table class="form-table">
-			<tr>
-				<th><?php echo sprintf(__( 'Events page', 'events-manager')); ?></th>
-				<td>
-					<?php wp_dropdown_pages(array('name'=>'dbem_events_page', 'selected'=>get_option('dbem_events_page'), 'show_option_none'=>sprintf(__('[No %s Page]', 'events-manager'),__('Events','events-manager')) )); ?>
-					<br />
-					<em><?php echo __( 'This option allows you to select which page to use as an events page. If you do not select an events page, to display event lists you can enable event archives or use the appropriate shortcodes and/or template tags.','events-manager'); ?></em>
-				</td>
-			</tr>
+		        <?php
+		        $events_page_desc = __( 'This option allows you to select which page to use as an events page. If you do not select an events page, to display event lists you can enable event archives or use the appropriate shortcodes and/or template tags.', 'events-manager');
+		        em_options_select_page( __('Events page', 'events-manager'), 'dbem_events_page', [ 'none' => sprintf(__('[No %s Page]', 'events-manager'), __('Events', 'events-manager')) ], $events_page_desc );
+				?>
 			<tbody class="em-event-page-options">
 				<?php 
 				em_options_radio_binary ( __( 'Show events search?', 'events-manager'), 'dbem_events_page_search_form', __( "If set to yes, a search form will appear just above your list of events.", 'events-manager') );
@@ -92,7 +89,7 @@
 									'title' => __('Order by name','events-manager')
 								));
 							?>
-							<?php foreach($event_archive_orderby_options as $key => $value) : ?>   
+							<?php foreach( $event_archive_orderby_options as $key => $value ) : ?>
 			 				<option value='<?php echo esc_attr($key) ?>' <?php echo ($key == get_option('dbem_events_default_archive_orderby')) ? "selected='selected'" : ''; ?>>
 			 					<?php echo esc_html($value); ?>
 			 				</option>
@@ -639,88 +636,84 @@
 		<div class="inside">
         	<p class="em-boxheader"><?php _e('These pages allow you to provide an event management interface outside the admin area on whatever page you want on your website. Bear in mind that this is overridden by BuddyPress if activated.', 'events-manager'); ?></p>
         	<table class="form-table">
-			<?php
-			$other_pages_tip = 'Using the %s shortcode, you can allow users to manage %s outside the admin area.';
-			?>
-			<tr class="em-header">
-				<td colspan="2">
-					<h4><?php _e('My Bookings','events-manager'); ?></h4>
-					<p><?php _e('This page is where people that have made bookings for an event can go and view their previous bookings.','events-manager'); ?>
-				</td>
-			</tr>
-			<tr>
-				<th><?php echo sprintf(__( '%s page', 'events-manager'),__('My bookings','events-manager')); ?>
-				</th>
-				<td>
-					<?php wp_dropdown_pages(array('name'=>'dbem_my_bookings_page', 'selected'=>get_option('dbem_my_bookings_page'), 'show_option_none'=>'['.__('None', 'events-manager').']' )); ?>
-					<br />
-					<em><?php echo sprintf(__('Users can view their bookings for other events on this page.','events-manager'),'<code>[my_bookings]</code>',__('bookings','events-manager')); ?></em>
-				</td>
-			</tr>	
-			<tr valign="top" id='dbem_bookings_default_orderby_row'>
-		   		<th scope="row"><?php _e('Default list ordering','events-manager'); ?></th>
-		   		<td>   
-					<select name="dbem_bookings_default_orderby" >
-						<?php 
-							$orderby_options = apply_filters('em_settings_bookings_default_orderby_ddm', array(
-								'event_name' => sprintf(__('Order by %s','events-manager'),__('Event Name','events-manager')),
-								'event_start_date' => sprintf(__('Order by %s','events-manager'),__('Start Date','events-manager')),
-								'booking_date' => sprintf(__('Order by %s','events-manager'),__('Booking Date','events-manager'))
-							)); 
-						?>
-						<?php foreach($orderby_options as $key => $value) : ?>
-		 				<option value='<?php echo esc_attr($key) ?>' <?php echo ($key == get_option('dbem_bookings_default_orderby')) ? "selected='selected'" : ''; ?>>
-		 					<?php echo esc_html($value) ?>
-		 				</option>
-						<?php endforeach; ?>
-					</select> 
-					<select name="dbem_bookings_default_order" >
-						<?php 
-						$ascending = __('Ascending','events-manager');
-						$descending = __('Descending','events-manager');
-						$order_options = apply_filters('em_settings_bookings_default_order_ddm', array(
-							'ASC' => __('Ascending','events-manager'),
-							'DESC' => __('Descending','events-manager')
-						));
-						?>
-						<?php foreach( $order_options as $key => $value) : ?>   
-		 				<option value='<?php echo esc_attr($key) ?>' <?php echo ($key == get_option('dbem_bookings_default_order')) ? "selected='selected'" : ''; ?>>
-		 					<?php echo esc_html($value) ?>
-		 				</option>
-						<?php endforeach; ?>
-					</select>
-				</td>
-		   	</tr>
-			<tr class="em-header">
-				<td colspan="2">
-					<h4><?php _e('Front-end management pages','events-manager'); ?></h4>
-					<p><?php _e('Users with the relevant permissions can manage their own events and bookings to these events on the following pages.','events-manager'); ?></p>
-				</td>
-			</tr>
-			<tr>
-				<th><?php echo sprintf(__( '%s page', 'events-manager'),__('Edit events','events-manager')); ?></th>
-				<td>
-					<?php wp_dropdown_pages(array('name'=>'dbem_edit_events_page', 'selected'=>get_option('dbem_edit_events_page'), 'show_option_none'=>'['.__('None', 'events-manager').']' )); ?>
-					<br />
-					<em><?php echo sprintf(__('Users can view, add and edit their %s on this page.','events-manager'),__('events','events-manager')); ?></em>
-				</td>
-			</tr>	            	
-			<tr>
-				<th><?php echo sprintf(__( '%s page', 'events-manager'),__('Edit locations','events-manager')); ?></th>
-				<td>
-					<?php wp_dropdown_pages(array('name'=>'dbem_edit_locations_page', 'selected'=>get_option('dbem_edit_locations_page'), 'show_option_none'=>'['.__('None', 'events-manager').']' )); ?>
-					<br />
-					<em><?php echo sprintf(__('Users can view, add and edit their %s on this page.','events-manager'),__('locations','events-manager')); ?></em>
-				</td>
-			</tr>	            	
-			<tr>
-				<th><?php echo sprintf(__( '%s page', 'events-manager'),__('Manage bookings','events-manager')); ?></th>
-				<td>
-					<?php wp_dropdown_pages(array('name'=>'dbem_edit_bookings_page', 'selected'=>get_option('dbem_edit_bookings_page'), 'show_option_none'=>'['.__('None', 'events-manager').']' )); ?>
-					<br />
-					<em><?php _e('Users can manage bookings for their events on this page.','events-manager'); ?></em>
-				</td>
-			</tr>
+		        <tbody>
+					<?php
+					$other_pages_tip = 'Using the %s shortcode, you can allow users to manage %s outside the admin area.';
+					?>
+					<tr class="em-header">
+						<td colspan="2">
+							<h4><?php _e('My Bookings','events-manager'); ?></h4>
+							<p><?php _e('This page is where people that have made bookings for an event can go and view their previous bookings.','events-manager'); ?>
+						</td>
+					</tr>
+					<tr>
+						<th><?php echo sprintf(__( '%s page', 'events-manager'),__('My bookings','events-manager')); ?>
+						</th>
+						<td>
+							<?php wp_dropdown_pages(array('name'=>'dbem_my_bookings_page', 'selected'=>get_option('dbem_my_bookings_page'), 'show_option_none'=>'['.__('None', 'events-manager').']' )); ?>
+							<br />
+							<em><?php echo sprintf(__('Users can view their bookings for other events on this page.','events-manager'),'<code>[my_bookings]</code>',__('bookings','events-manager')); ?></em>
+						</td>
+					</tr>
+					<tr valign="top" id='dbem_bookings_default_orderby_row'>
+				        <th scope="row"><?php _e('Default list ordering','events-manager'); ?></th>
+				        <td>
+							<select name="dbem_bookings_default_orderby" >
+								<?php
+									$orderby_options = apply_filters('em_settings_bookings_default_orderby_ddm', array(
+										'event_name' => sprintf(__('Order by %s','events-manager'),__('Event Name','events-manager')),
+										'event_start_date' => sprintf(__('Order by %s','events-manager'),__('Start Date','events-manager')),
+										'booking_date' => sprintf(__('Order by %s','events-manager'),__('Booking Date','events-manager'))
+									));
+								?>
+								<?php foreach($orderby_options as $key => $value) : ?>
+				                <option value='<?php echo esc_attr($key) ?>' <?php echo ($key == get_option('dbem_bookings_default_orderby')) ? "selected='selected'" : ''; ?>>
+				                    <?php echo esc_html($value) ?>
+				                </option>
+								<?php endforeach; ?>
+							</select>
+							<select name="dbem_bookings_default_order" >
+								<?php
+								$ascending = __('Ascending','events-manager');
+								$descending = __('Descending','events-manager');
+								$order_options = apply_filters('em_settings_bookings_default_order_ddm', array(
+									'ASC' => __('Ascending','events-manager'),
+									'DESC' => __('Descending','events-manager')
+								));
+								?>
+								<?php foreach( $order_options as $key => $value) : ?>
+				                <option value='<?php echo esc_attr($key) ?>' <?php echo ($key == get_option('dbem_bookings_default_order')) ? "selected='selected'" : ''; ?>>
+				                    <?php echo esc_html($value) ?>
+				                </option>
+								<?php endforeach; ?>
+							</select>
+						</td>
+				    </tr>
+		        </tbody>
+		        <tbody>
+					<tr class="em-header">
+						<td colspan="2">
+							<h4><?php _e('Front-end management pages','events-manager'); ?></h4>
+							<p><?php _e('Users with the relevant permissions can manage their own events and bookings to these events on the following pages.','events-manager'); ?></p>
+						</td>
+					</tr>
+			        <?php
+			        $dropdown_args = array('none' => '['.__('None', 'events-manager').']', 'default' => false);
+
+			        // Edit Events page dropdown
+			        $desc_edit_events = sprintf(__('Users can view, add and edit their %s on this page.','events-manager'),__('events','events-manager'));
+			        em_options_select_page( sprintf(__( '%s page', 'events-manager'),__('Edit events','events-manager')), 'dbem_edit_events_page', $dropdown_args, $desc_edit_events );
+
+			        // Edit Locations page dropdown
+			        $desc_edit_locations = sprintf(__('Users can view, add and edit their %s on this page.','events-manager'),__('locations','events-manager'));
+			        em_options_select_page( sprintf(__( '%s page', 'events-manager'),__('Edit locations','events-manager')), 'dbem_edit_locations_page', $dropdown_args, $desc_edit_locations );
+
+			        // Manage Bookings page dropdown
+			        $desc_manage_bookings = __('Users can manage bookings for their events on this page.','events-manager');
+			        em_options_select_page( sprintf(__( '%s page', 'events-manager'),__('Manage bookings','events-manager')), 'dbem_edit_bookings_page', $dropdown_args, $desc_manage_bookings );
+			        ?>
+		        </tbody>
+
 			<?php echo $save_button; ?>
         	</table>
 		</div> <!-- . inside --> 

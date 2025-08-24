@@ -58,7 +58,7 @@ function em_bookings_dashboard(){
 		        <h1><?php esc_html_e('Event Bookings Dashboard', 'events-manager'); ?></h1>
 		        <?php else: echo $EM_Notices; ?>
 	        <?php endif; ?>
-			<?php if( get_option('dbem_booking_charts_dashboard') && class_exists('\EM\Admin\Dashboard') ): ?>
+			<?php if( em_get_option('dbem_booking_charts_dashboard') && class_exists('\EM\Admin\Dashboard') ): ?>
 				<div class="em-bookings-stats wrap">
 					<div class="inside">
 						<?php \EM\Admin\Dashboard::output('dashboard'); ?>
@@ -144,7 +144,7 @@ function em_bookings_event(){
 			<p>
 				<strong><?php esc_html_e('Availability','events-manager'); ?></strong> :
 				<?php echo $EM_Event->get_bookings()->get_booked_spaces() . '/'. $EM_Event->get_spaces() ." ". __('Spaces confirmed','events-manager'); ?>
-				<?php if( get_option('dbem_bookings_approval_reserved') ): ?>
+				<?php if( em_get_option('dbem_bookings_approval_reserved') ): ?>
 				, <?php echo $EM_Event->get_bookings()->get_available_spaces() . '/'. $EM_Event->get_spaces() ." ". __('Available spaces','events-manager'); ?>
 				<?php endif; ?>
 				<?php do_action('em_admin_event_booking_availibility', $EM_Event); ?>
@@ -162,7 +162,7 @@ function em_bookings_event(){
 				<a class="row-title" href="<?php echo admin_url(); ?>post.php?action=edit&amp;post=<?php echo $EM_Event->get_location()->post_id ?>"><?php echo ($EM_Event->get_location()->location_name); ?></a>
 				<?php endif; ?>
 			</p>
-			<?php if( get_option('dbem_booking_charts_event') && class_exists('\EM\Admin\Dashboard') ): ?>
+			<?php if( em_get_option('dbem_booking_charts_event') && class_exists('\EM\Admin\Dashboard') ): ?>
 			<div class="wrap">
 				<div class="em-bookings-stats">
 					<div class="inside">
@@ -252,7 +252,7 @@ function em_bookings_ticket(){
 			<h2><?php esc_html_e('Bookings','events-manager'); ?></h2>
 			<?php
 			$EM_Bookings_Table = new EM_Bookings_Table();
-			$EM_Bookings_Table->status = get_option('dbem_bookings_approval') ? 'needs-attention':'confirmed';
+			$EM_Bookings_Table->status = em_get_option('dbem_bookings_approval') ? 'needs-attention':'confirmed';
 			$EM_Bookings_Table->ticket = $EM_Ticket;
 			$EM_Bookings_Table->display();
 	        ?>
@@ -389,7 +389,7 @@ function em_bookings_single(){
 							
 							<?php do_action('em_bookings_admin_booking_details_actions', $EM_Booking); ?>
 						</div>
-						<?php if( get_option('dbem_bookings_rsvp') ): ?>
+						<?php if( em_get_option('dbem_bookings_rsvp') ): ?>
 						<div class="em-booking-single-rsvp-status">
 							<form action="" method="post" class="em-booking-single-status-info em-booking-single-rsvp-status-info">
 								<strong class="em-tooltip" aria-label="<?php echo esc_attr('This represents whether the person has confirmed if they will be attending.', 'events-manager'); ?>"><?php esc_html_e('RSVP Status','events-manager'); ?> : </strong>
@@ -412,7 +412,7 @@ function em_bookings_single(){
 							</form>
 						</div>
 						<?php endif; ?>
-						<form action="" method="post" class="em-booking-form" id="em-booking-form-<?php echo $id; ?>" data-id="<?php echo $id; ?>" <?php if ( !get_option('dbem_uploads_ui') ) echo ' enctype="multipart/form-data"'; ?>>
+						<form action="" method="post" class="em-booking-form" id="em-booking-form-<?php echo $id; ?>" data-id="<?php echo $id; ?>" <?php if ( !em_get_option('dbem_uploads_ui') ) echo ' enctype="multipart/form-data"'; ?>>
 							<table class="em-tickets em-tickets-bookings-table" cellpadding="0" cellspacing="0">
 								<thead>
 									<tr>
@@ -630,7 +630,7 @@ function em_bookings_single(){
 							$user = new EM_Person($note['author']);
 						?>
 						<div>
-							<?php echo sprintf(esc_html_x('%1$s - %2$s wrote','[Date] - [Name] wrote','events-manager'), date(get_option('date_format'), $note['timestamp']), $user->get_name()); ?>:
+							<?php echo sprintf(esc_html_x('%1$s - %2$s wrote','[Date] - [Name] wrote','events-manager'), date(em_get_option('date_format'), $note['timestamp']), $user->get_name()); ?>:
 							<p style="background:#efefef; padding:5px;"><?php echo nl2br($note['note']); ?></p>
 						</div>
 						<?php endforeach; ?>

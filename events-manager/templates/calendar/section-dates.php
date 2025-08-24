@@ -25,7 +25,7 @@ This template is the main meat of the calendar, most of the heavy lifting is don
 			<?php if( !empty($cell_data['events']) && count($cell_data['events']) > 0 ): ?>
 				<div class="em-cal-day-date colored" data-date="<?php echo esc_attr($date); ?>" data-timestamp="<?php echo esc_attr($cell_data['date']); ?>" >
 					<a href="<?php echo esc_url($cell_data['link']); ?>" title="<?php echo esc_attr($cell_data['link_title']); ?>"><?php echo esc_html(date('j',$cell_data['date'])); ?></a>
-					<?php if( $args['limit'] && $cell_data['events_count'] > $args['limit'] && get_option('dbem_display_calendar_events_limit_msg') != '' ): ?>
+					<?php if( $args['limit'] && $cell_data['events_count'] > $args['limit'] && em_get_option('dbem_display_calendar_events_limit_msg') != '' ): ?>
 						<div class="limited-icon size-small size-medium">+</div>
 					<?php endif; ?>
 				</div>
@@ -50,7 +50,7 @@ This template is the main meat of the calendar, most of the heavy lifting is don
 					if( $EM_Category ) {
 						$colors[] = $EM_Category->get_color();
 					} else {
-						$colors[] = get_option('dbem_category_default_color');
+						$colors[] = em_get_option('dbem_category_default_color');
 					}
 					// check multi-day events first
 					if( !empty($args['long_events']) && $EM_Event->event_start_date != $EM_Event->event_end_date ){
@@ -176,9 +176,9 @@ This template is the main meat of the calendar, most of the heavy lifting is don
 					<?php
 				}
 				?>
-				<?php if( $args['limit'] && $cell_data['events_count'] > $args['limit'] && get_option('dbem_display_calendar_events_limit_msg') != '' ): ?>
+				<?php if( $args['limit'] && $cell_data['events_count'] > $args['limit'] && em_get_option('dbem_display_calendar_events_limit_msg') != '' ): ?>
 					<div class="em-cal-day-limit"><a href="<?php echo esc_url($cell_data['link']); ?>" class="button">
-							<?php echo str_replace('%COUNT%', $cell_data['events_count'] - $args['limit'], get_option('dbem_display_calendar_events_limit_msg')); ?></a>
+							<?php echo str_replace('%COUNT%', $cell_data['events_count'] - $args['limit'], em_get_option('dbem_display_calendar_events_limit_msg')); ?></a>
 					</div>
 				<?php endif; ?>
 			

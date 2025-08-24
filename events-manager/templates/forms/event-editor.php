@@ -25,7 +25,7 @@ $id = rand(); // not related to searches, so we'll just add an ID for good pract
 		echo $EM_Notices;
 		//Success notice
 		if( !empty($_REQUEST['success']) ){
-			if(!get_option('dbem_events_form_reshow')){
+			if(!em_get_option('dbem_events_form_reshow')){
 				echo '</div>'; // close the div and exit if we're not showing the form again
 				return false;
 			}
@@ -35,7 +35,7 @@ $id = rand(); // not related to searches, so we'll just add an ID for good pract
 	      method="post" action="<?php echo esc_url(add_query_arg(array('success'=>null, 'action'=>null))); ?>" data-view-id="<?php echo $id; ?>">
 		<?php do_action('em_front_event_form_header', $EM_Event); ?>
 		<section class="event-form-submitter <?php echo $template; ?>">
-			<?php if(get_option('dbem_events_anonymous_submissions') && !is_user_logged_in()): ?>
+			<?php if(em_get_option('dbem_events_anonymous_submissions') && !is_user_logged_in()): ?>
 				<h3><?php esc_html_e( 'Your Details', 'events-manager'); ?></h3>
 				<div class="input">
 					<p>
@@ -76,7 +76,7 @@ $id = rand(); // not related to searches, so we'll just add an ID for good pract
 		</section>
 
 		<section class="event-form-where">
-			<?php if( get_option('dbem_locations_enabled') ): ?>
+			<?php if( em_get_option('dbem_locations_enabled') ): ?>
 			<h3><?php esc_html_e( 'Where', 'events-manager'); ?></h3>
 			<div>
 				<?php em_locate_template('forms/event/location.php',true); ?>
@@ -88,7 +88,7 @@ $id = rand(); // not related to searches, so we'll just add an ID for good pract
 			<div class="<?php echo $template; ?>"><h3><?php esc_html_e( 'Details', 'events-manager'); ?></h3></div>
 			<div>
 				<div class="event-editor">
-					<?php if( get_option('dbem_events_form_editor') && function_exists('wp_editor') ): ?>
+					<?php if( em_get_option('dbem_events_form_editor') && function_exists('wp_editor') ): ?>
 						<?php
 							$post_content = !empty($EM_Event->post_content) ? $EM_Event->post_content : '';
 							wp_editor($post_content, 'em-editor-content', array('textarea_name'=>'content') );
@@ -101,8 +101,8 @@ $id = rand(); // not related to searches, so we'll just add an ID for good pract
 				</div>
 				<div class="event-extra-details <?php echo $template; ?>">
 					<div class="input">
-					<?php if(get_option('dbem_attributes_enabled')) { em_locate_template('forms/event/attributes-public.php',true); }  ?>
-					<?php if(get_option('dbem_categories_enabled')) { em_locate_template('forms/event/categories-public.php',true); }  ?>
+					<?php if(em_get_option('dbem_attributes_enabled')) { em_locate_template('forms/event/attributes-public.php',true); }  ?>
+					<?php if(em_get_option('dbem_categories_enabled')) { em_locate_template('forms/event/categories-public.php',true); }  ?>
 					</div>
 				</div>
 			</div>
@@ -118,7 +118,7 @@ $id = rand(); // not related to searches, so we'll just add an ID for good pract
 		</section>
 
 		<section class="event-form-bookings <?php echo $template; ?>">
-			<?php if( get_option('dbem_rsvp_enabled') && $EM_Event->can_manage('manage_bookings','manage_others_bookings') ) : ?>
+			<?php if( em_get_option('dbem_rsvp_enabled') && $EM_Event->can_manage('manage_bookings','manage_others_bookings') ) : ?>
 			<!-- START Bookings -->
 			<h3><?php esc_html_e('Bookings/Registration','events-manager'); ?></h3>
 			<div class="input">

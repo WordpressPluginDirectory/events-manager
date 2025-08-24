@@ -9,6 +9,7 @@
 	</p>
 	<?php
 	$current_status = absint(get_option('dbem_advanced_formatting'));
+	$archetype_options = em_options_get_archetype_options('dbem_advanced_formatting');
 	$disabled_text = __('Disabled', 'events-manager');
 	$enabled_text = __('Enabled', 'events-manager');
 	$current_text = $current_status ? '<span class="status enabled">('. $enabled_text .')</span>' : '<span class="status disabled">('.$disabled_text.')</span>';
@@ -16,48 +17,59 @@
 	<div  class="postbox em-postbox-notice em-postbox-notice-info" id="em-opt-advanced-formatting" data-enabled-text="(<?php echo esc_attr($enabled_text); ?>)" data-disabled-text="(<?php echo esc_attr($disabled_text); ?>)">
 		<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Advanced Mode', 'events-manager'); ?> <?php echo $current_text ?></span></h3>
 		<div class="inside">
-			<input type="hidden" name="dbem_advanced_formatting" id="em-advanced-formatting" value="<?php echo $current_status; ?>">
-			<div>
-				<?php
-				$advanced_mode = esc_html__('Advanced Mode', 'events-manager');
-				$advanced_mode_super = esc_html__('Super Advanced Mode', 'events-manager');
-				$disable_text = sprintf(esc_html__('Disable %s', 'events-manager'), $advanced_mode);
-				$enable_text = sprintf(esc_html__('Enable %s', 'events-manager'), $advanced_mode);
-				?>
-				<p>
-				<a href="#" class="em-af-toggle button-primary show-0" data-set-status="1"><?php echo $enable_text; ?></a>
-				<a href="#" class="em-af-toggle button-secondary show-1 show-2" data-set-status="0"><?php echo $disable_text; ?></a>
-				</p>
-				<?php
-				$disable_text = sprintf(esc_html__('Disable %s', 'events-manager'), $advanced_mode_super);
-				$enable_text = sprintf(esc_html__('Enable %s', 'events-manager'), $advanced_mode_super);
-				$current_text = $current_status ? $disable_text : $enable_text;
-				?>
-				<a href="#" class="em-af-toggle button-secondary show-2" data-set-status="1"><?php echo $disable_text; ?></a>
-				<a href="#" class="em-af-toggle button-primary show-1 show-0" data-set-status="2"><?php echo $enable_text; ?></a>
+			<div class="em-default-option em-advanced-formatting">
+				<input type="hidden" name="dbem_advanced_formatting" value="<?php echo $current_status; ?>">
+				<?php function em_options_advanced_formatting_content( $current_status ) { ?>
+				<div>
+					<?php
+					$advanced_mode = esc_html__('Advanced Mode', 'events-manager');
+					$advanced_mode_super = esc_html__('Super Advanced Mode', 'events-manager');
+					$disable_text = sprintf(esc_html__('Disable %s', 'events-manager'), $advanced_mode);
+					$enable_text = sprintf(esc_html__('Enable %s', 'events-manager'), $advanced_mode);
+					?>
+					<p>
+						<a href="#" class="em-af-toggle button-primary show-0" data-set-status="1"><?php echo $enable_text; ?></a>
+						<a href="#" class="em-af-toggle button-secondary show-1 show-2" data-set-status="0"><?php echo $disable_text; ?></a>
+					</p>
+					<?php
+					$disable_text = sprintf(esc_html__('Disable %s', 'events-manager'), $advanced_mode_super);
+					$enable_text = sprintf(esc_html__('Enable %s', 'events-manager'), $advanced_mode_super);
+					$current_text = $current_status ? $disable_text : $enable_text;
+					?>
+					<a href="#" class="em-af-toggle button-secondary show-2" data-set-status="1"><?php echo $disable_text; ?></a>
+					<a href="#" class="em-af-toggle button-primary show-1 show-0" data-set-status="2"><?php echo $enable_text; ?></a>
+				</div>
+				<div>
+					<?php
+					$am = '<code>'. $advanced_mode .'</code>';
+					$sam = '<code>'.$advanced_mode_super.'</code>';
+					?>
+					<p class="em-af-status" data-status="<?php echo $current_status; ?>">
+						<span class="em-af-status-0"><?php echo sprintf( esc_html__('You have currently disabled %s', 'events-manager'), $am ); ?></span>
+						<span class="em-af-status-1"><?php echo sprintf( esc_html__('You have currently enabled %s', 'events-manager'), $am ); ?></span>
+						<span class="em-af-status-2"><?php echo sprintf( esc_html__('You have currently enabled %s', 'events-manager'), $sam ); ?></span>
+						<span class="em-af-status-save"><?php esc_html_e('Save your settings for this to take effect!', 'events-manager'); ?></span>
+					</p>
+					<p>
+						<?php echo sprintf(esc_html__("%s allows you to modify some or all of the formats used by Events Manager to generate your content. You can choose to override default formats and customize them to your needs. You do not lose your previously defined custom formats should you enable/disable %s or choose to not override a certain set of formats, they'll appear again once you enable %s again for that content.", 'events-manager'), $am, $am, $am); ?>
+					</p>
+					<p>
+						<?php echo sprintf(esc_html__("%s overrides all formatting choices, which will be be taken from the settings defined on this page. If you want to override only certain formatting, choose the %s instead.", 'events-manager'), $sam, $am); ?>
+					</p>
+					<p>
+						<?php esc_html_e('Clicking these buttons will not have any effect until you save your settings!', 'events-manager'); ?>
+					</p>
+				</div>
+				<?php } em_options_advanced_formatting_content( $current_status ); ?>
 			</div>
-			<div>
-				<?php
-				$am = '<code>'. $advanced_mode .'</code>';
-				$sam = '<code>'.$advanced_mode_super.'</code>';
-				?>
-				<p class="em-af-status" data-status="<?php echo $current_status; ?>">
-					<span class="em-af-status-0"><?php echo sprintf( esc_html__('You have currently disabled %s', 'events-manager'), $am ); ?></span>
-					<span class="em-af-status-1"><?php echo sprintf( esc_html__('You have currently enabled %s', 'events-manager'), $am ); ?></span>
-					<span class="em-af-status-2"><?php echo sprintf( esc_html__('You have currently enabled %s', 'events-manager'), $sam ); ?></span>
-					<span class="em-af-status-save"><?php esc_html_e('Save your settings for this to take effect!', 'events-manager'); ?></span>
-				</p>
-				<p>
-					<?php echo sprintf(esc_html__("%s allows you to modify some or all of the formats used by Events Manager to generate your content. You can choose to override default formats and customize them to your needs. You do not lose your previously defined custom formats should you enable/disable %s or choose to not override a certain set of formats, they'll appear again once you enable %s again for that content.", 'events-manager'), $am, $am, $am); ?>
-				</p>
-				<p>
-					<?php echo sprintf(esc_html__("%s overrides all formatting choices, which will be be taken from the settings defined on this page. If you want to override only certain formatting, choose the %s instead.", 'events-manager'), $sam, $am); ?>
-				</p>
-				<p>
-					<?php esc_html_e('Clicking these buttons will not have any effect until you save your settings!', 'events-manager'); ?>
-				</p>
+			<div class="em-archetype-options">
+				<?php foreach ( $archetype_options['archetypes'] as $type => $atts ): ?>
+					<div class="em-archetype-option em-advanced-formatting" data-archetype="<?php echo $type ?>">
+						<input type="hidden" name="<?php echo esc_attr($atts['name']) ?>" type="text" id="em-advanced-formatting_<?php echo $type ?>" value="<?php echo $atts['value'] ?? $current_status ? 1:0; ?>">
+						<?php em_options_advanced_formatting_content( $atts['value'] ?? $current_status ? 1:0 ); ?>
+					</div>
+				<?php endforeach; ?>
 			</div>
-
 		</div>
 	</div>
 
@@ -83,60 +95,64 @@
 				em_options_input_text ( sprintf(__( 'Single %s title format', 'events-manager'),__('event','events-manager')), 'dbem_event_page_title_format', sprintf(__( 'The format of a single %s page title.', 'events-manager'),__('event','events-manager')).' '.__( 'This is only used when showing events from other blogs.', 'events-manager').$events_placeholder_tip );
 			}
 			?>
-		    <tr class="em-subheader">
-			    <td colspan="2">
-				    <h5><?php esc_html_e( 'Grouped Lists View', 'events-manager'); ?></h5>
-				    <p><?php esc_html_e('These options are the defaults applied to lists being showing in Grouped List view mode and can be overriden in individual lists using shortcodes, blocks, widgets etc.', 'events-manager'); ?></p>
-			    </td>
-		    </tr>
-		    <?php
-		    $grouby_modes = array('yearly'=>__('Yearly','events-manager'), 'monthly'=>__('Monthly','events-manager'), 'weekly'=>__('Weekly','events-manager'), 'daily'=>__('Daily','events-manager'));
-		    em_options_select(__('Grouped list default','events-manager'), 'dbem_event_list_groupby', $grouby_modes, __('If you choose a group by mode, your events page will display events in groups of your chosen time range.','events-manager'));
-		    em_options_input_text(__('Grouped list header','events-manager'), 'dbem_event_list_groupby_header_format', __('Choose how to format your group headings.','events-manager').' '. sprintf(__('#s will be replaced by the date format below', 'events-manager'), 'http://codex.wordpress.org/Formatting_Date_and_Time'));
-		    em_options_input_text(__('Grouped list format','events-manager'), 'dbem_event_list_groupby_format', __('Choose how to format your group heading dates. Leave blank for default.','events-manager').' '. sprintf(__('Date and Time formats follow the <a href="%s">WordPress time formatting conventions</a>', 'events-manager'), 'http://codex.wordpress.org/Formatting_Date_and_Time'));
-		    ?>
-		    
-		    <tr class="em-subheader"><td colspan="2"><h5><?php echo esc_html( sprintf(_x('%1$s %2$s Formats', 'cpt type and view type', 'events-manager'), __('Event', 'events-manager'), __('List', 'events-manager')) ); ?></h5></td></tr>
-		    <?php
-		    em_options_input_text ( __( 'No events message', 'events-manager'), 'dbem_no_events_message', __( 'The message displayed when no events are available.', 'events-manager') );
-			?>
-		    
+		    <tbody>
+			    <tr class="em-subheader">
+				    <td colspan="2">
+					    <h5><?php esc_html_e( 'Grouped Lists View', 'events-manager'); ?></h5>
+					    <p><?php esc_html_e('These options are the defaults applied to lists being showing in Grouped List view mode and can be overriden in individual lists using shortcodes, blocks, widgets etc.', 'events-manager'); ?></p>
+				    </td>
+			    </tr>
+			    <?php
+			    $grouby_modes = array('yearly'=>__('Yearly','events-manager'), 'monthly'=>__('Monthly','events-manager'), 'weekly'=>__('Weekly','events-manager'), 'daily'=>__('Daily','events-manager'));
+			    em_options_select(__('Grouped list default','events-manager'), 'dbem_event_list_groupby', $grouby_modes, __('If you choose a group by mode, your events page will display events in groups of your chosen time range.','events-manager'));
+			    em_options_input_text(__('Grouped list header','events-manager'), 'dbem_event_list_groupby_header_format', __('Choose how to format your group headings.','events-manager').' '. sprintf(__('#s will be replaced by the date format below', 'events-manager'), 'http://codex.wordpress.org/Formatting_Date_and_Time'));
+			    em_options_input_text(__('Grouped list format','events-manager'), 'dbem_event_list_groupby_format', __('Choose how to format your group heading dates. Leave blank for default.','events-manager').' '. sprintf(__('Date and Time formats follow the <a href="%s">WordPress time formatting conventions</a>', 'events-manager'), 'http://codex.wordpress.org/Formatting_Date_and_Time'));
+			    ?>
+		    </tbody>
+		    <tbody class="am-af" data-group="format-events-list">
+			    <tr class="em-subheader" data-group="format-events-list"><td colspan="2"><h5><?php echo esc_html( sprintf(_x('%1$s %2$s Formats', 'cpt type and view type', 'events-manager'), __('Event', 'events-manager'), __('List', 'events-manager')) ); ?></h5></td></tr>
+			    <?php
+			    em_options_input_text ( __( 'No events message', 'events-manager'), 'dbem_no_events_message', __( 'The message displayed when no events are available.', 'events-manager') );
+				?>
+		    </tbody>
+
 		    <!-- ADVANCED Formatting -->
-		    <tbody class="am-af">
+		    <tbody class="am-af" data-group="format-events-list">
 		        <?php
 		        em_options_radio_binary ( __( 'Override Default Formats?', 'events-manager'), 'dbem_advanced_formatting_modes[events-list]', '', '', '.am-af-events-list' );
 		        ?>
 		    </tbody>
-		    <tbody class="am-af am-af-events-list">
-		    <?php
-		    em_options_textarea ( __( 'Default event list format header', 'events-manager'), 'dbem_event_list_item_format_header', __( 'This content will appear just above your code for the default event list format. Default is blank', 'events-manager'), true );
-		 	em_options_textarea ( __( 'Default event list format', 'events-manager'), 'dbem_event_list_item_format', __( 'The format of any events in a list.', 'events-manager').$events_placeholder_tip, true );
-			em_options_textarea ( __( 'Default event list format footer', 'events-manager'), 'dbem_event_list_item_format_footer', __( 'This content will appear just below your code for the default event list format. Default is blank', 'events-manager'), true );
-		    ?>
+		    <tbody class="am-af am-af-events-list" data-group="format-events-list">
+			    <?php
+			    em_options_textarea ( __( 'Default event list format header', 'events-manager'), 'dbem_event_list_item_format_header', __( 'This content will appear just above your code for the default event list format. Default is blank', 'events-manager'), true );
+			    em_options_textarea ( __( 'Default event list format', 'events-manager'), 'dbem_event_list_item_format', __( 'The format of any events in a list.', 'events-manager').$events_placeholder_tip, true );
+				em_options_textarea ( __( 'Default event list format footer', 'events-manager'), 'dbem_event_list_item_format_footer', __( 'This content will appear just below your code for the default event list format. Default is blank', 'events-manager'), true );
+			    ?>
 		    </tbody>
 		    <!-- /ADVANCED Formatting -->
 
-		    <tr class="em-subheader"><td colspan="2"><h5><?php echo esc_html( sprintf(_x('%1$s %2$s Formats', 'cpt type and view type', 'events-manager'), __('Event', 'events-manager'), __('Grid', 'events-manager')) ); ?></h5></td></tr>
-		    <!-- ADVANCED Formatting -->
-		    <tbody class="am-af">
-		    <?php
-		    em_options_radio_binary ( __( 'Override Default Formats?', 'events-manager'), 'dbem_advanced_formatting_modes[events-grid]', '', '', '.am-af-events-grid' );
-		    ?>
+			<!-- ADVANCED Formatting -->
+		    <tbody class="am-af" data-group="format-events-grid">
+		        <tr class="em-subheader"><td colspan="2"><h5><?php echo esc_html( sprintf(_x('%1$s %2$s Formats', 'cpt type and view type', 'events-manager'), __('Event', 'events-manager'), __('Grid', 'events-manager')) ); ?></h5></td></tr>
+			    <?php
+			    em_options_radio_binary ( __( 'Override Default Formats?', 'events-manager'), 'dbem_advanced_formatting_modes[events-grid]', '', '', '.am-af-events-grid' );
+			    ?>
 		    </tbody>
-		    <tbody class="am-af am-af-events-grid">
-		    <?php
-		    em_options_textarea ( sprintf(_x( 'Default %1$s %2$s format header', 'events-manager', 'cpt type and view type'), __('Event', 'events-manager'), __('Grid', 'events-manager')), 'dbem_event_grid_item_format_header', sprintf(__( 'This content will appear just above your code for the %s list format below. Default is blank', 'events-manager'), __('grid','events-manager')), true );
-		    em_options_textarea ( sprintf(_x( 'Default %1$s %2$s format', 'events-manager', 'cpt type and view type'), __('Event', 'events-manager'), __('Grid', 'events-manager')), 'dbem_event_grid_item_format', sprintf(__( 'The format of a single %s in a list.', 'events-manager'), __('event','events-manager')).$events_placeholder_tip, true );
-		    em_options_textarea ( sprintf(_x( 'Default %1$s %2$s format footer', 'events-manager', 'cpt type and view type'), __('Event', 'events-manager'), __('Grid', 'events-manager')), 'dbem_event_grid_item_format_footer', sprintf(__( 'This content will appear just below your code for the %s list format above. Default is blank', 'events-manager'), __('grid','events-manager')), true );
-		    ?>
+		    <tbody class="am-af am-af-events-grid" data-group="format-events-grid">
+			    <?php
+			    em_options_textarea ( sprintf(_x( 'Default %1$s %2$s format header', 'events-manager', 'cpt type and view type'), __('Event', 'events-manager'), __('Grid', 'events-manager')), 'dbem_event_grid_item_format_header', sprintf(__( 'This content will appear just above your code for the %s list format below. Default is blank', 'events-manager'), __('grid','events-manager')), true );
+			    em_options_textarea ( sprintf(_x( 'Default %1$s %2$s format', 'events-manager', 'cpt type and view type'), __('Event', 'events-manager'), __('Grid', 'events-manager')), 'dbem_event_grid_item_format', sprintf(__( 'The format of a single %s in a list.', 'events-manager'), __('event','events-manager')).$events_placeholder_tip, true );
+			    em_options_textarea ( sprintf(_x( 'Default %1$s %2$s format footer', 'events-manager', 'cpt type and view type'), __('Event', 'events-manager'), __('Grid', 'events-manager')), 'dbem_event_grid_item_format_footer', sprintf(__( 'This content will appear just below your code for the %s list format above. Default is blank', 'events-manager'), __('grid','events-manager')), true );
+			    ?>
 		    </tbody>
 		    <!-- /ADVANCED Formatting -->
+
 		    <?php
 		    em_options_input_text( sprintf(_x( 'Default %1$s %2$s width', 'events-manager', 'cpt type and view type'), __('Event', 'events-manager'), __('Grid', 'events-manager')), 'dbem_event_grid_item_width', __( 'The default minimum width, in pixels, that each grid item can shrink to fit on one line.', 'events-manager') );
 		    ?>
 
 		    <!-- ADVANCED Formatting -->
-		    <tbody class="am-af">
+		    <tbody class="am-af" data-group="format-event-single">
 			    <tr class="em-header">
 			        <td colspan="2">
 			            <h4><?php echo sprintf(__('Single %s Page','events-manager'),__('Event','events-manager')); ?></h4>
@@ -147,7 +163,7 @@
 		        em_options_radio_binary(__('Override Default Formats?', 'events-manager'), 'dbem_advanced_formatting_modes[event-single]', '', '', '.am-af-event-single');
 				?>
 		    </tbody>
-		    <tbody class="am-af am-af-event-single">
+		    <tbody class="am-af am-af-event-single" data-group="format-event-single">
 		    <?php
 			em_options_textarea ( sprintf(__('Single %s page format', 'events-manager'),__('event','events-manager')), 'dbem_single_event_format', sprintf(__( 'The format used to display %s content on single pages or elsewhere on your site.', 'events-manager'),__('event','events-manager')).$events_placeholder_tip, true);
 			?>
@@ -215,10 +231,11 @@
 					<th scope="row"><?php esc_html_e('View Types', 'events-manager'); ?></th>
 					<td>
 						<?php
+						$archetype_options = em_options_get_archetype_options('dbem_search_form_views');
 						$view_types = get_option('dbem_search_form_views', array());
 						if( !is_array($view_types) ) $view_types = array();
 						?>
-						<fieldset class="em-field-checkboxes">
+						<fieldset class="em-default-option option-checkboxes em-field-checkboxes">
 							<legend class="screen-reader-text"><?php esc_html_e('View Types', 'events-manager'); ?></legend>
 							<?php foreach ( $views as $view_name => $view_label ): ?>
 								<label>
@@ -227,6 +244,27 @@
 								</label>
 							<?php endforeach; ?>
 						</fieldset>
+						<?php if( !empty($archetype_options['archetypes']) ): ?>
+						<div class="em-archetype-options">
+							<?php foreach ( $archetype_options['archetypes'] as $type => $atts ): ?>
+								<div class="em-archetype-option option-checkboxes" data-archetype="<?php echo $type ?>"  <?php if ( empty($atts['value']) ) echo 'data-default'; ?>>
+									<?php foreach ( $views as $view_name => $view_label ): ?>
+										<label>
+											<input type="checkbox" name="<?php echo esc_attr($atts['name']); ?>[]" value="<?php  echo esc_attr($view_name); ?>"
+												<?php echo in_array($view_name, $view_types) ? 'data-default' : ''; ?>
+												<?php if( in_array($view_name, $atts['value']) ) echo 'checked'; ?>>
+											<?php echo esc_html($view_label); ?>
+										</label>
+									<?php endforeach; ?>
+									<br>
+									<div class="em-archetype-checkbox-buttons">
+										<button type="button" class="button-secondary em-archetype-checkbox-default" <?php if ( empty($atts['value']) ) echo 'disabled'; ?>><?php esc_html_e('Use Defaults', 'events-manager'); ?></button>
+										<button type="button" class="button-secondary em-archetype-checkbox-override" <?php if ( empty($atts['value']) ) echo 'disabled'; ?>><?php esc_html_e('Override Defaults', 'events-manager'); ?></button>
+									</div>
+								</div>
+							<?php endforeach; ?>
+						</div>
+						<?php endif; ?>
 						<p><em><?php echo sprintf( esc_html__('Select the view types a user can select to display on the default search form, you can override this selection using the %s argument in shortcodes and PHP functions.', 'events-manager'), '<code>views</code>'); ?></em></p>
 					</td>
 				</tr>

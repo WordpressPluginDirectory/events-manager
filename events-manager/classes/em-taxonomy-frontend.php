@@ -39,7 +39,7 @@ class EM_Taxonomy_Frontend {
 	 */
 	public static function template($template = ''){
 		global $wp_query, $wp_the_query, $em_the_query, $post;
-		if( is_tax(static::$taxonomy_name) && !locate_template('taxonomy-'.static::$taxonomy_name.'.php') && get_option('dbem_cp_'. static::$option_name_plural .'_formats', true) ){
+		if( is_tax(static::$taxonomy_name) && !locate_template('taxonomy-'.static::$taxonomy_name.'.php') && em_get_option('dbem_cp_'. static::$option_name_plural .'_formats', true) ){
 			do_action('em_pre_'. static::$option_name .'_taxonomy_template');
 			do_action('em_pre_taxonomy_template', get_called_class(), static::$tax_class);
 			$em_the_query = $wp_the_query; //use this for situations where other plugins need to access 'original' query data, which you can switch back/forth.
@@ -49,7 +49,7 @@ class EM_Taxonomy_Frontend {
 				$wp_query = new WP_Query(array('page_id'=> static::get_page_id()));
 				$wp_query->queried_object = $wp_query->post;
 				$wp_query->queried_object_id = $wp_query->post->ID;
-				$wp_query->post->post_title = $wp_query->posts[0]->post_title = $wp_query->queried_object->post_title = $EM_Taxonomy->output(get_option('dbem_'. static::$option_name .'_page_title_format'));
+				$wp_query->post->post_title = $wp_query->posts[0]->post_title = $wp_query->queried_object->post_title = $EM_Taxonomy->output(em_get_option('dbem_'. static::$option_name .'_page_title_format'));
 				if( !function_exists('yoast_breadcrumb') ){ //not needed by WP SEO Breadcrumbs, we deal with it in a filter further down - wpseo_breadcrumb_links
 					$wp_query->post->post_parent = $wp_query->posts[0]->post_parent = $wp_query->queried_object->post_parent = static::get_page_id();
 				}
@@ -60,7 +60,7 @@ class EM_Taxonomy_Frontend {
 				// some themes or plugins may not like this, the only real option is to use a dedicated categories page so the above if block gets triggered.
 			    $wp_query->posts = array();
 			    $wp_query->posts[0] = new stdClass();
-			    $wp_query->posts[0]->post_title = $wp_query->queried_object->post_title = $EM_Taxonomy->output(get_option('dbem_'. static::$option_name .'_page_title_format'));
+			    $wp_query->posts[0]->post_title = $wp_query->queried_object->post_title = $EM_Taxonomy->output(em_get_option('dbem_'. static::$option_name .'_page_title_format'));
 				$wp_query->posts[0]->post_type = 'page';
 			    $post_array = array('ID', 'post_author', 'post_date','post_date_gmt','post_content','post_excerpt','post_status','comment_status','ping_status','post_password','post_name','to_ping','pinged','post_modified','post_modified_gmt','post_content_filtered','post_parent','guid','menu_order','post_mime_type','comment_count','filter');
 			    foreach($post_array as $post_array_item){
@@ -145,31 +145,31 @@ class EM_Taxonomy_Frontend {
 		if( $wp_query->is_tax(static::$taxonomy_name) ){
 			//Scope is future
 			$today = current_time('mysql');
-			if( get_option('dbem_events_current_are_past') ){
+			if( em_get_option('dbem_events_current_are_past') ){
 				$wp_query->query_vars['meta_query'][] = array( 'key' => '_event_start', 'value' => $today, 'compare' => '>=', 'type' => 'DATETIME' );
 			}else{
 				$wp_query->query_vars['meta_query'][] = array( 'key' => '_event_end', 'value' => $today, 'compare' => '>=', 'type' => 'DATETIME' );
 			}
-		  	if( get_option('dbem_'. static::$option_name_plural .'_default_archive_orderby') == 'title'){
+		  	if( em_get_option('dbem_'. static::$option_name_plural .'_default_archive_orderby') == 'title'){
 		  		$wp_query->query_vars['orderby'] = 'title';
 		  	}else{
 			  	$wp_query->query_vars['orderby'] = 'meta_value';
-			  	$wp_query->query_vars['meta_key'] = get_option('dbem_'. static::$option_name_plural .'_default_archive_orderby');
+			  	$wp_query->query_vars['meta_key'] = em_get_option('dbem_'. static::$option_name_plural .'_default_archive_orderby');
 			  	if( in_array($wp_query->query_vars['meta_key'], array('_event_start', '_event_end', '_event_start_local', '_event_end_local')) ){
 			  		$wp_query->query_vars['meta_type'] = 'DATETIME';
 			  	}
 		  	}
-			$wp_query->query_vars['order'] = get_option('dbem_'. static::$option_name_plural .'_default_archive_order','ASC');
+			$wp_query->query_vars['order'] = em_get_option('dbem_'. static::$option_name_plural .'_default_archive_order','ASC');
 			$post_types = $wp_query->get( 'post_type');
 			$post_types = is_array($post_types) ? $post_types + array(EM_POST_TYPE_EVENT) : EM_POST_TYPE_EVENT; 
-			if( !get_option('dbem_cp_events_search_results') ) $wp_query->set( 'post_type', $post_types ); //in case events aren't publicly searchable due to 'bug' in WP - https://core.trac.wordpress.org/ticket/17592
+			if( !em_get_option('dbem_cp_events_search_results') ) $wp_query->set( 'post_type', $post_types ); //in case events aren't publicly searchable due to 'bug' in WP - https://core.trac.wordpress.org/ticket/17592
 		}elseif( !empty($wp_query->{'em_'.static::$option_name.'_id'}) ){
 		    $post = $wp_query->post;
 		}
 	}
 	
 	public static function get_page_id(){
-		return get_option('dbem_'.static::$option_name_plural.'_page');
+		return em_get_option('dbem_'.static::$option_name_plural.'_page');
 	}
 	
 	public static function wpseo_breadcrumb_links( $links ){

@@ -709,6 +709,9 @@
 .wp-admin .wp-admin #em-opt-advanced-formatting .em-af-status .em-af-status-save {
   color: #c45500;
 }
+.wp-admin .wp-admin .em-archetype-option-default {
+  cursor: pointer;
+}
 .wp-admin #em-options-form fieldset.em-field-checkboxes label {
   display: block;
   padding: 0 !important;
@@ -716,6 +719,155 @@
 }
 .wp-admin #em-options-form fieldset.em-field-checkboxes label input {
   padding-right: 5px;
+}
+.wp-admin #em-opt-archetypes {
+  /* Base event form styles */
+  /* Hide label fields, taxonomy selection, and recurrence fields in base event form by default */
+  /* Show these fields when there's at least one custom archetype */
+  /* Show these fields when there's at least one custom archetype */
+}
+.wp-admin #em-opt-archetypes input::placeholder {
+  color: #ccc;
+  font-style: italic;
+}
+.wp-admin #em-opt-archetypes #event-archetypes-container {
+  margin-bottom: 20px;
+}
+.wp-admin #em-opt-archetypes .base-event-form h4,
+.wp-admin #em-opt-archetypes .archetypes-ui-container h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+  font-size: 16px;
+}
+.wp-admin #em-opt-archetypes .archetypes-ui-container {
+  margin-bottom: 15px;
+}
+.wp-admin #em-opt-archetypes .archetype-item {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 3px;
+}
+.wp-admin #em-opt-archetypes .archetype-item h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+}
+.wp-admin #em-opt-archetypes .archetype-item h4 span {
+  color: #888;
+  font-weight: normal;
+  font-style: italic;
+}
+.wp-admin #em-opt-archetypes .archetype-display table,
+.wp-admin #em-opt-archetypes .archetype-edit table {
+  margin-bottom: 10px;
+}
+.wp-admin #em-opt-archetypes .archetype-edit input[readonly] {
+  background-color: #f0f0f0;
+  color: #777;
+}
+.wp-admin #em-opt-archetypes .archetype-actions {
+  margin-top: 10px;
+}
+.wp-admin #em-opt-archetypes .dashicons-edit {
+  cursor: pointer;
+  color: #0073aa;
+  vertical-align: middle;
+  margin-left: 5px;
+}
+.wp-admin #em-opt-archetypes .add-new-archetype {
+  margin-top: 20px;
+}
+.wp-admin #em-opt-archetypes .archetype-buttons {
+  display: flex;
+  gap: 10px;
+}
+.wp-admin #em-opt-archetypes .base-event-form input[disabled] {
+  background-color: #f0f0f0;
+  color: #777;
+}
+.wp-admin #em-opt-archetypes .base-event-features-info {
+  display: table-row-group;
+}
+.wp-admin #em-opt-archetypes #event-archetypes-container:has(#archetypes-list > .archetype-item) .base-event-features-info {
+  display: none;
+}
+.wp-admin #em-opt-archetypes .archetypes-list-row:not(:has(#archetypes-list > .archetype-item)) td {
+  padding: 0;
+}
+.wp-admin #em-opt-archetypes .em-archetype-tabs {
+  margin-bottom: 10px;
+}
+.wp-admin #em-options-page .em-archetype-tabs.subsubsub {
+  display: block;
+  float: none;
+}
+.wp-admin #em-options-page .em-archetype-tabs.subsubsub a[data-archetype] {
+  cursor: pointer;
+}
+.wp-admin #em-options-page[data-archetype=all] .em-archetype-options, .wp-admin #em-options-page[data-archetype=all] .em-options-archetypes-description, .wp-admin #em-options-page[data-archetype=all] .em-archetype-option-desc {
+  display: none;
+  visibility: hidden;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .nav-tab-wrapper .nav-tab:not(.has-archetype-options):not(.persist):not(.em-header):not(.em-subheader), .wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) div.em-menu-group:not(.has-archetype-options):not(.persist):not(.em-header):not(.em-subheader), .wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) div.postbox:not(.has-archetype-options):not(.persist):not(.em-header):not(.em-subheader), .wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) table:not(.has-archetype-options):not(.persist):not(.em-header):not(.em-subheader), .wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) tbody:not(.has-archetype-options):not(.persist):not(.em-header):not(.em-subheader), .wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) tr:not(.has-archetype-options):not(.persist):not(.em-header):not(.em-subheader) {
+  display: none;
+  visibility: hidden;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-archetype-option ::placeholder {
+  font-style: italic;
+  opacity: 0.6;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-archetype-option.option-checkboxes[data-default] input[type=checkbox][data-default]:not(:checked):before {
+  content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 15 15"><path fill="%233276c3" fill-rule="evenodd" d="M5 7.5c0-.3.2-.5.5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5Z" clip-rule="evenodd"/></svg>');
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-archetype-option.option-checkboxes[data-default] input[type=checkbox]:disabled {
+  pointer-events: all;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-archetype-option.option-checkboxes .em-archetype-checkbox-buttons {
+  margin-top: 5px;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-archetype-option-desc {
+  display: block;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-options-archetypes-description {
+  display: grid;
+  grid-template-columns: 25px 1fr;
+  align-items: center;
+  grid-gap: 5px;
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-left-width: 4px;
+  border-left-color: #72aee6;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+  margin: 10px 0 5px;
+  padding: 10px 12px;
+  vertical-align: middle;
+  line-height: 20px;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-options-archetypes-description span.em-icon {
+  align-self: start;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-options-archetypes-description p:first-child {
+  margin: 0;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-options-archetypes-description p {
+  margin: 10px 0 0;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-default-option {
+  display: none;
+  visibility: hidden;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-archetype-options {
+  display: block;
+  visibility: visible;
+}
+.wp-admin #em-options-page[data-archetype]:not([data-archetype=all]) .em-archetype-options .em-archetype-option {
+  display: none;
+  visibility: hidden;
 }
 .wp-admin .em {
   --counter-background: #F36752;

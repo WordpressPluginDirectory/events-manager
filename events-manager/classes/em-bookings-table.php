@@ -100,13 +100,13 @@ class EM_Bookings_Table extends EM\List_Table {
 			'needs-attention' => [ 'label'=>__('Needs Attention','events-manager'), 'search'=> [0]  ],
 			'incomplete' => [ 'label'=>__('Incomplete Bookings','events-manager'), 'search'=> [0]  ],
 		);
-		if( !get_option('dbem_bookings_approval') ){
+		if( !em_get_option('dbem_bookings_approval') ){
 			unset($this->statuses['pending']);
 			unset($this->statuses['incomplete']);
 			$this->statuses['confirmed']['search'] = [0,1];
 		}
 		// set default status to search for
-		static::$filter_vars['status']['default'] = get_option('dbem_bookings_approval') ? 'needs-attention':'confirmed';
+		static::$filter_vars['status']['default'] = em_get_option('dbem_bookings_approval') ? 'needs-attention':'confirmed';
 		
 		// set/translate Attendee column header previd accordingly
 		if ( !defined('EM_BOOKINGS_TABLE_ATTENDEE_PREFIX') || constant('EM_BOOKINGS_TABLE_ATTENDEE_PREFIX') === true ) {
@@ -575,7 +575,7 @@ class EM_Bookings_Table extends EM\List_Table {
 		// determine which keys to show
 		switch( $EM_Booking->booking_status ){
 			case 0: //pending
-				if( get_option('dbem_bookings_approval') ){
+				if( em_get_option('dbem_bookings_approval') ){
 					$allowed_actions = ['approve', 'reject', 'delete'];
 					break;
 				}//if approvals are off, treat as a 1
@@ -868,7 +868,7 @@ class EM_Bookings_Table extends EM\List_Table {
 		} elseif ( $col == 'booking_rsvp_status' ) {
 			$val = $EM_Booking->get_rsvp_status( true );
 		}elseif($col == 'booking_date'){
-			$val = $EM_Booking->date()->i18n( get_option('dbem_date_format').' '. get_option('dbem_time_format') );
+			$val = $EM_Booking->date()->i18n( $EM_Booking->get_option('dbem_date_format').' '. $EM_Booking->get_option('dbem_time_format') );
 		}elseif($col == 'actions' && !in_array( $format, ['csv', 'xls', 'xlsx'] ) ) {
 			// html only
 			$booking_actions = $this->get_booking_actions($EM_Booking, true);
@@ -1268,12 +1268,13 @@ class EM_Bookings_Table extends EM\List_Table {
 		<?php if( $EM_Event !== false ): ?>
 			<input type="hidden" name="event_id" value='<?php echo esc_attr($EM_Event->event_id); ?>' data-persist>
 		<?php endif; ?>
-				<?php if( $EM_Ticket !== false ): ?>
+		<?php if( $EM_Ticket !== false ): ?>
 			<input type="hidden" name="ticket_id" value='<?php echo esc_attr($EM_Ticket->ticket_id); ?>' data-persist>
 		<?php endif; ?>
 		<?php if( $EM_Person !== false ): ?>
 			<input type="hidden" name="person_id" value='<?php echo esc_attr($EM_Person->ID); ?>' data-persist>
 		<?php endif; ?>
+		<input type="hidden" name="event_archetype" value='<?php echo esc_attr(\EM\Archetypes::get_current()); ?>' data-persist>
 		<input type="hidden" name="save_default_view" value='0'>
 		<input type="hidden" name="view" value='<?php echo esc_attr($this->view); ?>' data-setting>
 		<?php

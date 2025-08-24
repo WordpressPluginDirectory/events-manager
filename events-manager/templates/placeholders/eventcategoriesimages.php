@@ -11,10 +11,10 @@ if( $count_cats > 0 ){
 			<?php endif; ?>
 		<?php endforeach; ?>
 		<?php if (!$one_image): ?>
-			<li><?php echo get_option ( 'dbem_no_categories_message' ); ?></li>
+			<li><?php echo em_get_option ( 'dbem_no_categories_message' ); ?></li>
 		<?php endif; ?>
 	</ul>
 	<?php
 }else{
-	echo get_option ( 'dbem_no_categories_message' );
+	echo em_get_option ( 'dbem_no_categories_message' );
 }

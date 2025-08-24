@@ -40,7 +40,7 @@ class EM_Locations_Widget extends WP_Widget {
     		'location_name' => __('Location name','events-manager')
     	);
         
-        $this->widget_options['description'] = __("Display a list of event locations on Events Manager.", 'events-manager');
+        $this->widem_get_options['description'] = __("Display a list of event locations on Events Manager.", 'events-manager');
     }
 
     /** @see WP_Widget::widget */

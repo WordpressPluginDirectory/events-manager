@@ -20,7 +20,7 @@ $show_advanced = !empty($args['show_advanced']);
 		<?php if( $args['show_main'] ): //show the 'main' search form ?>
 			<?php em_locate_template('templates/search/form-main.php', true, array('args' => $args)); ?>
 		<?php else: ?>
-			<input type="hidden" name="view" value="<?php echo !empty($args['view']) ? esc_attr($args['view']) : esc_attr(get_option('dbem_search_form_view')); ?>">
+			<input type="hidden" name="view" value="<?php echo !empty($args['view']) ? esc_attr($args['view']) : esc_attr(em_get_option('dbem_search_form_view')); ?>">
 		<?php endif; ?>
 		<?php if( $show_advanced ): ?>
 			<?php if( $args['advanced_mode'] == 'inline' ): //show inline if requested ?>

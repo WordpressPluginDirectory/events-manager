@@ -167,7 +167,7 @@ class Event_Location {
 	 * @return bool
 	 */
 	public static function is_enabled(){
-		$location_types = get_option('dbem_location_types', array());
+		$location_types = em_get_option('dbem_location_types', array());
 		return !empty($location_types[static::$type]);
 	}
 	

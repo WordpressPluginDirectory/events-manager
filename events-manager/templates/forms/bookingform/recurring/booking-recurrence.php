@@ -24,7 +24,7 @@ $can_book = $EM_Event->get_bookings()->is_open();
 		<span class="em-icon em-icon-clock"></span><span><?php echo $EM_Event->output('#_EVENTTIMES'); ?></span>
 	</div>
 	<div class="em-booking-recurrence-spaces">
-		<?php if( $already_booked && !get_option('dbem_bookings_double') ): //Double bookings not allowed ?>
+		<?php if( $already_booked && !em_get_option('dbem_bookings_double') ): //Double bookings not allowed ?>
 			<?php do_action('em_booking_form_status_already_booked', $EM_Event); // do not delete ?>
 		<?php elseif( !$EM_Event->event_rsvp ): //bookings not enabled ?>
 			<?php do_action('em_booking_form_status_disabled', $EM_Event); // do not delete ?>

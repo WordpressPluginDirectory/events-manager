@@ -7,16 +7,16 @@
  * In this template, we encode the $args array into JSON for javascript to easily parse and request the locations from the server via AJAX.
  */
 	/* @var $EM_Location EM_Location */
-	if ( get_option('dbem_gmap_is_active') && ( is_object($EM_Location) && $EM_Location->location_latitude != 0 && $EM_Location->location_longitude != 0 ) ) {
+	if ( em_get_option('dbem_gmap_is_active') && ( is_object($EM_Location) && $EM_Location->location_latitude != 0 && $EM_Location->location_longitude != 0 ) ) {
 		//assign random number for element id reference
 		$rand = rand();
 		//get dimensions with px or % added in
-		$width = (isset($args['width'])) ? $args['width']:get_option('dbem_map_default_width','400px');
-		$height = (isset($args['height'])) ? $args['height']:get_option('dbem_map_default_height','300px');
+		$width = (isset($args['width'])) ? $args['width']:em_get_option('dbem_map_default_width','400px');
+		$height = (isset($args['height'])) ? $args['height']:em_get_option('dbem_map_default_height','300px');
 		$width = preg_match('/(px)|%/', $width) ? $width:$width.'px';
 		$height = preg_match('/(px)|%/', $height) ? $height:$height.'px';
 		//generate map depending on type
-		if( get_option('dbem_gmap_type') == 'embed' ){
+		if( em_get_option('dbem_gmap_type') == 'embed' ){
 			$map_url = $EM_Location->get_google_maps_embed_url();
 			?>
 			<div class="em-location-map-container"  style='position:relative; background: #CDCDCD; width: <?php echo $width ?>; height: <?php echo $height ?>;'>
@@ -48,7 +48,7 @@
 			</div>
 			<div class='em-location-map-info' id='em-location-map-info-<?php echo $rand ?>' style="display:none; visibility:hidden;">
 				<div class="em-map-balloon" style="font-size:12px;">
-					<div class="em-map-balloon-content" ><?php echo $EM_Location->output(get_option('dbem_location_baloon_format')); ?></div>
+					<div class="em-map-balloon-content" ><?php echo $EM_Location->output(em_get_option('dbem_location_baloon_format')); ?></div>
 				</div>
 			</div>
 			<div class='em-location-map-coords' id='em-location-map-coords-<?php echo $rand ?>' style="display:none; visibility:hidden;">

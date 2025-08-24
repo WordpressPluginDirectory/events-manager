@@ -41,10 +41,10 @@ class EM_Admin_Notices {
 		}
 		if( !$EM_Admin_Notice->name ) return false;
 		//get options data
-		$data = $network ? get_site_option('dbem_data') : get_option('dbem_data');
+		$data = $network ? get_site_option('dbem_data') : em_get_option('dbem_data');
 		$data = empty($data) ? array() : maybe_unserialize($data);
 		if( !is_array($data)) $data = array();
-		$notices_data = $network ? get_site_option('dbem_admin_notices') : get_option('dbem_admin_notices');
+		$notices_data = $network ? get_site_option('dbem_admin_notices') : em_get_option('dbem_admin_notices');
 		$notices_data = empty($notices_data) ? array() : maybe_unserialize($notices_data);
 		if( !is_array($notices_data)) $notices_data = array(); //we store the data regarldess of whether a message will require a hook, since it contains location and caps considtions
 		//start building data
@@ -73,12 +73,12 @@ class EM_Admin_Notices {
 	 */
 	public static function remove( $notice_key, $network = false ){
 		$network = $network && is_multisite(); //make sure we are actually in multisite!
-		$data = $network ? get_site_option('dbem_data') : get_option('dbem_data');
+		$data = $network ? get_site_option('dbem_data') : em_get_option('dbem_data');
 		if( !empty($data['admin_notices']) && isset($data['admin_notices'][$notice_key])){
 			unset($data['admin_notices'][$notice_key]);
 			if( empty($data['admin_notices']) ) unset($data['admin_notices']);
 			$result = $update_notices_data = $network ? update_site_option('dbem_data', $data) : update_option('dbem_data', $data);
-			$notices_data = $network ? get_site_option('dbem_admin_notices') : get_option('dbem_admin_notices');
+			$notices_data = $network ? get_site_option('dbem_admin_notices') : em_get_option('dbem_admin_notices');
 			if( !empty($notices_data[$notice_key]) ){
 				unset($notices_data[$notice_key]);
 				if( empty($notices_data) ){
@@ -110,7 +110,7 @@ class EM_Admin_Notices {
 	 */
 	public static function admin_notices( $network = false ){
 		$notices = array();
-		$data = $network ? get_site_option('dbem_data') : get_option('dbem_data');
+		$data = $network ? get_site_option('dbem_data') : em_get_option('dbem_data');
 		$possible_notices = is_array($data) && !empty($data['admin_notices']) ? $data['admin_notices'] : array();
 		//we may have something to show, so we make sure that there's something to show right now
 		foreach( $possible_notices as $key => $val ){
@@ -125,7 +125,7 @@ class EM_Admin_Notices {
 	
 	public static function get_notice( $key, $network = false ){
 		//build notice object
-		$notice_data = $network ? get_site_option('dbem_admin_notices') : get_option('dbem_admin_notices');
+		$notice_data = $network ? get_site_option('dbem_admin_notices') : em_get_option('dbem_admin_notices');
 		if( empty($notice_data[$key]) || !is_array($notice_data[$key]) ){
 			$notice = array('name'=>$key, 'network'=>$network);
 		}else{

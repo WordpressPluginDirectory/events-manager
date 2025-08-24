@@ -1,4 +1,5 @@
 <?php
+use EM\Archetypes;
 /**
  * Base class which others extend on. Contains functions shared across all EM objects.
  *
@@ -44,7 +45,7 @@ class EM_Object {
 		$super_defaults = array(
 			'id' => rand(),
 			'limit' => false,
-			'scope' => 'future',
+			'scope' => em_get_option('dbem_events_default_scope', 'future'),
 			'timezone' => false, //default blog timezone
 			'timezone_scope' => false, // search based on a specific timezone, rather than based off local times
 			'order' => 'ASC', //hard-coded at end of this function
@@ -61,6 +62,7 @@ class EM_Object {
 			'location' => false,
 			'event' => false,
 			'event_status' => false, //automatically set to 'status' value if in EM_Events, useful only for EM_Locations
+			'event_archetype' => Archetypes::get_current(),
 			'event_type' => false,
 			'location_status' => false,  //automatically set to 'status' value if in EM_Locations, useful only for EM_Events
 			'offset'=>0,
@@ -79,8 +81,8 @@ class EM_Object {
 			'search'=>false,
 			'geo'=>false, //reserved for future searching via name
 			'near'=>false, //lat,lng coordinates in array or comma-separated format
-			'near_unit'=>get_option('dbem_search_form_geo_unit_default'), //mi or km
-			'near_distance'=>get_option('dbem_search_form_geo_distance_default'), //distance from near coordinates - currently the default is the same as for the search form
+			'near_unit'=> em_get_option('dbem_search_form_geo_unit_default'), //mi or km
+			'near_distance'=> em_get_option('dbem_search_form_geo_distance_default'), //distance from near coordinates - currently the default is the same as for the search form
 			'ajax'=> (defined('EM_AJAX') && EM_AJAX), //considered during pagination
 			'language' => null, //for language searches in ML mode
 		);
@@ -164,6 +166,15 @@ class EM_Object {
 					unset($array['language']);
 				}
 			}
+			// Archetypes and Types
+			if ( !empty($array['event_archetype']) ) {
+				// sanitize again, just in case
+				if ( !is_array($array['event_archetype']) ) {
+					$array['event_archetype'] = explode(',', str_replace(' ', '', $array['event_archetype']));
+				}
+				$array['event_archetype'] = array_intersect( Archetypes::get_cpts(), $array['event_archetype'] );
+			}
+
 			if ( !empty($array['event_type']) ) {
 				// sanitize again, just in case
 				if ( !is_array($array['event_type']) ) {
@@ -311,6 +322,20 @@ class EM_Object {
 				}
 			}
 		}
+
+		// archetypes, generally we'll want to display only one archetype at a time, but we can still be flexible
+		if ( !empty($args['event_archetype']) ) {
+			if ( !is_array($args['event_archetype']) ) {
+				$args['event_archetype'] = explode(',', str_replace(' ', '', $args['event_archetype']));
+			}
+			$event_archetypes = array_intersect( Archetypes::get_cpts(), $args['event_archetype'] );
+			if ( count($args['event_archetype']) > 1 ) {
+				$conditions['event_archetype'] = "(`event_archetype` IN ('" . implode("','", $event_archetypes) . "'))";
+			} else {
+				$event_archetype = current($event_archetypes);
+				$conditions['event_archetype'] = "(`event_archetype` = '$event_archetype')";
+			}
+		}
 		
 		//Recurrences
 		// TODO Transition recurrences over time...
@@ -383,7 +408,7 @@ class EM_Object {
 		$event_end_col = 'event_end_date';
 		// override search variables if we are with a timezone scope
 		if ( $args['timezone_scope'] ) {
-			$timezone_scope = in_array( $args['timezone_scope'], [1,'1',true], true )  ? get_option( 'timezone_string' ) : $args['timezone_scope'];
+			$timezone_scope = in_array( $args['timezone_scope'], [1,'1',true], true )  ? em_get_option( 'timezone_string', $args['event_archetype'] ) : $args['timezone_scope'];
 			$cast = 'DATETIME';
 			$event_start_col = 'event_start';
 			$event_end_col = 'event_end';
@@ -404,14 +429,14 @@ class EM_Object {
 				$conditions['scope'] = " $event_start_col >= CAST('$date_start' AS $cast)";
 			}elseif( empty($date_start) && !empty($date_end) ){
 				//do past till $date_end
-				if( get_option('dbem_events_current_are_past') ){
+				if( em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) ){
 					$conditions['scope'] = " $event_start_col <= CAST('$date_end' AS $cast)";
 				}else{
 					$conditions['scope'] = " $event_end_col <= CAST('$date_end' AS $cast)";
 				}
 			}else{
 				//date range
-				if( get_option('dbem_events_current_are_past') ){
+				if( em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) ){
 					$conditions['scope'] = "( $event_start_col BETWEEN CAST('$date_start' AS $cast) AND CAST('$date_end' AS $cast) )";
 				}else{
 					$conditions['scope'] = "( $event_start_col <= CAST('$date_end' AS $cast) AND $event_end_col >= CAST('$date_start' AS $cast) )";
@@ -425,7 +450,7 @@ class EM_Object {
 				$date_start = EM_DateTime::create( $scope . ' 00:00:00', $timezone_scope )->getDateTime('UTC');
 				$date_end = EM_DateTime::create( $scope . ' 23:59:59', $timezone_scope )->getDateTime('UTC');
 			}
-			if( get_option('dbem_events_current_are_past') ){
+			if( em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) ){
 				if ( $timezone_scope ) {
 					$conditions['scope'] = " ( $event_start_col BETWEEN CAST('$date_start' AS $cast) AND CAST('$date_end' AS $cast) )";
 				} else {
@@ -443,26 +468,26 @@ class EM_Object {
 			$EM_DateTime = $timezone_scope ? new EM_DateTime('now', $timezone_scope) : new EM_DateTime(); //the time, now, in blog/site timezone
 			$utc = $timezone_scope ? 'UTC' : null;
 			if ($scope == "past"){
-				if( get_option('dbem_events_current_are_past') ){
+				if( em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) ){
 					$conditions['scope'] = " event_start < '".$EM_DateTime->getDateTime('UTC')."'";
 				}else{
 					$conditions['scope'] = " event_end < '".$EM_DateTime->getDateTime('UTC')."'";
 				}  
 			}elseif ($scope == "today"){
 				$conditions['scope'] = " ($event_start_col = CAST('".$EM_DateTime->getDateTime( $utc )."' AS $cast))";
-				if( !get_option('dbem_events_current_are_past') ){
+				if( !em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) ){
 					$conditions['scope'] .= " OR ($event_start_col <= CAST('".$EM_DateTime->getDateTime( $utc )."' AS $cast) AND $event_end_col >= CAST('$EM_DateTime' AS $cast))";
 				}
 			}elseif ($scope == "tomorrow"){
 				$EM_DateTime->modify('+1 day');
 				$conditions['scope'] = "($event_start_col = CAST('".$EM_DateTime->getDateTime( $utc )."' AS $cast))";
-				if( !get_option('dbem_events_current_are_past') ){
+				if( !em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) ){
 					$conditions['scope'] .= " OR ($event_start_col <= CAST('".$EM_DateTime->getDateTime( $utc )."' AS $cast) AND $event_end_col >= CAST('".$EM_DateTime->getDateTime( $utc )."' AS $cast))";
 				}
 			}elseif ($scope == "week" || $scope == 'this-week'){
 				list($start_date, $end_date) = $EM_DateTime->get_week_dates( $scope );
 				$conditions['scope'] = " ($event_start_col BETWEEN CAST('$start_date' AS $cast) AND CAST('$end_date' AS $cast))";
-				if( !get_option('dbem_events_current_are_past') ){
+				if( !em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) ){
 					$conditions['scope'] .= " OR ($event_start_col < CAST('$start_date' AS $cast) AND $event_end_col >= CAST('$start_date' AS $cast))";
 				}
 			}elseif ($scope == "month" || $scope == "next-month" || $scope == 'this-month'){
@@ -470,7 +495,7 @@ class EM_Object {
 				$start_month = $scope == 'this-month' ? $EM_DateTime->getDateTime( $utc ) : $EM_DateTime->modify('first day of this month')->getDateTime( $utc );
 				$end_month = $EM_DateTime->modify('last day of this month')->getDateTime( $utc );
 				$conditions['scope'] = " ($event_start_col BETWEEN CAST('$start_month' AS $cast) AND CAST('$end_month' AS $cast))";
-				if( !get_option('dbem_events_current_are_past') ){
+				if( !em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) ){
 					$conditions['scope'] .= " OR ($event_start_col < CAST('$start_month' AS $cast) AND $event_end_col >= CAST('$start_month' AS $cast))";
 				}
 			}elseif( preg_match('/([0-9]+)\-months/',$scope,$matches) ){ // next x months means this month (what's left of it), plus the following x months until the end of that month.
@@ -478,12 +503,12 @@ class EM_Object {
 				$start_month = $EM_DateTime->getDateTime( $utc );
 				$end_month = $EM_DateTime->add('P'.$months_to_add.'M')->format('Y-m-t');
 				$conditions['scope'] = " ($event_start_col BETWEEN CAST('$start_month' AS $cast) AND CAST('$end_month' AS $cast))";
-				if( !get_option('dbem_events_current_are_past') ){
+				if( !em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) ){
 					$conditions['scope'] .= " OR ($event_start_col < CAST('$start_month' AS $cast) AND $event_end_col >= CAST('$start_month' AS $cast))";
 				}
 			}elseif ($scope == "future"){
 				$conditions['scope'] = " event_start >= '".$EM_DateTime->getDateTime(true)."'";
-				if( !get_option('dbem_events_current_are_past') ){
+				if( !em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) ){
 					$conditions['scope'] .= " OR (event_end >= '".$EM_DateTime->getDateTime(true)."')";
 				}
 			}
@@ -526,8 +551,8 @@ class EM_Object {
 		//Location specific filters
 		//if we're searching near something, country etc. becomes irrelevant
 		if( !empty($args['near']) && self::array_is_numeric($args['near']) ){
-			$distance = !empty($args['near_distance']) && is_numeric($args['near_distance']) ? absint($args['near_distance']) : absint(get_option('dbem_search_form_geo_units',25));
-			if( empty($args['near_unit']) ) $args['near_unit'] = get_option('dbem_search_form_geo_distance','mi');
+			$distance = !empty($args['near_distance']) && is_numeric($args['near_distance']) ? absint($args['near_distance']) : absint( em_get_option( 'dbem_search_form_geo_units',25, $args['event_archetype'] ) );
+			if( empty($args['near_unit']) ) $args['near_unit'] = em_get_option( 'dbem_search_form_geo_distance','mi', $args['event_archetype'] );
 			$unit = ( !empty($args['near_unit']) && $args['near_unit'] == 'km' ) ? 6371 /* kilometers */ : 3959 /* miles */;
 			$conditions['near'] = "( $unit * acos( cos( radians({$args['near'][0]}) ) * cos( radians( location_latitude ) ) * cos( radians( location_longitude ) - radians({$args['near'][1]}) ) + sin( radians({$args['near'][0]}) ) * sin( radians( location_latitude ) ) ) ) < $distance";
 		}else{
@@ -807,7 +832,7 @@ class EM_Object {
 				$EM_DateTime = new EM_DateTime($scope[0]); //create default time in blog timezone
 				$start_date = $EM_DateTime->getDate();
 				$end_date = $EM_DateTime->modify($scope[1])->getDate();
-				if( get_option('dbem_events_current_are_past') && $wp_query->query_vars['post_type'] != 'event-recurring' ){
+				if( em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) && $wp_query->query_vars['post_type'] != 'event-recurring' ){
 					$query[] = array( 'key' => '_event_start_date', 'value' => array($start_date,$end_date), 'type' => 'DATE', 'compare' => 'BETWEEN');
 				}else{
 					$query[] = array( 'key' => '_event_start_date', 'value' => $end_date, 'compare' => '<=', 'type' => 'DATE' );
@@ -816,7 +841,7 @@ class EM_Object {
 			}
 		}elseif ( $scope == 'today' || $scope == 'tomorrow' || preg_match ( "/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/", $scope ) ) {
 			$EM_DateTime = new EM_DateTime($scope); //create default time in blog timezone
-			if( get_option('dbem_events_current_are_past') && $wp_query->query_vars['post_type'] != 'event-recurring' ){
+			if( em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) && $wp_query->query_vars['post_type'] != 'event-recurring' ){
 				$query[] = array( 'key' => '_event_start_date', 'value' => $EM_DateTime->getDate() );
 			}else{
 				$query[] = array( 'key' => '_event_start_date', 'value' => $EM_DateTime->getDate(), 'compare' => '<=', 'type' => 'DATE' );
@@ -826,7 +851,7 @@ class EM_Object {
 			$EM_DateTime = new EM_DateTime(); //create default time in blog timezone
 			$EM_DateTime->setTimezone('UTC');
 			$compare = $scope == 'future' ? '>=' : '<';
-			if( get_option('dbem_events_current_are_past') && $wp_query->query_vars['post_type'] != 'event-recurring' ){
+			if( em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) && $wp_query->query_vars['post_type'] != 'event-recurring' ){
 				$query[] = array( 'key' => '_event_start', 'value' => $EM_DateTime->getDateTime(), 'compare' => $compare, 'type' => 'DATETIME' );
 			}else{
 				$query[] = array( 'key' => '_event_end', 'value' => $EM_DateTime->getDateTime(), 'compare' => $compare, 'type' => 'DATETIME' );
@@ -836,7 +861,7 @@ class EM_Object {
 			if( $scope == 'next-month' ) $EM_DateTime->add('P1M');
 			$start_month = $EM_DateTime->modify('first day of this month')->getDate();
 			$end_month = $EM_DateTime->modify('last day of this month')->getDate();
-			if( get_option('dbem_events_current_are_past') && $wp_query->query_vars['post_type'] != 'event-recurring' ){
+			if( em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) && $wp_query->query_vars['post_type'] != 'event-recurring' ){
 				$query[] = array( 'key' => '_event_start_date', 'value' => array($start_month,$end_month), 'type' => 'DATE', 'compare' => 'BETWEEN');
 			}else{
 				$query[] = array( 'key' => '_event_start_date', 'value' => $end_month, 'compare' => '<=', 'type' => 'DATE' );
@@ -847,7 +872,7 @@ class EM_Object {
 			$months_to_add = $matches[1];
 			$start_month = $EM_DateTime->getDate();
 			$end_month = $EM_DateTime->add('P'.$months_to_add.'M')->format('Y-m-t');
-			if( get_option('dbem_events_current_are_past') && $wp_query->query_vars['post_type'] != 'event-recurring' ){
+			if( em_get_option('dbem_events_current_are_past', $args['event_archetype'] ) && $wp_query->query_vars['post_type'] != 'event-recurring' ){
 				$query[] = array( 'key' => '_event_start_date', 'value' => array($start_month,$end_month), 'type' => 'DATE', 'compare' => 'BETWEEN');
 			}else{
 				$query[] = array( 'key' => '_event_start_date', 'value' => $end_month, 'compare' => '<=', 'type' => 'DATE' );
@@ -1757,7 +1782,7 @@ class EM_Object {
 	 */
 	function image_upload(){
 		$type = $this->get_image_type();
-		$user_to_check = ( !is_user_logged_in() && get_option('dbem_events_anonymous_submissions') ) ? get_option('dbem_events_anonymous_user'):false;
+		$user_to_check = ( !is_user_logged_in() && $this->get_option('dbem_events_anonymous_submissions') ) ? $this->get_option('dbem_events_anonymous_user'):false;
 		if ( $this->can_manage('upload_event_images','upload_event_images', $user_to_check) ) {
 			// proceed with upload
 			try {
@@ -1781,7 +1806,7 @@ class EM_Object {
 		$type = $this->get_image_type();
 		try {
 			EM\Uploads\Uploader::prepare( $type . '_image' );
-			$max_filesize = get_option('dbem_image_max_size') > wp_max_upload_size() ? wp_max_upload_size() : get_option('dbem_image_max_size');
+			$max_filesize = $this->get_option('dbem_image_max_size') > wp_max_upload_size() ? wp_max_upload_size() : $this->get_option('dbem_image_max_size');
 			$result = EM\Uploads\Uploader::validate( $type . '_image', ['type' => 'image', 'max_file_size' => $max_filesize] ) !== false; // no false returned, error thrown if not true/null
 		} catch ( EM_Exception $e ) {
 			$this->add_error( $e );
@@ -1844,7 +1869,7 @@ class EM_Object {
 	 * @return float
 	 */
 	function get_tax_rate( $decimal = false ){
-		$tax_rate = get_option('dbem_bookings_tax');
+		$tax_rate = $this->get_option('dbem_bookings_tax');
 		$tax_rate = ($tax_rate > 0) ? $tax_rate : 0;
 		if( $decimal && $tax_rate > 0 ) $tax_rate = $tax_rate / 100;
 		return $tax_rate;
@@ -1914,5 +1939,17 @@ class EM_Object {
 				$this->add_error( $error );
 			}
 		}
+	}
+
+	/**
+	 * Override in child objects.
+	 *
+	 * @param $option
+	 * @param $default
+	 *
+	 * @return mixed|null
+	 */
+	public function get_option( $option, $default = null ) {
+		return em_get_option( $option, $default );
 	}
 }

@@ -57,7 +57,7 @@ class EM_Mailer {
 			$receiver = trim($receiver);
 			$emails_ok = is_email($receiver);
 		}
-		if( get_option('dbem_smtp_html') && get_option('dbem_smtp_html_br') ){
+		if( em_get_option('dbem_smtp_html') && em_get_option('dbem_smtp_html_br') ){
 			$body = nl2br($body);
 		}
 		if ( $emails_ok ) {
@@ -65,12 +65,12 @@ class EM_Mailer {
 			$parameters = array('subject' => $subject, 'body' => $body, 'receiver' => $receiver, 'attachments' => $attachments, 'args' => $args);
 			extract( apply_filters('em_mailer_send_parameters', $parameters) );
 			// send via wp_mail or phpmailer
-			if ( get_option('dbem_rsvp_mail_send_method') == 'wp_mail' ){
-				$from = get_option('dbem_mail_sender_address');
+			if ( em_get_option('dbem_rsvp_mail_send_method') == 'wp_mail' ){
+				$from = em_get_option('dbem_mail_sender_address');
 				$headers = array();
-				$headers[] = get_option('dbem_mail_sender_name') ? 'From: '.get_option('dbem_mail_sender_name').' <'.$from.'>':'From: '.$from;
-				$headers[] = get_option('dbem_mail_sender_name') ? 'Reply-To: '.get_option('dbem_mail_sender_name').' <'.$from.'>':'From: '.$from;
-				if( get_option('dbem_smtp_html') ){ //create filter to change content type to html in wp_mail
+				$headers[] = em_get_option('dbem_mail_sender_name') ? 'From: '.em_get_option('dbem_mail_sender_name').' <'.$from.'>':'From: '.$from;
+				$headers[] = em_get_option('dbem_mail_sender_name') ? 'Reply-To: '.em_get_option('dbem_mail_sender_name').' <'.$from.'>':'From: '.$from;
+				if( em_get_option('dbem_smtp_html') ){ //create filter to change content type to html in wp_mail
 					add_filter('wp_mail_content_type','EM_Mailer::return_texthtml');
 				}
 				if( !empty($args) ){
@@ -109,7 +109,7 @@ class EM_Mailer {
 				$mail = new PHPMailer\PHPMailer\PHPMailer();
 				try{
 					//$mail->SMTPDebug = true;
-					if( get_option('dbem_smtp_html') ){
+					if( em_get_option('dbem_smtp_html') ){
 						$mail->isHTML();
 					}
 					$mail->clearAllRecipients();
@@ -120,26 +120,26 @@ class EM_Mailer {
 					$mail->CharSet = 'utf-8';
 				    $mail->setLanguage('en', dirname(__FILE__).'/');
 					$mail->PluginDir = dirname(__FILE__).'/phpmailer/';
-					$host = get_option('dbem_smtp_host');
+					$host = em_get_option('dbem_smtp_host');
 					//if port is supplied via the host address, give that precedence over the port setting
 					if( preg_match('/^(.+):([0-9]+)$/', $host, $host_port_matches) ){
 						$mail->Host = $host_port_matches[1];
 						$mail->Port = $host_port_matches[2];
 					}else{
 						$mail->Host = $host;
-						$mail->Port = get_option('dbem_rsvp_mail_port');
+						$mail->Port = em_get_option('dbem_rsvp_mail_port');
 					}
-					$mail->Username = get_option('dbem_smtp_username');
-					$mail->Password = get_option('dbem_smtp_password');
-					$mail->From = get_option('dbem_mail_sender_address');
-					$mail->FromName = get_option('dbem_mail_sender_name'); // This is the from name in the email, you can put anything you like here
+					$mail->Username = em_get_option('dbem_smtp_username');
+					$mail->Password = em_get_option('dbem_smtp_password');
+					$mail->From = em_get_option('dbem_mail_sender_address');
+					$mail->FromName = em_get_option('dbem_mail_sender_name'); // This is the from name in the email, you can put anything you like here
 					$mail->Body = $body;
 					$mail->Subject = $subject;
 					//SSL/TLS
-					if( get_option('dbem_smtp_encryption') ){
-						$mail->SMTPSecure = get_option('dbem_smtp_encryption');
+					if( em_get_option('dbem_smtp_encryption') ){
+						$mail->SMTPSecure = em_get_option('dbem_smtp_encryption');
 					}
-					$mail->SMTPAutoTLS = get_option('dbem_smtp_autotls') == 1;
+					$mail->SMTPAutoTLS = em_get_option('dbem_smtp_autotls') == 1;
 					//add attachments
 					self::add_attachments_to_mailer($mail, $attachments);
 					if(is_array($receiver)){
@@ -163,14 +163,14 @@ class EM_Mailer {
 					do_action('em_mailer', $mail); //$mail will still be modified
 					
 					//Protocols
-				    if( get_option('dbem_rsvp_mail_send_method') == 'qmail' ){
+				    if( em_get_option('dbem_rsvp_mail_send_method') == 'qmail' ){
 						$mail->isQmail();
-					}elseif( get_option('dbem_rsvp_mail_send_method') == 'sendmail' ){
+					}elseif( em_get_option('dbem_rsvp_mail_send_method') == 'sendmail' ){
 						$mail->isSendmail();
 					}else {
-						$mail->Mailer = get_option('dbem_rsvp_mail_send_method');
+						$mail->Mailer = em_get_option('dbem_rsvp_mail_send_method');
 					}
-					if(get_option('dbem_rsvp_mail_SMTPAuth') == '1'){
+					if(em_get_option('dbem_rsvp_mail_SMTPAuth') == '1'){
 						$mail->SMTPAuth = TRUE;
 				    }
 					do_action('em_mailer_before_send', $mail, $subject, $body, $receiver, $attachments); //$mail can still be modified

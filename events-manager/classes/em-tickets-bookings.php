@@ -491,7 +491,7 @@ class EM_Tickets_Bookings extends EM_Object implements Iterator, Countable, Arra
 	 * @see wp-content/plugins/events-manager/classes/EM_Object#build_sql_orderby()
 	 */
 	public static function build_sql_orderby( $args, $accepted_fields, $default_order = 'ASC' ){
-		return apply_filters( static::$n . '_build_sql_orderby', parent::build_sql_orderby($args, $accepted_fields, get_option('dbem_events_default_order')), $args, $accepted_fields, $default_order );
+		return apply_filters( static::$n . '_build_sql_orderby', parent::build_sql_orderby($args, $accepted_fields, em_get_option('dbem_events_default_order')), $args, $accepted_fields, $default_order );
 	}
 	
 	/*

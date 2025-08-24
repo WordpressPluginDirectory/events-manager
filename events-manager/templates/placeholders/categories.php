@@ -10,5 +10,5 @@ if( $count_cats > 0 ){
 	</ul>
 	<?php	
 }else{
-	echo get_option ( 'dbem_no_categories_message' );
+	echo em_get_option ( 'dbem_no_categories_message' );
 }

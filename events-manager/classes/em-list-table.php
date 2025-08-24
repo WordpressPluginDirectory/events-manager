@@ -458,17 +458,20 @@ namespace EM {
 		 * Handles AJAX Bookings admin table filtering, view changes and pagination
 		 */
 		public static function em_ajax_table(){
+			if ( !empty($_REQUEST['event_archetype']) ) {
+				Archetypes::set_current( $_REQUEST['event_archetype'] );
+			}
 			if( !empty($_REQUEST['_emnonce']) && check_admin_referer( static::$basename, '_emnonce') ){
 				$class_name = static::class;
 				$EM_List_Table = new $class_name();
 				$EM_List_Table->display();
 			}else{
 				check_admin_referer(static::$basename);
-			$class_name = static::class;
-			$EM_List_Table = new $class_name();
-			if( !empty($_REQUEST['table_id']) ) { // so modals work linked to the ID
-				$EM_List_Table->uid = $EM_List_Table->id . '-' . absint($_REQUEST['table_id']);
-			}
+				$class_name = static::class;
+				$EM_List_Table = new $class_name();
+				if( !empty($_REQUEST['table_id']) ) { // so modals work linked to the ID
+					$EM_List_Table->uid = $EM_List_Table->id . '-' . absint($_REQUEST['table_id']);
+				}
 				$EM_List_Table->output_table();
 			}
 			exit();
@@ -699,6 +702,7 @@ namespace EM {
 					<input type="hidden" name="save" value="0">
 					<input type="hidden" name="save_filters" value="0">
 					<input type="hidden" name="table_id" value="<?php echo esc_attr( str_replace($this->id . '-', '', $uid)); ?>">
+					<input type="hidden" name="event_archetype" value="<?php echo esc_attr(Archetypes::get_current()); ?>">
 					<?php
 						$this->display_hidden_input();
 						parent::display();

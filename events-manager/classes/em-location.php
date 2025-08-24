@@ -303,7 +303,7 @@ class EM_Location extends EM_Object {
 		$this->post_content = ( !empty($_POST['content']) ) ? wp_kses( wp_unslash($_POST['content']), $allowedtags):'';
 		$this->get_post_meta(false);
 		//anonymous submissions and guest basic info
-		if( !is_user_logged_in() && get_option('dbem_events_anonymous_submissions') && empty($this->location_id) ){
+		if( !is_user_logged_in() && em_get_option('dbem_events_anonymous_submissions') && empty($this->location_id) ){
 			$this->owner_anonymous = 1;
 			$this->owner_name = !empty($_POST['owner_name']) ? wp_kses_data(wp_unslash($_POST['owner_name'])):'';
 			$this->owner_email = !empty($_POST['owner_email']) ? wp_kses_data($_POST['owner_email']):'';
@@ -329,7 +329,7 @@ class EM_Location extends EM_Object {
 		$this->location_latitude = ( !empty($_POST['location_latitude']) && is_numeric($_POST['location_latitude']) ) ? round($_POST['location_latitude'], 6):'';
 		$this->location_longitude = ( !empty($_POST['location_longitude']) && is_numeric($_POST['location_longitude']) ) ? round($_POST['location_longitude'], 6):'';
 		//Sort out event attributes - note that custom post meta now also gets inserted here automatically (and is overwritten by these attributes)
-		if(get_option('dbem_location_attributes_enabled')){
+		if(em_get_option('dbem_location_attributes_enabled')){
 			global $allowedtags;
 			if( !is_array($this->location_attributes) ){ $this->location_attributes = array(); }
 			$location_available_attributes = em_get_attributes(true); //lattributes only
@@ -398,7 +398,7 @@ class EM_Location extends EM_Object {
 		$EM_SAVING_LOCATION = true; //this flag prevents our dashboard save_post hooks from going further
 		//TODO shuffle filters into right place
 		if( get_site_option('dbem_ms_mainblog_locations') ){ self::ms_global_switch(); }
-		if( !$this->can_manage('edit_locations', 'edit_others_locations') && !( get_option('dbem_events_anonymous_submissions') && empty($this->location_id)) ){
+		if( !$this->can_manage('edit_locations', 'edit_others_locations') && !( em_get_option('dbem_events_anonymous_submissions') && empty($this->location_id)) ){
 			return apply_filters('em_location_save', false, $this);
 		}
 		do_action('em_location_save_pre', $this);
@@ -437,8 +437,8 @@ class EM_Location extends EM_Object {
 			$post_array['post_status'] = $this->force_status;
 		}
 		//Anonymous submission
-		if( !is_user_logged_in() && get_option('dbem_events_anonymous_submissions') && empty($this->location_id) ){
-			$post_array['post_author'] = get_option('dbem_events_anonymous_user');
+		if( !is_user_logged_in() && em_get_option('dbem_events_anonymous_submissions') && empty($this->location_id) ){
+			$post_array['post_author'] = em_get_option('dbem_events_anonymous_user');
 			if( !is_numeric($post_array['post_author']) ) $post_array['post_author'] = 0;
 		}
 		//Save post and continue with meta
@@ -488,7 +488,7 @@ class EM_Location extends EM_Object {
 	function save_meta(){
 		//echo "<pre>"; print_r($this); echo "</pre>"; die();
 		global $wpdb;
-		if( $this->can_manage('edit_locations','edit_others_locations') || ( get_option('dbem_events_anonymous_submissions') && empty($this->location_id)) ){
+		if( $this->can_manage('edit_locations','edit_others_locations') || ( em_get_option('dbem_events_anonymous_submissions') && empty($this->location_id)) ){
 			do_action('em_location_save_meta_pre', $this);
 			//language default
 			if( !$this->location_language ) $this->location_language = EM_ML::$current_language;
@@ -509,7 +509,7 @@ class EM_Location extends EM_Object {
 				}
 			}
 			//Update Post Custom Fields and attributes
-			if( get_option('dbem_location_attributes_enabled') ){
+			if( em_get_option('dbem_location_attributes_enabled') ){
 				//attributes get saved as individual keys or deleted if non-existent anymore
 				$atts = em_get_attributes( true ); //get available attributes that EM manages
 				$this->location_attributes= maybe_unserialize($this->location_attributes);
@@ -561,10 +561,10 @@ class EM_Location extends EM_Object {
 					if( $this->previous_status != $this->get_status() ) $this->set_status($this->get_status());
 				}
 				//check anonymous submission information
-				if( !empty($this->owner_anonymous) && get_option('dbem_events_anonymous_user') != $this->location_owner ){
+				if( !empty($this->owner_anonymous) && em_get_option('dbem_events_anonymous_user') != $this->location_owner ){
 					//anonymous user owner has been replaced with a valid wp user account, so we remove anonymous status flag but leave email and name for future reference
 					update_post_meta($this->post_id, '_owner_anonymous', 0);
-				}elseif( get_option('dbem_events_anonymous_submissions') && get_option('dbem_events_anonymous_user') == $this->location_owner && is_email($this->owner_email) && !empty($this->owner_name) ){
+				}elseif( em_get_option('dbem_events_anonymous_submissions') && em_get_option('dbem_events_anonymous_user') == $this->location_owner && is_email($this->owner_email) && !empty($this->owner_name) ){
 					//anonymous user account has been reinstated as the owner, so we can restore anonymous submission status
 					update_post_meta($this->post_id, '_owner_anonymous', 1);
 				}
@@ -798,8 +798,8 @@ class EM_Location extends EM_Object {
 	 * Can the user manage this location? 
 	 */
 	function can_manage( $owner_capability = false, $admin_capability = false, $user_to_check = false ){
-		if( $this->location_id == '' && !is_user_logged_in() && get_option('dbem_events_anonymous_submissions') ){
-			$user_to_check = get_option('dbem_events_anonymous_user');
+		if( $this->location_id == '' && !is_user_logged_in() && em_get_option('dbem_events_anonymous_submissions') ){
+			$user_to_check = em_get_option('dbem_events_anonymous_user');
 		}
 		if( $admin_capability && EM_MS_GLOBAL && get_site_option('dbem_ms_mainblog_locations') ){
 			//if in global mode with locations restricted to main blog, we check capabilities against the main blog
@@ -821,9 +821,9 @@ class EM_Location extends EM_Object {
 				$link = get_blog_permalink( get_current_site()->blog_id, $this->post_id);
 			}elseif( $blog_id != get_current_blog_id() ){
 				//decide whether to give a link to the blog the location originates from or to show it on the main site
-				if( !get_site_option('dbem_ms_global_locations_links') && is_main_site() && get_option('dbem_locations_page') ){
+				if( !get_site_option('dbem_ms_global_locations_links') && is_main_site() && em_get_option('dbem_locations_page') ){
 					//showing subsite locations on main site, create a custom link
-					$link = trailingslashit(get_permalink(get_option('dbem_locations_page')).get_site_option('dbem_ms_locations_slug',EM_LOCATION_SLUG).'/'.$this->location_slug.'-'.$this->location_id);
+					$link = trailingslashit(get_permalink(em_get_option('dbem_locations_page')).get_site_option('dbem_ms_locations_slug',EM_LOCATION_SLUG).'/'.$this->location_slug.'-'.$this->location_id);
 				}else{
 					//if location doesn't belong to current blog and/or if main blog doesn't have a locations page, link directly to the blog it belongs to
 					$link = get_blog_permalink( $blog_id, $this->post_id);					
@@ -882,7 +882,7 @@ class EM_Location extends EM_Object {
 			        	$link = em_add_get_params(get_blog_permalink($this->blog_id, get_blog_option($this->blog_id, 'dbem_edit_locations_page')), array('action'=>'edit','location_id'=>$this->location_id), false);
 			        }
 					if( (is_main_site() || empty($link)) && get_blog_option($current_site->blog_id, 'dbem_edit_locations_page') && !is_admin() ){ //if editing on main site and edit page exists, stay on same site
-						$link = em_add_get_params(get_blog_permalink(get_option('dbem_edit_locations_page')), array('action'=>'edit','location_id'=>$this->location_id), false);
+						$link = em_add_get_params(get_blog_permalink(em_get_option('dbem_edit_locations_page')), array('action'=>'edit','location_id'=>$this->location_id), false);
 					}
 			        if( empty($link) && !is_main_site() ){
 			            $link = get_admin_url($current_blog->blog_id, "edit.php?post_type=event&page=locations&action=edit&location_id={$this->location_id}");
@@ -902,8 +902,8 @@ class EM_Location extends EM_Object {
 					}
 			    }
 			}else{
-				if( get_option('dbem_edit_locations_page') && !is_admin() ){
-					$link = em_add_get_params(get_permalink(get_option('dbem_edit_locations_page')), array('action'=>'edit','location_id'=>$this->location_id), false);
+				if( em_get_option('dbem_edit_locations_page') && !is_admin() ){
+					$link = em_add_get_params(get_permalink(em_get_option('dbem_edit_locations_page')), array('action'=>'edit','location_id'=>$this->location_id), false);
 				}
 				if( empty($link))
 					$link = admin_url()."post.php?post={$this->post_id}&action=edit";
@@ -913,7 +913,7 @@ class EM_Location extends EM_Object {
 	}
 	
 	function output_single($target = 'html'){
-		$format = get_option ( 'dbem_single_location_format' );
+		$format = em_get_option ( 'dbem_single_location_format' );
 		return apply_filters('em_location_output_single', $this->output($format, $target), $this, $target);
 	}
 	
@@ -1022,7 +1022,7 @@ class EM_Location extends EM_Object {
 					break;
 				case '#_MAP': //Deprecated (but will remain)
 				case '#_LOCATIONMAP':
-					if( get_option('dbem_gmap_is_active') ){
+					if( em_get_option('dbem_gmap_is_active') ){
 						ob_start();
 						$args = array();
 					    if( !empty($placeholders[3][$key]) ){
@@ -1075,7 +1075,7 @@ class EM_Location extends EM_Object {
 								if( self::array_is_numeric($image_size) && count($image_size) > 1 ){
 								    if( EM_MS_GLOBAL && get_current_blog_id() != $this->blog_id ){
     								    //get a thumbnail
-    								    if( get_option('dbem_disable_thumbnails') ){
+    								    if( em_get_option('dbem_disable_thumbnails') ){
         								    $image_attr = '';
         								    $image_args = array();
         								    if( empty($image_size[1]) && !empty($image_size[0]) ){    
@@ -1161,13 +1161,13 @@ class EM_Location extends EM_Object {
 					elseif ( $result == '#_LOCATIONNEXTEVENTS' ){ $scope = 'future'; }
 					else{ $scope = 'all'; }
 				    $args = array('location'=>$this->location_id, 'scope'=>$scope, 'pagination'=>1, 'ajax'=>0);
-				    $args['format_header'] = get_option('dbem_location_event_list_item_header_format');
-				    $args['format_footer'] = get_option('dbem_location_event_list_item_footer_format');
-				    $args['format'] = get_option('dbem_location_event_list_item_format');
-				    $args['no_results_msg'] = get_option('dbem_location_no_events_message');
-					$args['limit'] = !empty($placeholders[3][$key]) && is_numeric($placeholders[3][$key]) ? absint($placeholders[3][$key]) : get_option('dbem_location_event_list_limit');
-					$args['orderby'] = get_option('dbem_location_event_list_orderby');
-					$args['order'] = get_option('dbem_location_event_list_order');
+				    $args['format_header'] = em_get_option('dbem_location_event_list_item_header_format');
+				    $args['format_footer'] = em_get_option('dbem_location_event_list_item_footer_format');
+				    $args['format'] = em_get_option('dbem_location_event_list_item_format');
+				    $args['no_results_msg'] = em_get_option('dbem_location_no_events_message');
+					$args['limit'] = !empty($placeholders[3][$key]) && is_numeric($placeholders[3][$key]) ? absint($placeholders[3][$key]) : em_get_option('dbem_location_event_list_limit');
+					$args['orderby'] = em_get_option('dbem_location_event_list_orderby');
+					$args['order'] = em_get_option('dbem_location_event_list_order');
 					$args['page'] = (!empty($_REQUEST['pno']) && is_numeric($_REQUEST['pno']) )? $_REQUEST['pno'] : 1;
 					if( $target == 'email' || !empty($placeholders[3][$key])  ){
 						$args['pagination'] = 0;
@@ -1177,9 +1177,9 @@ class EM_Location extends EM_Object {
 					break;
 				case '#_LOCATIONNEXTEVENT':
 					$events = EM_Events::get( array('location'=>$this->location_id, 'scope'=>'future', 'limit'=>1, 'orderby'=>'event_start_date,event_start_time') );
-					$replace = get_option('dbem_location_no_event_message');
+					$replace = em_get_option('dbem_location_no_event_message');
 					foreach($events as $EM_Event){
-						$replace = $EM_Event->output(get_option('dbem_location_event_single_format'));
+						$replace = $EM_Event->output( $EM_Event->get_option('dbem_location_event_single_format'));
 					}
 					break;
 				default:
@@ -1234,11 +1234,11 @@ class EM_Location extends EM_Object {
 		$args = apply_filters('em_location_google_maps_embed_args', array(
 			'maptype' => 'roadmap',
 			'zoom' => 15,
-			'key' => get_option('dbem_google_maps_browser_key')
+			'key' => em_get_option('dbem_google_maps_browser_key')
 		), $this);
-		if( get_option('dbem_gmap_embed_type') == 'place' ){
+		if( em_get_option('dbem_gmap_embed_type') == 'place' ){
 			$args['q'] = urlencode($this->location_name.', '. $this->get_full_address());
-		}elseif( get_option('dbem_gmap_embed_type') == 'address' ){
+		}elseif( em_get_option('dbem_gmap_embed_type') == 'address' ){
 			$args['q'] = urlencode($this->get_full_address());
 		}else{
 			$args['q'] = $latlng;

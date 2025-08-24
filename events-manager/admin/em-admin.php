@@ -1,88 +1,92 @@
 <?php
 //Admin functions
+use EM\Archetypes;
+
 function em_admin_menu(){
-	global $menu, $submenu, $pagenow;
-	//Count pending bookings	
-   	if( get_option('dbem_rsvp_enabled') ){
-		$bookings_num = '';
-		$bookings_pending_count = apply_filters('em_bookings_pending_count',0);
-		if( get_option('dbem_bookings_approval') == 1){ 
-			$bookings_pending_count += EM_Bookings::count(array('status'=>'0', 'blog'=>get_current_blog_id()));
+	global $menu, $submenu;
+	//Count pending bookings
+	foreach ( Archetypes::get_cpts( [], ['event', 'types'] ) as $post_type ) {
+		Archetypes::set_current( $post_type );
+		$archetype = Archetypes::get( $post_type );
+	    if( em_get_option('dbem_rsvp_enabled') ){
+			$bookings_num = '';
+			$bookings_pending_count = apply_filters('em_bookings_pending_count',0);
+			if( em_get_option('dbem_bookings_approval') == 1){
+				$bookings_pending_count += EM_Bookings::count(array('status'=>'0', 'blog'=>get_current_blog_id()));
+			}
+			if($bookings_pending_count > 0){
+				$bookings_num = '<span class="update-plugins count-'.$bookings_pending_count.'"><span class="plugin-count">'.$bookings_pending_count.'</span></span>';
+			}
+	    }else{
+	        $bookings_num = '';
+			$bookings_pending_count = 0;
+	    }
+		//Count pending events
+		$events_num = '';
+		$events_pending_count = EM_Events::count(array('status'=>0, 'scope'=>'all', 'blog'=>get_current_blog_id()));
+		//TODO Add flexible permissions
+		if($events_pending_count > 0){
+			$events_num = '<span class="update-plugins count-'.$events_pending_count.'"><span class="plugin-count">'.$events_pending_count.'</span></span>';
 		}
-		if($bookings_pending_count > 0){
-			$bookings_num = '<span class="update-plugins count-'.$bookings_pending_count.'"><span class="plugin-count">'.$bookings_pending_count.'</span></span>';
+		//Count pending recurring events
+		$events_recurring_num = '';
+		$events_recurring_pending_count = EM_Events::count(array('status'=>0, 'recurring'=>1, 'scope'=>'all', 'blog'=>get_current_blog_id()));
+		//TODO Add flexible permissions
+		if($events_recurring_pending_count > 0){
+			$events_recurring_num = '<span class="update-plugins count-'.$events_recurring_pending_count.'"><span class="plugin-count">'.$events_recurring_pending_count.'</span></span>';
 		}
-   	}else{
-   		$bookings_num = '';
-		$bookings_pending_count = 0;
-   	}
-	//Count pending events
-	$events_num = '';
-	$events_pending_count = EM_Events::count(array('status'=>0, 'scope'=>'all', 'blog'=>get_current_blog_id()));
-	//TODO Add flexible permissions
-	if($events_pending_count > 0){
-		$events_num = '<span class="update-plugins count-'.$events_pending_count.'"><span class="plugin-count">'.$events_pending_count.'</span></span>';
-	}
-	//Count pending recurring events
-	$events_recurring_num = '';
-	$events_recurring_pending_count = EM_Events::count(array('status'=>0, 'recurring'=>1, 'scope'=>'all', 'blog'=>get_current_blog_id()));
-	//TODO Add flexible permissions
-	if($events_recurring_pending_count > 0){
-		$events_recurring_num = '<span class="update-plugins count-'.$events_recurring_pending_count.'"><span class="plugin-count">'.$events_recurring_pending_count.'</span></span>';
-	}
-	$both_pending_count = apply_filters('em_items_pending_count', $events_pending_count + $bookings_pending_count + $events_recurring_pending_count);
-	$both_num = ($both_pending_count > 0) ? '<span class="update-plugins count-'.$both_pending_count.'"><span class="plugin-count">'.$both_pending_count.'</span></span>':'';
-  	// Add a submenu to the custom top-level menu:
-   	$plugin_pages = array();
-   	if( get_option('dbem_rsvp_enabled') ){
-		$plugin_pages['bookings'] = add_submenu_page('edit.php?post_type='.EM_POST_TYPE_EVENT, __('Bookings', 'events-manager'), __('Bookings', 'events-manager').$bookings_num, 'manage_bookings', 'events-manager-bookings', "em_bookings_page");
-   	}
-	$plugin_pages['options'] = add_submenu_page('edit.php?post_type='.EM_POST_TYPE_EVENT, __('Events Manager Settings','events-manager'),__('Settings','events-manager'), 'manage_options', "events-manager-options", 'em_admin_options_page');
-	$plugin_pages['help'] = add_submenu_page('edit.php?post_type='.EM_POST_TYPE_EVENT, __('Getting Help for Events Manager','events-manager'),__('Help','events-manager'), 'manage_options', "events-manager-help", 'em_admin_help_page');
-	//If multisite global with locations set to be saved in main blogs we can force locations to be created on the main blog only
-	if( EM_MS_GLOBAL && !is_main_site() && get_site_option('dbem_ms_mainblog_locations') ){
-		include( dirname(__FILE__)."/em-ms-locations.php" );
-		$plugin_pages['locations'] = add_submenu_page('edit.php?post_type='.EM_POST_TYPE_EVENT, __('Locations','events-manager'),__('Locations','events-manager'), 'read_others_locations', "locations", 'em_admin_ms_locations');
-	}
-	$plugin_pages = apply_filters('em_create_events_submenu',$plugin_pages);
-	//We have to modify the menus manually
-	if( !empty($both_num) ){ //Main Event Menu
-		//go through the menu array and modify the events menu if found
-		foreach ( (array)$menu as $key => $parent_menu ) {
-			if ( $parent_menu[2] == 'edit.php?post_type='.EM_POST_TYPE_EVENT ){
-				$menu[$key][0] = $menu[$key][0]. $both_num;
-				break;
+		$both_pending_count = apply_filters('em_items_pending_count', $events_pending_count + $bookings_pending_count + $events_recurring_pending_count);
+		$both_num = ($both_pending_count > 0) ? '<span class="update-plugins count-'.$both_pending_count.'"><span class="plugin-count">'.$both_pending_count.'</span></span>':'';
+	    // Add a submenu to the custom top-level menu:
+	    $plugin_pages = array();
+	    if( em_get_option('dbem_rsvp_enabled') ){
+			$plugin_pages['bookings'] = add_submenu_page('edit.php?post_type='.$post_type, __('Bookings', 'events-manager'), __('Bookings', 'events-manager').$bookings_num, 'manage_bookings', 'events-manager-bookings', "em_bookings_page");
+	    }
+		$plugin_pages['options'] = add_submenu_page('edit.php?post_type='.$post_type, __('Events Manager Settings','events-manager'),__('Settings','events-manager'), 'manage_options', "events-manager-options", 'em_admin_options_page');
+		$plugin_pages['help'] = add_submenu_page('edit.php?post_type='.$post_type, __('Getting Help for Events Manager','events-manager'),__('Help','events-manager'), 'manage_options', "events-manager-help", 'em_admin_help_page');
+		//If multisite global with locations set to be saved in main blogs we can force locations to be created on the main blog only
+		if( EM_MS_GLOBAL && !is_main_site() && get_site_option('dbem_ms_mainblog_locations') ){
+			include( dirname(__FILE__)."/em-ms-locations.php" );
+			$plugin_pages['locations'] = add_submenu_page('edit.php?post_type='.$post_type, __('Locations','events-manager'),__('Locations','events-manager'), 'read_others_locations', "locations", 'em_admin_ms_locations');
+		}
+		if ( $post_type === Archetypes::$event['cpt'] ) {
+			$plugin_pages = apply_filters( 'em_create_events_submenu', $plugin_pages );
+		} else {
+			$plugin_pages = apply_filters( 'em_create_archetype_submenu_' . $post_type, $plugin_pages );
+		}
+		//We have to modify the menus manually to add pending counts
+		if( !empty($both_num) ){ //Main Event Menu
+			//go through the menu array and modify the events menu if found
+			foreach ( (array)$menu as $key => $parent_menu ) {
+				if ( $parent_menu[2] == 'edit.php?post_type='.$post_type ){
+					$menu[$key][0] = $menu[$key][0]. $both_num;
+					break;
+				}
+			}
+		}
+		// Pending Events # Pill - go through the menu array and modify the events menu if found
+		if( !empty($events_num) && !empty($submenu['edit.php?post_type='.$post_type]) ){ //Submenu Event Item
+			foreach ( (array)$submenu['edit.php?post_type='.$post_type] as $key => $submenu_item ) {
+				if ( $submenu_item[2] == 'edit.php?post_type='.$post_type ){
+					$submenu['edit.php?post_type='.$post_type][$key][0] = $submenu['edit.php?post_type='.$post_type][$key][0]. $events_num;
+					break;
+				}
+			}
+		}
+		// Recurring Events # Pill - go through the menu array and modify the recurring events menu if found
+		if( !empty($events_recurring_num) && !empty($submenu['edit.php?post_type='.$post_type]) ){ //Submenu Recurring Event Item
+			if ( em_get_option('dbem_repeating_enabled') ) {
+				$repeating_post_type = empty( $archetype['repeating']['cpt'] ) ? $archetype['cpt'] . '-recurring' : $archetype['repeating']['cpt'];
+				foreach ( (array)$submenu['edit.php?post_type='.$post_type] as $key => $submenu_item ) {
+					if ( $submenu_item[2] == 'edit.php?post_type='. $repeating_post_type ){
+						$submenu['edit.php?post_type='.$post_type][$key][0] = $submenu['edit.php?post_type='.$post_type][$key][0]. $events_recurring_num;
+						break;
+					}
+				}
 			}
 		}
 	}
-	if( !empty($events_num) && !empty($submenu['edit.php?post_type='.EM_POST_TYPE_EVENT]) ){ //Submenu Event Item
-		//go through the menu array and modify the events menu if found
-		foreach ( (array)$submenu['edit.php?post_type='.EM_POST_TYPE_EVENT] as $key => $submenu_item ) {
-			if ( $submenu_item[2] == 'edit.php?post_type='.EM_POST_TYPE_EVENT ){
-				$submenu['edit.php?post_type='.EM_POST_TYPE_EVENT][$key][0] = $submenu['edit.php?post_type='.EM_POST_TYPE_EVENT][$key][0]. $events_num;
-				break;
-			}
-		}
-	}
-	if( !empty($events_recurring_num) && !empty($submenu['edit.php?post_type='.EM_POST_TYPE_EVENT]) ){ //Submenu Recurring Event Item
-		//go through the menu array and modify the events menu if found
-		foreach ( (array)$submenu['edit.php?post_type='.EM_POST_TYPE_EVENT] as $key => $submenu_item ) {
-			if ( $submenu_item[2] == 'edit.php?post_type=event-recurring' ){
-				$submenu['edit.php?post_type='.EM_POST_TYPE_EVENT][$key][0] = $submenu['edit.php?post_type='.EM_POST_TYPE_EVENT][$key][0]. $events_recurring_num;
-				break;
-			}
-		}
-	}
-	/* Hack! Add location/recurrence isn't possible atm so this is a workaround */
-	global $_wp_submenu_nopriv;
-	if( $pagenow == 'post-new.php' && !empty($_REQUEST['post_type']) ){
-		if( $_REQUEST['post_type'] == EM_POST_TYPE_LOCATION && !empty($_wp_submenu_nopriv['edit.php']['post-new.php']) && current_user_can('edit_locations') ){
-			unset($_wp_submenu_nopriv['edit.php']['post-new.php']);
-		}
-		if( $_REQUEST['post_type'] == 'event-recurring' && !empty($_wp_submenu_nopriv['edit.php']['post-new.php']) && current_user_can('edit_recurring_events') ){
-			unset($_wp_submenu_nopriv['edit.php']['post-new.php']);
-		}
-	}
+	Archetypes::revert_current();
 }
 add_action('admin_menu','em_admin_menu');
 
@@ -100,7 +104,7 @@ function em_admin_dashicon(){
 		  font-weight: normal;
 		  font-style: normal;
 		}
-		.menu-icon-event .dashicons-calendar:before, #toplevel_page_events-manager-options .dashicons-calendar:before {
+		.dashicons-before.dashicons-em-calendar:before {
 		  font-family: 'em_dashicons';
 		  content: '\e600';
 		}
@@ -134,7 +138,7 @@ add_action('admin_init','em_admin_init');
 function em_admin_warnings() {
 	global $EM_Notices;
 	//If we're editing the events page show hello to new user
-	$events_page_id = get_option ( 'dbem_events_page' );
+	$events_page_id = em_get_option ( 'dbem_events_page' );
 	$dismiss_link_joiner = ( count($_GET) > 0 ) ? '&amp;':'?';
 	
 	if( current_user_can('activate_plugins') ){
@@ -143,7 +147,7 @@ function em_admin_warnings() {
 		if( !empty($_GET['em_dismiss_events_page']) && wp_verify_nonce($_GET['em_dismiss_events_page'], 'em_dismiss_notice') ){
 			update_option('dbem_dismiss_events_page',1);
 		}else{
-			if ( !get_page($events_page_id) && !get_option('dbem_dismiss_events_page') ){
+			if ( !get_page($events_page_id) && !em_get_option('dbem_dismiss_events_page') ){
 				?>
 				<div id="em_page_error" class="updated">
 					<p><?php echo sprintf ( __( 'Uh Oh! For some reason WordPress could not create an events page for you (or you just deleted it). Not to worry though, all you have to do is create an empty page, name it whatever you want, and select it as your events page in your <a href="%s">settings page</a>. Sorry for the extra step! If you know what you are doing, you may have done this on purpose, if so <a href="%s">ignore this message</a>', 'events-manager'), EM_ADMIN_URL .'&amp;page=events-manager-options', esc_url($_SERVER['REQUEST_URI'].$dismiss_link_joiner.'em_dismiss_events_page='.wp_create_nonce('em_dismiss_notice')) ); ?></p>
@@ -152,7 +156,7 @@ function em_admin_warnings() {
 			}
 		}
 	
-		if( is_multisite() && !empty($_REQUEST['page']) && $_REQUEST['page']=='events-manager-options' && em_wp_is_super_admin() && get_option('dbem_ms_update_nag') ){
+		if( is_multisite() && !empty($_REQUEST['page']) && $_REQUEST['page']=='events-manager-options' && em_wp_is_super_admin() && em_get_option('dbem_ms_update_nag') ){
 			if( !empty($_GET['disable_dbem_ms_update_nag'])  && wp_verify_nonce($_GET['disable_dbem_ms_update_nag'], 'em_dismiss_notice') ){
 				delete_site_option('dbem_ms_update_nag');
 			}else{
@@ -163,7 +167,7 @@ function em_admin_warnings() {
 				<?php
 			}
 		}
-		if( !empty($_REQUEST['page']) && 'events-manager-options' == $_REQUEST['page'] && get_option('dbem_pro_dev_updates') == 1 ){
+		if( !empty($_REQUEST['page']) && 'events-manager-options' == $_REQUEST['page'] && em_get_option('dbem_pro_dev_updates') == 1 ){
 			?>
 			<div id="message" class="updated">
 				<p><?php echo sprintf(__('Dev Mode active: Just a friendly reminder that you are updating to development versions. Only admins see this message, and it will go away when you disable this <a href="#pro-api">here</a> in your settings.','events-manager'),'<code>define(\'EMP_DEV_UPDATES\',true);</code>'); ?></p>
@@ -219,7 +223,7 @@ function em_updates_check( $transient ) {
         return $transient;
         
     //only bother if we're checking for dev versions
-    if( get_option('em_check_dev_version') || get_option('dbem_pro_dev_updates') ){     
+    if( em_get_option('em_check_dev_version') || em_get_option('dbem_pro_dev_updates') ){     
 	    //check WP repo for trunk version, other EM-related plugins on .org can hook here to make the best of our admin setting option
 	    $plugins = apply_filters('em_org_dev_versions', array(
 	    	'events-manager'=> array(
@@ -267,8 +271,8 @@ add_filter('pre_set_site_transient_update_plugins', 'em_updates_check', 100); //
 
 function em_user_action_links( $actions, $user ){
 	if ( !is_network_admin() && current_user_can( 'manage_others_bookings' ) ){
-		if( get_option('dbem_edit_bookings_page') && (!is_admin() || !empty($_REQUEST['is_public'])) ){
-			$my_bookings_page = get_permalink(get_option('dbem_edit_bookings_page'));
+		if( em_get_option('dbem_edit_bookings_page') && (!is_admin() || !empty($_REQUEST['is_public'])) ){
+			$my_bookings_page = get_permalink(em_get_option('dbem_edit_bookings_page'));
 			$bookings_link = em_add_get_params($my_bookings_page, array('person_id'=>$user->ID), false);
 		}else{
 			$bookings_link = EM_ADMIN_URL. "&page=events-manager-bookings&person_id=".$user->ID;

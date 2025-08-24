@@ -1,8 +1,8 @@
 <?php
 /* @var array $args */
 $classes = array();
-if( get_option('dbem_search_form_geo_hide_m') ) $classes[] = 'hide-medium';
-if( get_option('dbem_search_form_geo_hide_s') ) $classes[] = 'hide-small';
+if( em_get_option('dbem_search_form_geo_hide_m') ) $classes[] = 'hide-medium';
+if( em_get_option('dbem_search_form_geo_hide_s') ) $classes[] = 'hide-small';
 ?>
 <!-- START GeoLocation Search -->
 <div class="em-search-geo em-search-field input <?php echo implode(' ', $classes); ?>">

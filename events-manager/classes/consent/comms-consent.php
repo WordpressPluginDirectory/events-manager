@@ -16,7 +16,7 @@ class Comms extends Consent {
 	public static $prefix = 'comms_consent';
 	
 	public static function init() {
-		static::$required = get_option('dbem_data_' . static::$prefix . '_required') == true;
+		static::$required = em_get_option('dbem_data_' . static::$prefix . '_required') == true;
 		parent::init();
 		if( is_admin() ) {
 			include('comms-consent-admin.php');
@@ -81,7 +81,7 @@ class Comms extends Consent {
 			// update what we can here based on email of user if there was a change
 			if ( $consented_recently || $revoked_recently ) {
 				// if user can modify edit users, modify the user itself too
-				if ( current_user_can('edit_users') && get_option('dbem_bookings_registration_disable_user_emails') ) { // only needed if guests can use registered emails to book
+				if ( current_user_can('edit_users') && em_get_option('dbem_bookings_registration_disable_user_emails') ) { // only needed if guests can use registered emails to book
 					// check if there's a user belonging to this email
 					$user = get_user_by_email( $EM_Person->user_email );
 					if ( $user ) {

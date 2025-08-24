@@ -1,4 +1,5 @@
 <?php
+use EM\Archetypes;
 /**
  * @author marcus
  * Standard events list widget
@@ -35,6 +36,7 @@ class EM_Widget extends WP_Widget {
 			'all_events_text' => 'all events',
 			'no_events_text' => '<div class="em-list-no-items">No events</div>',
 		    'v6' => false,
+		    'event_archetype' => '',
     	);
         parent::__construct(false, 'Events', ['description' => 'Display a list of events on Events Manager.']);
         add_action('wp_loaded', array($this, 'wp_loaded'));
@@ -54,15 +56,16 @@ class EM_Widget extends WP_Widget {
 			'event_end_date,event_end_time,event_name' => __('end date, end time, event name','events-manager'),
 		));
         
-        $this->widget_options['description'] = __("Display a list of events on Events Manager.", 'events-manager');
+        $this->widem_get_options['description'] = __("Display a list of events on Events Manager.", 'events-manager');
     }
 
     /** @see WP_Widget::widget */
     function widget($args, $instance) {
     	$instance = array_merge($this->defaults, $instance);
-    	$instance = $this->fix_scope($instance); // depcreciate	
+    	$instance = $this->fix_scope($instance); // depcreciate
+	    $instance['event_archetype'] = $instance['event_archetype'] === '' ? EM_POST_TYPE_EVENT : $instance['event_archetype'];
 
-    	echo $args['before_widget'];
+	    echo $args['before_widget'];
     	if( !empty($instance['title']) ){
 		    echo $args['before_title'];
 		    echo apply_filters('widget_title',$instance['title'], $instance, $this->id_base);
@@ -134,6 +137,7 @@ class EM_Widget extends WP_Widget {
 		        $new_instance[$key] = force_balance_tags($new_instance[$key]);
 		    }
     	}
+	    $new_instance['event_archetype'] = (!$new_instance['event_archetype']) ? EM_POST_TYPE_EVENT:$new_instance['event_archetype'];
 		$new_instance['v6'] = EM_Options::get('v6', false);
     	return $new_instance;
     }
@@ -174,6 +178,17 @@ class EM_Widget extends WP_Widget {
 				<?php endforeach; ?>
 			</select>
 		</p>
+	    <?php if ( Archetypes::$types ) : ?>
+		    <p>
+			    <label for="<?php echo $this->get_field_id('event_archetype'); ?>"><?php _e('Archetype','events-manager'); ?>: </label>
+			    <select id="<?php echo $this->get_field_id('event_archetype'); ?>" name="<?php echo $this->get_field_name('event_archetype'); ?>">
+				    <option value="auto" <?php selected($instance['event_archetype'], ''); ?>><?php esc_html_e('Default', 'events-manager'); ?></option>
+				    <?php foreach(Archetypes::$types as $type => $archetype) : ?>
+					    <option value="<?php echo $type; ?>" <?php selected($instance['event_archetype'], $type); ?>><?php echo $archetype['label']; ?></option>
+				    <?php endforeach; ?>
+			    </select>
+		    </p>
+	    <?php endif; ?>
 		<p>
 			<label for="<?php echo $this->get_field_id('order'); ?>"><?php esc_html_e('Order By','events-manager'); ?>: </label>
 			<select  id="<?php echo $this->get_field_id('orderby'); ?>" name="<?php echo $this->get_field_name('orderby'); ?>" class="widefat">

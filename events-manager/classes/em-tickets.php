@@ -37,8 +37,8 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 		if( is_numeric($object) || $object instanceof EM_Event || $object instanceof EM_Booking ){
 			$this->event_id = (is_object($object)) ? $object->event_id:$object;
 			if( $object instanceof EM_Event ) $this->event = $object;
-			$orderby_option = get_option('dbem_bookings_tickets_orderby');
-			$order_by = get_option('dbem_bookings_tickets_ordering') ? array('ticket_order ASC') : array();
+			$orderby_option = em_get_option('dbem_bookings_tickets_orderby');
+			$order_by = em_get_option('dbem_bookings_tickets_ordering') ? array('ticket_order ASC') : array();
 			$ticket_orderby_options = apply_filters('em_tickets_orderby_options', array(
 				'ticket_price DESC, ticket_name ASC'=>__('Ticket Price (Descending)','events-manager'),
 				'ticket_price ASC, ticket_name ASC'=>__('Ticket Price (Ascending)','events-manager'),

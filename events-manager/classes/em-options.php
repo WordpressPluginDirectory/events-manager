@@ -3,7 +3,7 @@
  * An interface for the dbem_data option stored in wp_options as a serialized array. 
  * This option can hold various information which can be stored in one record rather than individual records in wp_options.
  * The functions in this class deal directly with that dbem_data option as if it was the wp_options table itself, and therefore
- * have similarities to the get_option and update_option functions. 
+ * have similarities to the em_get_option and update_option functions. 
  * @since 5.8.2.0
  *
  */
@@ -18,7 +18,7 @@ class EM_Options {
 	 * @return mixed
 	 */
 	public static function get( $option_name, $default = array(), $dataset = 'dbem_data', $site = false ){
-		$data = $site ? get_site_option($dataset) : get_option($dataset);
+		$data = $site ? get_site_option($dataset) : em_get_option($dataset);
 		if( isset($data[$option_name]) ){
 			return $data[$option_name];
 		}else{
@@ -35,7 +35,7 @@ class EM_Options {
 	 * @return boolean
 	 */
 	public static function set( $option_name, $option_value, $dataset = 'dbem_data', $site = false ){
-		$data = $site ? get_site_option($dataset) : get_option($dataset);
+		$data = $site ? get_site_option($dataset) : em_get_option($dataset);
 		if( empty($data) ) $data = array();
 		$data[$option_name] = $option_value;
 		return $site ? update_site_option($dataset, $data) : update_option($dataset, $data);
@@ -52,7 +52,7 @@ class EM_Options {
 	 * @return boolean
 	 */
 	public static function add( $option_name, $option_key, $option_value, $dataset = 'dbem_data', $site = false ){
-		$data = $site ? get_site_option($dataset) : get_option($dataset);
+		$data = $site ? get_site_option($dataset) : em_get_option($dataset);
 		if( empty($data[$option_name]) ){
 			$data[$option_name] = array( $option_key => $option_value );
 		}else{
@@ -71,7 +71,7 @@ class EM_Options {
 	 * @return boolean
 	 */
 	public static function remove( $option_name, $option_key = null, $dataset = 'dbem_data', $site = false ){
-		$data = $site ? get_site_option($dataset) : get_option($dataset);
+		$data = $site ? get_site_option($dataset) : em_get_option($dataset);
 		if( $option_key === null && isset($data[$option_name]) ){
 			unset($data[$option_name]);
 			return $site ? update_site_option($dataset, $data) : update_option($dataset, $data);

@@ -214,7 +214,7 @@ class EM_ML_Options {
 		    //we're calling an option to be overridden by the default language
 		    $option_name = str_replace('pre_option_','',$filter_name);
 		    //don't use EM_ML::get_option as it creates an endless loop for options without a translation
-			$option_langs = get_option($option_name.'_ml', array());
+			$option_langs = em_get_option($option_name.'_ml', array());
 			if( is_array($option_langs) && !empty($option_langs[EM_ML::$current_language]) ){
 				return $option_langs[EM_ML::$current_language];
 			}
@@ -224,7 +224,7 @@ class EM_ML_Options {
     
 	/* START wp_options hooks */
 	/**
-	 * Gets an option in a specific language. Similar to get_option but will return either the translated option if it exists
+	 * Gets an option in a specific language. Similar to em_get_option but will return either the translated option if it exists
 	 * @param string $option
 	 * @param string $lang
 	 * @param boolean $return_original
@@ -232,13 +232,13 @@ class EM_ML_Options {
 	 */
 	public static function get_option($option, $lang = false, $return_original = true){
 		if( self::is_option_translatable($option) ){
-			$option_langs = get_option($option.'_ml', array());
+			$option_langs = em_get_option($option.'_ml', array());
 			if( empty($lang) ) $lang = EM_ML::$current_language;
 			if( !empty($option_langs[$lang]) ){
 				return $option_langs[$lang];
 			}
 		}
-		return $return_original ? get_option($option):'';
+		return $return_original ? em_get_option($option):'';
 	}
 
 	/**
