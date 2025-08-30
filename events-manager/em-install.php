@@ -1881,6 +1881,13 @@ function em_upgrade_current_installation(){
 			$message = 'Events Manager 7.1 now allows you to rename your events and locations or create completely new event types, called Archetypes. Now you can create Workshops, Talks, Excursions or whatever your heart desires with different custom settings/features, all running off Events Manager! Enable this in <a href="'. EM_ADMIN_URL .'&amp;page=events-manager-options#general+archetypes' .'"><em>Events > Settings > Archetypes</em></a>';
 			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
 		}
+		if ( version_compare( $current_version, '7.1.3', '<' ) ) {
+			// copy over event archetype meta into wp_postmeta for previously created events, bug from 7.1
+			$subquery = "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key='_event_archetype'";
+			$insert_sql = "SELECT post_id, '_event_archetype', event_archetype FROM ". EM_EVENTS_TABLE . " WHERE post_id NOT IN ( $subquery )";
+			$sql = "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) $insert_sql";
+			$wpdb->query( $sql );
+		}
 	}
 }
 

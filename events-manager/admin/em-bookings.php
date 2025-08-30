@@ -412,7 +412,7 @@ function em_bookings_single(){
 							</form>
 						</div>
 						<?php endif; ?>
-						<form action="" method="post" class="em-booking-form" id="em-booking-form-<?php echo $id; ?>" data-id="<?php echo $id; ?>" <?php if ( !em_get_option('dbem_uploads_ui') ) echo ' enctype="multipart/form-data"'; ?>>
+						<form action="" method="post" class="em-booking-form" id="em-booking-form-<?php echo $id; ?>" data-id="<?php echo $id; ?>" <?php if ( !em_get_option('dbem_uploads_ui') ) echo ' enctype="multipart/form-data"'; ?> data-noajax data-mode="view">
 							<table class="em-tickets em-tickets-bookings-table" cellpadding="0" cellspacing="0">
 								<thead>
 									<tr>
@@ -592,16 +592,12 @@ function em_bookings_single(){
 						</form>
 						<script type="text/javascript">
 							jQuery(document).ready( function($){
-								$('#em-booking-submit-modify').on('click', function(){
-									$('.em-booking-single-info').hide();
-									$('.em-booking-single-edit').show();
+								$('#em-booking-submit-modify').on('click', function( e ){
+									e.target.closest('form').dataset.mode = 'edit';
 								});
-								$('#em-booking-submit-cancel').on('click', function(){
-									$('.em-booking-single-info').show();
-									$('.em-booking-single-edit').hide();
+								$('#em-booking-submit-cancel').on('click', function( e ){
+									e.target.closest('form').dataset.mode = 'view';
 								});
-								$('.em-booking-single-info').show();
-								$('.em-booking-single-edit').hide();
 
 								$('.em-booking-submit-status-modify').on('click', function(){
 									let el = $(this).closest('.em-booking-single-status-info');

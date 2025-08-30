@@ -379,8 +379,10 @@ var em_booking_form_init = function( booking_form ){
 	 * When booking is submitted
 	 */
 	booking_form.addEventListener("submit", function( e ){
-		e.preventDefault();
-		em_booking_form_submit( e.target );
+		if ( typeof booking_form.dataset.noajax === 'undefined' ) {
+			e.preventDefault();
+			em_booking_form_submit( e.target );
+		}
 	});
 
 	// trigger an intent update

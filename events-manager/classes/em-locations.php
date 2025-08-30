@@ -475,7 +475,7 @@ $limit $offset
 			//location-specific attributes
 			'eventful' => false, //Locations that have an event (scope will also play a part here
 			'eventless' => false, //Locations WITHOUT events, eventful takes precedence
-			'event_status' => false //search locations with events of a specific publish status
+			'event_status' => false, //search locations with events of a specific publish status
 		);
 		//sort out whether defaults were supplied or just the array of search values
 		if( empty($array) ){
@@ -495,6 +495,12 @@ $limit $offset
 		}
 		$array['eventful'] = ( !empty($array['eventful']) && $array['eventful'] == true );
 		$array['eventless'] = ( !empty($array['eventless']) && $array['eventless'] == true );
+		// if not looking for eventful events, certain event params will cause problems if set inadvertedly
+		if ( !$array['eventful'] ) {
+			// we only apply event_archetype if events are considered in the search
+			$array['event_archetype'] = false;
+			$array['scope'] = 'all'; // only relevant if we're searching for eventful locations
+		}
 		if( is_admin() && !defined('DOING_AJAX') ){
 			$defaults['owner'] = !current_user_can('read_others_locations') ? get_current_user_id():false;
 		}

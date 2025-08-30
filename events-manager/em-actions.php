@@ -635,7 +635,7 @@ function em_init_actions_start() {
 			exit();
 		}
 		Archetypes::revert_current();
-		
+
 		if( $result && defined('DOING_AJAX') ){
 			$return = array('result'=>true, 'success'=>true, 'message'=>$feedback);
 			header( 'Content-Type: application/javascript; charset=UTF-8', true ); //add this for HTTP -> HTTPS requests which assume it's a cross-site request
@@ -835,8 +835,9 @@ function em_ajax_search_and_pagination(){
 		$view = !empty($_REQUEST['view']) && preg_match('/^[a-zA-Z0-9-_]+$/', $_REQUEST['view']) ? $_REQUEST['view'] : 'list';
 		$args = EM_Locations::get_post_search($args);
 		$search_args = em_get_search_form_defaults($args);
+		// so eventful searches show upcoming event locations only
+		$args['scope'] = !empty($args['eventful']) ? 'future' :'all' ;
 		$args = array_merge($search_args, $args);
-		if( !empty($args['eventful']) ) $args['scope'] = 'future'; // so eventful searches show upcoming event locations only
 		switch( $view ){
 			case 'list':
 				$args = EM_Locations::get_post_search($args);

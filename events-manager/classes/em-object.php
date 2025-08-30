@@ -62,7 +62,7 @@ class EM_Object {
 			'location' => false,
 			'event' => false,
 			'event_status' => false, //automatically set to 'status' value if in EM_Events, useful only for EM_Locations
-			'event_archetype' => Archetypes::get_current(),
+			'event_archetype' => false,
 			'event_type' => false,
 			'location_status' => false,  //automatically set to 'status' value if in EM_Locations, useful only for EM_Events
 			'offset'=>0,

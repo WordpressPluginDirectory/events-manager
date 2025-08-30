@@ -789,7 +789,7 @@ $orderby_sql";
 			'active' => null,
 			'active_status' => null,
 			'event_type' => false,
-			'event_archetype' => Archetypes::get_current(),
+			'event_archetype' => Archetypes::get_current(), // override the default false
 		);
 		// if event_archetype is not set, we
 		//sort out whether defaults were supplied or just the array of search values

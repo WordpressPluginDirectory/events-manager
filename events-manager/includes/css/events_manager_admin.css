@@ -140,7 +140,10 @@ table.em-tickets-bookings-table tbody td { text-align:center; }
 #em-bookings-admin-booking form.em-booking-single-status-info, #em-bookings-admin-booking form.em-booking-single-rsvp-status-edit { display:inline-block; }
 #em-bookings-admin-booking .postbox h3, #em-bookings-admin-booking .stuffbox h3 { font-size:16px; }
 #em-bookings-admin-booking .stuffbox .inside { padding: 0 12px 12px 12px; }
-#em-bookings-admin-booking .em-booking-single-info { display:none; }
+#em-bookings-admin-booking .em-booking-single-edit { display:none; }
+#em-bookings-admin-booking .em-booking-form[data-mode="edit"] .em-booking-single-edit { display:block; }
+#em-bookings-admin-booking .em-booking-form[data-mode="edit"] .em-booking-single-info { display:none; }
+#em-bookings-admin-booking .em-booking-form[data-mode="single"] .em-booking-single-info { display:block; }
 #em-bookings-admin-booking .em-booking-single-form { padding-right:20px; }
 
 /* Google Map Object */

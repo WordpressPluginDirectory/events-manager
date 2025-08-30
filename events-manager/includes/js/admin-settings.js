@@ -237,9 +237,9 @@ jQuery(document).ready(function($){
 
     let af_toggle_action = function( af ){
         const am = af.find('input').val();
-        if( am == 0 ){
+        if( am === '0' ){
             $('.am-af').addClass('hidden');
-        }else if( am == 1 ){
+        }else if( am === '1' ){
             $('.am-af').removeClass('hidden');
             $('.dbem_advanced_formatting_modes_row').show(); // show toggles
 	        // trigger radio and chckboxes with triggers to show/hide based on selected archetype
@@ -248,8 +248,8 @@ jQuery(document).ready(function($){
 		        el.dispatchEvent( new Event( 'change' ) );
 	        });
         }else{
-            $('.am-af').removeClass('hidden'); // show everything
-            $('.dbem_advanced_formatting_modes_row').hide(); // hide toggles
+            $('.am-af').removeClass('hidden') // show everything
+            $('.dbem_advanced_formatting_modes_row').hide().find('input[type="radio"]').attr('data-trigger', false); // hide toggles
 	        $('.am-af [name]:disabled').prop('disabled', false);
         }
         af.find('.em-af-toggle, .em-af-status span').hide();
