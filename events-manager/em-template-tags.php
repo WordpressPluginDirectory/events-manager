@@ -255,7 +255,7 @@ function em_events_admin($args = array()){
 				$EM_Notices->add_alert(esc_html__('You can edit individual recurrences and disassociate them with this recurring event.', 'events-manager'));
 				$args['recurrence_id'] = absint($_REQUEST['recurrence_id']);
 			} else {
-				$args['event_type'] = ['recurring', 'repeating', 'event'];
+				$args['event_type'] = ['recurring', 'repeating', 'single'];
 			}
 			$args = apply_filters('em_events_admin_args', $args);
 			//template $args for different views

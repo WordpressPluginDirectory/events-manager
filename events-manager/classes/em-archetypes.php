@@ -41,8 +41,8 @@ class Archetypes {
 			'cpts' => get_option('em_cp_events_cpts') ?: $event_cpt . 's',
 			'show_in_rest' => defined('EM_GUTENBERG') && EM_GUTENBERG,
 			'slug' => get_option('dbem_cp_events_slug', 'events'),
-			'label' => get_option('dbem_cp_events_label', __('Events', 'events-manager') ),
-			'label_single' => get_option('dbem_cp_events_label_single', __('Event', 'events-manager') ),
+			'label' => get_option('dbem_cp_events_label' ),
+			'label_single' => get_option('dbem_cp_events_label_single' ),
 			'repeating' => get_option('dbem_repeating_enabled'), // if enabled, CTPs will create a repeating CPT type
 			'taxonomies' => [],
 			'menu_icon' => get_option('dbem_cp_events_menu_icon') ?: 'dashicons-em-calendar',
@@ -59,8 +59,8 @@ class Archetypes {
 				'cpt' => $location_cpt,
 				'cpts' => get_option('em_cp_locations_cpts') ?: $location_cpt . 's' ,
 				'slug' => $location_slug,
-				'label' => get_option('dbem_cp_locations_name', __('Locations','events-manager') ),
-				'label_single' => get_option('dbem_cp_locations_name_single', __('Location','events-manager') ),
+				'label' => get_option('dbem_cp_locations_label' ),
+				'label_single' => get_option('dbem_cp_locations_label_single' ),
 				'capability_type' => ['location', 'locations'],
 				'capabilities' => true, // created in create_archetype_cpt based on capability_type
 				'show_ui' => !(EM_MS_GLOBAL && !is_main_site() && get_site_option('dbem_ms_mainblog_locations')),
@@ -438,8 +438,12 @@ class Archetypes {
 
 	public static function register_post_types() {
 		do_action('em_archetypes_register_post_types');
+		// set the post types we will register
+		$post_types = [ static::$event['cpt'] => static::$event ];
+		if ( static::$location ) {
+			$post_types[ static::$location['cpt'] ] = static::$location;
+		}
 		// register post types
-		static::register_post_type( static::$event, 'event' );
 		if ( static::$enabled ) {
 			// In choose mode on subsites, filter custom types based on selection
 			$mode = static::get_ms_mode();
@@ -449,12 +453,36 @@ class Archetypes {
 					if ( !in_array( $key, (array) $selected, true ) ) continue;
 				}
 				// register
-				static::register_post_type( $type );
+				$post_types[ $type['cpt'] ] = $type;
 			}
 		}
-		if( static::$location ){
-			// previously in em-posts.php we registered locations before unless it contained events slug in the slug, but it likely doesn't matter either way so we always register after now
-			static::register_post_type( static::$location, 'location');
+		// sort the $post_types array so if any of the $post_types['slug'] values are within in another, they are moved to the end of the array for later registration
+		$sorted = [];
+		$unsorted = $post_types;
+		while ( !empty( $unsorted ) ) {
+			foreach ( $unsorted as $key => $type ) {
+				$move_to_end = false;
+				foreach ( $unsorted as $key_check => $type_check ) {
+					if ( $key != $key_check && strstr( $type_check['slug'], $type['slug'] ) !== false ) {
+						$move_to_end = true;
+						break;
+					}
+				}
+				if ( !$move_to_end ) {
+					$sorted[ $key ] = $type;
+					unset( $unsorted[ $key ] );
+				}
+			}
+			// prevent infinite loops, if we get here then there's a circular dependency and remaining items get added as-is
+			if ( !empty( $unsorted ) ) {
+				$sorted = array_merge( $sorted, $unsorted );
+				break;
+			}
+		}
+		$post_types = $sorted;
+		// register the post types
+		foreach ( $post_types as $type ) {
+			static::register_post_type( $type );
 		}
 		static::$base = null; // clean memory
 	}
@@ -703,7 +731,7 @@ class Archetypes {
 	 */
 	public static function is_location( $cpt ) {
 		$cpt = static::get_post_type( $cpt );
-		return $cpt && static::$location['cpt'] ?? null === $cpt;
+		return $cpt && ( static::$location['cpt'] ?? null === $cpt );
 	}
 
 	/**

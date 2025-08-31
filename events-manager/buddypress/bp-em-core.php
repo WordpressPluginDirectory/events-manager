@@ -1,5 +1,6 @@
 <?php
 //Main loader for buddypress
+use EM\Archetypes;
 /**
  * Events Manager component for BuddyPress
  * @author marcus
@@ -9,7 +10,7 @@ class BP_EM_Component extends BP_Component {
 	
 	function __construct() {
 		global $bp;
-		parent::start('events',	__('Events', 'events-manager'), EM_DIR);
+		parent::start('events',	Archetypes::$event['label'], EM_DIR);
 		$this->includes();
 		//TODO make BP component optional
 		$bp->active_components[$this->id] = '1';

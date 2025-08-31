@@ -196,11 +196,11 @@ function em_content_page_title($original_content, $id = null) {
 						}
 					}else{
 						$event = array_shift($events);
-						$content =  $event->output( $event->em_get_option('dbem_event_page_title_format') );
+						$content =  $event->output( $event->get_option('dbem_event_page_title_format') );
 					}
 				}elseif ( EM_MS_GLOBAL && is_object($EM_Event) && !em_get_option('dbem_ms_global_events_links') ) {
 					// single event page
-					$content =  $EM_Event->output ( $EM_Event->em_get_option ( 'dbem_event_page_title_format' ) );
+					$content =  $EM_Event->output ( $EM_Event->get_option ( 'dbem_event_page_title_format' ) );
 				}
 				Archetypes::revert_current();
 			}elseif( $post->ID == $locations_page_id ){

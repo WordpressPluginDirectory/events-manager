@@ -935,12 +935,12 @@ function em_add_options() {
 		// CPTs
 		'dbem_cp_events_cpt' => 'event',
 		'dbem_cp_events_cpts' => 'events',
-		'dbem_cp_events_name' => __('Events','events-manager'),
-		'dbem_cp_events_name_single' => __('Event','events-manager'),
+		'dbem_cp_events_label' => __('Events','events-manager'),
+		'dbem_cp_events_label_single' => __('Event','events-manager'),
 		'dbem_cp_locations_cpt' => 'location',
 		'dbem_cp_locations_cpts' => 'locations',
-		'dbem_cp_locations_name' => __('Locations','events-manager'),
-		'dbem_cp_locations_name_single' => __('Location','events-manager'),
+		'dbem_cp_locations_label' => __('Locations','events-manager'),
+		'dbem_cp_locations_label_single' => __('Location','events-manager'),
 		// slugs
 		'dbem_cp_events_slug' => 'events',
 		'dbem_cp_locations_slug' => 'locations',
@@ -1887,6 +1887,12 @@ function em_upgrade_current_installation(){
 			$insert_sql = "SELECT post_id, '_event_archetype', event_archetype FROM ". EM_EVENTS_TABLE . " WHERE post_id NOT IN ( $subquery )";
 			$sql = "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) $insert_sql";
 			$wpdb->query( $sql );
+		}
+		if ( version_compare( $current_version, '7.1.7', '<' ) ) {
+			delete_option('dbem_cp_events_name');
+			delete_option('dbem_cp_events_name_single');
+			delete_option('dbem_cp_locations_name');
+			delete_option('dbem_cp_locations_name_single');
 		}
 	}
 }

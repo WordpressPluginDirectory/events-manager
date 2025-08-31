@@ -11,7 +11,7 @@ class Archetypes_Admin {
 
 	public static function init() {
 		add_action( 'em_options_save', [ static::class, 'em_options_save' ] );
-		add_filter('parent_file', [ static::class, 'parent_file' ] );
+		add_action( 'admin_footer', [ static::class, 'admin_footer' ] );
 	}
 
 	public static function em_options_save() {
@@ -89,30 +89,6 @@ class Archetypes_Admin {
 			global $EM_Notices;
 			$EM_Notices->add_error( $ex->get_messages(), true );
 		}
-	}
-
-	/**
-	 * Fix for admin menus when archetypes are enabled and multiple archetypes have same option pages that could conflict with each other showing currently open menu.
-	 *
-	 * @param $parent_file
-	 *
-	 * @return array|string|string[]
-	 */
-	public static function parent_file( $parent_file ) {
-		global $submenu;
-		if ( strstr($_REQUEST['page'] ?? '', 'events-manager-') && Archetypes::is_event( $_REQUEST['post_type'] ?? false ) ) {
-			// replace the parent file with the relevant archetype
-			$parent_file = str_replace('post_type=' . Archetypes::$event['cpt'], 'post_type=' . $_REQUEST['post_type'], $parent_file);
-			$parent_page = 'edit.php?post_type=' . Archetypes::$event['cpt'];
-			if ( !empty( $submenu[ $parent_page ] ) ) {
-				foreach ( $submenu[ $parent_page ] as $k => $submenu_array ) {
-					if ( strstr($submenu_array[2], 'events-manager-') ) {
-						$submenu[$parent_page][$k][2] = ''; // for this pageload only, so there's no current menu conflict
-					}
-				}
-			}
-		}
-		return $parent_file;
 	}
 
 	public static function get_post() {
@@ -525,6 +501,40 @@ class Archetypes_Admin {
 		$mode = Archetypes::get_ms_mode();
 
 		return $mode === 'custom';
+	}
+
+	/**
+	 * Adds some JS to correct submenu items in WP Admin menu not correctly having the parent menu open, rather always opening the first occurrence of that submenu item in another archetype (usually the main EM archetype).
+	 * @return void
+	 */
+	public static function admin_footer(){
+		if ( strstr($_REQUEST['page'] ?? '', 'events-manager-') && Archetypes::is_event( $_REQUEST['post_type'] ?? false ) ) {
+			// make sure the right menu is open based on the current class name in JS
+			?>
+			<script type="text/javascript">
+				document.addEventListener('DOMContentLoaded', function() {
+					let current = document.querySelector('#adminmenu .current');
+					let top = current.closest('.menu-top');
+					// check if top menu has wp-has-current-submenu class, if not then we need to add it and a subclass, and remove the other menu that may have this
+					if ( !top.matches('.wp-has-current-submenu') ) {
+						let nav = top.closest('#adminmenu');
+						nav.querySelectorAll('.wp-has-current-submenu').forEach( function(el) {
+							el.classList.remove('wp-has-current-submenu', 'wp-menu-open');
+							el.classList.add('wp-not-current-submenu');
+							let topLink = top.querySelector('a.menu-top');
+							topLink?.classList.remove('wp-has-current-submenu', 'wp-menu-open');
+							topLink?.classList.add('wp-not-current-submenu');
+						})
+						top.classList.add('wp-has-current-submenu', 'wp-menu-open');
+						top.classList.remove('wp-not-current-submenu');
+						let topLink = top.querySelector('a.menu-top');
+						topLink?.classList.add('wp-has-current-submenu', 'wp-menu-open');
+						topLink?.classList.remove('wp-not-current-submenu');
+					}
+				})
+			</script>
+			<?php
+		}
 	}
 }
 Archetypes_Admin::init();

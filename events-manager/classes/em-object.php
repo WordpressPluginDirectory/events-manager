@@ -180,7 +180,7 @@ class EM_Object {
 				if ( !is_array($array['event_type']) ) {
 					$array['event_type'] = explode(',', str_replace(' ', '', $array['event_type']));
 				}
-				$allowed_event_types = ['recurring', 'repeating', 'recurrence', 'event'];
+				$allowed_event_types = ['recurring', 'repeating', 'recurrence', 'single'];
 				$array['event_type'] = array_intersect( $allowed_event_types, $array['event_type'] );
 			}
 			//return clean array
@@ -344,7 +344,7 @@ class EM_Object {
 			if ( !is_array($args['event_type']) ) {
 				$args['event_type'] = explode(',', str_replace(' ', '', $args['event_type']));
 			}
-			$allowed_event_types = ['recurring', 'repeating', 'recurrence', 'event'];
+			$allowed_event_types = ['recurring', 'repeating', 'recurrence', 'single'];
 			$event_types = array_intersect( $allowed_event_types, $args['event_type'] );
 			$conditions['event_type'] = "(`event_type` IN ('" . implode("','", $event_types) . "'))";
 		} else {
