@@ -10,14 +10,21 @@ $timezone = $timezone ?? $EM_Event->event_timezone;
 $multiday = preg_match( '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $scope ) ? false : 'has-dates';
 if ( $multiday  ) {
 	$title = esc_html( sprintf(__('Upcoming %s', 'events-manager'), esc_html__('Events', 'events-manager')) );
-	$recurrences = EM_Events::get( [ 'recurrence' => $EM_Event->event_id, 'scope' => $scope, 'timezone_scope' => $timezone, 'limit' => $scope == 'future' ? 3 : false ] );
+	$recurrences = EM_Events::get( [ 'recurrence' => $EM_Event->event_id, 'scope' => $scope, 'timezone_scope' => $timezone, 'limit' => $scope == 'future' ? 3 : false, 'timeslots' => $EM_Event->has_timeslots() ] );
 } else {
 	// output the date
-	$recurrences = EM_Events::get( [ 'recurrence' => $EM_Event->event_id, 'scope' => $scope, 'timezone_scope' => $timezone, 'limit' => false ] );
+	$title = date( em_get_date_format(), strtotime( $scope ) );
+	if ( $EM_Event->is_recurring() ) {
+		$recurrences = EM_Events::get( [ 'recurrence' => $EM_Event->event_id, 'scope' => $scope, 'timezone_scope' => $timezone, 'limit' => false, 'timeslots' => $EM_Event->has_timeslots() ] );
+	} else {
+		$recurrences = EM_Events::get( [ 'event' => $EM_Event->event_id, 'scope' => $scope, 'timezone_scope' => $timezone, 'limit' => false, 'timeslots' => $EM_Event->has_timeslots() ] );
+	}
 }
 ?>
 <div id="em-booking-recurrences-<?php echo $id; ?>" class="em-booking-recurrences <?php echo $multiday; ?>" data-date="<?php echo esc_attr($scope); ?>">
+	<?php if ( !empty($title) ) : ?>
 	<h3><?php echo esc_html($title); ?></h3>
+	<?php endif; ?>
 	<?php
 		if ( !empty($recurrences) ) {
 			if( em_get_option('dbem_timezone_enabled') || $EM_Event->event_timezone !== em_get_option('timezone_string') ): ?>

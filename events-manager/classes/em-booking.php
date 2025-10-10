@@ -1,4 +1,7 @@
 <?php
+
+use EM\Event\Timeslot;
+
 /**
  * gets a booking in a more db-friendly manner, allows hooking into booking object right after instantiation
  * @param mixed $id
@@ -32,12 +35,14 @@ function em_get_booking($id = false) {
  * @property int|false $booking_status
  * @property string $language
  * @property EM_Person $person
+ * @property string|int $event_id       The event ID including timeslot ID e.g. 123 or 123:123
  */
 class EM_Booking extends EM_Object{
 	//DB Fields
 	var $booking_id;
 	var $booking_uuid;
-	var $event_id;
+	protected $event_id;
+	var $timeslot_id;
 	var $person_id;
 	var $booking_price = null;
 	var $booking_spaces;
@@ -51,6 +56,7 @@ class EM_Booking extends EM_Object{
 		'booking_id' => array('name'=>'id','type'=>'%d'),
 		'booking_uuid' => array('name'=>'uuid','type'=>'%s'),
 		'event_id' => array('name'=>'event_id','type'=>'%d'),
+		'timeslot_id' => array('name'=>'timeslot_id','type'=>'%d'),
 		'person_id' => array('name'=>'person_id','type'=>'%d'),
 		'booking_price' => array('name'=>'price','type'=>'%f'),
 		'booking_spaces' => array('name'=>'spaces','type'=>'%d'),
@@ -71,7 +77,8 @@ class EM_Booking extends EM_Object{
 		'rsvp_status' => 'booking_rsvp_status',
 		'tax_rate' => 'booking_tax_rate',
 		'taxes' => 'booking_taxes',
-		'meta' => 'booking_meta'
+		'meta' => 'booking_meta',
+		'timeslot_id' => 'timeslot_id',
 	);
 	//Other Vars
 	/**
@@ -130,6 +137,10 @@ class EM_Booking extends EM_Object{
 	 * @var EM_Event
 	 */
 	var $event;
+	/**
+	 * @var Timeslot
+	 */
+	var $timeslot;
 	/**
 	 * @var EM_Tickets_Bookings
 	 */
@@ -206,6 +217,10 @@ class EM_Booking extends EM_Object{
 			//reset booking_price, it'll be recalculated later (if you're using this property directly, don't use $this->get_price())
 	    	$this->booking_price = $this->booking_taxes = null;
 		}
+		// typecast things
+		$this->timeslot_id = is_numeric($this->timeslot_id) ? absint($this->timeslot_id) : null;
+		$this->booking_id = is_numeric($this->booking_id) ? absint($this->booking_id) : null;
+		$this->event_id = is_numeric($this->event_id) ? absint($this->event_id) : null;
 		// allow others to intervene
 		do_action('em_booking', $this, $booking_data);
 	}
@@ -226,6 +241,8 @@ class EM_Booking extends EM_Object{
 			return $this->date();
 	    }elseif( $prop == 'uuid' ){
 		    return $this->booking_uuid;
+	    } elseif ( $prop === 'event_id' ) {
+		    return $this->get_event_uid();
 	    }
 	    return null;
 	}
@@ -243,6 +260,8 @@ class EM_Booking extends EM_Object{
 			} else {
 				$this->person = null;
 			}
+		} elseif ( $prop === 'event_id' ) {
+			return $this->set_event_id( $val );
 		}
 		parent::__set( $prop, $val );
 	}
@@ -258,7 +277,7 @@ class EM_Booking extends EM_Object{
 	 * @return string[]
 	 */
 	public function __sleep(){
-		$array = array('booking_id','booking_uuid','event_id','person_id','booking_price','booking_spaces','booking_comment','booking_status','booking_tax_rate','booking_taxes','booking_meta','notes','booking_date','person','feedback_message','errors','mails_sent','custom','previous_status','status_array','manage_override','tickets_bookings');
+		$array = array('booking_id','booking_uuid','event_id','timeslot_id','person_id','booking_price','booking_spaces','booking_comment','booking_status','booking_tax_rate','booking_taxes','booking_meta','notes','booking_date','person','feedback_message','errors','mails_sent','custom','previous_status','status_array','manage_override','tickets_bookings');
 		if( !empty($this->bookings) ) $array[] = 'bookings'; // EM Pro backwards compatibility
 		return apply_filters('em_booking_sleep', $array, $this);
 	}
@@ -279,6 +298,45 @@ class EM_Booking extends EM_Object{
 
 	public function get_option( $option, $default = null ){
 		return $this->get_event()->get_option( $option, $default );
+	}
+
+	/**
+	 * Returns the base event_id, or alternatively the event ID including timeslot ID if $base_only is set to false. Useful for external code looking only for the numeric event_id, used internally for getting the full event ID including timeslot
+	 *
+	 * @param $base_only
+	 *
+	 * @return false|float|int|mixed|string
+	 */
+	function get_event_id ( $base_only = true ) {
+		$event_id = $this->event_id;
+		if ( !$base_only && $this->timeslot_id ) {
+			$event_id .= ':' . $this->timeslot_id;
+		}
+		return $event_id;
+	}
+
+	/**
+	 * Returns the full event ID including the timeslot ID
+	 * @return string
+	 */
+	function get_event_uid() {
+		return $this->get_event_id( false );
+	}
+
+	public function set_event_id( $event_id ) {
+		if ( preg_match('/^(\d+):(\d+)$/', $event_id, $matches) ) {
+			$this->event_id = absint($matches[1]);
+			$this->timeslot_id = absint($matches[2]);
+		} elseif ( is_numeric( $event_id )) {
+			$this->event_id = absint($event_id);
+		}
+	}
+
+	public function get_timeslot() {
+		if ( empty( $this->timeslot ) ) {
+			$this->timeslot = new Timeslot( $this->timeslot_id, $this->get_event() );
+		}
+		return $this->timeslot;
 	}
 
 	function get_notes(){
@@ -548,7 +606,7 @@ class EM_Booking extends EM_Object{
 		$this->tickets_bookings = new EM_Tickets_Bookings($this);
 		do_action('em_booking_get_post_pre',$this);
 		$result = array();
-		$this->event_id = absint($_REQUEST['event_id']);
+		$this->set_event_id( $_REQUEST['event_id'] );
 		if ( $this->get_event()->event_status != 1 || $this->get_event()->event_active_status != 1 ) {
 			$this->add_error( __('This event is not available or has been cancelled', 'events-manager') ); // uncommon, not needed for custom error.
 		}
@@ -581,9 +639,15 @@ class EM_Booking extends EM_Object{
 		do_action( 'em_booking_validate_pre', $this, $override_availability );
 		if( EM_Bookings::$disable_restrictions ) $override_availability = true;
 		//step 1, basic info
-		$basic = (empty($this->event_id) || is_numeric($this->event_id)) && (empty($this->person_id) || is_numeric($this->person_id));
+		$basic = ( empty($this->event_id) || is_numeric($this->event_id)) && (empty($this->person_id) || is_numeric($this->person_id));
 		if( !$basic ){
 			$this->add_error('Incomplete booking information provided.');
+		}
+		// make sure event is not a recurring event with timeslots
+		if ( !$this->timeslot_id && $this->get_event()->get_option('dbem_event_timeslots_enabled') ) {
+			if ( $this->get_event()->has_timeslots() ) {
+				$this->add_error('Incomplete booking information provided. No timeslot selected.');
+			}
 		}
 		//give some errors in step 1
 		if( !is_numeric($this->get_spaces()) || $this->booking_spaces == 0 ){
@@ -944,12 +1008,19 @@ class EM_Booking extends EM_Object{
 	 */
 	function get_event(){
 		global $EM_Event;
-		if( is_object($this->event) && get_class($this->event)=='EM_Event' && ($this->event->event_id == $this->event_id || (EM_ML::$is_ml && $this->event->event_parent == $this->event_id)) ){
-			return $this->event;
-		}elseif( is_object($EM_Event) && $EM_Event->event_id == $this->event_id ){
-			$this->event = $EM_Event;
-		}else{
-			$this->event = em_get_event($this->event_id, 'event_id');
+		if( ! ( $this->event instanceof EM_Event && ($this->event->event_id == $this->get_event_uid() || (EM_ML::$is_ml && $this->event->event_parent == $this->event_id)) ) ) {
+			// do nothing, we make sure timeslots match next step
+			if ( is_object( $EM_Event ) && $EM_Event->get_id() == $this->event_id && $this->event ) {
+				$this->event = $EM_Event;
+			} else {
+				$this->event = em_get_event( $this->get_event_uid() );
+			}
+		}
+		// convert event association with EM_Event object
+		if ( $this->timeslot_id ) {
+			try {
+				$this->event = $this->event->convert_to_timeslot( $this->timeslot_id, false );
+			} catch ( Exception $e ) {}
 		}
 		return apply_filters('em_booking_get_event', $this->event, $this);
 	}
@@ -1164,7 +1235,7 @@ class EM_Booking extends EM_Object{
 				$this->add_error(sprintf(__('%s could not be deleted', 'events-manager'), __('Booking','events-manager')));
 			}
 		}
-		do_action('em_bookings_deleted', $result, array($this->booking_id), array($this->event_id));
+		do_action('em_bookings_deleted', $result, array($this->booking_id), array($this->get_event_uid()));
 		return apply_filters('em_booking_delete',( $result !== false ), $this);
 	}
 	
@@ -1557,13 +1628,13 @@ class EM_Booking extends EM_Object{
 	function get_admin_url(){
 		if( $this->get_option('dbem_edit_bookings_page') && (!is_admin() || !empty($_REQUEST['is_public'])) ){
 			$my_bookings_page = get_permalink( $this->get_option('dbem_edit_bookings_page'));
-			$bookings_link = em_add_get_params($my_bookings_page, array('event_id'=>$this->event_id, 'booking_id'=>$this->booking_id), false);
+			$bookings_link = em_add_get_params($my_bookings_page, [ 'event_id'=> $this->get_event_uid(), 'booking_id'=>$this->booking_id ], false);
 		}else{
 			$archetype = $this->get_event()->event_archetype;
 			if( $this->get_event()->blog_id != get_current_blog_id() ){
-				$bookings_link = get_admin_url($this->get_event()->blog_id, 'edit.php?post_type='.$archetype."&page=events-manager-bookings&event_id=".$this->event_id."&booking_id=".$this->booking_id);
+				$bookings_link = get_admin_url($this->get_event()->blog_id, 'edit.php?post_type='.$archetype."&page=events-manager-bookings&event_id=".$this->get_event_uid()."&booking_id=".$this->booking_id);
 			}else{
-				$bookings_link = em_admin_url( $archetype ). "&page=events-manager-bookings&event_id=".$this->event_id."&booking_id=".$this->booking_id;
+				$bookings_link = em_admin_url( $archetype ). "&page=events-manager-bookings&event_id=".$this->get_event_uid()."&booking_id=".$this->booking_id;
 			}
 		}
 		return apply_filters('em_booking_get_bookings_url', $bookings_link, $this);
@@ -1732,7 +1803,7 @@ class EM_Booking extends EM_Object{
 	}
 	
 	public function output_intent_html(){
-		$input = '<input type="hidden" name="booking_intent" value="' . esc_attr($this->booking_uuid) .'" class="em-booking-intent" id="em-booking-intent-'. esc_attr($this->event_id) .'"';
+		$input = '<input type="hidden" name="booking_intent" value="' . esc_attr($this->booking_uuid) .'" class="em-booking-intent" id="em-booking-intent-'. esc_attr( $this->get_event_uid() ) .'"';
 		foreach( $this->get_intent_data() as $key => $value ){
 			$input .= ' data-'.$key.'="'. esc_attr($value) .'"';
 		}
@@ -1743,7 +1814,7 @@ class EM_Booking extends EM_Object{
 	public function get_intent_data(){
 		return array(
 			'uuid' => $this->booking_uuid,
-			'event_id' => $this->event_id,
+			'event_id' => $this->get_event_uid(),
 			'spaces' => $this->get_spaces(),
 			'amount' => $this->get_price(),
 			'amount_formatted' => $this->get_price( true ),
@@ -1949,7 +2020,7 @@ class EM_Booking extends EM_Object{
 	function to_api( $args = array('event' => true), $version = 'v1' ){
 		$booking = array (
 			'id' => $this->booking_id,
-			'event_id' => $this->event_id,
+			'event_id' => $this->get_event_uid(),
 			'uuid' => $this->booking_uuid,
 			'person_id' => $this->person_id,
 			'status' => $this->booking_status,

@@ -54,33 +54,11 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		// set all recurrence sets to have a 0 value flag to detect modifications of primary
 		recurrenceSets.querySelectorAll('.em-recurrence-set').forEach( recurrenceSet => { recurrenceSet.dataset.primaryModified = '0'; });
 
-		// set the timepicker values for placeholders
-		let recurrenceTimes = recurrenceSetPrimary.querySelector('.em-recurrence-times');
-		let allDayInput = recurrenceTimes.querySelector('.em-time-all-day');
-		let startTimeInput = recurrenceTimes.querySelector('.em-time-start');
-		let endTimeInput = recurrenceTimes.querySelector('.em-time-end');
-
+		// check for modified values and if so set flag that this overrides primary set
 		recurrenceSets.querySelectorAll('.em-recurrence-set').forEach(recurrenceSet => {
 			if (recurrenceSet !== recurrenceSetPrimary) {
-				let timeFields = recurrenceSet.querySelector('.em-recurrence-times');
-				if (timeFields) {
-					let hasTime = false;
-					[['.em-time-start', startTimeInput], ['.em-time-end', endTimeInput]].forEach(([selector, refInput]) => {
-						let field = timeFields.querySelector(selector);
-						if (field) {
-							if (field.value) {
-								hasTime = true;
-							}
-							field.placeholder = refInput.value || refInput.placeholder;
-							if ( field.value === '' && refInput.value !== refInput.dataset.undo ) {
-								recurrenceSet.dataset.primaryModified = '1';
-							}
-						}
-					});
-
-					timeFields.querySelectorAll('.em-time-all-day').forEach(checkbox => {
-						checkbox.indeterminate = !hasTime && allDayInput && allDayInput.checked;
-					});
+				if ( recurrenceSet.querySelector('.recurrences-timeranges-default-trigger')?.checked ) {
+					recurrenceSet.dataset.primaryModified = '1';
 				}
 			}
 		});

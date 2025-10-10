@@ -20,7 +20,9 @@ function em_install() {
 		 	if( !EM_MS_GLOBAL || (EM_MS_GLOBAL && is_main_site()) ){
 				em_create_events_table();
 			    em_create_recurrences_table();
+				em_create_timeslots_table();
 				em_create_events_meta_table();
+				em_create_event_timeslots_table();
 				em_create_locations_table();
 			  	em_create_bookings_table();
 			    em_create_bookings_meta_table();
@@ -236,6 +238,58 @@ function em_create_recurrences_table() {
 	em_sort_out_table_nu_keys($table_name, array('event_id'));
 }
 
+/**
+ * Create table for event time slots
+ */
+function em_create_timeslots_table(){
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'em_timeranges';
+
+	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+	$sql = "CREATE TABLE IF NOT EXISTS {$table_name} (
+		timerange_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+		timerange_group_id VARCHAR(64) NOT NULL DEFAULT '',
+
+		timerange_start TIME NOT NULL,
+		timerange_end TIME DEFAULT NULL,
+		timerange_all_day TINYINT(1) NOT NULL DEFAULT 0,
+
+		timeslot_frequency VARCHAR(5) DEFAULT NULL,
+		timeslot_buffer VARCHAR(5) DEFAULT NULL,
+		timeslot_duration VARCHAR(5) DEFAULT NULL,
+
+		PRIMARY KEY  (timerange_id)
+	) {$wpdb->get_charset_collate()};";
+
+	dbDelta( $sql );
+
+	// Add additional keys
+	em_sort_out_table_nu_keys( $table_name, [ 'timerange_group_id', 'timerange_start' ] );
+}
+
+function em_create_event_timeslots_table() {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'em_event_timeslots';
+
+	$sql = "
+	CREATE TABLE $table_name (
+		timeslot_id          BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+		event_id             BIGINT(20) UNSIGNED NOT NULL,
+		timerange_id         BIGINT(20) UNSIGNED NOT NULL,
+		timeslot_start       DATETIME NOT NULL,
+		timeslot_end         DATETIME DEFAULT NULL,
+		timeslot_status      TINYINT(1) DEFAULT 1,
+		PRIMARY KEY (timeslot_id)
+	) {$wpdb->get_charset_collate()};
+	";
+
+	dbDelta($sql);
+
+	// Add index(es)
+	em_sort_out_table_nu_keys($table_name, ['event_id'] );
+}
+
 function em_create_events_meta_table(){
 	global  $wpdb;
 	$table_name = $wpdb->prefix.'em_meta';
@@ -326,6 +380,7 @@ function em_create_bookings_table() {
 		booking_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		booking_uuid char(32) NOT NULL,
 		event_id bigint(20) unsigned NULL,
+		timeslot_id bigint(20) unsigned NULL,
 		person_id bigint(20) unsigned NOT NULL,
 		booking_spaces int(5) NOT NULL,
 		booking_comment text DEFAULT NULL,
@@ -340,7 +395,7 @@ function em_create_bookings_table() {
 		) $charset_collate;";
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 	dbDelta($sql);
-	em_sort_out_table_nu_keys($table_name, array('event_id','person_id','booking_status', 'booking_rsvp_status'));
+	em_sort_out_table_nu_keys($table_name, array('event_id', 'timeslot_id', 'person_id','booking_status', 'booking_rsvp_status'));
 	if( em_check_utf8mb4_tables() ) maybe_convert_table_to_utf8mb4( $table_name );
 }
 
@@ -497,6 +552,8 @@ function em_add_options() {
 	$dbem_options = array(
 		'dbem_data' => array(), //used to store admin-related data such as notice flags and other row keys that may not always exist in the wp_options table
 		'dbem_event_status_enabled' => !$already_installed,
+		'dbem_event_timeranges_enabled' => !$already_installed,
+		'dbem_event_timeranges_advanced' => !$already_installed,
 		//time formats
 		'dbem_time_format' => get_option('time_format'),
 		'dbem_date_format' => get_option('date_format'),
@@ -826,6 +883,9 @@ function em_add_options() {
 			'dbem_bookings_header_summary' => esc_html__('Booking Summary', 'events-manager'),
 			'dbem_bookings_header_confirm' => '', // blank so appears below summary section
 			'dbem_bookings_header_confirm_free' => '', // blank so appears below summary section
+			// Timeslot stuff
+			'dbem_bookings_header_timeslots' => esc_html__('Select a time', 'events-manager'),
+			'dbem_bookings_timeslots_timezone_picker' => 0,
 			//Messages
 			'dbem_bookings_form_msg_disabled' => __('Online bookings are not available for this event.','events-manager'),
 			'dbem_bookings_form_msg_closed' => __('Bookings are closed for this event.','events-manager'),
@@ -1085,10 +1145,13 @@ function em_upgrade_current_installation(){
 		$data['admin-modals']['review-nudge'] = time() + (DAY_IN_SECONDS * 14);
 		update_site_option('dbem_data', $data);
 	}
-	// temp promo
-	if( time() < 1751659200 && ( version_compare($current_version, '7.0.4', '<') || !empty($data['admin-modals']['review-nudge']) )  ) {
-		$EM_Admin_Notice = new EM_Admin_Notice(array( 'name' => 'promo-popup', 'who' => 'admin', 'where' => 'all', 'raw_output' => true ));
-		EM_Admin_Notices::add($EM_Admin_Notice, is_multisite());
+	// promo - lt
+	if( ( version_compare($current_version, '7.2.2', '<') || !empty($data['admin-modals']['review-nudge']) )  ) {
+		//$EM_Admin_Notice = new EM_Admin_Notice(array( 'name' => 'promo-popup', 'who' => 'admin', 'where' => 'all', 'raw_output' => true ));
+		//EM_Admin_Notices::add($EM_Admin_Notice, is_multisite());
+		if(  empty($data['admin-modals'])  )  $data['admin-modals']  =  array();
+		$data['admin-modals']['promo-popup']  =  true;
+		update_site_option('dbem_data',  $data);
 	}
 	
 	// Check EM Pro update min
@@ -1893,6 +1956,22 @@ function em_upgrade_current_installation(){
 			delete_option('dbem_cp_events_name_single');
 			delete_option('dbem_cp_locations_name');
 			delete_option('dbem_cp_locations_name_single');
+		}
+		if ( version_compare( $current_version, '7.2', '<' ) ) {
+			$url = 'https://wp-events-plugin.com/blog/2025/09/25/events-manager-7-2-and-pro-3-7-2/';
+			$message = 'Events Manager 7.2 introduces timeslots! Enable this in <a href="'. EM_ADMIN_URL .'&amp;page=events-manager-options#general+general' .'"><em>Events > Settings > General Options</em></a>. <a href="'. $url .'">Learn more</a>';
+			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'what' => 'success', 'where' => 'all', 'message' => $message )), is_multisite());
+		}
+		$pro_update = function() {
+			if ( defined('EMP_VERSION') && version_compare( EMP_VERSION, '3.7.2', '<' ) ) {
+				$message = 'The new timeslot features requires Events Manager Pro <code>3.7.2</code>, timeslots will remain disabled to prevent unpredicatable and undesired effects. You can continue using your current EM Pro version without timeslots enabled.';
+				EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'pro-update', 'who' => 'admin', 'what' => 'warning', 'where' => 'all', 'message' => $message )), is_multisite());
+			}
+		};
+		if ( did_action( 'plugins_loaded') ) {
+			$pro_update();
+		} else {
+			add_action('plugins_loaded', $pro_update);
 		}
 	}
 }

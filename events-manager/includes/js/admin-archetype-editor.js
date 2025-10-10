@@ -5,7 +5,7 @@ const i18n = EM.archetypesEditor?.i18n || {};
 const repeatingEnabled = EM.archetypesEditor?.repeating_enabled || false;
 const postTypes = (EM.archetypesEditor?.post_types || []).map(pt => String(pt).toLowerCase());
 const archetypes = document.getElementById( 'archetypes-list' );
-const container = document.getElementById( 'event-archetypes-container' );
+let container = document.getElementById( 'event-archetypes-container' );
 
 // Enable base-event-form-extras inputs/textareas (used when a new archetype is added dynamically)
 function enableBaseExtras() {
@@ -506,12 +506,12 @@ container.addEventListener('blur', function(e) {
 	// Base Location CPT fields
 	if ( (e.target.id === 'dbem_cp_locations_cpt' || e.target.id === 'dbem_cp_locations_cpts') && !e.target.value.trim() ) {
 		if ( e.target.id === 'dbem_cp_locations_cpt' ) {
-			const labelSingleLoc = container.querySelector('#dbem_cp_locations_name_single');
+			const labelSingleLoc = container.querySelector('#dbem_cp_locations_label_single');
 			if (labelSingleLoc && labelSingleLoc.value.trim()) {
 				autoPopulateSingularCPT(labelSingleLoc.value, e.target);
 			}
 		} else {
-			const labelPluralLoc = container.querySelector('#dbem_cp_locations_name');
+			const labelPluralLoc = container.querySelector('#dbem_cp_locations_label');
 			if (labelPluralLoc && labelPluralLoc.value.trim()) {
 				autoPopulatePluralCPT(labelPluralLoc.value, e.target);
 			}

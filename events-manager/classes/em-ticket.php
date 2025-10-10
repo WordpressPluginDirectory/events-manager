@@ -744,7 +744,14 @@ class EM_Ticket extends EM_Object {
 	 * @return int
 	 */
 	function get_spaces(){
-		return apply_filters('em_ticket_get_spaces',$this->spaces,$this);
+		$spaces = $this->spaces;
+		if ( $this->get_event()->is_recurring( true ) ) {
+			// add all spaces for all recurrences
+			$spaces = $spaces * count( $this->get_event()->get_recurrence_sets()->get_recurrences() );
+		} elseif ( $this->get_event()->has_timeslots() ) {
+			$spaces = $spaces * count($this->get_event()->get_timeranges()->get_timeslots());
+		}
+		return apply_filters('em_ticket_get_spaces', $spaces, $this);
 	}
 
 	/**
@@ -788,6 +795,9 @@ class EM_Ticket extends EM_Object {
 		if( !array_key_exists($this->event_id, $this->pending_spaces) || $force_refresh ){
 			$status_cond = !$this->get_event()->get_option('dbem_bookings_approval') ? 'booking_status IN (0,1)' : 'booking_status = 1';
 			$sub_sql = 'SELECT booking_id FROM '.EM_BOOKINGS_TABLE." WHERE event_id=%d AND $status_cond";
+			if ( $this->get_event()->is_timeslot() ) {
+				$sub_sql .= " AND timeslot_id=" . absint($this->get_event()->timeslot_id);
+			}
 			$sql = 'SELECT SUM(ticket_booking_spaces) FROM '.EM_TICKETS_BOOKINGS_TABLE. " WHERE booking_id IN ($sub_sql) AND ticket_id=%d";
 			$booked_spaces = $wpdb->get_var($wpdb->prepare($sql, $this->event_id, $this->ticket_id));
 			$this->booked_spaces[$this->event_id] = $booked_spaces > 0 ? $booked_spaces : 0;
@@ -805,7 +815,11 @@ class EM_Ticket extends EM_Object {
 	function get_bookings_count( $status = false, $force_refresh = false ){
 		global $wpdb;
 		if( !array_key_exists($this->event_id, $this->bookings_count) || $force_refresh ){
-			$sql = 'SELECT COUNT(*) FROM '.EM_TICKETS_BOOKINGS_TABLE. ' WHERE booking_id IN (SELECT booking_id FROM '.EM_BOOKINGS_TABLE.' WHERE event_id=%d) AND ticket_id=%d';
+			$sub_sql = 'SELECT booking_id FROM '.EM_BOOKINGS_TABLE.' WHERE event_id=%d';
+			if ( $this->get_event()->is_timeslot() ) {
+				$sub_sql .= " AND timeslot_id=" . absint($this->get_event()->timeslot_id);
+			}
+			$sql = 'SELECT COUNT(*) FROM '.EM_TICKETS_BOOKINGS_TABLE. ' WHERE booking_id IN ('. $sub_sql .') AND ticket_id=%d';
 			$bookings_count = $wpdb->get_var($wpdb->prepare($sql, $this->event_id, $this->ticket_id));
 			$this->bookings_count[$this->event_id] = $bookings_count > 0 ? $bookings_count : 0;
 			$this->bookings_count[$this->event_id] = apply_filters('em_ticket_get_bookings_count', $this->bookings_count[$this->event_id], $this, $force_refresh);
@@ -831,7 +845,7 @@ class EM_Ticket extends EM_Object {
 		}
 	}
 	/**
-	 * returns array of EM_Booking objects that have this ticket
+	 * Returns an array of EM_Booking objects that have this ticket
 	 * @return EM_Bookings
 	 */
 	function get_bookings(){

@@ -57,7 +57,7 @@ function em_init_actions_start() {
 		if( isset($_REQUEST['action']) ) {
 			if ( $_REQUEST['action'] == 'booking_form' ) {
 				if ( !empty( $_REQUEST['event_id'] ) && !empty( $_REQUEST['nonce'] ) && wp_verify_nonce( $_REQUEST['nonce'], 'booking_form' ) ) {
-					$EM_Event = em_get_event( absint( $_REQUEST['event_id'] ) );
+					$EM_Event = em_get_event( $_REQUEST['event_id'] );
 					do_action('em_ajax_output_booking_form', $EM_Event);
 					if ( $EM_Event->is_published() ) {
 						echo $EM_Event->output_booking_form();
@@ -70,7 +70,7 @@ function em_init_actions_start() {
 				exit();
 			} elseif ( $_REQUEST['action'] == 'booking_recurrences' ) {
 				if ( !empty( $_REQUEST['event_id'] ) && !empty( $_REQUEST['nonce'] ) && wp_verify_nonce( $_REQUEST['nonce'], 'booking_recurrences' ) ) {
-					$EM_Event = em_get_event( absint( $_REQUEST['event_id'] ) );
+					$EM_Event = em_get_event( $_REQUEST['event_id'] );
 					// get the date requested
 					$day = $_REQUEST['day'];
 					if ( preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $day) ) {
@@ -101,7 +101,7 @@ function em_init_actions_start() {
 	if( !empty($_REQUEST['action']) && substr($_REQUEST['action'],0,5) == 'event' ){
 		//Load the event object, with saved event if requested
 		if( !empty($_REQUEST['event_id']) ){
-			$EM_Event = new EM_Event( absint($_REQUEST['event_id']) );
+			$EM_Event = em_get_event( $_REQUEST['event_id'] );
 		}else{
 			$EM_Event = new EM_Event();
 		}
@@ -320,15 +320,17 @@ function em_init_actions_start() {
 	$booking_actions = array_merge( $booking_ajax_actions, array_keys($booking_allowed_actions) );
 	if( !empty($_REQUEST['action']) && in_array($_REQUEST['action'], $booking_actions) && (is_user_logged_in() || (in_array($_REQUEST['action'], $booking_nopriv_actions) && em_get_option('dbem_bookings_anonymous'))) ){
 		global $EM_Event, $EM_Booking, $EM_Person;
-		Archetypes::set_current( $EM_Event->event_archetype );
 		//Load the booking object, with saved booking if requested
 		$EM_Booking = ( !empty($_REQUEST['booking_id']) ) ? em_get_booking($_REQUEST['booking_id']) : em_get_booking();
 		if( !empty($EM_Booking->event_id) ){
 			//Load the event object, with saved event if requested
 			$EM_Event = $EM_Booking->get_event();
 		}elseif( !empty($_REQUEST['event_id']) ){
-			$EM_Event = new EM_Event( absint($_REQUEST['event_id']) );
+			$EM_Event = em_get_event( $_REQUEST['event_id'] );
 		}
+		// set the archetype
+		Archetypes::set_current( $EM_Event->event_archetype );
+		// start process
 		$result = false;
 		$feedback = '';
 		do_action('em_before_booking_action_'.$_REQUEST['action'], $EM_Event, $EM_Booking);
@@ -661,7 +663,7 @@ function em_init_actions_start() {
 	// convert repeating events
 	if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'convert_to_recurrence' && !empty($_REQUEST['event_id']) && check_admin_referer('convert_to_recurrence_'.absint($_REQUEST['event_id']), 'nonce') ){
 		//Convert event to recurring event
-		$EM_Event = em_get_event( absint($_REQUEST['event_id']) );
+		$EM_Event = em_get_event( $_REQUEST['event_id'] );
 		if( $EM_Event->convert_to_recurring() ){
 			$message = __('The repeating event has been converted into a recurring event.', 'events-manager');
 			$EM_Notices->add_confirm( $message, true );

@@ -740,6 +740,7 @@ class EM_Calendar extends EM_Object {
 			'calendar_month_nav' => true,
 			'empty_months' => true, // if empty months are to be shown
 			'calendar_timezone' => false, // if set to a timezone, we search and show dates/times in the specified timezone rather than local time
+			'timeslots' => false,
 		);
 
 		//sort out whether defaults were supplied or just the array of search values

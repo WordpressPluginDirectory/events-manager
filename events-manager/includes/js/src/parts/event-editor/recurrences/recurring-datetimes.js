@@ -20,7 +20,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 				/** @type {Element} */
 				let eventDatePicker = eventDateTimes.querySelector('.em-datepicker.em-event-dates');
 				/** @type {Element} */
-				let eventTimeRange = eventDateTimes.querySelector('.event-times.em-time-range');
+				let eventTimeRange = eventDateTimes.querySelector('.em-timeranges');
 				// we need to get jQuery elements to handle the timepicker
 				/** @type {jQuery} */
 				let $eventStartTime = jQuery(eventTimeRange.querySelector('.em-time-input.em-time-start'));
@@ -95,23 +95,19 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 					// proceed if we have start/end dates
 					if ( recurrenceStart && recurrenceEnd ) {
 						// add the time to the start/end dates
-						let timeRange = recurrenceSet.querySelector( '.em-recurrence-advanced .em-time-range' );
-						if ( timeRange ) {
-							let $recurrenceStartTime = jQuery( timeRange.querySelector( '.em-time-input.em-time-start' ) );
-							let $recurrenceEndTime = jQuery( timeRange.querySelector( '.em-time-input.em-time-end' ) );
+						let timeRange = recurrenceSet.querySelector( '.em-timeranges' );
+						if ( timeRange && ( recurrenceSet.dataset.primary || recurrenceSet.querySelector( '.recurrences-timeranges-default-trigger')?.checked ) ) {
+							let $recurrenceStartTime = jQuery( timeRange.querySelector( '.em-time-input.earliest-time' ) );
+							let $recurrenceEndTime = jQuery( timeRange.querySelector( '.em-time-input.latest-time' ) );
 
-							// Check if this recurrence set has all-day checkbox checked
-							let allDayCheckbox = timeRange.querySelector( '.em-time-all-day' );
-							if ( allDayCheckbox && !allDayCheckbox.checked && !allDayCheckbox.indeterminate ) {
-								allRecurrencesAllDay = false;
-							}
-
-							if ( timeRange.querySelector( '.em-time-all-day' )?.checked ) {
+							// Get times based on whether all day or normal
+							if ( timeRange.dataset.allday === "1" ) {
 								recurrenceEnd = recurrenceEnd.endOf( 'day' );
 								// set default start/end times first time for the timepicker for future recurrences
 								defaultStartTimeSeconds |= 0;
 								defaultEndTimeSeconds |= 86399; // 23:59:59
 							} else {
+								allRecurrencesAllDay = false;
 								let secondsFromMidnight = $recurrenceStartTime.em_timepicker( 'getSecondsFromMidnight' );
 								if ( $recurrenceStartTime.val() ) {
 									recurrenceStart = recurrenceStart.plus( { seconds: secondsFromMidnight } );
@@ -134,14 +130,13 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 							if ( duration ) {
 								recurrenceEnd = recurrenceEnd.plus( { days: duration } );
 							}
-						}
-
-						// Now we have the luxon.DateTime dates/times in correct timezone, we can compare them accurately
-						if ( recurrenceStart.isValid && ( !startDateTime || recurrenceStart < startDateTime ) ) {
-							startDateTime = recurrenceStart.setZone( timezone );
-						}
-						if ( recurrenceEnd.isValid && (!endDateTime || recurrenceEnd > endDateTime) ) {
-							endDateTime = recurrenceEnd.setZone( timezone );
+							// Now we have the luxon.DateTime dates/times in correct timezone, we can compare them accurately
+							if ( recurrenceStart.isValid && ( !startDateTime || recurrenceStart < startDateTime ) ) {
+								startDateTime = recurrenceStart.setZone( timezone );
+							}
+							if ( recurrenceEnd.isValid && (!endDateTime || recurrenceEnd > endDateTime) ) {
+								endDateTime = recurrenceEnd.setZone( timezone );
+							}
 						}
 					}
 				});
@@ -159,25 +154,6 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 					}
 					$eventStartTime.em_timepicker( 'setTime', startDate );
 					$eventEndTime.em_timepicker( 'setTime', endDate );
-
-
-					// Check if the start/end times match the all-day pattern (midnight to 11:59:59 PM)
-					let isStartMidnight = startDateTime.hour === 0 && startDateTime.minute === 0 && startDateTime.second === 0;
-					let isEndMidnight = endDateTime.hour === 23 && endDateTime.minute === 59 && endDateTime.second === 59;
-
-					// we can only consider this an all-day recurring event if all recurrence sets have all-day checked AND the start/end times match midnight in the primary timezone
-					let allDayCheckbox = eventTimeRange.querySelector('.em-time-all-day');
-					if (allDayCheckbox) {
-						if ( allRecurrencesAllDay && (isStartMidnight && isEndMidnight) ) {
-							// All recurrence sets are all-day and times match the pattern within same timezone
-							allDayCheckbox.checked = true;
-							allDayCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-						} else {
-							// At least one recurrence set is not all-day or times don't match the pattern
-							allDayCheckbox.checked = false;
-							allDayCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-						}
-					}
 					
 					// Update recurring summary dates
 					let recurringSection = eventDateTimes.querySelector('.recurring-summary-dates');
@@ -216,7 +192,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 						// Update classes based on all-day status
 						recurringSection.classList.remove('is-all-day', 'has-all-day');
 						
-						if ( allDayCheckbox?.checked) {
+						if ( eventTimeRange.dataset.allday === '1' ) {
 							// True all-day event (all checkboxes checked and times match pattern)
 							recurringSection.classList.add('is-all-day');
 						} else if ( allRecurrencesAllDay ) {

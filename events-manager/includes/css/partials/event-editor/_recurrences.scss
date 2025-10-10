@@ -11,6 +11,12 @@ form.em-is-recurring {
 		display: none;
 		visibility: hidden;
 	}
+
+	// adding this to prevent some drawing issues experienced in Chrome (possibly others) in classic editor
+	.recurring-event-editor, .recurring-event-data, .postbox#em-event-recurring {
+		display: block;
+		visibility: visible;
+	}
 }
 
 form:not(.em-is-recurring) {
@@ -25,77 +31,6 @@ form:not(.em-is-recurring) {
 	#event-rsvp-options .em-booking-date-recurring {
 		display: none;
 		visibility: hidden;
-	}
-}
-
-.event-form-when {
-
-	.em-event-datetimes > * {
-		margin-bottom: 15px !important;
-
-		&:last-child {
-			margin-bottom: 0 !important;
-		}
-	}
-
-	.em-event-dates {
-		label {
-			width: 100%;
-			display:block;
-		}
-		.em-date-start-end {
-			width: 100% !important;
-			max-width: 250px !important;
-		}
-		&.em-datepicker-range {
-			fieldset {
-				width: 100%;
-			}
-		}
-		&.em-datepicker-until .em-datepicker-until-fields {
-			display: grid;
-			grid-template-columns: minmax(100px, 150px) min-content minmax(100px, 150px);
-			grid-column-gap: 8px;
-			justify-items: center;
-			align-items: center;
-
-			> * {
-				margin-bottom: 0 !important;
-				width:100%;
-			}
-			.em-range-description {
-				margin-top: 15px;
-			}
-			[disabled] {
-				color: #777; // slightly darker
-			}
-		}
-	}
-
-	.em-event-type label:has( select ){
-		line-height: 38px;
-		vertical-align: middle;
-	}
-}
-
-.event-form-when, .em-recurrence-sets {
-	> * {
-		margin-bottom: 15px !important;
-	}
-
-	> p {
-		margin-bottom: 20px !important;
-	}
-
-	fieldset {
-		margin-bottom: 0 !important;
-	}
-
-	.em-recurrence-dates.em-datepicker-range {
-		fieldset {
-			width: 100%;
-			max-width: 250px !important;
-		}
 	}
 }
 
@@ -206,9 +141,16 @@ form:not(.em-is-recurring) {
 			width: auto;
 		}
 	}
-	
+
 	// For has-all-day class (displays times + all-day text)
 	&.has-all-day {
+		grid-template-areas:
+		    "start-label"
+		    "start-datetime"
+		    "end-label"
+		    "end-datetime"
+		    "timezone"
+		    "all-day";
 		.label.all-day {
 			display: none;
 			visibility: hidden;
@@ -686,6 +628,38 @@ Recurrence Sets and Set styling, out here to reduce selector length, and allow d
 			display: none;
 			visibility: hidden;
 		}
+	}
+
+	// timerange logic
+	&:not([data-primary]) {
+		.em-recurrence-timeranges {
+			.recurrence-timeranges-editor {
+				display: none;
+				visibility: hidden;
+			}
+
+			&:has( input.recurrences-timeranges-default-trigger:checked ) {
+				.recurrence-timeranges-editor {
+					display: block;
+					visibility: visible;
+				}
+			}
+		}
+	}
+	&[data-primary] {
+		.em-recurrence-timeranges {
+			.recurrence-timeranges-default {
+				display: none;
+				visibility: hidden;
+			}
+		}
+	}
+	fieldset.em-recurrence-timeranges {
+		.em-timeranges-editor legend {
+			display: none;
+			visibility: hidden;
+		}
+		margin-bottom: 18px !important;
 	}
 }
 .em-modal-content {

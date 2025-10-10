@@ -35,7 +35,7 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 	function __construct( $object = false, $force_load = false ){
 		global $wpdb;
 		if( is_numeric($object) || $object instanceof EM_Event || $object instanceof EM_Booking ){
-			$this->event_id = (is_object($object)) ? $object->event_id:$object;
+			$this->event_id = (is_object($object)) ? $object->get_event_id():$object;
 			if( $object instanceof EM_Event ) $this->event = $object;
 			$orderby_option = em_get_option('dbem_bookings_tickets_orderby');
 			$order_by = em_get_option('dbem_bookings_tickets_ordering') ? array('ticket_order ASC') : array();
@@ -88,7 +88,7 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 	public function __set( $prop, $val ){
 		if( $prop == 'event' && $val instanceof EM_Event ){
 			$this->event = $val;
-			$this->event_id = $this->event->event_id;
+			$this->event_id = $this->event->get_event_id();
 		}
 	}
 	
@@ -104,11 +104,11 @@ class EM_Tickets extends EM_Object implements Iterator, Countable {
 	 * @return EM_Event
 	 */
 	function get_event(){
-		if( $this->event && $this->event->event_id == $this->event_id ){
+		if( $this->event && $this->event->get_event_id() == $this->event_id ){
 			return $this->event;
 		}
 		global $EM_Event;
-		if( is_object($EM_Event) && $EM_Event->event_id == $this->event_id ){
+		if( is_object($EM_Event) && $EM_Event->get_event_id() == $this->event_id ){
 			$this->event = $EM_Event;
 			return $EM_Event;
 		}else{

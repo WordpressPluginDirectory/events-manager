@@ -1,9 +1,13 @@
 <?php
+
+use EM\Event\Timeranges;
+
 /**
  * Deals with the booking info for an event
  *
  * @property EM_Booking[] $bookings
  * @property EM_Event $event
+ * @property int $event_id;
  */
 class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	
@@ -19,7 +23,11 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	/**
 	 * @var int
 	 */
-	var $event_id;
+	protected $event_id;
+	/**
+	 * @var int
+	 */
+	var $timeslot_id;
 	/**
 	 * How many spaces this event has
 	 * @var int
@@ -59,6 +67,9 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		if( is_object($data) && get_class($data) == "EM_Event" ){ //Creates a blank bookings object if needed
 			$this->event_id = $data->event_id;
 			$this->event = $data;
+			if ( $this->event->timeslot_id ) {
+				$this->timeslot_id = absint($this->event->timeslot_id);
+			}
 		}elseif( is_array($data) ){
 			foreach( $data as $EM_Booking ){
 				if( $EM_Booking instanceof EM_Booking ){
@@ -73,6 +84,8 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			return $this->load();
 		}elseif( $prop == 'event' ){
 			return $this->get_event();
+		} elseif ( $prop === 'event_id' ) {
+			return $this->get_event_uid();
 		}
 		return parent::__get( $prop );
 	}
@@ -86,7 +99,9 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			}
 		}elseif( $var == 'event' && $val instanceof EM_Event ){
 			$this->event = $val;
-			$this->event_id = $this->event->event_id;
+			$this->set_event_id( $this->event->event_id );
+		} elseif ( $var === 'event_id' ) {
+			$this->set_event_id( $val );
 		}
 		parent::__set( $var, $val );
 	}
@@ -114,7 +129,16 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			global $wpdb;
 			$bookings = $this->bookings = array();
 			if( $this->event_id > 0 ){
-				$sql = "SELECT * FROM ". EM_BOOKINGS_TABLE ." WHERE event_id ='{$this->event_id}' ORDER BY booking_date";
+				$timeslot = "";
+				if ( $this->get_event()->is_recurring( true ) ) {
+					$subquery = "SELECT event_id FROM " . EM_EVENTS_TABLE . " WHERE recurrence_set_id IN ( SELECT recurrence_set_id FROM " . EM_EVENT_RECURRENCES_TABLE . " WHERE event_id = '{$this->event_id}' )";
+					$sql = "SELECT * FROM ". EM_BOOKINGS_TABLE ." WHERE event_id IN ( $subquery ) ORDER BY booking_date";
+				} else {
+					if ( $this->event->timeslot_id ) {
+						$timeslot = " AND timeslot_id = '". absint($this->event->timeslot_id) . "'";
+					}
+					$sql = "SELECT * FROM ". EM_BOOKINGS_TABLE ." WHERE event_id ='{$this->event_id}' $timeslot ORDER BY booking_date";
+				}
 				$bookings = $wpdb->get_results($sql, ARRAY_A);
 			}
 			foreach ($bookings as $booking){
@@ -130,7 +154,6 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	 * @return boolean
 	 */
 	function add( $EM_Booking ){
-		global $wpdb,$EM_Mailer;
 		//Save the booking
 		$email = false;
 		//set status depending on approval settings
@@ -138,7 +161,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			$EM_Booking->booking_status = em_get_option('dbem_bookings_approval') ? 0:1;
 		}
 		$result = $EM_Booking->save(false);
-		if($result){
+		if ( $result ){
 			//Success
 		    do_action('em_bookings_added', $EM_Booking);
 			if( $this->bookings === null ) $this->bookings = array();
@@ -149,7 +172,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			}else{
 				$this->feedback_message = em_get_option('dbem_booking_feedback');
 			}
-			if(!$email){
+			if( !$email ){
 				$EM_Booking->email_not_sent = true;
 				$this->feedback_message .= ' '.em_get_option('dbem_booking_feedback_nomail');
 				if( current_user_can('activate_plugins') ){
@@ -198,7 +221,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			'is_open' =>  $this->is_open(), //whether there are any available tickets right now
 			'is_free' =>  $this->get_event()->is_free(),
 			'show_tickets' =>  true,
-			'id' =>  absint($this->event_id),
+			'id' =>  $this->get_event_uid(),
 			'already_booked' => is_object( $EM_Booking ) && $EM_Booking->booking_id > 0,
 			'EM_Booking' => $this->get_intent_default(), // get the booking intent if not supplied already
 		);
@@ -248,26 +271,64 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		}
 		return apply_filters('em_bookings_get_intent_default', $EM_Booking);
 	}
+
+	/**
+	 * Returns the base event_id, or alternatively the event ID including timeslot ID if $base_only is set to false. Useful for external code looking only for the numeric event_id, used internally for getting the full event ID including timeslot
+	 *
+	 * @param $base_only
+	 *
+	 * @return false|float|int|mixed|string
+	 */
+	function get_event_id ( $base_only = true ) {
+		$event_id = $this->event_id;
+		if ( !$base_only && $this->timeslot_id ) {
+			$event_id .= ':' . $this->timeslot_id;
+		}
+		return $event_id;
+	}
+
+	/**
+	 * Returns the full event ID including the timeslot ID
+	 * @return string
+	 */
+	function get_event_uid() {
+		return $this->get_event_id( false );
+	}
+
+	/**
+	 * Sets the event ID and also the timeslot ID if supplied in UID format
+	 * @param $event_id
+	 *
+	 * @return void
+	 */
+	public function set_event_id( $event_id ) {
+		if ( preg_match('/^(\d+):(\d+)$/', $event_id, $matches) ) {
+			$this->event_id = absint($matches[1]);
+			$this->timeslot_id = absint($matches[2]);
+		} elseif ( is_numeric( $event_id )) {
+			$this->event_id = absint($event_id);
+		}
+	}
 	
 	/**
 	 * Smart event locator, saves a database read if possible. Note that if an event doesn't exist, a blank object will be created to prevent duplicates.
 	 */
 	function get_event(){
-		if( $this->event && $this->event->event_id == $this->event_id ){
+		if( $this->event && $this->event->event_id == $this->get_event_uid() ){
 			return $this->event;
 		}
 		global $EM_Event;
-		if( is_object($EM_Event) && $EM_Event->event_id == $this->event_id ){
+		if( is_object($EM_Event) && $EM_Event->event_id == $this->get_event_uid() ){
 			$this->event = $EM_Event;
 			return $EM_Event;
 		}else{
 			if( is_numeric($this->event_id) && $this->event_id > 0 ){
-				$this->event = em_get_event($this->event_id);
+				$this->event = em_get_event( $this->get_event_uid() );
 				return $this->event;
 			}elseif( is_array($this->bookings) ){
 				foreach($this->bookings as $EM_Booking){
 					/* @var $EM_Booking EM_Booking */
-					return em_get_event($EM_Booking->event_id);
+					return em_get_event( $EM_Booking->event_id );
 				}
 			}
 		}
@@ -331,7 +392,6 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	function get_available_tickets( $include_member_tickets = false ){
 		$tickets = array();
 		foreach ($this->get_tickets() as $EM_Ticket){
-			/* @var $EM_Ticket EM_Ticket */
 			if( static::$disable_restrictions || $EM_Ticket->is_available($include_member_tickets) ){
 				//within time range
 				if( static::$disable_restrictions || $EM_Ticket->get_available_spaces() > 0 ){
@@ -421,9 +481,10 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			//faster way of deleting bookings for an event circumventing the need to load all bookings if it hasn't been loaded already
 			$event_id = absint($this->event_id);
 			$event_ids = array($event_id);
-			$booking_ids = $wpdb->get_col("SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id'");
-			$result_tickets = $wpdb->query("DELETE FROM ". EM_TICKETS_BOOKINGS_TABLE ." WHERE booking_id IN (SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id')");
-			$result = $wpdb->query("DELETE FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id'");
+			$timeslot = $this->timeslot_id ? ' AND timeslot_id = ' . absint($this->timeslot_id) : '';
+			$booking_ids = $wpdb->get_col("SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id' $timeslot");
+			$result_tickets = $wpdb->query("DELETE FROM ". EM_TICKETS_BOOKINGS_TABLE ." WHERE booking_id IN (SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id' $timeslot)");
+			$result = $wpdb->query("DELETE FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id' $timeslot");
 			if ( $this->get_event()->is_recurring( true ) ) {
 				$this->get_event()->get_recurrence_sets()->delete_bookings();
 			}
@@ -550,7 +611,13 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		global $wpdb;
 		if( $this->booked_spaces === null || $force_refresh ){
 			$status_cond = !em_get_option('dbem_bookings_approval') ? 'booking_status IN (0,1)' : 'booking_status = 1';
-			$sql = 'SELECT SUM(booking_spaces) FROM '.EM_BOOKINGS_TABLE. " WHERE $status_cond AND event_id=".absint($this->event_id);
+			if ( $this->get_event()->is_recurring( true ) ) {
+				$subquery = "SELECT event_id FROM " . EM_EVENTS_TABLE . " WHERE $status_cond AND recurrence_set_id IN ( SELECT recurrence_set_id FROM " . EM_EVENT_RECURRENCES_TABLE . " WHERE event_id = '{$this->event_id}' )";
+				$sql = "SELECT SUM(booking_spaces) FROM ". EM_BOOKINGS_TABLE ." WHERE event_id IN ( $subquery ) ORDER BY booking_date";
+			} else {
+				$timeslot = $this->timeslot_id ? ' AND timeslot_id = ' . absint($this->timeslot_id) : '';
+				$sql = 'SELECT SUM(booking_spaces) FROM '.EM_BOOKINGS_TABLE. " WHERE $status_cond AND event_id=".absint($this->event_id) . $timeslot;
+			}
 			$booked_spaces = $wpdb->get_var($sql);
 			$this->booked_spaces = $booked_spaces > 0 ? $booked_spaces : 0;
 		}
@@ -567,7 +634,13 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		}
 		global $wpdb;
 		if( $this->pending_spaces === null || $force_refresh ){
-			$sql = 'SELECT SUM(booking_spaces) FROM '.EM_BOOKINGS_TABLE. ' WHERE booking_status=0 AND event_id='.absint($this->event_id);
+			if ( $this->get_event()->is_recurring( true ) ) {
+				$subquery = "SELECT event_id FROM " . EM_EVENTS_TABLE . " WHERE booking_status IN (0,5) AND recurrence_set_id IN ( SELECT recurrence_set_id FROM " . EM_EVENT_RECURRENCES_TABLE . " WHERE event_id = '{$this->event_id}' )";
+				$sql = "SELECT SUM(booking_spaces) FROM ". EM_BOOKINGS_TABLE ." WHERE event_id IN ( $subquery ) ORDER BY booking_date";
+			} else {
+				$timeslot = $this->timeslot_id ? ' AND timeslot_id = ' . absint($this->timeslot_id) : '';
+				$sql = 'SELECT SUM(booking_spaces) FROM '.EM_BOOKINGS_TABLE. ' WHERE booking_status IN (0,5) AND event_id='.absint($this->event_id) . $timeslot;
+			}
 			$pending_spaces = $wpdb->get_var($sql);
 			$this->pending_spaces = $pending_spaces > 0 ? $pending_spaces : 0;
 		}
@@ -669,7 +742,8 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		if( is_numeric($user_id) && $user_id > 0 ){
 			global $wpdb;
 			// get the first booking ID available and return that
-			$sql = $wpdb->prepare('SELECT booking_id FROM '.EM_BOOKINGS_TABLE.' WHERE event_id = %d AND person_id = %d AND booking_status NOT IN (2,3)', $this->event_id, $user_id);
+			$timeslot = $this->timeslot_id ? ' AND timeslot_id = ' . absint($this->timeslot_id) : '';
+			$sql = $wpdb->prepare('SELECT booking_id FROM '.EM_BOOKINGS_TABLE.' WHERE event_id = %d AND person_id = %d AND booking_status NOT IN (2,3)' . $timeslot, $this->event_id, $user_id);
 			$booking_id = $wpdb->get_var($sql);
 			if( (int) $booking_id > 0 ){
 				$EM_Booking = em_get_booking($booking_id);
@@ -921,7 +995,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			//We can just get all the events here and return them
 			$sql = "
 				SELECT * FROM $bookings_table b 
-				LEFT JOIN $events_table e ON e.event_id=b.event_id 
+				LEFT JOIN $events_table e ON e.event_id=b.event_id
 				WHERE booking_id=".implode(" OR booking_id=", $args);
 			$results = $wpdb->get_results(apply_filters('em_bookings_get_sql',$sql),ARRAY_A);
 			$bookings = array();
@@ -974,7 +1048,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	//@todo remove in 6.0
 	function export_csv() {
 		global $EM_Event;
-		if($EM_Event->event_id != $this->event_id ){
+		if( $EM_Event->event_id != $this->get_event_uid() ){
 			$event = $this->get_event();
 			$event_name = $event->name;
 		}else{
@@ -1080,6 +1154,14 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 					// name of table (or array of tables) this join would also require, if joining based on a dependent table that links it to bookings
 					'requires' => null,
 				),
+				/* Needed?
+				EM_EVENT_TIMESLOTS_TABLE => array(
+						'args' => ['timeslot_id'],
+						'join' => "LEFT JOIN ".EM_EVENT_TIMESLOTS_TABLE." ON ".EM_EVENT_TIMESLOTS_TABLE.".event_id=".EM_EVENTS_TABLE.".event_id",
+						'fields' => (new TimeRanges(''))->get_fields(true),
+						'requires' => EM_EVENTS_TABLE,
+				)
+				*/
 			),
 			'prefixes' => array(
 				EM_EVENTS_TABLE => 'event',
@@ -1213,6 +1295,9 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		if( !empty($args['booking_id']) && static::array_is_numeric($args['booking_id']) ) {
 			$conditions['ticket'] = EM_BOOKINGS_TABLE.'.booking_id IN ('.implode(',', $args['booking_id']).')';
 		}
+		if ( !empty( $args['timeslot_id'] ) ) {
+			$conditions['timeslot'] = EM_BOOKINGS_TABLE . '. timeslot_id = ' . absint($args['timeslot_id']);
+		}
 		return apply_filters('em_bookings_build_sql_conditions', $conditions, $args);
 	}
 	
@@ -1233,6 +1318,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			'array' => false, //returns an array of results if true, if an array or text it's assumed an array of specific table fields or single field name requested
 			'country' => false, // experimeenal, if you see this and want more locatiion booking searches, let us know!
 			'booking_id' => [],
+			'timeslot_id' => false,
 		);
 		//sort out whether defaults were supplied or just the array of search values
 		if( empty($array) ){
@@ -1251,6 +1337,15 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			    $array['blog'] = false;
 			}
 		}
+		if ( !empty($array['timeslot_id']) ) {
+			$array['timeslot_id'] = absint( $array['timeslot_id'] );
+		}
+		// deal with timeslot event ids
+		if ( !empty($array['event']) && preg_match('/^([0-9]+):([0-9]+)$/', $array['event'], $matches) ) {
+			$array['event'] = absint( $matches[1] );
+			$array['timeslot_id'] = absint( $matches[2] );
+		}
+		// get search defaults from parent
 		$search_defaults = parent::get_default_search($defaults,$array);
 		//clean up array value, which could be an actual array for EM_Bookings
 		if( !empty($array['array']) ){

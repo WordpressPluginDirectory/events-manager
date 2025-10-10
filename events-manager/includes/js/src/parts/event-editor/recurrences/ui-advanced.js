@@ -123,10 +123,11 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		}
 
 		// Listen for changes to .em-time-range on non-primary recurrence sets
-		if ( e.target.matches('.em-time-input') ) {
+		if ( e.target.matches('.em-recurrence-timeranges *') ) {
 			let recurrenceSet = e.target.closest('.em-recurrence-set');
-			let startTimeInput = recurrenceSet.querySelector('.em-time-input.em-time-start');
-			let endTimeInput = recurrenceSet.querySelector('.em-time-input.em-time-end');
+			let timeranges = recurrenceSet.querySelector('.em-recurrence-timeranges .em.timeranges');
+			let startTimeInput = recurrenceSet.querySelector('.em-time-input.em-time-start.earliest-time');
+			let endTimeInput = recurrenceSet.querySelector('.em-time-input.em-time-end.latest-time');
 			let durationInput = recurrenceSet.querySelector('input.em-recurrence-duration');
 			let isMultiDay = durationInput?.value > 0 || durationInput?.placeholder > 0 || false;
 
@@ -200,12 +201,14 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 	// Update the recurrence summary of recurrences
 	recurrenceSets.addEventListener('updateRecurrenceSummary', function( e ) {
 		let sets = e.target.matches('.em-recurrence-set') ? [ e.target ] : e.target.querySelectorAll('.em-recurrence-set');
+		let timerangeDefault = e.target.querySelector('.em-recurrence-set[data-primary] .em-recurrence-timeranges .em-timeranges');
+
 		sets.forEach( function ( recurrenceSet ){
 			let advancedSummary = recurrenceSet.querySelector('.advanced-summary');
 			if ( advancedSummary ) {
 				// Initialize objects for values as one-liners
 				let dateValues = { start: '', end: '', startIsSet: false, endIsSet: false };
-				let timeValues = { start: '', end: '', startIsSet: false, endIsSet: false };
+				let timeValues = { start: timerangeDefault.dataset.start, end: timerangeDefault.dataset.end, startIsSet: false, endIsSet: false };
 
 				// Get date values with a loop
 				if ( recurrenceSet.querySelector('select.recurrence_freq')?.value === 'on' ) {
@@ -255,15 +258,18 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 				}
 
 				// Get time values with a loop
-				['start', 'end'].forEach(function(type) {
-					let timeInput = recurrenceSet.querySelector(`.em-recurrence-times .em-time-${type}`);
-					if (timeInput) {
-						timeValues[type] = timeInput.value || timeInput.placeholder || '';
-						if ( timeInput.value ) {
-							timeValues[type + 'IsSet'] = true;
+				if ( recurrenceSet.querySelector('.em-recurrence-timeranges .recurrence-timeranges-default input:checked') ) {
+					timeranges = recurrenceSet.querySelector('.em-recurrence-timeranges .em.timeranges');
+					['start', 'end'].forEach(function(type) {
+						let timeInput = recurrenceSet.querySelector(`.em-recurrence-times .em-time-${type}`);
+						if (timeInput) {
+							timeValues[type] = timeranges.dataset[type];
+							if ( timeInput.value ) {
+								timeValues[type + 'IsSet'] = !!timeValues[type];
+							}
 						}
-					}
-				});
+					});
+				}
 
 				// Get timezone from select
 				let timezoneSelect = recurrenceSet.querySelector('.em-recurrence-timezone select');

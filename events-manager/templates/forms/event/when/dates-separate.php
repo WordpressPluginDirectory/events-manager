@@ -5,7 +5,7 @@
 /* @var EM_Event $EM_Event */
 ?>
 <div class="em-datepicker em-datepicker-until em-event-dates">
-		<label for="em-date-start-<?php echo $id ?>" class="em-event-text"><?php _e ( 'Event Dates ', 'events-manager'); ?></label>
+	<label for="em-date-start-<?php echo $id ?>" class="em-event-text"><?php _e ( 'Event Dates ', 'events-manager'); ?></label>
 	<div class="em-datepicker-until-fields">
 		<input id="em-date-start-<?php echo $id ?>" type="hidden" class="em-date-input em-date-input-start" aria-hidden="true" placeholder="<?php _e ( 'Start Date', 'events-manager'); ?>" aria-label="<?php _e ( 'Start Date', 'events-manager'); ?>">
 		<label for="em-date-end-<?php echo $id ?>"><?php _e('until','events-manager'); ?></label>

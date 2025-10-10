@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('em_event_editor_ready', function() {
 
 	// load event recurrence data
 	document.querySelectorAll('.em-recurrence-sets').forEach( function( recurrenceSets ) {
@@ -9,11 +9,14 @@ document.addEventListener('DOMContentLoaded', function() {
 	// Event Status Warning
 	document.querySelectorAll('select[name="event_active_status"]').forEach(select => {
 		select.addEventListener('change', function (event) {
-			if ( select.value === '0' && !confirm( EM.event_cancellations.warning.replace(/\\n/g, '\n') ) ) {
+			if ( select.value === '0' && !confirm( EM.event_cancellations.warning.replace(/\\n/g, '\n') ) ) { 
 				event.preventDefault();
 			}
 		});
 	});
+
+	// disable recurrence meta box selection since we must always show it
+	document.getElementById('em-event-recurring-hide')?.setAttribute('disabled', '');
 
 	// Handle the recurring/repeating event selection and initialize showing/hiding relevant recurring sections
 	document.querySelectorAll( '.event_type' ).forEach( eventType => {
@@ -32,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				} else {
 					selectedDates = eventDatePicker.querySelector('.em-date-input.flatpickr-input')._flatpickr.selectedDates;
 				}
-				let eventTimeRange = eventDateTimes.querySelector('.event-times.em-time-range');
+				let eventTimeRange = eventDateTimes.querySelector('.em-time-range');
 				// we need to get jQuery elements to handle the timepicker
 				let eventStartTime = eventTimeRange.querySelector('.em-time-input.em-time-start');
 				let eventEndTime = eventTimeRange.querySelector('.em-time-input.em-time-end');

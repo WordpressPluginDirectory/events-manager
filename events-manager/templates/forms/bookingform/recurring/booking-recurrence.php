@@ -15,11 +15,14 @@
 /* @var mixed $scope */
 /* @var mixed $scope */
 $can_book = $EM_Event->get_bookings()->is_open();
+$event_id = $EM_Event->event_id;
 ?>
-<a href="#<?php echo $EM_Event->start()->getDate() . '@' . $EM_Event->start()->getTime(); ?>" class="em-booking-recurrence em-item em-button button-secondary" <?php if ( !$can_book ) echo 'disabled'; ?> data-event="<?php echo $EM_Event->event_id; ?>">
+<a href="#<?php echo $EM_Event->start()->getDate() . '@' . $EM_Event->start()->getTime(); ?>" class="em-booking-recurrence em-item em-button button-secondary" <?php if ( !$can_book ) echo 'disabled'; ?> data-event="<?php echo $event_id; ?>">
+	<?php if ( !empty($multiday) ): ?>
 	<div class="em-booking-recurrence-date">
 		<span class="em-icon em-icon-calendar"></span><span><?php echo $EM_Event->output('#_EVENTDATES'); ?></span>
 	</div>
+	<?php endif; ?>
 	<div class="em-booking-recurrence-time">
 		<span class="em-icon em-icon-clock"></span><span><?php echo $EM_Event->output('#_EVENTTIMES'); ?></span>
 	</div>

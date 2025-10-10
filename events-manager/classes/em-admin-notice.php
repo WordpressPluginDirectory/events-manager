@@ -147,7 +147,7 @@ class EM_Admin_Notice {
 			$return = false; //unless this test passes, don't show it
 			if( empty($this->where) || $this->where == 'all' ){
 				$return = true;
-			}elseif( !empty($_REQUEST['post_type']) && in_array($_REQUEST['post_type'], array(EM_POST_TYPE_EVENT, EM_POST_TYPE_LOCATION, 'event-recurring')) ){
+			}elseif( !empty($_REQUEST['post_type']) && in_array($_REQUEST['post_type'], \EM\Archetypes::get_cpts()) ){
 				if( $this->where == 'plugin' ) $return = true;
 				elseif( empty($_REQUEST['page']) && in_array($this->where, array(EM_POST_TYPE_EVENT, EM_POST_TYPE_LOCATION, 'event-recurring')) ) $return = true;
 				elseif( $this->where == 'settings' && !empty($_REQUEST['page']) && $_REQUEST['page'] == 'events-manager-options' ) $return = true;

@@ -858,9 +858,29 @@ class EM_Bookings_Table extends EM\List_Table {
 				$val = '<a href="'.$EM_Booking->get_event()->get_bookings_url().'">'. esc_html($EM_Booking->get_event()->event_name) .'</a>';
 			}
 		}elseif($col == 'event_date'){
-			$val = $EM_Booking->get_event()->output('#_EVENTDATES');
+			if( in_array( $format, ['csv', 'xls', 'xlsx'] ) ){
+				$val = $EM_Booking->get_event()->output('#_EVENTDATES');
+			}else{
+				if ( $EM_Booking->get_event()->is_recurrence() || $EM_Booking->get_event()->is_timeslot() ) {
+					$val = $EM_Booking->get_event()->output('#_EVENTDATES');
+					$val = '<a href="'. add_query_arg( [ 'event_id' => $EM_Booking->get_event()->get_event_id() ], $EM_Booking->get_event()->get_bookings_url() ).'">'. esc_html($val) .'</a>';
+					static::$cols_allowed_html[$col] = true;
+				} else {
+					$val = $EM_Booking->get_event()->output('#_EVENTDATES');
+				}
+			}
 		}elseif($col == 'event_time'){
-			$val = $EM_Booking->get_event()->output('#_EVENTTIMES');
+			if( in_array( $format, ['csv', 'xls', 'xlsx'] ) ){
+				$val = $EM_Booking->get_event()->output('#_EVENTTIMES');
+			}else{
+				if ( $EM_Booking->get_event()->is_timeslot() ) {
+					$val = $EM_Booking->get_event()->output('#_EVENTTIMES');
+					$val = '<a href="'.$EM_Booking->get_event()->get_bookings_url().'">'. esc_html($val) .'</a>';
+					static::$cols_allowed_html[$col] = true;
+				} else {
+					$val = $EM_Booking->get_event()->output('#_EVENTTIMES');
+				}
+			}
 		}elseif($col == 'booking_price'){
 			$val = $EM_Booking->get_price(true);
 		}elseif($col == 'booking_status'){

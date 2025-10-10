@@ -260,7 +260,7 @@ namespace EM {
 			$settings = $this->get_current_context();
 			// set things like limit, cols, etc.
 			$this->cols = $settings['cols'] ?? $this->cols;
-			$this->limit = $settings['limit'] ?? $this->limit;
+			$this->limit = absint( $settings['limit'] ?? $this->limit ) ?: 10;
 			$this->filters = $settings['filters'] ?? $this->filters;
 			$this->orderby = $settings['orderby'] ?? $this->orderby;
 			// set default filters - child classes could set them here or after this parent constructor is called
@@ -1355,7 +1355,7 @@ namespace EM {
 		public static function export_csv_http_headers() {
 			//generate bookings export according to search request
 			if( !empty($_REQUEST['event_id']) ){
-				$EM_Event = em_get_event( absint($_REQUEST['event_id']) );
+				$EM_Event = em_get_event( $_REQUEST['event_id'] );
 			}
 			header("Content-Type: application/octet-stream; charset=utf-8");
 			$file_name = $EM_Event->event_slug ?? get_bloginfo();
@@ -1367,7 +1367,7 @@ namespace EM {
 		public static function export_csv_header_title( $handle ) {
 			// get Event ID
 			if( !empty($_REQUEST['event_id']) ){
-				$EM_Event = em_get_event( absint($_REQUEST['event_id']) );
+				$EM_Event = em_get_event( $_REQUEST['event_id'] );
 			}
 			// csv headers
 			if ( !defined('EM_CSV_DISABLE_HEADERS') || !EM_CSV_DISABLE_HEADERS ) {

@@ -773,9 +773,9 @@
   transform: rotate(30deg) !important;
   box-sizing: border-box !important;
 }
-.em.pixelbones .input input[type=checkbox],
-.em.pixelbones .input input[type=radio], .em.pixelbones.input input[type=checkbox],
-.em.pixelbones.input input[type=radio] {
+.em.pixelbones .input input[type=checkbox]:not([data-nostyle]),
+.em.pixelbones .input input[type=radio]:not([data-nostyle]), .em.pixelbones.input input[type=checkbox]:not([data-nostyle]),
+.em.pixelbones.input input[type=radio]:not([data-nostyle]) {
   margin-bottom: 0 !important;
   display: inline-block !important;
   background-color: var(--background-color-checkboxes) !important;
@@ -913,12 +913,9 @@
   For other event list and single event display CSS, see the _items.scss file
    */
   /* Booking Form */
+  /* Timeslots picker */
   /* Booking Calendar */
   /* My Bookings Page */
-  /* Recurring Summary Dates Styling */
-  /*
-  Recurrence Sets and Set styling, out here to reduce selector length, and allow draggable styling
-   */
   /* Bookings Table (originally from events-manager.css) */
   /* The selection modal of columns for the bookings table */
 }
@@ -935,6 +932,7 @@
   --icon-edit: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' viewBox='0 0 512 512' fill='%23777'%3E%3Cpath d='M498.125 92.38 419.62 13.874c-18.496-18.497-48.436-18.5-66.935 0-13.167 13.169-302.639 302.642-308.16 308.161-2.182 2.182-3.725 4.918-4.46 7.915L.502 491.068c-3.036 12.368 8.186 23.44 20.431 20.432 8.361-2.053 153.718-37.747 161.117-39.564 2.996-.735 5.734-2.278 7.915-4.46l308.161-308.161c18.496-18.497 18.501-48.436-.001-66.935zM39.957 472.043l1.612-6.562 4.951 4.951-6.563 1.611zm44.917-11.029-33.887-33.887 14.736-60.009 79.16 79.16-60.009 14.736zm93.148-29.367-97.668-97.668L332.559 81.773l97.668 97.668-252.205 252.206zM474.24 135.429l-19.508 19.507-97.667-97.668 19.507-19.507c5.294-5.293 13.867-5.298 19.163 0l78.506 78.507c5.295 5.295 5.295 13.864-.001 19.161z'/%3E%3C/svg%3E");
   --icon-calendar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' viewBox='0 0 512 512' fill='%23555'%3E%3Cpath d='M472 60h-8V44c0-13.234-10.766-24-24-24s-24 10.766-24 24v16H96V44c0-13.234-10.766-24-24-24S48 30.766 48 44v16h-8C17.944 60 0 77.944 0 100v352c0 22.056 17.944 40 40 40h432c22.056 0 40-17.944 40-40V100c0-22.056-17.944-40-40-40zm-40-16c0-4.411 3.589-8 8-8s8 3.589 8 8v23.981c0 .007-.001.013-.001.019s.001.013.001.019V92c0 4.411-3.589 8-8 8s-8-3.589-8-8V44zM72 36c4.411 0 8 3.589 8 8v48c0 4.411-3.589 8-8 8s-8-3.589-8-8V44c0-4.411 3.589-8 8-8zm400 440H40c-13.234 0-24-10.766-24-24V148h384c4.418 0 8-3.582 8-8s-3.582-8-8-8H16v-32c0-13.234 10.766-24 24-24h8v16c0 13.234 10.766 24 24 24s24-10.766 24-24V76h320v16c0 13.234 10.766 24 24 24s24-10.766 24-24V76h8c13.234 0 24 10.766 24 24v32h-16c-4.418 0-8 3.582-8 8s3.582 8 8 8h16v304c0 13.234-10.766 24-24 24z'/%3E%3Cpath d='M448 132h-16c-4.418 0-8 3.582-8 8s3.582 8 8 8h16c4.418 0 8-3.582 8-8s-3.582-8-8-8z'/%3E%3Cg stroke='null'%3E%3Crect width='30' height='15' x='206' y='222' rx='8'/%3E%3Crect width='30' height='15' x='277' y='222' rx='8'/%3E%3Crect width='30' height='15' x='346' y='222' rx='8'/%3E%3Crect width='30' height='15' x='416' y='222' rx='8'/%3E%3Crect width='30' height='15' x='66' y='302' rx='8'/%3E%3Crect width='30' height='15' x='136' y='302' rx='8'/%3E%3Crect width='30' height='15' x='206' y='302' rx='8'/%3E%3Crect width='30' height='15' x='276' y='302' rx='8'/%3E%3Crect width='30' height='15' x='346' y='302' rx='8'/%3E%3Crect width='30' height='15' x='416' y='302' rx='8'/%3E%3Crect width='30' height='15' x='66' y='392' rx='8'/%3E%3Crect width='30' height='15' x='136' y='392' rx='8'/%3E%3Crect width='30' height='15' x='206' y='392' rx='8'/%3E%3Crect width='30' height='15' x='276' y='392' rx='8'/%3E%3Crect width='30' height='15' x='346' y='392' rx='8'/%3E%3C/g%3E%3C/svg%3E");
   --icon-calendar-empty: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' viewBox='0 0 512 512' fill='%23555'%3E%3Cg stroke='null'%3E%3Cpath d='M472 47.37289h-8V30.42374c0-14.01907-10.766-25.42373-24-25.42373s-24 11.40466-24 25.42373v16.94915H96V30.42374C96 16.40467 85.234 5.00001 72 5.00001S48 16.40467 48 30.42374v16.94915h-8c-22.056 0-40 19.00847-40 42.37288v372.88136c0 23.36441 17.944 42.37288 40 42.37288h432c22.056 0 40-19.00847 40-42.37288V89.74577c0-23.36441-17.944-42.37288-40-42.37288zm-40-16.94915c0-4.67267 3.589-8.47458 8-8.47458s8 3.80191 8 8.47458v25.4036c0 .00742-.001.01377-.001.02013s.001.01377.001.02013v25.4036c0 4.67267-3.589 8.47458-8 8.47458s-8-3.80191-8-8.47458V30.42374zM72 21.94916c4.411 0 8 3.80191 8 8.47458V81.2712c0 4.67267-3.589 8.47458-8 8.47458s-8-3.80191-8-8.47458V30.42374c0-4.67267 3.589-8.47458 8-8.47458zm400 466.10169H40c-13.234 0-24-11.40466-24-25.42373v-322.0339h384c4.418 0 8-3.79449 8-8.47458s-3.582-8.47458-8-8.47458H16V89.74575c0-14.01907 10.766-25.42373 24-25.42373h8v16.94915c0 14.01907 10.766 25.42373 24 25.42373s24-11.40466 24-25.42373V64.32202h320v16.94915c0 14.01907 10.766 25.42373 24 25.42373s24-11.40466 24-25.42373V64.32202h8c13.234 0 24 11.40466 24 25.42373v33.89831h-16c-4.418 0-8 3.79449-8 8.47458s3.582 8.47458 8 8.47458h16v322.0339c0 14.01907-10.766 25.42373-24 25.42373z'/%3E%3Cpath d='M448 123.64407h-16c-4.418 0-8 3.79449-8 8.47458s3.582 8.47458 8 8.47458h16c4.418 0 8-3.79449 8-8.47458s-3.582-8.47458-8-8.47458z'/%3E%3C/g%3E%3C/svg%3E");
+  --icon-24h: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" fill="%23646468" stroke="%23646468" viewBox="0 0 461.5 461.5"><path d="M268.6 409.9c-3.6 1-7.3 1.8-11 2.6a17.7 17.7 0 1 0 7.1 34.7c4.4-.9 8.8-1.9 13.1-3a17.7 17.7 0 1 0-9.2-34.3zM145 400a179 179 0 0 1-10.2-4.9 17.7 17.7 0 0 0-16.4 31.5c4 2 8 4 12.1 5.8A17.7 17.7 0 0 0 145 400zM206 415.6c-3.8-.3-7.5-.7-11.2-1.2a17.7 17.7 0 1 0-5 35c4.4.7 8.9 1.2 13.3 1.6a17.7 17.7 0 1 0 2.9-35.4zM325.7 383.4c-3 2.2-6.2 4.2-9.5 6.2a17.7 17.7 0 0 0 18.4 30.3c3.8-2.3 7.6-4.7 11.2-7.2a17.7 17.7 0 0 0-20-29.3zM395.5 335.5c-8-5.7-19-4-24.8 4l-6.9 9a17.7 17.7 0 1 0 27.5 22.4c2.8-3.4 5.6-7 8.2-10.7 5.7-8 3.9-19-4-24.7zM420.3 270.9a17.7 17.7 0 0 0-22 12c-1 3.6-2.2 7.3-3.5 10.8a17.6 17.6 0 0 0 10.7 22.7 17.7 17.7 0 0 0 22.7-10.7c1.5-4.2 2.9-8.5 4.1-12.8a17.7 17.7 0 0 0-12-22zM453.6 155.3l-23.4 7.3A219 219 0 0 0 309.4 29.2l-.7-.3C262.7 9 212 5 163.2 18.2l-1.2.3a214 214 0 0 0-12.8 4c-.4 0-.7.2-1 .3a218.6 218.6 0 0 0-107 80l-.3.4c-2.5 3.6-5 7.4-7.4 11.2l-.4.7A219 219 0 0 0 9.5 294.8c9.4 31.1 25 59 46.5 83.2a17.7 17.7 0 0 0 26.5-23.7 183 183 0 0 1-27-39.4l-.1-.5-4.8-10.2v-.1a185.4 185.4 0 0 1 60.8-222.3l2.7-2A184.2 184.2 0 0 1 232 46.4a185.8 185.8 0 0 1 147.8 90.3l1.4 2.4.2.3c6 10.5 11 21.8 15 33.7l-23.3 7.3c-6.5 2-7.1 6.6-1.5 10.3l50.8 32.9a10 10 0 0 0 15-4.7l23.2-55.8c2.6-6.3-.6-9.8-7-7.8z"/><path d="M155.3 231.2a150.5 150.5 0 0 0-35 33 67 67 0 0 0-11.1 29.8H216v-29h-55.7a129.4 129.4 0 0 1 23-18.3 94.2 94.2 0 0 0 25-23.4 40.8 40.8 0 0 0 6.8-22.4 34.8 34.8 0 0 0-22.4-33.1c-7-2.9-16.7-4.3-29.3-4.3-12 0-21.4 1.5-28.2 4.5-6.8 3-12 7.3-15.8 13a57 57 0 0 0-7.7 23.4l35.7 3c1-7.3 3-12.3 5.8-15.2 3-2.9 6.6-4.3 11.2-4.3 4.3 0 8 1.4 10.9 4.2 2.9 2.7 4.3 6 4.3 10 0 3.6-1.5 7.4-4.4 11.5-2.9 4-9.6 9.9-20 17.6zM323.7 294v-24h16v-27.7h-16v-78.8h-31.1l-65 77.2V270h65v24h31zm-65.4-51.7 34.3-40.3v40.3h-34.3z"/></svg>');
   --icon-list-grouped: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' viewBox='0 0 64 64' fill='%23555'%3E%3Cpath stroke='null' d='M1.52092 5.89552h60.86722c.84042 0 1.52107-.4472 1.52107-.9995 0-.5522-.68065-.9995-1.52107-.9995H1.52092C.68065 3.89652 0 4.34382 0 4.89602c0 .5523.68065.9995 1.52092.9995z'/%3E%3Cpath d='M62.98405 19.62524h-40c-.5522 0-.9995.4473-.9995.9995 0 .5523.4473.9995.9995.9995h40c.5523 0 .9996-.4472.9996-.9995 0-.5522-.4473-.9995-.9996-.9995z'/%3E%3Cpath stroke='null' d='M10.00888 13.67918c-3.87581 0-7.02924 3.15984-7.02924 7.04356 0 3.88384 3.15342 7.0437 7.02924 7.0437 3.87592 0 7.02934-3.15986 7.02934-7.0437 0-3.88372-3.15342-7.04356-7.02934-7.04356zm0 11.80281c-2.61911 0-4.74945-2.13465-4.74945-4.75925 0-2.62448 2.13034-4.75913 4.74945-4.75913 2.61925 0 4.74956 2.13465 4.74956 4.75913 0 2.62459-2.1303 4.75925-4.74956 4.75925zM1.52092 37.42953h60.86722c.84043 0 1.52108-.4472 1.52108-.9995 0-.5522-.68065-.9995-1.52108-.9995H1.52092c-.84027 0-1.52092.4473-1.52092.9995 0 .5523.68065.9995 1.52092.9995z'/%3E%3Cpath d='M62.98405 51.15925h-40c-.5522 0-.9995.4473-.9995.9995 0 .5523.4473.9995.9995.9995h40c.5523 0 .9996-.4472.9996-.9995 0-.5522-.4473-.9995-.9996-.9995z'/%3E%3Cpath stroke='null' d='M10.00888 45.21319c-3.87582 0-7.02924 3.15984-7.02924 7.04356 0 3.88384 3.15342 7.0437 7.02924 7.0437 3.87592 0 7.02934-3.15986 7.02934-7.0437 0-3.88372-3.15342-7.04356-7.02934-7.04356zm0 11.80281c-2.61912 0-4.74945-2.13465-4.74945-4.75925 0-2.62447 2.13033-4.75913 4.74945-4.75913 2.61925 0 4.74955 2.13466 4.74955 4.75913 0 2.6246-2.1303 4.75925-4.74955 4.75925z'/%3E%3C/svg%3E");
   --icon-list-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%23555' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Crect width='8' height='8' x='2' y='2' rx='0'/%3E%3Crect width='8' height='8' x='2' y='14' rx='0'/%3E%3Crect width='8' height='8' x='14' y='2' rx='0'/%3E%3Crect width='8' height='8' x='14' y='14' rx='0'/%3E%3C/svg%3E");
   --icon-filter: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' viewBox='0 0 256 256'%3E%3Cg fill='%23555' stroke-miterlimit='10' stroke-width='0'%3E%3Cpath d='M1.793 44.436943c0-3.0962784 2.5129216-5.6092 5.6092-5.6092h92.229271c3.0962784 0 5.6092 2.5129216 5.6092 5.6092s-2.5129216 5.6092-5.6092 5.6092H7.4022c-3.0962784 0-5.6092-2.510117-5.6092-5.6092zM87.7343578 211.563057c0-3.0962784 2.5129216-5.6092 5.6092-5.6092H248.5978c3.0962784 0 5.6092 2.5129216 5.6092 5.6092s-2.5129216 5.6092-5.6092 5.6092H93.3435578c-3.099083 0-5.6092-2.5129216-5.6092-5.6092zM1.793 128c0-3.0962784 2.5129216-5.6092 5.6092-5.6092h168.4947588c3.0962784 0 5.6092 2.5129216 5.6092 5.6092s-2.5129216 5.6092-5.6092 5.6092H7.4022c-3.0962784 0-5.6092-2.5129216-5.6092-5.6092z'/%3E%3Cpath d='M170.2877588 128c0-15.3243344 12.466447-27.793586 27.793586-27.793586S225.8749308 112.672861 225.8749308 128s-12.466447 27.793586-27.793586 27.793586S170.2877588 143.327139 170.2877588 128zm44.3659674 0c0-9.1401914-7.4349946-16.575186-16.575186-16.575186S181.5033542 118.8598086 181.5033542 128s7.4349946 16.575186 16.575186 16.575186 16.575186-7.4349946 16.575186-16.575186zM94.022271 44.436943c0-15.3243344 12.466447-27.793586 27.793586-27.793586 15.3243344 0 27.793586 12.466447 27.793586 27.793586s-12.466447 27.793586-27.793586 27.793586-27.793586-12.4692516-27.793586-27.793586zm44.368772 0c0-9.1401914-7.4349946-16.575186-16.575186-16.575186s-16.575186 7.4349946-16.575186 16.575186 7.4349946 16.575186 16.575186 16.575186 16.575186-7.4349946 16.575186-16.575186zM43.3655858 211.563057c0-15.3243344 12.466447-27.7907814 27.793586-27.7907814 15.3243344 0 27.7907814 12.466447 27.7907814 27.7907814 0 15.327139-12.466447 27.793586-27.7907814 27.793586s-27.793586-12.466447-27.793586-27.793586zm44.368772 0c0-9.1401914-7.43219-16.5723814-16.5723814-16.5723814s-16.575186 7.43219-16.575186 16.5723814 7.4349946 16.575186 16.575186 16.575186 16.5723814-7.4349946 16.5723814-16.575186z'/%3E%3Cpath d='M138.391043 44.436943c0-3.0962784 2.5129216-5.6092 5.6092-5.6092H248.5978c3.0962784 0 5.6092 2.5129216 5.6092 5.6092s-2.5129216 5.6092-5.6092 5.6092H144.000243c-3.099083 0-5.6092-2.510117-5.6092-5.6092zM214.6537262 128c0-3.0962784 2.5129216-5.6092 5.6092-5.6092H248.5978c3.0962784 0 5.6092 2.5129216 5.6092 5.6092s-2.5129216 5.6092-5.6092 5.6092h-28.3348738c-3.0962784 0-5.6092-2.5129216-5.6092-5.6092zM1.793 211.563057c0-3.0962784 2.5129216-5.6092 5.6092-5.6092h41.5725858c3.0962784 0 5.6092 2.5129216 5.6092 5.6092s-2.5129216 5.6092-5.6092 5.6092H7.4022c-3.0962784 0-5.6092-2.5129216-5.6092-5.6092z'/%3E%3C/g%3E%3C/svg%3E");
@@ -981,6 +979,24 @@
   --icon-phone: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23230000" stroke="%23230000" stroke-width="2.2" viewBox="0 0 48 48"><path fill="none" stroke-linecap="round" stroke-linejoin="round" d="M19.3 12.5a24 24 0 0 1-.9-4.4 3 3 0 0 0-3-2.6H8.7a3 3 0 0 0-3 3.3 37 37 0 0 0 33.6 33.6 3 3 0 0 0 3.3-3v-6.1c0-2.3-1.1-3.6-2.6-3.7a24 24 0 0 1-4.4-1c-1.7-.4-3.6 0-4.8 1.3l-3 3a31.3 31.3 0 0 1-12.6-12.6l3-3a4.9 4.9 0 0 0 1.2-4.8Z"/></svg>');
   --icon-file: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%23000" viewBox="0 0 64 64"><path d="M44 8v8h8"/><path d="m52 16-8-8H12v48h40V16z"/></svg>');
   --icon-drag: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%23555" stroke-width="0" viewBox="0 0 15 15"><path fill="%23555" fill-rule="evenodd" stroke="none" d="M4.5 2.5a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm4 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm-4 5a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm4 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm-4 5a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm4 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0Z" clip-rule="evenodd"/></svg>');
+}
+.em .em-checkbox-icon:has(.em-icon) {
+  cursor: pointer;
+}
+.em .em-checkbox-icon:has(.em-icon):has(input:checked) .em-icon {
+  opacity: 1;
+}
+.em .em-checkbox-icon:has(.em-icon):has(input:checked)[style][data-checked-icon] .em-icon {
+  background-image: var(--checked-icon);
+}
+.em .em-checkbox-icon:has(.em-icon) :not(.em-icon) {
+  display: none !important;
+}
+.em .em-checkbox-icon:has(.em-icon) .em-icon {
+  width: 24px;
+  height: 24px;
+  background-size: 24px;
+  opacity: 0.4;
 }
 .em .em-icon {
   display: inline-block;
@@ -1051,6 +1067,9 @@
 }
 .em .em-icon.em-icon-calendar-empty {
   background-image: var(--icon-calendar-empty);
+}
+.em .em-icon.em-icon-24h {
+  background-image: var(--icon-24h);
 }
 .em .em-icon.em-icon-list-grouped {
   background-image: var(--icon-list-grouped);
@@ -3817,6 +3836,63 @@
 .em .em-booking-form-summary .skeleton .em-bs-row.em-bs-row-item {
   grid-template-columns: 7fr 1fr 2fr;
 }
+.em .em-booking-timeslot-picker.mode-buttons {
+  --original-accent-color: var(--accent-color);
+  --selected-border: var(--original-accent-color);
+}
+.em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslots-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 5px;
+  text-align: center;
+}
+.em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslot {
+  --accent-color: var(--text-color-softer);
+  --accent-color-hover: var(--text-color-normal);
+  margin: 0;
+  padding: 10px;
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
+  line-height: 20px;
+  display: block;
+}
+.em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslot.selected {
+  border: 2px solid var(--accent-color) !important;
+}
+.em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslot:not(.selected) {
+  opacity: 0.5;
+}
+.em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslot:not(.skeleton-item) {
+  border: 1px solid var(--border-color);
+  background-color: var(--background-color-inputs, #fff);
+  text-decoration: none;
+  color: var(--text-color-normal);
+  cursor: pointer;
+}
+.em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslot.skeleton-item {
+  height: auto;
+}
+.em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslot:not([disabled]):hover {
+  border-color: var(--accent-color) !important;
+  transform: translateY(-2px);
+}
+.em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslot * {
+  padding: 0 !important;
+  margin: 0 !important;
+  vertical-align: middle;
+}
+.em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslot .em-icon {
+  margin-right: 8px !important;
+}
+.em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslot[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: var(--background-color-softer);
+}
+.em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslot .em-booking-timeslot-spaces {
+  font-size: 80%;
+  font-style: italic;
+}
 .em .em-booking-recurrence-picker.mode-calendar {
   display: grid;
   grid-template-columns: 1fr;
@@ -4044,26 +4120,6 @@
 .em.em-event-editor .em-ticket-form .em-ticket-form-main > div.inline-inputs:last-child, .em.em-event-editor .em-ticket-form .em-ticket-form-main > div .inline-inputs:last-child, .em.em-event-editor .em-ticket-form .em-ticket-form-advanced > div.inline-inputs:last-child, .em.em-event-editor .em-ticket-form .em-ticket-form-advanced > div .inline-inputs:last-child {
   margin-bottom: 20px;
 }
-.em form.em-is-recurring .single-event-data {
-  display: none;
-  visibility: hidden;
-}
-.em form.em-is-recurring #em-tickets-form .ticket-dates-from-normal,
-.em form.em-is-recurring #em-tickets-form .ticket-dates-to-normal,
-.em form.em-is-recurring #event-rsvp-options .em-booking-date-normal {
-  display: none;
-  visibility: hidden;
-}
-.em form:not(.em-is-recurring) .recurring-event-editor, .em form:not(.em-is-recurring) .recurring-event-data, .em form:not(.em-is-recurring) .postbox#em-event-recurring {
-  display: none;
-  visibility: hidden;
-}
-.em form:not(.em-is-recurring) #em-tickets-form .ticket-dates-from-recurring,
-.em form:not(.em-is-recurring) #em-tickets-form .ticket-dates-to-recurring,
-.em form:not(.em-is-recurring) #event-rsvp-options .em-booking-date-recurring {
-  display: none;
-  visibility: hidden;
-}
 .em .event-form-when .em-event-datetimes > * {
   margin-bottom: 15px !important;
 }
@@ -4114,487 +4170,6 @@
 .em .event-form-when .em-recurrence-dates.em-datepicker-range fieldset, .em .em-recurrence-sets .em-recurrence-dates.em-datepicker-range fieldset {
   width: 100%;
   max-width: 250px !important;
-}
-.em .em-recurring-summary {
-  margin-bottom: 15px;
-}
-.em .em-recurring-summary .recurring-summary-missing {
-  font-style: italic;
-}
-.em .recurring-summary-dates {
-  display: grid;
-  grid-template-columns: 1fr;
-  width: 100%;
-  grid-template-areas: "start-label" "start-datetime" "end-label" "end-datetime" "timezone";
-}
-.em .recurring-summary-dates .label-start-time {
-  grid-area: start-label;
-}
-.em .recurring-summary-dates .label-end-time {
-  grid-area: end-label;
-}
-.em .recurring-summary-dates .label-start-day {
-  grid-area: start-label;
-}
-.em .recurring-summary-dates .label-end-day {
-  grid-area: end-label;
-}
-.em .recurring-summary-dates .recurring-datetime-start {
-  grid-area: start-datetime;
-}
-.em .recurring-summary-dates .recurring-datetime-end {
-  grid-area: end-datetime;
-}
-.em .recurring-summary-dates .recurring-timezone {
-  grid-area: timezone;
-  margin-top: 8px;
-}
-.em .recurring-summary-dates .recurring-all-day {
-  grid-area: all-day;
-  margin-top: 10px;
-}
-.em .recurring-summary-dates > * {
-  margin-bottom: 10px;
-}
-.em .recurring-summary-dates .label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-.em .recurring-summary-dates .label:not(:first-child) {
-  margin-top: 8px;
-}
-.em .recurring-summary-dates .recurring-all-day {
-  font-style: italic;
-  margin-top: 8px;
-}
-.em .recurring-summary-dates:not(.is-all-day):not(.has-all-day) .all-day {
-  display: none;
-  visibility: hidden;
-}
-.em .recurring-summary-dates.size-large {
-  display: block;
-}
-.em .recurring-summary-dates.size-large * {
-  display: inline-block;
-}
-.em .recurring-summary-dates.size-large .label-start-day, .em .recurring-summary-dates.size-large .recurring-all-day {
-  margin: 8px 0;
-  display: block;
-}
-.em .recurring-summary-dates.size-large .recurring-datetime, .em .recurring-summary-dates.size-large .label-end-day, .em .recurring-summary-dates.size-large .recurring-timezone {
-  margin: 0 8px 0 0;
-}
-.em .recurring-summary-dates.size-large .recurring-timezone .label {
-  display: none;
-  visibility: hidden;
-}
-.em .recurring-summary-dates.size-large .recurring-timezone .timezone-varied {
-  font-size: 0.8rem;
-  font-style: italic;
-}
-.em .recurring-summary-dates.size-large .label-start-day {
-  display: block !important;
-  visibility: visible !important;
-}
-.em .recurring-summary-dates.size-large .label-end-day {
-  display: inline-block !important;
-  visibility: visible !important;
-}
-.em .recurring-summary-dates.size-large .label-time {
-  display: none;
-  visibility: hidden;
-}
-.em .recurring-summary-dates.is-all-day:not(.size-large) {
-  width: max-content;
-  grid-template-columns: min-content 25px minmax(auto, 1fr);
-  grid-template-areas: "start-label start-label start-label" "start-datetime end-label end-datetime" "all-day all-day all-day" "timezone timezone timezone";
-}
-.em .recurring-summary-dates.is-all-day:not(.size-large) .label-time, .em .recurring-summary-dates.is-all-day:not(.size-large) .time {
-  display: none;
-  visibility: hidden;
-}
-.em .recurring-summary-dates.is-all-day:not(.size-large) .recurring-datetime, .em .recurring-summary-dates.is-all-day:not(.size-large) .label-end-day {
-  margin: 0;
-}
-.em .recurring-summary-dates.is-all-day:not(.size-large) .label-end-day {
-  justify-self: center;
-  align-self: center;
-  white-space: nowrap;
-  width: auto;
-}
-.em .recurring-summary-dates.has-all-day .label.all-day {
-  display: none;
-  visibility: hidden;
-}
-.em .recurring-summary-dates:not(.has-multiple-timezones) .timezone-varied {
-  display: none;
-  visibility: hidden;
-}
-.em .recurring-summary-dates .timezone-varied {
-  margin: 0;
-  font-style: italic;
-}
-.em .em-recurrence-sets {
-  margin-bottom: 20px;
-  /* CSS for showing a placeholder during drag-and-drop ordering */
-}
-.em .em-recurrence-sets .em-recurrence-set-template {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-sets .em-recurrence-type {
-  margin-bottom: 20px;
-}
-.em .em-recurrence-sets .em-recurrence-type .em-recurrence-advanced-description-primary {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-sets .drop-placeholder {
-  background-color: #f0f0f0;
-  border: 1px dotted #ccc;
-  margin: 5px 0;
-}
-.em .em-recurrence-sets:not([data-exclude-count="0"]) .em-recurrence-type-include .em-add-recurrence-set[data-type=exclude] {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-sets .em-recurrence-type-include[data-count="1"] .em-recurrence-set {
-  display: block;
-}
-.em .em-recurrence-sets .em-recurrence-type-include[data-count="1"] .em-recurrence-set .em-recurrence-set-actions {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-sets .em-recurrence-type-include[data-count="1"] .em-recurrence-set .em-recurrence-set-data {
-  border-left: none;
-  padding: 15px;
-}
-.em .em-recurrence-sets .em-recurrence-type-include[data-count="1"] .em-recurrence-set .em-recurrence-set-data .em-recurrence-advanced {
-  padding-left: 5px;
-}
-.em .em-recurrence-sets .em-recurrence-type-include:not([data-count="1"]) .em-recurrence-set {
-  grid-template-columns: 105px 1fr;
-}
-.em .em-recurrence-sets .em-recurrence-type-include:not([data-count="1"]) .em-recurrence-set:first-child {
-  grid-template-columns: 75px 1fr;
-}
-.em .em-recurrence-sets .em-recurrence-type-include:not([data-count="1"]) .em-recurrence-set .em-recurrence-set-actions button {
-  margin-right: 4px;
-}
-.em .em-recurrence-sets .em-recurrence-type-include:not([data-count="1"]) .em-recurrence-set .em-recurrence-set-actions button.em-recurrence-set-action-advanced {
-  margin-left: 2px;
-}
-.em .em-recurrence-sets .em-recurrence-type-include .em-recurrence-set:first-child .em-recurrence-set-action-advanced, .em .em-recurrence-sets .em-recurrence-type-include .em-recurrence-set:first-child .em-recurrence-advanced-description {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-sets .em-recurrence-type-include .em-recurrence-set:first-child .em-recurrence-advanced-description-primary {
-  margin-top: 0;
-  display: block;
-  visibility: visible;
-}
-.em .em-recurrence-sets .em-recurrence-type-exclude[data-count="0"] {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-sets .em-recurrence-type-exclude:not([data-count="0"]) .em-recurrence-set {
-  grid-template-columns: 72px 1fr;
-}
-.em .em-recurrence-sets .em-recurrence-type-exclude:not([data-count="0"]) .em-recurrence-set .em-recurrence-set-action-advanced {
-  margin-left: 7px;
-}
-.em .em-recurrence-sets .em-recurrence-type-exclude .em-recurrence-set:not(.has-advanced-value) .advanced-summary {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-sets .em-recurrence-type-exclude .advanced-summary .duration-days {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-sets button[data-nostyle] {
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-}
-.em .em-recurrence-sets button[data-nostyle]:focus {
-  outline: none;
-}
-.em .em-recurrence-sets button[data-nostyle].em-add-recurrence-set {
-  color: var(--accent-color);
-  font-weight: bold;
-}
-.em .em-recurrence-sets .recurrence-reschedule-action {
-  color: #c46200;
-  line-height: 38px;
-  margin-bottom: 5px;
-}
-.em .em-recurrence-sets .recurrence-reschedule-action .em-icon-warning {
-  background: #c46200;
-  -webkit-mask-image: var(--icon-warning);
-  mask-image: var(--icon-warning);
-}
-.em .em-recurrence-sets .recurrence-reschedule-action label {
-  margin-bottom: 0 !important;
-}
-.em .em-recurrence-sets .recurrence-reschedule-action label select {
-  border-color: #dedede;
-  color: #c46200;
-}
-.em .em-recurrence-sets .recurrence-reschedule-action .em-icon-undo {
-  width: 22px;
-  height: 22px;
-  background-size: 22px;
-  vertical-align: middle;
-  margin-left: 5px;
-}
-.em .em-recurrence-sets .em-recurrence-type > .recurrence-reschedule-action {
-  margin-bottom: 10px;
-}
-.em .em-recurrence-sets .em-recurrence-type.em-recurrence-type-new .em-icon-undo {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-sets:has(.em-recurrence-set[data-primary][data-rescheduled].has-modified-date-range) .em-recurrence-set:not([data-primary]):not(.has-date-range) .primary-reschedule-override-warning {
-  display: inline-block;
-  visibility: visible;
-}
-.em .em-recurrence-sets:has(.em-recurrence-set[data-primary][data-rescheduled].has-modified-date-range-end) .em-recurrence-set:not([data-primary]):not(.has-date-range):not(.has-date-range-end) .primary-reschedule-override-warning {
-  display: inline-block;
-  visibility: visible;
-}
-.em .em-recurrence-sets:has(.em-recurrence-set[data-primary][data-rescheduled].has-modified-date-range-start) .em-recurrence-set:not([data-primary]):not(.has-date-range):not(.has-date-range-start) .primary-reschedule-override-warning {
-  display: inline-block;
-  visibility: visible;
-}
-.em .em-recurrence-set {
-  box-shadow: 0 0 0 transparent;
-  border-radius: 4px;
-  border: 1px solid #dedede;
-  background-color: #fff;
-  display: grid;
-  grid-template-columns: 38px 1fr;
-  margin-bottom: 10px;
-  align-items: start;
-}
-.em .em-recurrence-set label[data-nostyle], .em .em-recurrence-set legend[data-nostyle] {
-  width: auto;
-  margin: 0 0 10px 0;
-  padding: 0;
-  line-height: 1;
-  display: block;
-}
-.em .em-recurrence-set label[data-nostyle].inline, .em .em-recurrence-set legend[data-nostyle].inline {
-  margin: 0;
-  display: inline-block;
-}
-.em .em-recurrence-set input[type=checkbox]:indeterminate {
-  -webkit-appearance: checkbox !important;
-}
-.em .em-recurrence-set input:placeholder-shown {
-  opacity: 0.8;
-}
-.em .em-recurrence-set:last-child {
-  margin-bottom: 10px;
-}
-.em .em-recurrence-set[data-type=exclude] {
-  grid-template-columns: 105px 1fr;
-}
-.em .em-recurrence-set[data-type=exclude] .em-recurrence-set-action-order {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-set .em-recurrence-set-actions {
-  padding: 10px;
-  background: #F9FBFC;
-  height: 100%;
-  text-align: right;
-}
-.em .em-recurrence-set .em-recurrence-set-actions button.em-icon {
-  margin-top: 5px;
-}
-.em .em-recurrence-set .em-recurrence-set-actions button.em-icon-drag {
-  cursor: move;
-}
-.em .em-recurrence-set .em-recurrence-set-actions .em-icon {
-  opacity: 0.6;
-}
-.em .em-recurrence-set .em-recurrence-set-actions button.undo, .em .em-recurrence-set .em-recurrence-set-actions button.primary-reschedule-override-warning {
-  display: none;
-  visibility: hidden;
-  margin-top: 10px;
-}
-.em .em-recurrence-set.has-advanced-value .em-recurrence-set-action-advanced {
-  position: relative;
-}
-.em .em-recurrence-set.has-advanced-value .em-recurrence-set-action-advanced::after {
-  content: "";
-  position: absolute;
-  bottom: -5px;
-  right: -5px;
-  width: 8px;
-  height: 8px;
-  background-color: #4CAF50; /* green circle */
-  border: 1px solid white; /* optional: gives a border to stand out */
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1); /* optional shadow */
-}
-.em .em-recurrence-set.has-advanced-value[data-rescheduled]:not(.new-recurrence-set) button.undo, .em .em-recurrence-set.has-advanced-value.advanced-modified:not(.new-recurrence-set) button.undo {
-  display: inline-block;
-  visibility: visible;
-}
-.em .em-recurrence-set.has-advanced-value[data-rescheduled] .em-recurrence-set-action-advanced::after, .em .em-recurrence-set.has-advanced-value.advanced-modified .em-recurrence-set-action-advanced::after {
-  background-color: #c46200;
-}
-.em .em-recurrence-set.has-advanced-value.advanced-modified-primary .em-recurrence-set-action-advanced::after {
-  background-color: #c46200;
-}
-.em .em-recurrence-set .em-recurrence-set-data {
-  border-left: 1px solid #dedede;
-  padding: 10px 20px 10px 20px;
-  height: 100%;
-}
-.em .em-recurrence-set .em-recurrence-set-data .em-datepicker-dates {
-  margin-bottom: 0;
-}
-.em .em-recurrence-set .em-recurrence-pattern select, .em .em-recurrence-set .em-recurrence-pattern input[type=text] {
-  width: auto !important;
-}
-.em .em-recurrence-set .em-recurrence-pattern select {
-  padding-right: 30px !important;
-}
-.em .em-recurrence-set .em-recurrence-pattern div.alternate-selector:not(.em-selectize) {
-  margin-top: 15px;
-}
-.em .em-recurrence-set .em-recurrence-pattern .em-on-selector.em-datepicker-multiple {
-  display: inline;
-}
-.em .em-recurrence-set .em-recurrence-pattern .em-on-selector.em-datepicker-multiple label.em-date-input {
-  display: inline-block !important;
-}
-.em .em-recurrence-set .em-recurrence-pattern .em-on-selector.em-datepicker-multiple .em-datepicker-dates {
-  margin-bottom: 0;
-}
-.em .em-recurrence-set .em-recurrence-pattern input.hidden {
-  display: none !important;
-  visibility: hidden !important;
-}
-.em .em-recurrence-set .em-recurrence-pattern .em-weekly-selector {
-  display: inline-block;
-  width: max-content;
-  margin: 0 !important;
-}
-.em .em-recurrence-set .em-recurrence-pattern .em-weekly-selector .selectize-control.em-selectize:not(.negated) {
-  display: inline-block;
-  width: max-content;
-  margin-bottom: 0 !important;
-}
-.em .em-recurrence-set .em-recurrence-pattern .em-weekly-selector .selectize-control.em-selectize:not(.negated) .selectize-input > input {
-  width: 40px !important;
-}
-.em .em-recurrence-set .em-recurrence-pattern .em-weekly-selector .selectize-control.em-selectize:not(.negated) .selectize-input .item {
-  margin-bottom: 0 !important;
-}
-.em .em-recurrence-set .advanced-summary {
-  display: block;
-  visibility: visible;
-  margin: 10px 0 0;
-  font-style: italic;
-  opacity: 0.7;
-  font-size: 0.9em;
-}
-.em .em-recurrence-set .advanced-summary .all-day {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-set .advanced-summary .is-set {
-  font-weight: bold;
-}
-.em .em-recurrence-set:has(input.em-time-all-day[type=checkbox]:checked) .advanced-summary .all-day, .em .em-recurrence-set:has(input.em-time-all-day[type=checkbox]:indeterminate) .advanced-summary .all-day {
-  display: inline;
-  visibility: visible;
-}
-.em .em-recurrence-set:has(input.em-time-all-day[type=checkbox]:checked) .advanced-summary .times, .em .em-recurrence-set:has(input.em-time-all-day[type=checkbox]:indeterminate) .advanced-summary .times {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-set:has(select.em-recurrence-frequency option[value=on]:checked) .advanced-summary .dates {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-set:has(.em-recurrence-status select[data-default="0"]) .advanced-summary, .em .em-recurrence-set:has(.em-recurrence-status select option[value="0"]:checked) .advanced-summary {
-  text-decoration: line-through;
-  color: #563c3c;
-}
-.em .em-recurrence-set .em-recurrence-advanced {
-  border-top: 1px solid #dedede;
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-}
-.em .em-recurrence-set .em-recurrence-advanced ::placeholder {
-  opacity: 0.7;
-}
-.em .em-recurrence-set .em-recurrence-advanced legend, .em .em-recurrence-set .em-recurrence-advanced label[for] {
-  font-size: 1em;
-}
-.em .em-recurrence-set .em-recurrence-advanced > p {
-  font-style: italic;
-  margin: 5px 0 15px;
-}
-.em .em-recurrence-set .em-recurrence-advanced > div {
-  margin-bottom: 18px;
-}
-.em .em-recurrence-set .em-recurrence-advanced > div:last-child {
-  margin-bottom: 0;
-}
-.em .em-recurrence-set .em-recurrence-advanced > div:last-child .em-selectize.selectize-control {
-  margin-bottom: 0 !important;
-}
-.em .em-recurrence-set.show-advanced .em-recurrence-advanced, .em .em-recurrence-set[data-type=include]:first-child:not(.reordering) .em-recurrence-advanced {
-  padding: 18px 0 10px 10px;
-  max-height: 1000px;
-  opacity: 1;
-  overflow: visible;
-}
-.em .em-recurrence-set.show-advanced .em-recurrence-set-actions, .em .em-recurrence-set[data-type=include]:first-child:not(.reordering) .em-recurrence-set-actions {
-  grid-template-columns: auto;
-}
-.em .em-recurrence-set.show-advanced .em-recurrence-set-actions .em-icon.em-icon-filter, .em .em-recurrence-set[data-type=include]:first-child:not(.reordering) .em-recurrence-set-actions .em-icon.em-icon-filter {
-  background-image: var(--icon-filter-hide);
-}
-.em .em-recurrence-set.show-advanced .em-recurrence-pattern, .em .em-recurrence-set[data-type=include]:first-child:not(.reordering) .em-recurrence-pattern {
-  margin-bottom: 18px;
-}
-.em .em-recurrence-set.show-advanced .advanced-summary, .em .em-recurrence-set[data-type=include]:first-child:not(.reordering) .advanced-summary {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-set .em-recurrence-set-actions {
-  grid-template-columns: 69px;
-  transition: grid-template-columns 0.3s ease;
-}
-.em .em-recurrence-set .reschedule-trigger {
-  width: 15px;
-  height: 15px;
-  background-size: 15px;
-  margin-left: 5px;
-}
-.em .em-recurrence-set .reschedule-trigger[disabled] {
-  display: none;
-  visibility: hidden;
-}
-.em .em-recurrence-set.new-recurrence-set .reschedule-trigger {
-  display: none;
-  visibility: hidden;
-}
-.em .em-modal-content .recurrence-reschedule-action {
-  line-height: 38px;
-}
-.em .em-modal-content .recurrence-reschedule-action .reschedule-warning, .em .em-modal-content .recurrence-reschedule-action .undo {
-  display: none;
-  visibility: hidden;
 }
 .em .em-location-map-container {
   width: 100%;
@@ -5487,6 +5062,12 @@
   height: 18px;
   background-size: 18px;
 }
+.em button.input.em-icon, .em .button.input.em-icon,
+.em .input button.em-icon, .em .input .button.em-icon {
+  border: 0;
+  padding: 0;
+  background-color: transparent;
+}
 .em button.em-clickable.loading .loaded, .em form.em-ajax-form.loading .loaded {
   display: none;
   visibility: hidden;
@@ -5856,10 +5437,6 @@
   display: none;
   visibility: hidden;
 }
-.em form .event-form-bookings:has(input.event_rsvp:not(:checked)) #event-rsvp-options, .em form .event-form-bookings:has(input.event_rsvp:not(:checked)) .event-rsvp-options {
-  display: none;
-  visibility: hidden;
-}
 
 .em {
   --counter-background: #F36752;
@@ -6067,6 +5644,7 @@
 .em .em-notice {
   padding: 15px !important;
   margin-bottom: 20px !important;
+  margin-top: 20px !important;
   border: 1px solid #b6d4fe !important;
   border-radius: 2.5px !important;
   display: block !important;

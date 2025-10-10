@@ -23,6 +23,11 @@ button.input, .button.input,
 		height: 18px;
 		background-size: 18px;
 	}
+	&.em-icon {
+		border: 0; // remove border
+		padding: 0;
+		background-color: transparent;
+	}
 }
 
 button.em-clickable, form.em-ajax-form {

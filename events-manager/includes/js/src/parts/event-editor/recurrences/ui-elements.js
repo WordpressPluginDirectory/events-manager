@@ -1,20 +1,20 @@
 document.addEventListener('em_event_editor_recurrences', function( e ) {
 	let recurrenceSets = e.detail.recurrenceSets;
 
-	document.addEventListener('em_setup_ui_elements', function(e) {
+	let setup_ui_elements = function( container ) {
 		// clean up template of UI elements so they can be rebuilt when cloned
-		if ( e.detail.container === document ) {
+		if ( container === document ) {
 			let template = recurrenceSets.querySelector('.em-recurrence-set-template');
 			em_unsetup_ui_elements( template );
 		}
-		recurrenceSets.dispatchEvent( new CustomEvent('setAdvancedDefaults') );
-		recurrenceSets.dispatchEvent( new CustomEvent('setDateTimes') );
-	});
 
-	// track selectize changes
-	// Add change handlers for selectize dropdowns in first recurrence set
-	document.addEventListener('em_setup_ui_elements', function( e ) {
-		if ( e.detail.container === document ) {
+		recurrenceSets.dispatchEvent( new CustomEvent('setAdvancedDefaults') );
+
+		let eventType = recurrenceSets.closest('form').querySelector('input[name="event_type"]')?.value;
+
+		// Add change handlers for selectize dropdowns in first recurrence set
+		// track selectize changes assuming recurrences are enabled
+		if ( container === document && ( eventType === 'recurring' || eventType === 'repeating' ) ) {
 			// Get the first recurrence set
 			let firstRecurrenceSet = recurrenceSets.querySelector('.em-recurrence-type-include .em-recurrence-set:first-child');
 
@@ -70,5 +70,14 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 				}
 			});
 		}
+	}
+
+	document.addEventListener('em_setup_ui_elements', function(e) {
+		setup_ui_elements( e.detail.container );
 	});
+
+	// If already loaded, we trigger a first-time setup
+	if (document.readyState === 'complete' || document.readyState === 'interactive') {
+		setup_ui_elements( document );
+	}
 });

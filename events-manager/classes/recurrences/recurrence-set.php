@@ -1,6 +1,6 @@
 <?php
 namespace EM\Recurrences;
-use EM_DateTime, EM_DateTimeZone;
+use EM_DateTime, EM_DateTimeZone, EM\Event\Timeranges, EM\Event\Timerange;
 use EM_Object, EM_Event, EM_Events, EM_Tickets, EM_Bookings, EM_ML;
 
 // TODO - If an event is cancelled, just update the event
@@ -135,6 +135,11 @@ class Recurrence_Set extends EM_Object {
 	 * @var array recurrences stored by local date, then local start time, then an array representation of an event record
 	 */
 	public $recurrences;
+
+	/**
+	 * @var Timeranges
+	 */
+	protected $timeranges;
 
 	/**
 	 * The parent recurrence sets this set belongs to. Used for reference such as when creating events, to look for duplicates or negations.
@@ -447,6 +452,28 @@ class Recurrence_Set extends EM_Object {
 	}
 
 	/**
+	 * @return Timeranges
+	 */
+	public function get_timeranges() {
+		if ( empty( $this->timeranges ) ) {
+			$this->timeranges = new Timeranges( $this->recurrence_set_id ? 'recurrence_set_' . $this->recurrence_set_id : null, $this->get_event() );
+			$this->timeranges->load_timeranges();
+			// change start/end times so they match recurrence set rather than event
+			if ( $this->recurrence_set_id ) {
+				if ( $this->recurrence_start_time === null ) {
+					// This must be a non-primary recurrence set, so we can copy the timeranges from the primary recurrence set
+					$this->timeranges = $this->get_event()->get_recurrence_set()->get_timeranges();
+				}
+			}
+		}
+		// double-check we have a group id set in case we just saved this recurrence set
+		if ( $this->timeranges->group_id === null && $this->recurrence_set_id ) {
+			$this->timeranges->set_group_id( 'recurrence_set_' . $this->recurrence_set_id );
+		}
+		return $this->timeranges;
+	}
+
+	/**
 	 * Returns a multi-dimensional array of recurrences, indexed by local start date, start_time
 	 *
 	 * If a recurrence set is exclusive, then each array value will be an array containing dates and times each exclusion covers.
@@ -626,7 +653,6 @@ class Recurrence_Set extends EM_Object {
 		}
 		if ( !empty( $this->event_id ) ) {
 			$this->event = em_get_event( $this->event_id );
-
 			return $this->event;
 		}
 
@@ -641,17 +667,23 @@ class Recurrence_Set extends EM_Object {
 	public function get_post( $_DATA ) {
 		// Check rescheduling options
 		if ( $this->recurrence_set_id ) {
+			$this->reschedule_action = Recurrence_Sets::get_reschedule_action( $_DATA['reschedule']['action'] ?? null ); // excludes will likely hit a default, since they're global actions handled upstream
 			if ( !empty($_DATA['reschedule']['pattern']) ) {
 				$this->reschedule['pattern'] = (bool) wp_verify_nonce( $_DATA['reschedule']['pattern'], 'reschedule-pattern-'. $this->recurrence_set_id );
 			}
 			if ( !empty($_DATA['reschedule']['dates']) ) {
 				$this->reschedule['dates'] = (bool) wp_verify_nonce( $_DATA['reschedule']['dates'], 'reschedule-dates-'. $this->recurrence_set_id );
 			}
-			$this->reschedule_action = Recurrence_Sets::get_reschedule_action( $_DATA['reschedule']['action'] ?? null ); // excludes will likely hit a default, since they're global actions handled upstream
+			if ( !empty($_DATA['reschedule']['times']) ) {
+				$this->reschedule['times'] = (bool) wp_verify_nonce( $_DATA['reschedule']['times'], 'reschedule-times-'. $this->recurrence_set_id );
+				$this->get_timeranges()->allow_edit = $this->reschedule['times'];
+				$this->get_timeranges()->delete_action = $this->reschedule_action;
+			}
 		} else {
 			// we 'reschedule' i.e. create a new recurrence set
 			$this->reschedule['pattern'] = true;
 			$this->reschedule['dates'] = true;
+			$this->reschedule['times'] = true;
 		}
 
 		// certain things can only be saved first-time around
@@ -685,7 +717,7 @@ class Recurrence_Set extends EM_Object {
 				} else if( $this->recurrence_freq == 'monthly' ){
 					// only new recurrence sets can save monthly byday, daily/yearly already dealt with by interval
 					$this->recurrence_byday = isset($_DATA['recurrence_byday']) ? absint($_DATA['recurrence_byday']) : null;
-					$this->recurrence_byweekno = !empty($_DATA['recurrence_byweekno']) ? absint($_DATA['recurrence_byweekno']) : null;
+					$this->recurrence_byweekno = !empty($_DATA['recurrence_byweekno']) ? (int) $_DATA['recurrence_byweekno'] : null;
 				}
 			}
 		}
@@ -705,27 +737,22 @@ class Recurrence_Set extends EM_Object {
 		// duration in days of each event
 		$this->recurrence_duration = ( !empty($_DATA['recurrence_duration']) && is_numeric($_DATA['recurrence_duration']) && $this->recurrence_type === 'include' ) ? (int) $_DATA['recurrence_duration']:null;
 		// Sort out event times
-		$this->recurrence_all_day = ( !empty($_DATA['event_all_day']) ) ? 1 : 0;
-		if( $this->recurrence_all_day ){
-			$times_array = [];
-			$this->recurrence_start_time = '00:00:00';
-			$this->recurrence_end_time = '23:59:59';
-		}else{
-			$times_array = array('recurrence_start_time','recurrence_end_time');
-		}
-		foreach( $times_array as $timeName ){
-			$match = array();
-			if( !empty($_DATA[$timeName]) && preg_match ( '/^([01]\d|[0-9]|2[0-3])(:([0-5]\d))? ?(AM|PM)?$/', $_DATA[$timeName], $match ) ){
-				if( empty($match[3]) ) $match[3] = '00';
-				if( strlen($match[1]) == 1 ) $match[1] = '0'.$match[1];
-				if( !empty($match[4]) && $match[4] == 'PM' && $match[1] != 12 ){
-					$match[1] = 12+$match[1];
-				}elseif( !empty($match[4]) && $match[4] == 'AM' && $match[1] == 12 ){
-					$match[1] = '00';
+		if ( $this->has_reschedule('times') ) {
+			if ( !empty($_DATA['override_time']) || $this->is_primary() ) {
+				if ( !empty($_DATA['timeranges']) && $this->get_timeranges()->get_post( $_DATA['timeranges'] ) ) {
+					$this->recurrence_all_day = $this->get_timeranges()->is_all_day();
+					if ( $this->recurrence_all_day ) {
+						$this->recurrence_start_time = '00:00:00';
+						$this->recurrence_end_time = '23:59:59';
+					} else {
+						$this->recurrence_start_time = $this->get_timeranges()->get_time_start();
+						$this->recurrence_end_time = $this->get_timeranges()->get_time_end();
+					}
 				}
-				$this->{$timeName} = $match[1].":".$match[3].":00";
 			} else {
-				$this->{$timeName} = null;
+				$this->recurrence_all_day = null;
+				$this->recurrence_start_time = null;
+				$this->recurrence_end_time = null;
 			}
 		}
 		//Set Event Timezone to supplied value or alternatively use blog timezone value by default.
@@ -785,6 +812,9 @@ class Recurrence_Set extends EM_Object {
 			$this->add_error( sprintf( __('Main recurrence set %s are required.','events-manager'), __('dates', 'events-manager') ) );
 		}
 		// check the start/end dates and times match up
+		if ( !$this->get_timeranges()->validate() ) {
+			$this->add_error( $this->get_timeranges()->errors );
+		}
 		if ( $this->recurrence_start_time && $this->recurrence_end_time ) {
 			if ( $this->recurrence_duration === 0 && strtotime( '2000-01-01 ' . $this->recurrence_start_time ) > strtotime( '2000-01-01 ' . $this->recurrence_end_time ) ){
 				$this->add_error( sprintf( __('Recurrence %s cannot start after they end.','events-manager'), __('times', 'events-manager') ) );
@@ -824,6 +854,8 @@ class Recurrence_Set extends EM_Object {
 			}
 			$this->just_added = true;
 		}
+		$this->get_timeranges()->save();
+
 		return apply_filters('em_recurrence_set_save', $result !== false, $this );
 	}
 
@@ -952,6 +984,7 @@ class Recurrence_Set extends EM_Object {
 						if ( !empty( $matching_days ) ) {
 							//first save event post data
 							$EM_DateTime = new EM_DateTime( 'now', $this->timezone );
+							// go through matching days and save the new events
 							foreach ( $matching_days as $day ) {
 								// skip updated events
 								if ( !empty( $filtered_events['matched'][ $day ] ) ) {
@@ -1047,6 +1080,11 @@ class Recurrence_Set extends EM_Object {
 										) );
 									}
 								}
+								// save timeslots if there are any, switch the timerange object event_id by supplying the $event context
+								if ( $this->get_timeranges()->has_timeslots() ) {
+									// copy delete and edit permissions from this
+									$this->get_timeranges()->save( $event, $this->reschedule_action );
+								}
 							}
 							//insert the metas in one go, faster than one by one
 							if ( count( $meta_inserts ) > 0 ) {
@@ -1140,7 +1178,7 @@ class Recurrence_Set extends EM_Object {
 				'recurrence_set' => $this->recurrence_set_id,
 				'scope' => 'all',
 				'status' => 'everything',
-				'array' => true
+				'array' => true,
 			] );
 
 			// Only process if we have existing events
@@ -1245,6 +1283,10 @@ class Recurrence_Set extends EM_Object {
 		if ( $is_repeating ) {
 			$this->update_recurrence_meta( $meta_inserts );
 		}
+		if ( $this->get_timeranges()->has_timeslots() && !$this->get_timeranges()->allow_edit ) {
+			// update status for timeslots
+			$this->get_timeranges()->set_status( $this->recurrence_status );
+		}
 	}
 
 	/**
@@ -1266,6 +1308,7 @@ class Recurrence_Set extends EM_Object {
 		//set new start/end times to obtain accurate timestamp according to timezone and DST
 		$EM_DateTime = EM_DateTime::create( $event_array['event_start_date'] . ' ' . $this->start_time, $this->timezone );
 		$start_timestamp = $EM_DateTime->getTimestamp();
+		$event['event_start_date'] = $event_array['event_start_date'];
 		$event['event_start'] = $meta_fields['_event_start'] = $EM_DateTime->getDateTime( true );
 		// calculate the end date by duration
 		if ( $this->duration > 0 ) {
@@ -1323,6 +1366,12 @@ class Recurrence_Set extends EM_Object {
 					$meta_key,
 					$meta_val
 				) );
+			}
+		}
+
+		if ( $this->get_timeranges()->has_timeslots() ) {
+			if ( $this->get_timeranges()->allow_edit ) {
+				$this->get_timeranges()->save( $event );
 			}
 		}
 
@@ -1640,10 +1689,21 @@ class Recurrence_Set extends EM_Object {
 	}
 
 	/**
+	 * Deletes all
+	 * @return bool
+	 */
+	public function delete() {
+		$this->delete_events();
+		$this->delete_bookings();
+		$this->get_timeranges()->delete();
+		return apply_filters('em_recurrence_set_delete', true, $this );
+	}
+
+	/**
 	 * Removes all recurrences of a recurring event.
 	 * @return null
 	 */
-	function delete_events(){
+	public function delete_events(){
 		global $wpdb;
 		$EM_Event = $this->get_event();
 		if ( $EM_Event ) {
@@ -1686,8 +1746,8 @@ class Recurrence_Set extends EM_Object {
 		foreach ( $this->get_recurrences() as $recurrence ) {
 			$event_id = $recurrence['event_id'];
 			// Delete bookings associated with the event
-			$query = $wpdb->prepare( "DELETE FROM " . EM_BOOKINGS_TABLE . " WHERE event_id = %d", $event_id );
-			if ( false === $wpdb->query( $query ) ) {
+			$EM_Bookings = new EM_Bookings( $event_id );
+			if ( !$EM_Bookings->delete() ) {
 				$this->add_error( esc_html__( 'There was a problem deleting bookings for the event.', 'events-manager' ) );
 				$result = false;
 			}
@@ -1696,9 +1756,9 @@ class Recurrence_Set extends EM_Object {
 	}
 
 	/**
-	 * Returns the days that match this recurrence set. Array of values are unix timestams for day events occur, at 00:00 IN THE TIMEZONE OF THIS RECURRENCE SET
+	 * Returns the days that match this recurrence set. Array of values are unix timestams for times events occur, IN THE TIMEZONE OF THIS RECURRENCE SET
 	 *
-	 * For example, if an event happens yearly on the 1st Januay at 10am in Madrid time (GMT+2 with DST), the timestamps would always correspond to years on December 31st at 10pm UTC, therefore, 2 hours before midnight UTC
+	 * For example, if an event happens yearly on the 1st Januay at 12am in Madrid time (GMT+2 with DST), the timestamps would always correspond to years on December 31st at 10pm UTC, therefore, 2 hours before midnight UTC
 	 *
 	 * @return int[]
 	 */
@@ -1804,7 +1864,24 @@ class Recurrence_Set extends EM_Object {
 
 			return apply_filters( 'em_events_get_recurrence_days', $matching_days, $EM_Event, $this );
 		}
+	}
 
+	public function get_recurrence_timeslots( $matching_days, $EM_DateTime, $end_time = null ) {
+		if ( empty($end_time) ) {
+			$end_time = $this->end_time;
+		}
+		if ( $this->get_timeranges()->has_timeslots() ) {
+			foreach ( $this->get_timeranges()->generate_timeslots() as $Timeslot ) {
+				$start = $EM_DateTime->copy()->setTimeString( $Timeslot->start->getTime() );
+				$end = $EM_DateTime->copy()->add('P'. $this->duration .'D')->setTimeString( $Timeslot->end->getTime() );
+				if ( empty( $matching_days[ $Timeslot->start->getTimestamp() ] ) ) {
+					$matching_days[ $Timeslot->start->getTimestamp() ] = [ $start, $end ];
+				}
+			}
+		} elseif ( empty( $matching_days[ $EM_DateTime->getTimestamp() ] ) ) {
+			$matching_days[ $EM_DateTime->getTimestamp() ] = [ $EM_DateTime->copy(), $EM_DateTime->copy()->add('P'. $this->duration .'D')->setTimeString( $end_time ) ];
+		}
+		return $matching_days;
 	}
 
 	/**
@@ -1837,6 +1914,8 @@ class Recurrence_Set extends EM_Object {
 				}
 			}
 			$result = ( $result ?? true ) && $wpdb->query( $wpdb->prepare( "UPDATE " . EM_EVENTS_TABLE . " SET event_status=%s WHERE recurrence_set_id = %d", [ $set_status, $this->recurrence_set_id ] ) ) !== false;
+			$timeslot_sql = 'UPDATE ' . EM_EVENT_TIMESLOTS_TABLE . ' SET timeslot_status=%s WHERE event_id IN ( SELECT event_id FROM ' . EM_EVENTS_TABLE . ' WHERE recurrence_set_id = %d )';
+			$result = $result && ( $wpdb->query( $wpdb->prepare( $timeslot_sql, [ $set_status, $this->recurrence_set_id ] ) ) !== false );
 			return apply_filters( 'em_recurrence_set_set_status_recurrences', $result, $status, $this );
 		}
 	}

@@ -9,9 +9,9 @@
 <?php
 $calendar_args = [
 	'id' => $id,
-	'recurrence' => $EM_Event->event_id,
+	'recurrence' => $EM_Event->get_event_id(),
 	'calendar_size' => 'small',
-	//'calendar_event_style' => 'dot',
+	'calendar_event_style' => 'dot',
 	'long_events' => false,
 	'calendar_preview_mode' => 'booking',
 	'class' => 'em-booking-calendar',
@@ -19,5 +19,6 @@ $calendar_args = [
 	'scope' => 'future',
 	'calendar_header' => 'centered',
 	'calendar_timezone' => $EM_Event->event_timezone,
+	'timeslots' => $EM_Event->has_timeslots(),
 ];
 echo EM_Calendar::output( $calendar_args );

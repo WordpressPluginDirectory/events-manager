@@ -196,7 +196,7 @@ var em_init_booking_recurring_form = function( container ) {
 
 		// get the booking form
 		let fetchBookingForm = function( event_id ){
-			if ( !Number(event_id) ) {
+			if ( !event_id.match(/^\d+(:\d+)?$/) ) {
 				recurrenceBooking.innerHTML = '';
 			} else if ( recurrenceBooking && recurrenceBooking.dataset.event !== event_id ) {
 				let data = {

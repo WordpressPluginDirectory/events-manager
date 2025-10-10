@@ -101,6 +101,7 @@ function em_bookings_event(){
 		<?php
 		return false;
 	}
+	$label_single = \EM\Archetypes::get( $EM_Event->event_archetype )['label_single'];
 	$header_button_classes = is_admin() ? 'page-title-action':'button add-new-h2';
 	?>
 	<div class='em-bookings-admin-event <?php em_template_classes('bookings-admin'); ?>'>
@@ -117,29 +118,73 @@ function em_bookings_event(){
   			<?php do_action('em_admin_event_booking_options_buttons'); ?>
 			<hr class="wp-header-end">
 
+			<?php if ( $EM_Event->is_timeslot() || $EM_Event->has_timeslots() ): ?>
+				<?php
+					ob_start();
+					// get parent timeslots if this is an individual timeslot
+					$Timeslots = $EM_Event->is_timeslot() ? $EM_Event->get_parent()->get_timeranges()->get_timeslots() : $EM_Event->get_timeranges()->get_timeslots();
+				?>
+				<form action="" method="get" class="em-bookings-admin-event-timeslots">
+					<label><?php echo sprintf( esc_html__('This %s has timeslots, you are viewing','events-manager'), $label_single ); ?>
+						<select name="event_id">
+							<option value="<?php echo absint( $EM_Event->get_event_id() ); ?>"><?php esc_html_e('All Timeslots', 'events-manager') ?></option>
+							<?php foreach ( $Timeslots as $Timeslot ): ?>
+								<option value="<?php $Timeslot->uid(); ?>" <?php selected( $Timeslot->get_uid(), $_GET['event_id'] ?? '' ) ?>>
+									<?php echo $Timeslot->start->i18n('g:i A'); ?>
+									<?php if ( $Timeslot->timeslot_status === 0 ) : ?>
+									(<?php esc_html_e( 'Cancelled', 'events-manager' ); ?>)
+									<?php endif; ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+					</label>
+					<?php foreach ( $_GET as $key => $value ): if( $key === 'event_id' ) continue; ?>
+						<input type="hidden" name="<?php echo esc_attr($key); ?>" value="<?php echo esc_attr($value); ?>" >
+					<?php endforeach; ?>
+					<button type="submit" class="button button-secondary"><?php esc_html_e('View Timeslot', 'events-manager'); ?></button>
+				</form>
+				<?php $timeslots = ob_get_clean(); ?>
+			<?php endif; ?>
+
 			<?php if ( $EM_Event->is_recurring() ) : ?>
-			<p class="em-notice em-notice-icon" >
+			<div class="em-notice em-notice-icon" >
 				<span class="em-icon em-icon-info"></span>
 				<?php
 				$recurrence_bookings = esc_html( sprintf( __('Recurrence %s', 'events-manager'), __('Bookings', 'events-manager') ) );
 				$recurrence_bookings_link = '<a href="#event-bookings">'. strtolower($recurrence_bookings) .'</a>';
-				$event_recurrences = esc_html( sprintf( __('%s Recurrences', 'events-manager'), __('Event', 'events-manager') ) );
+				$event_recurrences = esc_html( sprintf( __('%s Recurrences', 'events-manager'), $label_single ) );
 				$event_recurrences_link = '<a href="#event-recurrences">'. strtolower($event_recurrences) .'</a>';
 				?>
-				<span><?php echo sprintf( esc_html__('This is a recurring %s. You can find all %s on this page, or click on individual %s to view recurrence-specific bookings.', 'events-manager'), esc_html__('Event', 'events-manager'), $recurrence_bookings_link, $event_recurrences_link ); ?></span>
-			</p>
-			<?php elseif ( $EM_Event->is_recurrence() ) : ?>
-				<p class="em-notice em-notice-icon" >
+				<span><?php echo sprintf( esc_html__('This is a recurring %s. You can find all %s on this page, or click on individual %s to view recurrence-specific bookings.', 'events-manager'), $label_single, $recurrence_bookings_link, $event_recurrences_link ); ?></span>
+				<?php if( !empty($timeslots) ) : ?>
+					<span></span><?php echo $timeslots; ?>
+				<?php endif; ?>
+			</div>
+			<?php elseif ( $EM_Event->is_recurrence() || ( $EM_Event->is_timeslot() && $EM_Event->get_parent()->is_recurrence() ) ) : ?>
+				<div class="em-notice em-notice-icon" >
 					<span class="em-icon em-icon-info"></span>
 					<?php
 					$recurring_link = '<a href="'. esc_url( add_query_arg('event_id', $EM_Event->get_recurring_event()->event_id) ) . '">' . $EM_Event->event_name . '</a>';
 					?>
-					<span><?php echo sprintf( esc_html__('This is a %s recurrence of %s.', 'events-manager'), strtolower(esc_html__('Event', 'events-manager')), $recurring_link ); ?></span>
-				</p>
+					<span><?php echo sprintf( esc_html__('This is a %s recurrence of %s.', 'events-manager'), strtolower( $label_single ), $recurring_link ); ?></span>
+					<?php if( !empty($timeslots) ) : ?>
+						<span></span><?php echo $timeslots; ?>
+					<?php endif; ?>
+				</div>
+			<?php elseif ( !empty($timeslots) ): ?>
+				<div class="em-notice em-notice-icon" >
+					<span class="em-icon em-icon-info"></span>
+					<?php echo $timeslots; ?>
+				</div>
 			<?php endif; ?>
 
 	        <?php if( !is_admin() ) echo $EM_Notices; ?>
-			<p><strong><?php esc_html_e('Event Name','events-manager'); ?></strong> : <?php echo esc_html($EM_Event->event_name); ?></p>
+			<p>
+				<strong><?php esc_html_e('Name','events-manager'); ?></strong> : <?php echo esc_html($EM_Event->event_name); ?>
+			</p>
+			<p>
+				<strong><?php esc_html_e('Status','events-manager'); ?></strong> : <?php echo esc_html( $EM_Event->get_active_status() ); ?>
+			</p>
 			<?php do_action('em_admin_event_booking_before_availibility', $EM_Event); ?>
 			<p>
 				<strong><?php esc_html_e('Availability','events-manager'); ?></strong> :
@@ -153,6 +198,12 @@ function em_bookings_event(){
 			<p>
 				<strong><?php esc_html_e('Date','events-manager'); ?></strong> :
 				<?php echo $EM_Event->output_dates(false, " - "). ' @ ' . $EM_Event->output_times(false, ' - '); ?>
+				<?php if ( $EM_Event->get_timezone()->getValue() !== get_option('timezone_string') ): ?>
+				<?php echo ' ('. $EM_Event->get_timezone()->getName() .')'; ?>
+				<?php endif; ?>
+				<?php if ( !empty($timeslots) ) : ?>
+				<span class="em-icon s-15 em-icon-info em-tooltip" aria-label="<?php esc_html_e('Multiple Timeslots','events-manager'); ?>"></span>
+				<?php endif; ?>
 			</p>
 			<p>
 				<strong><?php esc_html_e('Location','events-manager'); ?></strong> :
@@ -296,16 +347,25 @@ function em_bookings_single(){
 						<?php
 						$EM_Event = $EM_Booking->get_event();
 						?>
-						<table>
-							<tr><td><strong><?php esc_html_e('Name','events-manager'); ?></strong></td><td><a class="row-title" href="<?php echo $EM_Event->get_bookings_url(); ?>"><?php echo ($EM_Event->event_name); ?></a></td></tr>
-							<tr>
-								<td><strong><?php esc_html_e('Date/Time','events-manager'); ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</strong></td>
+						<table class="em-form-fields">
+							<tr class="em-booking-admin-event-name">
+								<th><?php esc_html_e('Name','events-manager'); ?></th>
 								<td>
-									<?php echo $EM_Event->output('#_EVENTDATES @ #_EVENTTIMES'); ?>
+									<a class="row-title" href="<?php echo $EM_Event->get_bookings_url(); ?>"><?php echo ($EM_Event->event_name); ?></a>
 								</td>
 							</tr>
+							<tr class="em-booking-admin-event-date">
+								<th><?php esc_html_e('Date/Time','events-manager'); ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+								<td>
+									<?php echo $EM_Event->output('#_EVENTDATES @ #_EVENTTIMES'); ?>
+									<?php if ( $EM_Event->is_recurrence() && $EM_Event->get_recurring_event()->event_timezone != $EM_Event->event_timezone ): ?>
+									( <?php echo $EM_Event->start()->getTimezone()->getName(); ?> )
+									<?php endif; ?>
+								</td>
+							</tr>
+							<?php do_action('em_bookings_admin_booking_event_row', $EM_Booking); ?>
 						</table>
-						<?php do_action('em_bookings_admin_booking_event', $EM_Event); ?>
+						<?php do_action('em_bookings_admin_booking_event', $EM_Event, $EM_Booking ); ?>
 					</div>
 				</div>
 				<div class="postbox">
@@ -358,7 +418,7 @@ function em_bookings_single(){
 						$EM_Event = $EM_Booking->get_event();
 						$shown_tickets = array();
 						?>
-						<div>
+						<div class="em-booking-single-rsvp-actions">
 							<form action="" method="post" class="em-booking-single-status-info">
 								<strong><?php esc_html_e('Status','events-manager'); ?> : </strong>
 								<?php echo $EM_Booking->get_status(); ?>

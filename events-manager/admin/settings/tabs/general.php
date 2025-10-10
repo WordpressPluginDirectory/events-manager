@@ -57,6 +57,15 @@ global $events_placeholder_tip, $locations_placeholder_tip, $categories_placehol
 	            </tr>
 	            <?php
 				em_options_radio_binary ( __( 'Enable Event Status?', 'events-manager'), 'dbem_event_status_enabled', sprintf(__( 'Events can have a status associated with them, such as a cancelled event, which can then be filtered out of search listings. By default, or if disabled, events have an %s status.','events-manager'), '<code>'. __('Active', 'events-manager') .'</code>'), '', '.event-active-status-option' );
+	            if ( defined('EMP_VERSION')  && version_compare( EMP_VERSION, '3.7.2', '<' ) ) {
+		            echo '<tr><td colspan="2" style="color: darkred;"><p>'. sprintf( __('Timeslots require %s and has been disabled automatically to prevent undesired results.','events-manager'), '<code>Events Manager Pro 3.7.2</code>' ).'</h4></td></tr>';
+		            echo '<tbody style="opacity:0.5">';
+	            }
+	            em_options_radio_binary ( __( 'Enable Event Timeslots?', 'events-manager'), 'dbem_event_timeranges_enabled', __( 'Events can have multiple times per day, the timeslots can be selected from booking forms, timeslots do not have their own event page and are housed under the same event.','events-manager'), '', '#dbem_event_timeranges_advanced_row' );
+	            em_options_radio_binary ( __( 'Enable Event Dynamic Timeslots?', 'events-manager'), 'dbem_event_timeranges_advanced', __( 'Events with timeslots can further break up timeslots dynamically by adding timeslot durations, buffers and frequencies to create multiple timeslots from one time range. For example, in the mornings, you can have a timeslot every 45 minutes at the start of each hour.','events-manager'), '' );
+	            if ( defined('EMP_VERSION')  && version_compare( EMP_VERSION, '3.7.2', '<' ) ) {
+		            echo '</tbody>';
+	            }
 				em_options_radio_binary ( __( 'Enable recurrence?', 'events-manager'), 'dbem_recurrence_enabled', __( 'Recurring events allow you to create one event page with recurring dates on the same page. Recurrences have their own bookings assigned to them, but can be linked with shared tickets.','events-manager'), '', '#row_dbem_recurrence_picker' );
 				//EM\Scripts_and_Styles::add_js_var('recurrencesDisableWarning', __('Are you sure you want to disable recurring events? If you do so, any recurrences you currently have enabled will stop showing, and de-sync from the recurring events should you re-save them whilst recurrences are disabled.', 'events-manager') );
 				em_options_radio_binary ( __( 'Enable repeated events?', 'events-manager'), 'dbem_repeating_enabled', __( 'Repeated events are similar to recurrences, but each event is independent of each other with its own page on your site and entirely separate bookings. You can mass-edit the recurrences by editing your repeating event.','events-manager') );

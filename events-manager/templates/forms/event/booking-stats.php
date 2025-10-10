@@ -6,10 +6,12 @@ global $EM_Event, $post;
 		$available_spaces = $EM_Event->get_bookings()->get_available_spaces();
 		$booked_spaces = $EM_Event->get_bookings()->get_booked_spaces();
 			
-		if ( count($EM_Event->get_bookings()->bookings) > 0 ) {
+		if ( count( $EM_Event->get_bookings()->bookings ) > 0 ) {
 			?>
 			<div class='wrap'>
+				<?php if ( $EM_Event->has_timeslots() ) : ?>
 				<p><strong><?php echo __('Available Spaces','events-manager').': '.$EM_Event->get_bookings()->get_available_spaces(); ?></strong></p>
+				<?php endif; ?>
 				<p><strong><?php echo __('Confirmed Spaces','events-manager').': '.$EM_Event->get_bookings()->get_booked_spaces(); ?></strong></p>
 				<p><strong><?php echo __('Pending Spaces','events-manager').': '.$EM_Event->get_bookings()->get_pending_spaces(); ?></strong></p>
 		 	</div>

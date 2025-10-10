@@ -120,7 +120,11 @@ class Events_Bookings extends List_Table {
 			}
 		}elseif( $col == 'event_name_summary'){
 			if( $this->format == 'html' ){
-				$val = '<strong><a href="' . $EM_Event->get_bookings_url() . '">' . esc_html($EM_Event->event_name)  . '</a></strong> - ' . esc_html__('Booked Spaces','events-manager') . ': ' . $EM_Event->get_bookings()->get_booked_spaces() . '/' . $EM_Event->get_spaces();
+				$val = '<strong><a href="' . $EM_Event->get_bookings_url() . '">' . esc_html($EM_Event->event_name)  . '</a></strong> - ' . esc_html__('Booked Spaces','events-manager') . ': ' . $EM_Event->get_bookings()->get_booked_spaces();
+				if ( !$EM_Event->has_timeslots() ) {
+					// only add 'out of' if this isn't a timeslotted event, since capacities may be per timeslot
+					$val .=  '/' . $EM_Event->get_spaces();
+				}
 				if( em_get_option('dbem_bookings_approval') == 1 ) {
 					$val .=  ' | ' . esc_html__('Pending','events-manager') . ': ' . $EM_Event->get_bookings()->get_pending_spaces();
 				}
@@ -135,6 +139,9 @@ class Events_Bookings extends List_Table {
 			$val = $EM_Event->get_bookings()->get_pending_spaces();
 		} elseif ( $col === 'event_datetimes' ) {
 			$val = $EM_Event->output_dates(false, " - "). ' @ ' . $EM_Event->output_times(false, ' - ');
+			if ( $EM_Event->has_timeslots() ) {
+				$val .= ' <span class="em-icon s-15 em-icon-info em-tooltip" aria-label="'. esc_html__('Multiple Timeslots','events-manager') .'"></span>';
+			}
 		} elseif ( $col === 'event_dates' ) {
 			$val = $EM_Event->output_dates(false, " - ");
 		} elseif ( $col === 'event_times' ) {

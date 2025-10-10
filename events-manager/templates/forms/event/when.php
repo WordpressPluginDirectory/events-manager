@@ -7,7 +7,7 @@ $classes = array();
 $id = rand();
 ?>
 <div class="em event-form-when input" id="em-form-when">
-	<?php if ( em_get_option('dbem_recurrence_enabled') || ( $EM_Event->is_repeating() ) ): ?>
+	<?php if ( em_get_option('dbem_recurrence_enabled') || em_get_option('dbem_repeating_enabled') || ( $EM_Event->is_recurring( true ) ) ): ?>
 		<?php if ( $EM_Event->is_recurring( true ) ): ?>
 			<input type="hidden" id="em-recurrence-checkbox-<?php echo $id; ?>" class="em-recurrence-checkbox event_type" name="event_type" value="<?php echo $EM_Event->is_repeating() ? 'repeating':'recurring'; ?>">
 			<p>
@@ -22,7 +22,7 @@ $id = rand();
 		<?php elseif ( !$EM_Event->event_id ): ?>
 			<p class="em-event-type">
 				<label data-nostyle>
-					<?php if (  !is_admin() && em_get_option('dbem_recurrence_enabled') && em_get_option('dbem_repeating_enabled') ):  ?>
+					<?php if ( !is_admin() && em_get_option('dbem_recurrence_enabled') && em_get_option('dbem_repeating_enabled') ):  ?>
 						<?php ob_start(); ?>
 						<select id="em-recurrence-checkbox-<?php echo $id; ?>" class="em-recurrence-checkbox event_type inline" name="event_type" data-nostyle>
 							<option value="single"><?php esc_html_e('Single', 'events-manager'); ?></option>
@@ -55,7 +55,7 @@ $id = rand();
 		<?php endif; ?>
 	</div>
 
-	<?php if ( em_get_option('dbem_recurrence_enabled') || ( $EM_Event->is_repeating() ) ): ?>
+	<?php if ( em_get_option('dbem_recurrence_enabled') || em_get_option('dbem_repeating_enabled') || ( $EM_Event->is_recurring( true ) ) ): ?>
 		<?php include em_locate_template('forms/event/when/recurring/recurring-summary.php'); ?>
 	<?php endif; ?>
 </div>

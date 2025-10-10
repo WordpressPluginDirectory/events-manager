@@ -35,6 +35,7 @@ class EM_Events extends EM_Object {
 	public static function get( $args = array(), $count=false ) {
 		global $wpdb;	 
 		$events_table = EM_EVENTS_TABLE;
+		$events_table_from = $events_table;
 		$locations_table = EM_LOCATIONS_TABLE;
 		
 		//Quick version, we can accept an array of IDs, which is easy to retrieve
@@ -73,6 +74,13 @@ class EM_Events extends EM_Object {
 				$selectors = $events_table.'.event_id, '. $events_table.'.post_id';
 			}
 			$selectors = 'DISTINCT ' . $selectors; //duplicate avoidance
+			if ( !empty($args['timeslots']) ) {
+				if ( $args['array'] ) {
+					$selectors .= ', ets.*';
+				} else {
+					$selectors .= ', ets.timeslot_id';
+				}
+			}
 		}
 		
 		//check if we need to join a location table for this search, which is necessary if any location-specific are supplied, or if certain arguments such as orderby contain location fields
@@ -102,6 +110,11 @@ class EM_Events extends EM_Object {
 		$join_locations = apply_filters('em_events_get_join_locations_table', $join_locations, $args, $count);
 		//depending on whether to join we do certain things like add a join SQL, change specific values like status search
 		$location_optional_join = $join_locations ? "LEFT JOIN $locations_table ON {$locations_table}.location_id={$events_table}.location_id" : '';
+
+		// split up results by timeslot_ids if requested
+		if ( !empty( $args['timeslots'] ) ) {
+			$events_table_from .= ' LEFT JOIN ' . EM_EVENT_TIMESLOTS_TABLE  . ' ets ON '. EM_EVENTS_TABLE .'.event_id = ets.event_id';
+		}
 		
 		//Build ORDER BY and WHERE SQL statements here, after we've done all the pre-processing necessary
 		$conditions = self::build_sql_conditions($args);
@@ -143,7 +156,7 @@ FROM (
 		@cur := IF($groupby_field = @id, @cur+1, 1) AS RowNumber,
 		@id := $groupby_field AS IdCache
 	FROM (
-		SELECT {$inner_selectors} FROM {$events_table}
+		SELECT {$inner_selectors} FROM {$events_table_from}
 		$location_optional_join
 		$where
 		ORDER BY $groupby_field $groupby_orderby_sql
@@ -164,7 +177,7 @@ FROM (
 	SELECT {$inner_selectors},
 		@cur := IF($groupby_field = @id, @cur+1, 1) AS RowNumber,
 		@id := $groupby_field AS IdCache
-	FROM {$events_table}
+	FROM {$events_table_from}
 	INNER JOIN (
 		SELECT @id:=0, @cur:=0
 	) AS lookup
@@ -184,7 +197,7 @@ $orderby_sql";
 		if( empty($sql) ){
 			//THE Query
 			$sql = "
-SELECT $selectors FROM $events_table
+SELECT $selectors FROM $events_table_from
 $location_optional_join
 $where
 $orderby_sql";
@@ -221,31 +234,72 @@ $orderby_sql";
 
 		//If we want results directly in an array, why not have a shortcut here?
 		if( $args['array'] == true ){
+			if ( !empty($args['timeslots']) ) {
+				// convert all the results to timeslot dates
+				foreach ( $results as $key => $result ) {
+					$results[$key]['event_start'] = $result['timeslot_start'];
+					$results[$key]['event_end'] = $result['timeslot_end'];
+					// convert event_start_date, event_start_time and end couterparts to timezone-correct times
+					$start = new EM_DateTime( $result['timeslot_start'], 'UTC' );
+					$start->setTimezone( $result['event_timezone'] );
+					$results[$key]['event_start_date'] = $start->getDate();
+					$results[$key]['event_start_time'] = $start->getTime();
+					$end = new EM_DateTime( $result['timeslot_end'], 'UTC' );
+					$end->setTimezone( $result['event_timezone'] );
+					$results[$key]['event_end_date'] = $end->getDate();
+					$results[$key]['event_end_time'] = $end->getTime();
+				}
+			}
 			return apply_filters('em_events_get_array',$results, $args);
 		}
 		
 		//Make returned results EM_Event objects
-		$results = (is_array($results)) ? $results:array();
-		$events = array();
+		$results = (is_array($results)) ? $results : [];
+		$events = $timeslot_ids = [];
 		
 		if( EM_MS_GLOBAL ){
 			foreach ( $results as $event ){
 				if ( !empty($event['post_id']) ) {
-					$events[] = em_get_event( $event['post_id'], $event['blog_id'] );
+					$EM_Event = em_get_event( $event['post_id'], $event['blog_id'] );
 				} else {
-					$events[] = em_get_event( $event['event_id'] );
+					$EM_Event = em_get_event( $event['event_id'] );
 				}
+				$event_id = $EM_Event->event_id;
+				// set timeslot id and append to event_id for later reference
+				if ( !empty($event['timeslot_id']) ) {
+					$EM_Event->convert_to_timeslot( $event['timeslot_id'], false );
+				}
+				$events[$event_id] = $EM_Event;
 			}
 		}else{
 			foreach ( $results as $event ){
 				if ( !empty($event['post_id']) ) {
-					$events[] = em_get_event( $event['post_id'], 'post_id' );
+					$EM_Event = em_get_event( $event['post_id'], 'post_id' );
+					// convert to timeslot if needed
+					if ( !empty($event['timeslot_id']) ) {
+						$EM_Event->convert_to_timeslot( $event['timeslot_id'], false );
+					}
 				} else {
-					$events[] = em_get_event( $event['event_id'] );
+					// set timeslot id and append to event_id for later reference
+					$event_id = !empty($event['timeslot_id']) ? $event['event_id'] . ':' . $event['timeslot_id'] : $event['event_id'];
+					$EM_Event = em_get_event( $event_id );
+				}
+				$events[$EM_Event->event_id] = $EM_Event;
+			}
+		}
+
+		// get all the timeslot data in one SQL query (for efficiency) and override it here in one go rather than individual set_timeslot_id() calls
+		if ( !empty($args['timeslots']) && $timeslot_ids ) {
+			$sql = "SELECT * FROM " . EM_EVENT_TIMESLOTS_TABLE . " WHERE timeslot_id IN (" . implode(',', $timeslot_ids) . ")";
+			$timeslots = $wpdb->get_results($sql, ARRAY_A);
+			foreach ( $timeslots as $timeslot ) {
+				if ( !empty( $events[ $timeslot['event_id'] . ':' . $timeslot['timeslot_id'] ] ) ) {
+					$EM_Event = $events[ $timeslot['event_id'] . ':' . $timeslot['timeslot_id'] ];
+					$events[ $timeslot['event_id'] . ':' . $timeslot['timeslot_id'] ] = $EM_Event->convert_to_timeslot( $timeslot['timeslot_id'], false );
 				}
 			}
 		}
-		
+
 		return apply_filters('em_events_get', $events, $args);
 	}
 	
@@ -686,6 +740,14 @@ $orderby_sql";
 				$conditions['active_status_exclude'] = "event_active_status NOT IN (". implode(',', $active_statuses['exclude']) .")";
 			}
 		}
+		if ( $args['timeslots'] ) {
+			$conditions['timeslots'] = "timeslot_status != 0";
+			// replace scope searches with timeslot fields
+			if ( !empty( $conditions['scope'] ) ) {
+				$conditions['scope'] = str_replace( ['event_start_date', 'event_start'], 'timeslot_start', $conditions['scope'] );
+				$conditions['scope'] = str_replace( ['event_end_date', 'event_end'], 'timeslot_end', $conditions['scope'] );
+			}
+		}
 		return apply_filters( 'em_events_build_sql_conditions', $conditions, $args );
 	}
 	
@@ -715,6 +777,20 @@ $orderby_sql";
 	public static function build_sql_orderby( $args, $accepted_fields, $default_order = 'ASC' ){
 	    $orderby = parent::build_sql_orderby($args, $accepted_fields, em_get_option('dbem_events_default_order'));
 		$orderby = self::build_sql_ambiguous_fields_helper($orderby); //fix ambiguous fields
+		if ( $args['timeslots'] ) {
+			foreach ( $orderby as $key => $value ) {
+				$orderby[$key] = str_replace( ['event_start_date', 'event_start_time', 'event_start'], 'timeslot_start', $value );
+				$orderby[$key] = str_replace( ['event_end_date', 'event_end_time', 'event_end'], 'timeslot_end', $orderby[$key] );
+
+				if ( str_contains( $value, 'timeslot_start' ) || str_contains( $value, 'timeslot_start' ) ) {
+					if ( !empty( $switched ) ) {
+						unset( $orderby[ $key ] );
+					} else {
+						$switched = true;
+					}
+				}
+			}
+		}
 		return apply_filters( 'em_events_build_sql_orderby', $orderby, $args, $accepted_fields, $default_order );
 	}
 	
@@ -790,6 +866,7 @@ $orderby_sql";
 			'active_status' => null,
 			'event_type' => false,
 			'event_archetype' => Archetypes::get_current(), // override the default false
+			'timeslots' => false, // split results by timeslots
 		);
 		// if event_archetype is not set, we
 		//sort out whether defaults were supplied or just the array of search values

@@ -259,6 +259,7 @@ class Scripts_and_Styles {
 		$js = static::get_minified_extension_js().'.js'.'?v='.EM_VERSION;
 		$css = static::get_minified_extension_css().'.css'.'?v='.EM_VERSION;
 		$js_url = EM_DIR_URI . 'includes/js/';
+		$css_url = EM_DIR_URI . 'includes/css/';
 
 		// JS Lazy Loading - Load JS on demand if a certain element is found via querySelector
 		// TODOC - Dev docs for how to add JS to EM with lazy loadign
@@ -323,6 +324,15 @@ class Scripts_and_Styles {
 				'js' => [ 'em-uploader' => ['url' => $js_url.'em-uploader'.$js, 'event' => 'em_uploader_ready'] ],
 			];
 		}
+		// timerange editor for admin area
+		$em_localized_js['assets']['.em-event-editor'] = [
+			'js' => [
+				'event-editor' => ['url' => $js_url.'events-manager-event-editor'.$js, 'event' => 'em_event_editor_ready']
+			],
+			'css' => [
+				'event-editor' => $css_url.'events-manager-event-editor'.$css
+			],
+		];
 		// timezone support via Luxon.js
 		$em_localized_js['assets']['.em-recurrence-sets, .em-timezone'] = [
 			'js' => [

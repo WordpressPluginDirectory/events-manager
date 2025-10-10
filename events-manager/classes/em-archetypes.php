@@ -294,7 +294,7 @@ class Archetypes {
 			}
 			$value = apply_filters( 'em_archetype_get_option_' . $option, $value ?? get_option( $option ), $archetype, $default );
 		} else {
-			$value = get_option( $option );
+			$value = get_option( $option, $default );
 		}
 
 		return $value;
@@ -800,10 +800,11 @@ class Archetypes {
 
 	/**
 	 * Gets the CPT name of a post type. Accepts a post type string, post ID, post or event object. If no CPT supplied, the current/default CPT is used.
+	 * Useful for geting the CPT value from multiple possible types of supplied arguments, a utility function to avoid checking object/variable types repeatedly.
 	 * You can also pass falsy values to trigger false results if using shorthand ?? to check post or request variables.
 	 * @param $cpt
 	 *
-	 * @return string
+	 * @return string|false
 	 */
 	public static function get_post_type( $cpt ) {
 		if ( !is_string( $cpt ) ) {
@@ -820,10 +821,34 @@ class Archetypes {
 			} elseif ( is_numeric( $cpt ) ) {
 				$cpt = get_post_type( $cpt );
 			} else {
-				$cpt = (string) $cpt;
+				// string, make sure it is a cPT present in archetypes
+				if ( !in_array( $cpt, static::get_cpts() ) ) {
+					$cpt = (string) $cpt;
+				} else {
+					$cpt = false;
+				}
 			}
 		}
 		return $cpt;
+	}
+
+	/**
+	 * Reverse-engineer name of archetype based on post type name, meaning the archetype could be a repeating event subarchetype which becomes the actual archetype name.
+	 * @param $post_type
+	 *
+	 * @return void
+	 */
+	public static function get_from_cpt( $post_type ) {
+		$archetype = false;
+		$cpts = static::get_cpts();
+		if ( in_array( $post_type, $cpts ) ) {
+			if ( Archetypes::is_repeating( $post_type ) ) {
+				$archetype = Archetypes::get_repeating_archetype( $post_type );
+			} else {
+				$archetype = $post_type;
+			}
+		}
+		return $archetype;
 	}
 }
 Archetypes::init();

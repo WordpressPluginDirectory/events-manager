@@ -13,6 +13,14 @@ jQuery(document).ready( function($){
 	}
 	$('#em-wrapper').addClass('em');
 
+	// Add keyboard accessibility for em-icon button spans
+	$(document).on('keydown', 'span.em-icon[role="button"]', function(e){
+		if( e.key === 'Enter' || e.keyCode === 13 ){
+			e.preventDefault();
+			$(this).trigger('click');
+		}
+	});
+
 	/* Time Entry - legacy @deprecated */
 	$('#start-time').each(function(i, el){
 		$(el).addClass('em-time-input em-time-start').next('#end-time').addClass('em-time-input em-time-end').parent().addClass('em-time-range');

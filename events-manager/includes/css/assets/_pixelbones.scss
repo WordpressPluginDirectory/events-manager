@@ -415,11 +415,13 @@
 
 	    input[type="checkbox"],
 	    input[type="radio"] {
-	        margin-bottom: 0 !important;
-	        display: inline-block !important;
-	        background-color: var(--background-color-checkboxes) !important;
-	        text-align: start !important;
-	        @include reset-input( $background:var(--background-color-checkboxes) );
+		    &:not([data-nostyle]) {
+			    margin-bottom: 0 !important;
+			    display: inline-block !important;
+			    background-color: var(--background-color-checkboxes) !important;
+			    text-align: start !important;
+			    @include reset-input( $background:var(--background-color-checkboxes) );
+		    }
 	    }
 
 	    label > .label-body {

@@ -127,8 +127,10 @@ $reschedule_warnings = !empty($EM_Event->event_id) && $EM_Event->is_recurring( t
 										<span class="ticket_end_time"><?php echo ( !empty($EM_Ticket->end) ) ? $EM_Ticket->end()->format( em_get_hour_format() ):''; ?></span>
 									</td>
 									<td class="ticket-qty">
+										<?php if ( !$EM_Event->is_recurring( true ) && !$EM_Event->has_timeslots() ) : ?>
 										<span class="ticket_available_spaces"><?php echo $EM_Ticket->get_available_spaces(); ?></span>/
-										<span class="ticket_spaces"><?php echo $EM_Ticket->get_spaces() ? $EM_Ticket->get_spaces() : '-'; ?></span>
+										<?php endif; ?>
+										<span class="ticket_spaces"><?php echo $EM_Ticket->ticket_spaces ? $EM_Ticket->ticket_spaces : '-'; ?></span>
 									</td>
 									<td class="ticket-booked-spaces">
 										<span class="ticket_booked_spaces"><?php echo $EM_Ticket->get_booked_spaces(); ?></span>

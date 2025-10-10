@@ -123,8 +123,8 @@ class Dashboard {
 		if( !empty($_REQUEST['view']) ){
 			$args['view'] = sanitize_key($_REQUEST['view']);
 		}
-		if( $args['view'] === 'event' && !empty($_REQUEST['event']) ){
-			$args['event'] = absint($_REQUEST['event']);
+		if( $args['view'] === 'event' && !empty($_REQUEST['event']) && preg_match('/^(\d+)(:\d+)?$/', $_REQUEST['event']) ){
+			$args['event'] = $_REQUEST['event'];
 		}elseif( $args['view'] === 'ticket' && !empty($_REQUESt['ticket']) ){
 			$args['ticket'] = absint($_REQUEST['ticket']);
 		}
@@ -233,9 +233,12 @@ class Dashboard {
 					unset( $conditions['owner'] );
 				}
 				if ( $EM_Event->is_recurring() ) {
-					$conditions['event'] = $wpdb->prepare( ' event_id IN ( SELECT event_id FROM '. EM_EVENTS_TABLE .' WHERE recurrence_set_id IN ( SELECT recurrence_set_id fROM '.EM_EVENT_RECURRENCES_TABLE.' WHERE event_id = %d ) )', $EM_Event->event_id );
+					$conditions['event'] = $wpdb->prepare( ' event_id IN ( SELECT event_id FROM '. EM_EVENTS_TABLE .' WHERE recurrence_set_id IN ( SELECT recurrence_set_id fROM '.EM_EVENT_RECURRENCES_TABLE.' WHERE event_id = %d ) )', $EM_Event->get_event_id() );
 				} else {
-					$conditions['event'] = $wpdb->prepare( ' event_id = %d ', $EM_Event->event_id );
+					$conditions['event'] = $wpdb->prepare( ' event_id = %d ', $EM_Event->get_event_id() );
+				}
+				if ( $EM_Event->timeslot_id ) {
+					$conditions['timeslot'] = $wpdb->prepare( ' timeslot_id = %d ', $EM_Event->timeslot_id );
 				}
 			}
 		} elseif ( !empty($args['event_archetype']) && Archetypes::is_event($args['event_archetype'], false) ){
