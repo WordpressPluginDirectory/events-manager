@@ -167,21 +167,27 @@ class EM_Object {
 				}
 			}
 			// Archetypes and Types
-			if ( !empty($array['event_archetype']) ) {
-				// sanitize again, just in case
-				if ( !is_array($array['event_archetype']) ) {
-					$array['event_archetype'] = explode(',', str_replace(' ', '', $array['event_archetype']));
+			if ( empty( $array['event'] ) ) {
+				if ( !empty($array['event_archetype']) ) {
+					// sanitize again, just in case
+					if ( !is_array($array['event_archetype']) ) {
+						$array['event_archetype'] = explode(',', str_replace(' ', '', $array['event_archetype']));
+					}
+					$array['event_archetype'] = array_intersect( Archetypes::get_cpts(), $array['event_archetype'] );
 				}
-				$array['event_archetype'] = array_intersect( Archetypes::get_cpts(), $array['event_archetype'] );
-			}
 
-			if ( !empty($array['event_type']) ) {
-				// sanitize again, just in case
-				if ( !is_array($array['event_type']) ) {
-					$array['event_type'] = explode(',', str_replace(' ', '', $array['event_type']));
+				if ( !empty($array['event_type']) ) {
+					// sanitize again, just in case
+					if ( !is_array($array['event_type']) ) {
+						$array['event_type'] = explode(',', str_replace(' ', '', $array['event_type']));
+					}
+					$allowed_event_types = ['recurring', 'repeating', 'recurrence', 'single'];
+					$array['event_type'] = array_intersect( $allowed_event_types, $array['event_type'] );
 				}
-				$allowed_event_types = ['recurring', 'repeating', 'recurrence', 'single'];
-				$array['event_type'] = array_intersect( $allowed_event_types, $array['event_type'] );
+			} else {
+				// we are looking for a specific event, so we know we don't need an archetype or type
+				$array['event_archetype'] = false;
+				$array['event_type'] = false;
 			}
 			//return clean array
 			$defaults = array_merge ( $defaults, $array ); //No point using WP's cleaning function, we're doing it already.
@@ -323,46 +329,49 @@ class EM_Object {
 			}
 		}
 
-		// archetypes, generally we'll want to display only one archetype at a time, but we can still be flexible
-		if ( !empty($args['event_archetype']) ) {
-			if ( !is_array($args['event_archetype']) ) {
-				$args['event_archetype'] = explode(',', str_replace(' ', '', $args['event_archetype']));
-			}
-			$event_archetypes = array_intersect( Archetypes::get_cpts(), $args['event_archetype'] );
-			if ( count($args['event_archetype']) > 1 ) {
-				$conditions['event_archetype'] = "(`event_archetype` IN ('" . implode("','", $event_archetypes) . "'))";
-			} else {
-				$event_archetype = current($event_archetypes);
-				$conditions['event_archetype'] = "(`event_archetype` = '$event_archetype')";
-			}
-		}
-		
-		//Recurrences
-		// TODO Transition recurrences over time...
-		if ( !empty($args['event_type']) ) {
-			// sanitize again, just in case
-			if ( !is_array($args['event_type']) ) {
-				$args['event_type'] = explode(',', str_replace(' ', '', $args['event_type']));
-			}
-			$allowed_event_types = ['recurring', 'repeating', 'recurrence', 'single'];
-			$event_types = array_intersect( $allowed_event_types, $args['event_type'] );
-			$conditions['event_type'] = "(`event_type` IN ('" . implode("','", $event_types) . "'))";
-		} else {
-			if ( $recurring ) {
-				//we show recurring event templates as well within results, if 'recurring' is 'include' then we show both recurring and normal events.
-				if ( $recurring !== 'include' ) {
-					$conditions['recurring'] = "`event_type` IN ('repeating','recurring')";
+		// Archetypes, Types and Recurrences
+		if ( !$event ) {
+			// archetypes, generally we'll want to display only one archetype at a time, but we can still be flexible
+			if ( !empty($args['event_archetype']) ) {
+				if ( !is_array($args['event_archetype']) ) {
+					$args['event_archetype'] = explode(',', str_replace(' ', '', $args['event_archetype']));
 				}
-			} elseif ( $recurrence > 0 ) {
-				$conditions['recurrence'] = $wpdb->prepare( "(`recurrence_set_id` IN (SELECT recurrence_set_id FROM " . EM_EVENT_RECURRENCES_TABLE . " WHERE event_id=%d))", $recurrence );
-			} else {
-				//we choose to either exclusively show or completely omit recurrences, if not set then both are shown
-				if ( $recurrences !== null ) {
-					$conditions['recurrences'] = $recurrences ? "(`recurrence_set_id` > 0 )" : "(`recurrence_set_id` IS NULL OR `recurrence_set_id`=0 )";
+				$event_archetypes = array_intersect( Archetypes::get_cpts(), $args['event_archetype'] );
+				if ( count($args['event_archetype']) > 1 ) {
+					$conditions['event_archetype'] = "(`event_archetype` IN ('" . implode("','", $event_archetypes) . "'))";
+				} else {
+					$event_archetype = current($event_archetypes);
+					$conditions['event_archetype'] = "(`event_archetype` = '$event_archetype')";
 				}
-				//if we get here and $recurring is not exactly null (meaning ignored), it was set to false or 0 meaning recurring events shouldn't be included
-				if ( $recurring !== null ) {
-					$conditions['recurring'] = "(`event_type` NOT IN ('repeating','recurring'))";
+			}
+
+			//Recurrences
+			// TODO Transition recurrences over time...
+			if ( !empty($args['event_type']) ) {
+				// sanitize again, just in case
+				if ( !is_array($args['event_type']) ) {
+					$args['event_type'] = explode(',', str_replace(' ', '', $args['event_type']));
+				}
+				$allowed_event_types = ['recurring', 'repeating', 'recurrence', 'single'];
+				$event_types = array_intersect( $allowed_event_types, $args['event_type'] );
+				$conditions['event_type'] = "(`event_type` IN ('" . implode("','", $event_types) . "'))";
+			} else {
+				if ( $recurring ) {
+					//we show recurring event templates as well within results, if 'recurring' is 'include' then we show both recurring and normal events.
+					if ( $recurring !== 'include' ) {
+						$conditions['recurring'] = "`event_type` IN ('repeating','recurring')";
+					}
+				} elseif ( $recurrence > 0 ) {
+					$conditions['recurrence'] = $wpdb->prepare( "(`recurrence_set_id` IN (SELECT recurrence_set_id FROM " . EM_EVENT_RECURRENCES_TABLE . " WHERE event_id=%d))", $recurrence );
+				} else {
+					//we choose to either exclusively show or completely omit recurrences, if not set then both are shown
+					if ( $recurrences !== null ) {
+						$conditions['recurrences'] = $recurrences ? "(`recurrence_set_id` > 0 )" : "(`recurrence_set_id` IS NULL OR `recurrence_set_id`=0 )";
+					}
+					//if we get here and $recurring is not exactly null (meaning ignored), it was set to false or 0 meaning recurring events shouldn't be included
+					if ( $recurring !== null ) {
+						$conditions['recurring'] = "(`event_type` NOT IN ('repeating','recurring'))";
+					}
 				}
 			}
 		}
@@ -1261,13 +1270,13 @@ class EM_Object {
 		if ( !empty(static::$field_shortcuts[$prop]) ) {
 			$property = static::$field_shortcuts[$prop];
 			if( !empty($this->fields[$property]['type']) && $this->fields[$property]['type'] == '%d' ){
-				$val = absint($val);
+				$val = (int) $val;
 			}
 			$this->{$property} = $val;
 		} elseif ( !empty($this->shortnames[$prop]) ) {
 			$property = $this->shortnames[$prop];
 			if( !empty($this->fields[$property]['type']) && $this->fields[$property]['type'] == '%d' ){
-				$val = absint($val);
+				$val = (int) $val;
 			}
 			$this->{$property} = $val;
 		} else {
@@ -1870,6 +1879,8 @@ class EM_Object {
 	 */
 	function get_tax_rate( $decimal = false ){
 		$tax_rate = $this->get_option('dbem_bookings_tax');
+		$tax_rate = str_replace(',', '.', (string) $tax_rate);
+		$tax_rate = (float) preg_replace('/[^0-9.]/', '', $tax_rate);
 		$tax_rate = ($tax_rate > 0) ? $tax_rate : 0;
 		if( $decimal && $tax_rate > 0 ) $tax_rate = $tax_rate / 100;
 		return $tax_rate;

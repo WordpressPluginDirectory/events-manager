@@ -32,11 +32,20 @@
 				<h3><?php esc_html_e('Description', 'events-manager'); ?></h3>
 				#_TAGDESCRIPTION
 			</section>
+			<?php foreach( EM\Archetypes::get_cpts( [], ['event', 'types']) as $cpt ): ?>
+				<?php
+				$archetype = EM\Archetypes::get( $cpt );
+				if ( in_array( EM_TAXONOMY_CATEGORY, $archetype['taxonomies'] ) ) {
+					?>
+					<section class="em-taxonomy-events">
+						<a name="upcoming-events"></a>
+						<h3><?php echo esc_html( sprintf( __('Upcoming %s', 'events-manager'), $archetype['label'] ) ); ?></h3>
+						#_TAGNEXTEVENTS{<?php echo $cpt ?>}
+					</section>
+					<?php
+				}
+				?>
+			<?php endforeach; ?>
 		</section>
 	</div>
-</section>
-<section class="em-taxonomy-events">
-	<a name="upcoming-events"></a>
-	<h3><?php esc_html_e('Upcoming Events', 'events-manager'); ?></h3>
-	#_TAGNEXTEVENTS
 </section>

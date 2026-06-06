@@ -87,7 +87,7 @@
 		position: relative;
 		width: auto;
 		float: none;
-		padding: 20px 30px;
+		padding: 20px 15px;
 		margin: 0;
 
 		&.em-booking-form-buttons {
@@ -98,7 +98,6 @@
 	/* Tickets Table */
 	.em-tickets {
 		border: 0;
-		margin: 0 10px;
 		padding: 0;
 		width: calc(100% - 20px);
 
@@ -153,8 +152,7 @@
 				display: none !important;
 				visibility: hidden !important;
 			}
-			margin: 0 20px 20px;
-			padding-bottom: 0;
+			padding: 0 15px 20px !important;
 			border: 0;
 			text-align: left;
 
@@ -308,6 +306,17 @@
 			min-width: 100px;
 		}
 	}
+
+
+	@media ( max-width: 768px ) {
+		.em-booking-section {
+			padding: 20px 5px;
+		}
+		.em-tickets .em-ticket-bookings {
+			padding: 0 0 20px 8px !important;
+		}
+	}
+
 }
 .em-booking-form-summary {
 

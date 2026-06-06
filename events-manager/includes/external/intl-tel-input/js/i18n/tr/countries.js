@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andorra",
   ae: "Birleşik Arap Emirlikleri",
   af: "Afganistan",
@@ -8,7 +7,6 @@ export default {
   al: "Arnavutluk",
   am: "Ermenistan",
   ao: "Angola",
-  aq: "Antarktika",
   ar: "Arjantin",
   as: "Amerikan Samoası",
   at: "Avusturya",
@@ -33,7 +31,6 @@ export default {
   br: "Brezilya",
   bs: "Bahamalar",
   bt: "Butan",
-  bv: "Bouvet Adası",
   bw: "Botsvana",
   by: "Belarus",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Guadeloupe",
   gq: "Ekvator Ginesi",
   gr: "Yunanistan",
-  gs: "Güney Georgia ve Güney Sandwich Adaları",
   gt: "Guatemala",
   gu: "Guam",
   gw: "Gine-Bissau",
   gy: "Guyana",
   hk: "Çin Hong Kong ÖİB",
-  hm: "Heard Adası ve McDonald Adaları",
   hn: "Honduras",
   hr: "Hırvatistan",
   ht: "Haiti",
@@ -180,7 +175,6 @@ export default {
   pk: "Pakistan",
   pl: "Polonya",
   pm: "Saint Pierre ve Miquelon",
-  pn: "Pitcairn Adaları",
   pr: "Porto Riko",
   ps: "Filistin Bölgeleri",
   pt: "Portekiz",
@@ -215,7 +209,6 @@ export default {
   sz: "Esvatini",
   tc: "Turks ve Caicos Adaları",
   td: "Çad",
-  tf: "Fransız Güney Toprakları",
   tg: "Togo",
   th: "Tayland",
   tj: "Tacikistan",
@@ -231,7 +224,6 @@ export default {
   tz: "Tanzanya",
   ua: "Ukrayna",
   ug: "Uganda",
-  um: "ABD Küçük Harici Adaları",
   us: "Amerika Birleşik Devletleri",
   uy: "Uruguay",
   uz: "Özbekistan",
@@ -248,5 +240,6 @@ export default {
   yt: "Mayotte",
   za: "Güney Afrika",
   zm: "Zambiya",
-  zw: "Zimbabve",
+  zw: "Zimbabve"
 };
+export default countryTranslations;

@@ -64,6 +64,12 @@ class Taxonomies {
 				'hierarchical' => true,
 				'public' => true,
 				'show_ui' => true,
+				// Mirror the CPT show_in_rest gating from classes/em-archetypes.php so the
+				// Gutenberg block-editor sidebar can render the Categories/Tags panels for
+				// EM events. Without show_in_rest, WP's block editor silently omits the
+				// taxonomy panel even when the CPT itself is in REST, leaving users no way
+				// to assign categories/tags to a post being edited in Gutenberg.
+				'show_in_rest' => em_use_block_editor(),
 				'query_var' => true,
 				// for now caps are fixed
 				'capabilities' => [

@@ -201,7 +201,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 	// Update the recurrence summary of recurrences
 	recurrenceSets.addEventListener('updateRecurrenceSummary', function( e ) {
 		let sets = e.target.matches('.em-recurrence-set') ? [ e.target ] : e.target.querySelectorAll('.em-recurrence-set');
-		let timerangeDefault = e.target.querySelector('.em-recurrence-set[data-primary] .em-recurrence-timeranges .em-timeranges');
+		let timerangeDefault = recurrenceSets.querySelector('.em-recurrence-set[data-primary] .em-recurrence-timeranges .em-timeranges');
 
 		sets.forEach( function ( recurrenceSet ){
 			let advancedSummary = recurrenceSet.querySelector('.advanced-summary');
@@ -275,7 +275,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 				let timezoneSelect = recurrenceSet.querySelector('.em-recurrence-timezone select');
 				let timezoneValue = '';
 
-				if (timezoneSelect) {
+				if ( timezoneSelect ) {
 					let value = timezoneSelect.value;
 
 					if (value) {

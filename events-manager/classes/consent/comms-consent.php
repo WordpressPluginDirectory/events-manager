@@ -14,6 +14,7 @@ class Comms extends Consent {
 	);
 	
 	public static $prefix = 'comms_consent';
+	public static $required = false;
 	
 	public static function init() {
 		static::$required = em_get_option('dbem_data_' . static::$prefix . '_required') == true;
@@ -305,29 +306,3 @@ class Comms extends Consent {
 	}
 }
 Comms::init();
-
-/**
-
-
-SELECT * FROM wp_em_bookings
-
-						LEFT JOIN ( SELECT mb.booking_id as mb_booking_id, em_comms_consent FROM wp_em_bookings_relationships mb LEFT JOIN
-
-(
-	SELECT b.booking_id AS comms_consent_bid, meta_value AS em_comms_consent FROM wp_em_bookings b LEFT JOIN (
-	SELECT wm1.user_id, meta_value FROM wp_usermeta wm1
-								WHERE wm1.meta_key='em_comms_consent'
-							) um ON um.user_id = b.person_id WHERE meta_value IS NOT NULL
-							UNION
-							SELECT b.booking_id AS comms_consent_bid, meta_value AS em_comms_consent FROM wp_em_bookings b
-								LEFT JOIN wp_em_bookings_meta bm1 ON bm1.booking_id = b.booking_id AND  (bm1.meta_key='_registration_em_comms_consent' OR bm1.meta_key='_registration|em_comms_consent')
-							WHERE bm1.meta_value IS NOT NULL
-						) comms_consent ON comms_consent.comms_consent_bid = mb.booking_main_id
-                        WHERE em_comms_consent IS NOT NULL
-					) mb ON mb.mb_booking_id=booking_id
- WHERE  wp_em_bookings.event_id = 23696
- GROUP BY booking_id
-ORDER BY em_comms_consent DESC
-LIMIT 20
-OFFSET 0
- */

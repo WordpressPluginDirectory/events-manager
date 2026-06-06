@@ -20,6 +20,7 @@ if( !class_exists('EM_Permalinks') ){
 			'calendar_day',
 			'rss',
 			'ical',
+			'event_archetype',
 			'event_categories',
 			'event_locations'
 		);
@@ -244,8 +245,16 @@ if( !class_exists('EM_Permalinks') ){
 				//set the dynamic rule for this taxonomy
 				$em_rules[ $taxonomy_info['slug'] . "/(.+)/ical/?$" ] = 'index.php?' . $taxonomy_info['query_var'] . '=$matches[1]&ical=1';
 			}
+			// add ical endpoint for archetypes showing all events of archetype (similar to events.ics)
+			foreach ( EM\Archetypes::get_cpts( [], ['event','types'] ) as $cpt ) {
+				$archetype = EM\Archetypes::get( $cpt );
+				$em_rules[ $archetype['slug'] . "/ical/?$" ] = 'index.php?ical=1&event_archetype=' . $cpt;
+			}
 			// add ical endpoint for events (last in case of subdierctory overlap
-			$em_rules[ EM_POST_TYPE_EVENT_SLUG . "/(.+)/ical/?$" ] = 'index.php?' . EM_POST_TYPE_EVENT . '=$matches[1]&ical=1';
+			foreach ( EM\Archetypes::get_cpts( [], ['event','types'] ) as $cpt ) {
+				$archetype = EM\Archetypes::get( $cpt );
+				$em_rules[ $archetype['slug'] . "/(.+)/ical/?$" ] = 'index.php?' . $cpt . '=$matches[1]&ical=1&&event_archetype=' . $cpt;
+			}
 			//add RSS location CPT endpoint
 			if ( em_get_option( 'dbem_locations_enabled' ) ) {
 				$em_rules[ EM_POST_TYPE_LOCATION_SLUG . "/([^/]+)/rss/?$" ] = 'index.php?' . EM_POST_TYPE_LOCATION . '=$matches[1]&rss=1';

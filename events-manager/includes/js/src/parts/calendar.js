@@ -103,6 +103,7 @@ jQuery(document).ready( function($){
 				let month = calendar.find('select[name="month"]');
 				let year = calendar.find('select[name="year"]');
 				let monthpicker = calendar.find('.em-month-picker');
+				let monthpicker_value = monthpicker.val() + '-02'; // store this for further down before we change the value below
 				let month_value = monthpicker.data('month-value');
 				monthpicker.prop('type', 'text').prop('value', month_value);
 				calendar_resize_monthpicker( monthpicker[0], month_value );
@@ -120,16 +121,16 @@ jQuery(document).ready( function($){
 					flatpickr.localize(flatpickr.l10ns[EM.datepicker.locale]);
 					flatpickr.l10ns.default.firstDayOfWeek = EM.firstDay;
 				}
-				monthpicker.flatpickr({
+				let fp = monthpicker.flatpickr({
 					appendTo : monthpicker_wrapper[0],
-					dateFormat : 'F Y',
+					dateFormat : EM?.calendar?.month_format,
 					minDate : minDate,
 					disableMobile: "true",
 					plugins: [
 						new monthSelectPlugin({
-							shorthand: true, //defaults to false
-							dateFormat: "F Y", //defaults to "F Y"
-							altFormat: "F Y", //defaults to "F Y"
+							shorthand: true,
+							dateFormat: EM?.calendar?.month_format || 'F Y',
+							altFormat: EM?.calendar?.month_format || 'F Y',
 						})
 					],
 					onChange: function(selectedDates, dateStr, instance) {
@@ -137,13 +138,13 @@ jQuery(document).ready( function($){
 						calendar_trigger_ajax( calendar, selectedDates[0].getFullYear(), selectedDates[0].getMonth()+1);
 					},
 				});
-				monthpicker.addClass('select-toggle')
-				/* Disabling native picker at the moment, too quriky cross-browser
-			}
-			*/
+				// this bit fixes issues if the supplied text value has a mismatch with the real text value due to localization differences between WP and flatpickr
+				fp.setDate( new Date( monthpicker_value ) );
+				// add classes to month picker
+				monthpicker.addClass('select-toggle');
 			}
 			if( calendar.hasClass('preview-tooltips') ){
-				var tooltip_vars = {
+				let tooltip_vars = {
 					theme : 'light-border',
 					allowHTML : true,
 					interactive : true,

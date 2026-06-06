@@ -628,7 +628,13 @@ if ( EM.phone ) {
 			let alt = document.createElement('input');
 			let name = input.name;
 			if( name ) {
-				input.name = name + '_intl';
+				// check if there's an ending ] in the name if so modify the name within the last brackets
+				let lastBracket = name.lastIndexOf(']');
+				if( lastBracket > -1 ) {
+					input.name = name.substring(0, lastBracket) + '_intl]';
+				} else {
+					input.name = name + '_intl';
+				}
 				alt.name = name;
 			}
 			input.classList.add('em-intl-tel');
@@ -673,6 +679,24 @@ if ( EM.phone ) {
 			}
 
 			let iti = EM.intlTelInput( input, options);
+			if ( !input?.checkVisibility() ) {
+				// if the input is hidden, we need some trickery to correctly obtain the padding by adding a clone of the minimum into the array
+				// intl-tel-input does this, but because it's not wrapped in an em element the padding isn't correctly styled via CSS
+				let body = document.body;
+				let container = document.createElement('div');
+				container.style.visibility = "hidden";
+				container.classList.add('em');
+				body.appendChild( container );
+				let containerClone = input.parentNode.cloneNode( false );
+				container.appendChild( containerClone );
+				let countryContainerClone = iti.ui.countryContainer.cloneNode();
+				containerClone.appendChild( countryContainerClone );
+				let selectedCountryClone = iti.ui.selectedCountry.cloneNode( true );
+				countryContainerClone.appendChild( selectedCountryClone );
+				let width = selectedCountryClone.offsetWidth + 12; // add extra padding
+				input.style.setProperty('padding-left', width + 'px', 'important' );
+				body.removeChild( container );
+			}
 			//iti.countryContainer.querySelector('button')?.setAttribute('data-nostyle', '');
 			let pixels = parseInt( input.style.paddingLeft.replace('px', '') ); // pad this an extra px
 			input.style.setProperty('padding-left', pixels + 'px', 'important' );
@@ -715,6 +739,19 @@ if ( EM.phone ) {
 				}
 			});
 
+			input.addEventListener('open:countrydropdown', function( e ) {
+				document.querySelectorAll('.iti.iti--container.iti--fullscreen-popup').forEach( function( el ) {
+					if ( !el.closest('.em') ) {
+						// wrap in an .em div
+						let div = document.createElement('div');
+						div.classList.add('em');
+						el.parentNode.insertBefore(div, el);
+						div.appendChild(el);
+						el.querySelector('input.iti__search-input')?.focus();
+					}
+				});
+			});
+
 		});
 	};
 
@@ -723,6 +760,9 @@ if ( EM.phone ) {
 			let iti = EM.intlTelInput?.getInstance(el);
 			if ( iti ) {
 				iti.destroy();
+				// remove alt field as well and unset the _intl suffix, which may have a trailing ] so needs a preg
+				el.name = el.name.replace(/_intl]$/, ']').replace(/_intl$/, '');
+				el.parentElement.querySelector('input.em-intl-tel-full')?.remove();
 			}
 		});
 	};

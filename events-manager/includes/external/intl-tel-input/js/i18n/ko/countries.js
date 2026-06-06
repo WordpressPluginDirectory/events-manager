@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "안도라",
   ae: "아랍에미리트",
   af: "아프가니스탄",
@@ -8,7 +7,6 @@ export default {
   al: "알바니아",
   am: "아르메니아",
   ao: "앙골라",
-  aq: "남극 대륙",
   ar: "아르헨티나",
   as: "아메리칸 사모아",
   at: "오스트리아",
@@ -33,7 +31,6 @@ export default {
   br: "브라질",
   bs: "바하마",
   bt: "부탄",
-  bv: "부베섬",
   bw: "보츠와나",
   by: "벨라루스",
   bz: "벨리즈",
@@ -89,13 +86,11 @@ export default {
   gp: "과들루프",
   gq: "적도 기니",
   gr: "그리스",
-  gs: "사우스조지아 사우스샌드위치 제도",
   gt: "과테말라",
   gu: "괌",
   gw: "기니비사우",
   gy: "가이아나",
   hk: "홍콩(중국 특별행정구)",
-  hm: "허드 맥도널드 제도",
   hn: "온두라스",
   hr: "크로아티아",
   ht: "아이티",
@@ -180,7 +175,6 @@ export default {
   pk: "파키스탄",
   pl: "폴란드",
   pm: "생피에르 미클롱",
-  pn: "핏케언 섬",
   pr: "푸에르토리코",
   ps: "팔레스타인 지구",
   pt: "포르투갈",
@@ -215,7 +209,6 @@ export default {
   sz: "에스와티니",
   tc: "터크스 케이커스 제도",
   td: "차드",
-  tf: "프랑스 남부 지방",
   tg: "토고",
   th: "태국",
   tj: "타지키스탄",
@@ -231,7 +224,6 @@ export default {
   tz: "탄자니아",
   ua: "우크라이나",
   ug: "우간다",
-  um: "미국령 해외 제도",
   us: "미국",
   uy: "우루과이",
   uz: "우즈베키스탄",
@@ -248,5 +240,6 @@ export default {
   yt: "마요트",
   za: "남아프리카",
   zm: "잠비아",
-  zw: "짐바브웨",
+  zw: "짐바브웨"
 };
+export default countryTranslations;

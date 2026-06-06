@@ -26,7 +26,7 @@
 		}else{
 			?>
 			<div class="em em-location-map-container" style="position:relative; <?php if( $width ) echo 'width:'. esc_attr($width).';'; ?> <?php if( $height ) echo 'height: '. esc_attr($height) .';' ?>">
-				<div class='em-location-map' id='em-location-map-<?php echo $rand ?>' style="width: 100%; height: 100%;">
+				<div class='em-location-map' id='em-location-map-<?php echo $rand ?>' style="width: 100%; height: 100%;" title="<?php echo esc_attr($EM_Location->location_name); ?>">
 					<div class="em-loading-maps">
 						<span><?php _e('Loading Map....', 'events-manager'); ?></span>
 						<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="margin: auto; background: none; display: block; shape-rendering: auto;" width="200px" height="200px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
@@ -47,7 +47,7 @@
 				</div>
 			</div>
 			<div class='em-location-map-info' id='em-location-map-info-<?php echo $rand ?>' style="display:none; visibility:hidden;">
-				<div class="em-map-balloon" style="font-size:12px;">
+				<div class="em-map-balloon">
 					<div class="em-map-balloon-content" ><?php echo $EM_Location->output(em_get_option('dbem_location_baloon_format')); ?></div>
 				</div>
 			</div>
@@ -55,7 +55,14 @@
 				<span class="lat"><?php echo $EM_Location->location_latitude; ?></span>
 				<span class="lng"><?php echo $EM_Location->location_longitude; ?></span>
 			</div>
-			<?php
+			<?php if( !empty($args['map_style']) ): ?>
+				<script type="text/javascript">
+					if( typeof EM == 'object'){
+						if( typeof EM.google_map_id_styles != 'object' ) EM.google_map_id_styles = [];
+						EM.google_map_id_styles['<?php echo $rand; ?>'] = <?php echo $args['map_style']; ?>;
+					}
+				</script>
+			<?php endif;
 		}
 	}elseif( is_object($EM_Location) && $EM_Location->location_latitude == 0 && $EM_Location->location_longitude == 0 ){
 		echo '<i>'. __('Map Unavailable', 'events-manager') .'</i>';

@@ -42,6 +42,10 @@
 		&.active {
 			display: block !important;
 			visibility: visible !important;
+
+			.em-modal-popup header {
+				margin: 0 0 15px;
+			}
 		}
 	}
 

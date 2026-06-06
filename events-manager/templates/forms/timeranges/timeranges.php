@@ -25,7 +25,7 @@ $edit_nonce = wp_create_nonce('em_timeranges_edit_' . $Timeranges->group_id);
 		// output template timerange
 		if ( $Timeranges->allow_timeranges ) {
 			$name = $name_template . '[X]';
-			$Timerange = new Timerange();
+			$Timerange = $Timeranges->get_timerange();
 			echo '<template>';
 			include( em_locate_template( 'forms/timeranges/timerange.php' ) );
 			echo '</template>';

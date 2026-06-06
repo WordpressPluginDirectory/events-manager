@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andorra",
   ae: "Egyesült Arab Emírségek",
   af: "Afganisztán",
@@ -8,7 +7,6 @@ export default {
   al: "Albánia",
   am: "Örményország",
   ao: "Angola",
-  aq: "Antarktisz",
   ar: "Argentína",
   as: "Amerikai Szamoa",
   at: "Ausztria",
@@ -33,7 +31,6 @@ export default {
   br: "Brazília",
   bs: "Bahama-szigetek",
   bt: "Bhután",
-  bv: "Bouvet-sziget",
   bw: "Botswana",
   by: "Belarusz",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Guadeloupe",
   gq: "Egyenlítői-Guinea",
   gr: "Görögország",
-  gs: "Déli-Georgia és Déli-Sandwich-szigetek",
   gt: "Guatemala",
   gu: "Guam",
   gw: "Bissau-Guinea",
   gy: "Guyana",
   hk: "Hongkong KKT",
-  hm: "Heard-sziget és McDonald-szigetek",
   hn: "Honduras",
   hr: "Horvátország",
   ht: "Haiti",
@@ -180,7 +175,6 @@ export default {
   pk: "Pakisztán",
   pl: "Lengyelország",
   pm: "Saint-Pierre és Miquelon",
-  pn: "Pitcairn-szigetek",
   pr: "Puerto Rico",
   ps: "Palesztin Terület",
   pt: "Portugália",
@@ -215,7 +209,6 @@ export default {
   sz: "Szváziföld",
   tc: "Turks- és Caicos-szigetek",
   td: "Csád",
-  tf: "Francia Déli Területek",
   tg: "Togo",
   th: "Thaiföld",
   tj: "Tádzsikisztán",
@@ -231,7 +224,6 @@ export default {
   tz: "Tanzánia",
   ua: "Ukrajna",
   ug: "Uganda",
-  um: "Az USA lakatlan külbirtokai",
   us: "Egyesült Államok",
   uy: "Uruguay",
   uz: "Üzbegisztán",
@@ -248,5 +240,6 @@ export default {
   yt: "Mayotte",
   za: "Dél-afrikai Köztársaság",
   zm: "Zambia",
-  zw: "Zimbabwe",
+  zw: "Zimbabwe"
 };
+export default countryTranslations;

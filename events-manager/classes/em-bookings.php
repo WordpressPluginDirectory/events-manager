@@ -51,6 +51,8 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	protected $booked_spaces;
 	protected $pending_spaces;
 	protected $available_spaces;
+	protected $reserved_spaces;
+	protected $status_counts = [];
 	
 	/**
 	 * Reference to the event object if this object contains bookings of a specific event only
@@ -481,7 +483,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			//faster way of deleting bookings for an event circumventing the need to load all bookings if it hasn't been loaded already
 			$event_id = absint($this->event_id);
 			$event_ids = array($event_id);
-			$timeslot = $this->timeslot_id ? ' AND timeslot_id = ' . absint($this->timeslot_id) : '';
+			$timeslot = !empty($this->timeslot_id) ? ' AND timeslot_id = ' . absint($this->timeslot_id) : '';
 			$booking_ids = $wpdb->get_col("SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id' $timeslot");
 			$result_tickets = $wpdb->query("DELETE FROM ". EM_TICKETS_BOOKINGS_TABLE ." WHERE booking_id IN (SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id' $timeslot)");
 			$result = $wpdb->query("DELETE FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id' $timeslot");
@@ -588,15 +590,13 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	 * Returns number of available spaces for this event. If approval of bookings is on, will include pending bookings depending on em option.
 	 * @return int
 	 */
-	function get_available_spaces( $force_refresh = false ){
+	function get_available_spaces( $force_refresh = false ) {
 		if ( $this->get_event()->event_active_status === 0 ) {
 			$available_spaces = 0;
 		}else{
 			$spaces = $this->get_spaces($force_refresh);
 			$available_spaces = $spaces - $this->get_booked_spaces($force_refresh);
-			if( em_get_option('dbem_bookings_approval_reserved') ){ //deduct reserved/pending spaces from available spaces
-				$available_spaces -= $this->get_pending_spaces($force_refresh);
-			}
+			$available_spaces -= $this->get_reserved_spaces($force_refresh);
 		}
 		// @deprecated use em_bookings_get_available_spaces instead
 		$available_spaces = apply_filters('em_booking_get_available_spaces', $available_spaces, $this);
@@ -608,20 +608,31 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	 * @return int
 	 */
 	function get_booked_spaces($force_refresh = false){
-		global $wpdb;
 		if( $this->booked_spaces === null || $force_refresh ){
-			$status_cond = !em_get_option('dbem_bookings_approval') ? 'booking_status IN (0,1)' : 'booking_status = 1';
-			if ( $this->get_event()->is_recurring( true ) ) {
-				$subquery = "SELECT event_id FROM " . EM_EVENTS_TABLE . " WHERE $status_cond AND recurrence_set_id IN ( SELECT recurrence_set_id FROM " . EM_EVENT_RECURRENCES_TABLE . " WHERE event_id = '{$this->event_id}' )";
-				$sql = "SELECT SUM(booking_spaces) FROM ". EM_BOOKINGS_TABLE ." WHERE event_id IN ( $subquery ) ORDER BY booking_date";
-			} else {
-				$timeslot = $this->timeslot_id ? ' AND timeslot_id = ' . absint($this->timeslot_id) : '';
-				$sql = 'SELECT SUM(booking_spaces) FROM '.EM_BOOKINGS_TABLE. " WHERE $status_cond AND event_id=".absint($this->event_id) . $timeslot;
-			}
-			$booked_spaces = $wpdb->get_var($sql);
+			$status_cond = !em_get_option('dbem_bookings_approval') ? '0,1' : '1';
+			$booked_spaces = $this->get_status_count( $status_cond, $force_refresh );
 			$this->booked_spaces = $booked_spaces > 0 ? $booked_spaces : 0;
+			$this->booked_spaces = apply_filters('em_bookings_get_booked_spaces', $this->booked_spaces, $this, $force_refresh);
 		}
-		return apply_filters('em_bookings_get_booked_spaces', $this->booked_spaces, $this, $force_refresh);
+		return $this->booked_spaces;
+	}
+
+	/**
+	 * Gets number of reserved spaces. Will return 0 if booking approval is not enabled.
+	 * @return int
+	 */
+	function get_reserved_spaces( $force_refresh = false ) {
+		if( em_get_option('dbem_bookings_approval') && em_get_option('dbem_bookings_approval_reserved') ) {
+			if ( $this->reserved_spaces === null || $force_refresh ) {
+				$reserved_spaces = $this->get_status_count( 0, $force_refresh );
+				$this->reserved_spaces = $reserved_spaces > 0 ? $reserved_spaces : 0;
+				// run here, once unless forced to refresh
+				$this->reserved_spaces = apply_filters('em_bookings_get_reserved_spaces', $this->reserved_spaces, $this, $force_refresh);
+			}
+			return $this->reserved_spaces;
+		}
+		// if we reach here, always run the filter to allow other bookings to override other reserved spaces with bookings of different status
+		return apply_filters('em_bookings_get_reserved_spaces', $this->reserved_spaces ?? 0, $this, $force_refresh);
 	}
 	
 	/**
@@ -629,22 +640,39 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	 * @return int
 	 */
 	function get_pending_spaces( $force_refresh = false ){
-		if( em_get_option('dbem_bookings_approval') == 0 ){
-			return apply_filters('em_bookings_get_pending_spaces', 0, $this);
-		}
-		global $wpdb;
-		if( $this->pending_spaces === null || $force_refresh ){
-			if ( $this->get_event()->is_recurring( true ) ) {
-				$subquery = "SELECT event_id FROM " . EM_EVENTS_TABLE . " WHERE booking_status IN (0,5) AND recurrence_set_id IN ( SELECT recurrence_set_id FROM " . EM_EVENT_RECURRENCES_TABLE . " WHERE event_id = '{$this->event_id}' )";
-				$sql = "SELECT SUM(booking_spaces) FROM ". EM_BOOKINGS_TABLE ." WHERE event_id IN ( $subquery ) ORDER BY booking_date";
-			} else {
-				$timeslot = $this->timeslot_id ? ' AND timeslot_id = ' . absint($this->timeslot_id) : '';
-				$sql = 'SELECT SUM(booking_spaces) FROM '.EM_BOOKINGS_TABLE. ' WHERE booking_status IN (0,5) AND event_id='.absint($this->event_id) . $timeslot;
+		if( em_get_option('dbem_bookings_approval') ) {
+			if ( $this->pending_spaces === null || $force_refresh ) {
+				$pending_spaces = $this->get_status_count( 0 );
+				$this->pending_spaces = $pending_spaces > 0 ? $pending_spaces : 0;
+				$this->pending_spaces = apply_filters('em_bookings_get_pending_spaces', $this->pending_spaces, $this, $force_refresh);
 			}
-			$pending_spaces = $wpdb->get_var($sql);
-			$this->pending_spaces = $pending_spaces > 0 ? $pending_spaces : 0;
+			return $this->pending_spaces;
 		}
-		return apply_filters('em_bookings_get_pending_spaces', $this->pending_spaces, $this, $force_refresh);
+		// if we reach here, always run the filter to allow other bookings to override other reserved spaces with bookings of different status
+		return apply_filters('em_bookings_get_pending_spaces', 0, $this, $force_refresh);
+	}
+
+	public function get_status_count( $status, $force_refresh = false ) {
+		global $wpdb;
+		// clean up $status
+		if ( is_array($status) ) {
+			$status = implode(',', $status);
+		}
+		$status = str_replace(' ', '', $status);
+		// run if $status is clean
+		if ( preg_match('/^[0-9,]+$/', $status) ) {
+			if ( !isset( $this->status_counts[ $status ] ) || $force_refresh ) {
+				if ( $this->get_event()->is_recurring( true ) ) {
+					$subquery = "SELECT event_id FROM " . EM_EVENTS_TABLE . " WHERE booking_status IN ( $status ) AND recurrence_set_id IN ( SELECT recurrence_set_id FROM " . EM_EVENT_RECURRENCES_TABLE . " WHERE event_id = '{$this->event_id}' )";
+					$sql = "SELECT SUM(booking_spaces) FROM " . EM_BOOKINGS_TABLE . " WHERE event_id IN ( $subquery ) ORDER BY booking_date";
+				} else {
+					$timeslot = !empty($this->timeslot_id) ? ' AND timeslot_id = ' . absint( $this->timeslot_id ) : '';
+					$sql = 'SELECT SUM(booking_spaces) FROM ' . EM_BOOKINGS_TABLE . " WHERE booking_status IN ( $status ) AND event_id=" . absint( $this->event_id ) . $timeslot;
+				}
+				$this->status_counts[ $status ] =  (int) $wpdb->get_var( $sql );
+			}
+		}
+		return apply_filters('em_bookings_get_status_count', $this->status_counts[ $status ] ?? 0, $this, $status, $force_refresh);
 	}
 	
 	/**
@@ -742,7 +770,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		if( is_numeric($user_id) && $user_id > 0 ){
 			global $wpdb;
 			// get the first booking ID available and return that
-			$timeslot = $this->timeslot_id ? ' AND timeslot_id = ' . absint($this->timeslot_id) : '';
+			$timeslot = !empty($this->timeslot_id) ? ' AND timeslot_id = ' . absint($this->timeslot_id) : '';
 			$sql = $wpdb->prepare('SELECT booking_id FROM '.EM_BOOKINGS_TABLE.' WHERE event_id = %d AND person_id = %d AND booking_status NOT IN (2,3)' . $timeslot, $this->event_id, $user_id);
 			$booking_id = $wpdb->get_var($sql);
 			if( (int) $booking_id > 0 ){

@@ -72,6 +72,12 @@ Specific Single Styles
 &.em-item.em-item-single {
 	width: 100%;
 
+	// Nest .em-item-image and .em-item-meta INSIDE .em-item-header so these
+	// single-event layout rules don't cascade into nested block widgets
+	// (e.g. Events List / Event Locations blocks rendered inside the
+	// .em-event-content section). Without the .em-item-header scope, the
+	// `order: 2` on .em-item-image flips the layout of every nested location
+	// item, pushing the icon to the right and collapsing the address column.
 	.em-item-header {
 		display: flex;
 		flex-wrap : nowrap;
@@ -80,39 +86,39 @@ Specific Single Styles
 		background-color: var(--meta-bg);
 		color: var(--default-color);
 		margin-bottom: 20px;
-	}
 
-	.em-item-image {
-		flex: 1 0 300px;
-		order : 2;
-		img {
-			padding-left: 10px !important;
-			border-left: 4px solid var(--default-border);
-		}
-	}
-
-	.em-item-meta {
-		flex: 1 1 auto;
-		order : 1;
-
-		display: flex;
-		flex-wrap: wrap;
-		gap : 20px;
-
-		& > section {
-			flex:max(290px, 100%/3 + 0.1%); // 2 cols max, each col becomes masonry style
-
-			section { // actual meta sections
-				margin-bottom: 40px;
+		.em-item-image {
+			flex: 1 0 300px;
+			order : 2;
+			img {
+				padding-left: 10px !important;
+				border-left: 4px solid var(--default-border);
 			}
 		}
 
-		h3 {
-			font-size: calc(var(--font-size) + 10px) !important;
-			text-transform: uppercase;
-		}
+		.em-item-meta {
+			flex: 1 1 auto;
+			order : 1;
 
-		button, .button { margin: 15px 0 0 !important; }
+			display: flex;
+			flex-wrap: wrap;
+			gap : 20px;
+
+			& > section {
+				flex:max(290px, 100%/3 + 0.1%); // 2 cols max, each col becomes masonry style
+
+				section { // actual meta sections
+					margin-bottom: 40px;
+				}
+			}
+
+			h3 {
+				font-size: calc(var(--font-size) + 10px) !important;
+				text-transform: uppercase;
+			}
+
+			button, .button { margin: 15px 0 0 !important; }
+		}
 	}
 
 	> section {

@@ -169,6 +169,38 @@
 		}
 	}
 
+	/*
+	Maps - if the info balloons don't look right on your site, chances are it's a CSS issue.
+	Google is VERY sensitive to CSS rules for the infowindows, making it hard to accommodate every theme in WP.
+	Please edit your theme's CSS to override this
+	*/
+	.em-location-map, .em-locations-map, #em-map {
+		.em-map-balloon-title {
+			font-size: 14px;
+			font-weight: bold !important;
+		}
+		.em-map-balloon-content {
+			margin:0px 0px 0px 0px !important;
+			padding:0px 0px 10px 0px !important;
+			font-size:13px !important;
+			line-height:18px !important;
+			color:#000000  !important;
+			width:auto !important;
+			max-width:none !important;
+			height:auto !important;
+			max-height:none !important;
+		}
+		img {
+			max-width:none !important;
+			background:none !important;
+			border:none !important;
+			margin:0 !important;
+			padding:0 !important;
+			height:auto;
+			width:auto;
+		}
+	}
+
 	/* Warnings */
 	.em-warning {
 		margin: 10px 0 15px;

@@ -1,1 +1,3 @@
-<strong>#_LOCATIONNAME</strong><p>#_LOCATIONADDRESS</p><p>#_LOCATIONTOWN</p>
+#_LOCATIONADDRESS<br>
+#_LOCATIONTOWN
+<br/><a href="#_LOCATIONPAGEURL"><?php esc_html_e('More Info', 'events-manager'); ?></a>

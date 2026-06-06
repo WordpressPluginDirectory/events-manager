@@ -49,14 +49,14 @@ if( $EM_Booking->get_spaces() > 0 ){
 						$amount_raw = $EM_Ticket_Booking->get_price_with_taxes();
 					}
 					$qty = $EM_Ticket_Booking->get_spaces();
-					$name = $EM_Ticket_Booking->get_ticket()->ticket_name;
+					$name = $EM_Ticket_Booking->get_ticket()->name;
 				?>
 				<div class="em-bs-row em-bs-row-item" data-amount="<?php echo esc_attr($amount_raw); ?>" data-qty="<?php echo esc_attr($qty); ?>" data-name="<?php echo esc_attr($name); ?>">
 					<div class="em-bs-cell-qty" title="<?php esc_html_e('Quantity','events-manager'); ?>">
 						<?php echo esc_html($qty); ?>
 					</div>
 					<div class="em-bs-cell-desc" title="<?php esc_html_e('Ticket','events-manager'); ?>">
-						<span class="em-bs-qty-x">x</span> <?php echo esc_html($name); ?>
+						<span class="em-bs-qty-x">x</span> <?php echo wp_kses($name, 'em_ticket_name'); ?>
 					</div>
 					<div class="em-bs-cell-price" title="<?php esc_html_e('Price','events-manager'); ?>">
 						<?php echo esc_html($amount); ?>

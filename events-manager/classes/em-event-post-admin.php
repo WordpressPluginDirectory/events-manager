@@ -144,7 +144,6 @@ class EM_Event_Post_Admin{
 			if( !empty($_REQUEST['_emnonce']) && wp_verify_nonce($_REQUEST['_emnonce'], 'edit_event') ){
 				//this is only run if we know form data was submitted, hence the nonce
 				$get_meta = $EM_Event->get_post_meta();
-				$validate_meta = $EM_Event->validate_meta(); //Handle Errors by making post draft
 				do_action('em_event_save_pre', $EM_Event); //technically, the event is saved... but the meta isn't. wp doesn't give an pre-intervention action for this (or does it?)
 				//if we execute a location save here, we will screw up the current save_post $wp_filter pointer executed in do_action()
         	    //therefore, we save the current pointer position (priority) and set it back after saving the location further down
@@ -153,6 +152,7 @@ class EM_Event_Post_Admin{
 				$tag = end($wp_current_filter);
 				//save the event meta, whether validated or not and which includes saving a location
 				$save_meta = $EM_Event->save_meta();
+				$validate_meta = $EM_Event->validate_meta(); // Handle Errors by making post draft, but only after we save the event. It should be a saved event but with a 'draft' status
         		//reset save_post pointer in $wp_filter to its original position
         		reset( $wp_filter[$tag]->callbacks );
         		do{
@@ -417,6 +417,7 @@ class EM_Event_Post_Admin{
 	}
 }
 add_action('admin_init',array('EM_Event_Post_Admin','init'));
+add_action('rest_api_init',array('EM_Event_Post_Admin','init')); //also register save/edit hooks for REST-driven saves (e.g. Gutenberg)
 
 /*
  * Recurring Events
@@ -487,7 +488,7 @@ class EM_Event_Recurring_Post_Admin{
 		if ( Archetypes::is_repeating( get_post_type($post_id) ) ) {
 			global $EM_Notices, $wpdb;
 			$EM_Event = em_get_event($post_id,'post_id');
-			$EM_Event->set_status(null);
+			$EM_Event->set_status(-1);
 			//only trash other events if this isn't a draft-never-published event
 			if( !empty($EM_Event->event_id) ){
     			//now trash recurrences
@@ -513,7 +514,7 @@ class EM_Event_Recurring_Post_Admin{
     			$events_array = EM_Events::get( array('recurring_event'=>$EM_Event->event_id, 'scope'=>'all', 'status'=>'everything' ) );
     			foreach($events_array as $event){
     				/* @var $event EM_Event */
-    				if( $EM_Event->event_id == $event->get_recurrence_set()->event_id ){
+    				if( $EM_Event->event_id == $event->get_recurrence_set()->event_id && $event->post_id ){
     					wp_untrash_post($event->post_id);
     				}
     			}
@@ -523,8 +524,9 @@ class EM_Event_Recurring_Post_Admin{
 
 	public static function untrashed_post($post_id){
 		if ( Archetypes::is_repeating( get_post_type($post_id) ) ) {
-			global $EM_Notices,$EM_Event;
-			$EM_Event->set_status(1);
+			global $EM_Notices;
+			$EM_Event = new EM_Event($post_id, 'post_id'); //get a refreshed $EM_Event because otherwise statuses don't get updated by WP
+			$EM_Event->set_status( $EM_Event->get_status() );
 			$EM_Notices->remove_all(); //no validation/notices needed
 		}
 	}
@@ -576,3 +578,4 @@ class EM_Event_Recurring_Post_Admin{
 	}
 }
 add_action('admin_init',array('EM_Event_Recurring_Post_Admin','init'));
+add_action('rest_api_init',array('EM_Event_Recurring_Post_Admin','init')); //also register save/edit hooks for REST-driven saves (e.g. Gutenberg)

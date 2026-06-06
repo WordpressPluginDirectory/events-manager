@@ -119,7 +119,7 @@ $price = $EM_Ticket->ticket_price === null ? '' : $EM_Ticket->get_price_precise(
 			if ( $EM_Ticket->ticket_parent ) {
 				$state .= $EM_Ticket->ticket_required === null ? 'indeterminate readonly' : 'indeterminate';
 			}
-			$hidden_value = $state == 'checked' ? 1 : ( $state === 'indeterminate readonly' ? 'default' : 0 );
+			$hidden_value = $state == 'checked ' ? 1 : ( $state === 'indeterminate readonly' ? 'default' : 0 );
 			?>
 			<input type="checkbox" value="1" class="ticket_required possibly-indeterminate" <?php echo $state ?>>
 			<input type="hidden" value="<?php echo $hidden_value; ?>" name="em_tickets[<?php echo $col_count; ?>][ticket_required]" class="ticket_required">

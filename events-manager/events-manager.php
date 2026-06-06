@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Events Manager
-Version: 7.2.2.1
+Version: 7.3.3
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
@@ -10,7 +10,7 @@ Text Domain: events-manager
 License: GPLv2
 */
 /*
-Copyright (c) 2025, Marcus Sykes
+Copyright (c) 2026, Marcus Sykes
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Setting constants
 use EM\Archetypes;
 
-define('EM_VERSION', '7.2.2.1'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_VERSION', '7.3.3'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
 define('EM_PRO_MIN_VERSION', '3.7.2'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.6.0.2'); //self expanatory
 define('EM_FILE', __FILE__); //an absolute path to this directory
@@ -41,6 +41,26 @@ define('EM_SLUG', plugin_basename( __FILE__ )); //for updates
 // AJAX now enabled by default, disable if you really want to (but why? it's so nice!)
 if( !defined('EM_AJAX_SEARCH') ) define( 'EM_AJAX_SEARCH', true );
 if( !defined('EM_AJAX') ) define( 'EM_AJAX', true );
+
+/**
+ * Whether the block editor (Gutenberg) is enabled for Events Manager post types.
+ *
+ * Defined here (rather than em-functions.php) so it's available before any of the
+ * class includes below run — classes/em-archetypes.php calls Archetypes::init()
+ * at include time and that path needs the helper. The legacy EM_GUTENBERG constant
+ * takes precedence — defined true or false — so wp-config.php overrides keep
+ * working. Otherwise we fall back to the dbem_editor option (radio on the General
+ * settings tab), which defaults to 'classic' for upgraded installs and 'gutenberg'
+ * for fresh installs.
+ *
+ * @return bool
+ */
+function em_use_block_editor() {
+	if ( defined( 'EM_GUTENBERG' ) ) {
+		return (bool) EM_GUTENBERG;
+	}
+	return get_option( 'dbem_editor', 'classic' ) === 'gutenberg';
+}
 
 if( !defined('EM_CONDITIONAL_RECURSIONS') ) define('EM_CONDITIONAL_RECURSIONS', get_option('dbem_conditional_recursions', 2)); //allows for conditional recursios to be nested, 2 recommended due to our default template formats
 
@@ -133,6 +153,8 @@ if( get_option('dbem_locations_enabled') ){
 	include( EM_DIR . '/widgets/em-locations.php' );
 }
 include( EM_DIR . '/widgets/em-calendar.php' );
+//Gutenberg blocks + validation guard (registers blocks, REST field, editor JS)
+include( EM_DIR . '/blocks/_bootstrap.php' );
 //Classes
 include( EM_DIR . '/classes/em-list-table.php' );
 include( EM_DIR . '/classes/em-booking.php' );
@@ -168,10 +190,12 @@ include( EM_DIR . '/classes/em-tickets-bookings.php' );
 include( EM_DIR . '/classes/em-ticket-bookings.php' );
 include( EM_DIR . '/classes/em-tickets.php' );
 include( EM_DIR . '/classes/em-phone.php' );
+// EM's API bootstrap loads the bundled OAuth library, registers REST routes, abilities, and the MCP server — see EM\API\API::init().
+include( EM_DIR . '/classes/api/em-api.php' );
 
 
-//Admin Files
-if( is_admin() ){
+//Admin / API context
+if( is_admin() || ( defined('REST_REQUEST') && REST_REQUEST ) ){
 	include_once( EM_DIR . '/classes/em-admin-notices.php' );
 	include( EM_DIR . '/admin/em-admin.php' );
 	include( EM_DIR . '/admin/em-admin-modals.php' );
@@ -820,18 +844,21 @@ function em_rss() {
 	if( is_feed() && $wp_query->get(EM_TAXONOMY_CATEGORY) ){
 		//event category feed
 		$args = array('category' => $wp_query->get(EM_TAXONOMY_CATEGORY));
+		$args['event_archetype'] = false;
 	}elseif( is_feed() && $wp_query->get(EM_TAXONOMY_TAG) ){
 		//event tag feed
 		$args = array('tag' => $wp_query->get(EM_TAXONOMY_TAG));
+		$args['event_archetype'] = false;
 	}elseif( is_feed() && $wp_query->get('post_type') == EM_POST_TYPE_LOCATION && $wp_query->get(EM_POST_TYPE_LOCATION) ){
 		//location feeds
 		$location_id = $wpdb->get_var('SELECT location_id FROM '.EM_LOCATIONS_TABLE." WHERE location_slug='".$wp_query->get(EM_POST_TYPE_LOCATION)."' AND location_status=1 LIMIT 1");
 		if( !empty($location_id) ){
 			$args = array('location'=> $location_id);
 		}
-	}elseif( is_feed() && $wp_query->get('post_type') == EM_POST_TYPE_EVENT ) {
+	}elseif( is_feed() && EM\Archetypes::is_valid_cpt( $wp_query->get('post_type') ) ) {
 		//events feed - show it all
 		$args = array();
+		$args['event_archetype'] = $wp_query->get('post_type');
 	}
 	if( isset($args) ){
 		$wp_query->is_feed = true; //make is_feed() return true AIO SEO fix

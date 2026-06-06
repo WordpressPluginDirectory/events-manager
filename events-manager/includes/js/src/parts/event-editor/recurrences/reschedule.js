@@ -160,7 +160,8 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 	recurrenceSets.querySelectorAll('.em-add-recurrence-set[data-type="exclude"]').forEach( function( addButton ) {
 		addButton.addEventListener('click', function (e) {
 			if ( recurrenceExcludeSets.querySelectorAll('[data-rescheduled]').length > 0 || !recurrenceSets.dataset.event_id ) {
-				addButton.closest('.em-recurrence-type-exclude')?.dispatchEvent( new CustomEvent('addRecurrence', { bubbles: true }) );
+				let event = new CustomEvent('addRecurrence', { bubbles: true, detail: { type : 'exclude' } });
+				recurrenceSets.dispatchEvent( event );
 			} else {
 				openModal( recurrenceExcludeModal );
 			}

@@ -11,7 +11,6 @@ $calendar_args = [
 	'id' => $id,
 	'recurrence' => $EM_Event->get_event_id(),
 	'calendar_size' => 'small',
-	'calendar_event_style' => 'dot',
 	'long_events' => false,
 	'calendar_preview_mode' => 'booking',
 	'class' => 'em-booking-calendar',

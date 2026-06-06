@@ -18,20 +18,28 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		// Count existing recurrence sets to determine the new index.
 		let index = recurrenceTypeSets.querySelectorAll('.em-recurrence-set').length + 1;
 
-		// Clone the template (deep clone).
-		let recurrenceSet = recurrenceSets.querySelector('.em-recurrence-set-template').cloneNode(true);
+		// Copy template HTML
+		let templateHtml = recurrenceSets.querySelector('.em-recurrence-set-template')?.innerHTML;
+		let recurrenceSet;
+		if ( templateHtml === null ) {
+			// legacy template which didn't use the template element to enclose the recurrence set type
+			let recurrenceSet = recurrenceSets.querySelector('.em-recurrence-set-template').cloneNode(true);
+			recurrenceSet.classList.remove('em-recurrence-set-template', 'hidden');
+			recurrenceSet.innerHTML = recurrenceSet.innerHTML.replace(/T%/g, `${recurrenceType}`).replace(/N%/g, `${index}`);
+		} else {
+			// create a blank div which we'll add classes etc. to
+			recurrenceSet = document.createElement('div');
+			// Replace all occurrences of "[N%]" with the new index.
+			recurrenceSet.innerHTML = templateHtml.replace(/T%/g, `${recurrenceType}`).replace(/N%/g, `${index}`);
+		}
 
 		// Remove the 'hidden' class and template-specific class; add the active class.
-		recurrenceSet.classList.remove('em-recurrence-set-template', 'hidden');
 		recurrenceSet.classList.add('em-recurrence-set', 'new-recurrence-set');
 		recurrenceSet.querySelector('.em-recurrence-set-type').value = recurrenceType;
 		recurrenceSet.dataset.type = recurrenceType;
 		recurrenceSet.dataset.index = index;
 
-		// Replace all occurrences of "[N%]" with the new index.
-		recurrenceSet.innerHTML = recurrenceSet.innerHTML.replace(/T%/g, `${recurrenceType}`);
-		recurrenceSet.innerHTML = recurrenceSet.innerHTML.replace(/N%/g, `${index}`);
-
+		// remove include/exclude specific elements depending on type
 		if ( recurrenceType === 'exclude' ) {
 			recurrenceSet.querySelectorAll('.em-recurrence-advanced .only-include-type').forEach(el => el.remove() );
 		}
@@ -62,11 +70,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		addButton.addEventListener( 'click', () => addRecurrence('include') );
 	});
 	// set up listner to add recurrences, exclude and include, the exclude trigger is in reschedule.js
-	recurrenceSets.querySelectorAll('.em-recurrence-type').forEach( function( recurrenceSetsType ){
-		recurrenceSetsType.addEventListener( 'addRecurrence', function( e ) {
-			e.detail.recurrenceSet = addRecurrence( recurrenceSetsType.dataset.type );
-		});
-	});
+	recurrenceSets.addEventListener( 'addRecurrence', ( e ) => addRecurrence( e.detail.type ) );
 
 	// REMOVE A RECURRENCE RULE
 	recurrenceSets.addEventListener('click', function ( e ) {

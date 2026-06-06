@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andorra",
   ae: "Vereinigte Arabische Emirate",
   af: "Afghanistan",
@@ -8,7 +7,6 @@ export default {
   al: "Albanien",
   am: "Armenien",
   ao: "Angola",
-  aq: "Antarktis",
   ar: "Argentinien",
   as: "Amerikanisch-Samoa",
   at: "Österreich",
@@ -33,7 +31,6 @@ export default {
   br: "Brasilien",
   bs: "Bahamas",
   bt: "Bhutan",
-  bv: "Bouvetinsel",
   bw: "Botsuana",
   by: "Belarus",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Guadeloupe",
   gq: "Äquatorialguinea",
   gr: "Griechenland",
-  gs: "Südgeorgien und die Südlichen Sandwichinseln",
   gt: "Guatemala",
   gu: "Guam",
   gw: "Guinea-Bissau",
   gy: "Guyana",
   hk: "Sonderverwaltungsregion Hongkong",
-  hm: "Heard und McDonaldinseln",
   hn: "Honduras",
   hr: "Kroatien",
   ht: "Haiti",
@@ -180,7 +175,6 @@ export default {
   pk: "Pakistan",
   pl: "Polen",
   pm: "St. Pierre und Miquelon",
-  pn: "Pitcairninseln",
   pr: "Puerto Rico",
   ps: "Palästinensische Autonomiegebiete",
   pt: "Portugal",
@@ -215,7 +209,6 @@ export default {
   sz: "Eswatini",
   tc: "Turks- und Caicosinseln",
   td: "Tschad",
-  tf: "Französische Süd- und Antarktisgebiete",
   tg: "Togo",
   th: "Thailand",
   tj: "Tadschikistan",
@@ -231,7 +224,6 @@ export default {
   tz: "Tansania",
   ua: "Ukraine",
   ug: "Uganda",
-  um: "Amerikanische Überseeinseln",
   us: "Vereinigte Staaten",
   uy: "Uruguay",
   uz: "Usbekistan",
@@ -248,5 +240,6 @@ export default {
   yt: "Mayotte",
   za: "Südafrika",
   zm: "Sambia",
-  zw: "Simbabwe",
+  zw: "Simbabwe"
 };
+export default countryTranslations;

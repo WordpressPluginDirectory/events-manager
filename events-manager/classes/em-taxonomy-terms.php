@@ -42,7 +42,7 @@ class EM_Taxonomy_Terms extends EM_Object implements Iterator, Countable{
 	public function __construct( $data = false ){
 		global $wpdb;
 		if( $this->is_ms_global ) self::ms_global_switch();
-		if( is_object($data) && get_class($data) == "EM_Event" && !empty($data->post_id) ){ //Creates a blank taxonomies object if needed
+		if( is_object($data) && $data instanceof EM_Event && !empty($data->post_id) ){ //Creates a blank taxonomies object if needed
 			$this->event_id = $data->event_id;
 			$this->post_id = $data->post_id;
 			if( EM_MS_GLOBAL && $this->is_ms_global && !is_main_site($data->blog_id) ){

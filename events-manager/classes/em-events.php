@@ -73,14 +73,15 @@ class EM_Events extends EM_Object {
 			}else{
 				$selectors = $events_table.'.event_id, '. $events_table.'.post_id';
 			}
-			$selectors = 'DISTINCT ' . $selectors; //duplicate avoidance
 			if ( !empty($args['timeslots']) ) {
 				if ( $args['array'] ) {
-					$selectors .= ', ets.*';
+					// add as first selectors so that null event_id values are overwritten by the wp_em_events table fields
+					$selectors = 'ets.*, ' . $selectors;
 				} else {
 					$selectors .= ', ets.timeslot_id';
 				}
 			}
+			$selectors = 'DISTINCT ' . $selectors; //duplicate avoidance
 		}
 		
 		//check if we need to join a location table for this search, which is necessary if any location-specific are supplied, or if certain arguments such as orderby contain location fields
@@ -237,17 +238,20 @@ $orderby_sql";
 			if ( !empty($args['timeslots']) ) {
 				// convert all the results to timeslot dates
 				foreach ( $results as $key => $result ) {
-					$results[$key]['event_start'] = $result['timeslot_start'];
-					$results[$key]['event_end'] = $result['timeslot_end'];
-					// convert event_start_date, event_start_time and end couterparts to timezone-correct times
-					$start = new EM_DateTime( $result['timeslot_start'], 'UTC' );
-					$start->setTimezone( $result['event_timezone'] );
-					$results[$key]['event_start_date'] = $start->getDate();
-					$results[$key]['event_start_time'] = $start->getTime();
-					$end = new EM_DateTime( $result['timeslot_end'], 'UTC' );
-					$end->setTimezone( $result['event_timezone'] );
-					$results[$key]['event_end_date'] = $end->getDate();
-					$results[$key]['event_end_time'] = $end->getTime();
+					// if this is not a timeslot event, i.e. no timeslot data, skip it
+					if ( !empty( $result['timeslot_id'] ) ) {
+						$results[$key]['event_start'] = $result['timeslot_start'];
+						$results[$key]['event_end'] = $result['timeslot_end'];
+						// convert event_start_date, event_start_time and end couterparts to timezone-correct times
+						$start = new EM_DateTime( $result['timeslot_start'], 'UTC' );
+						$start->setTimezone( $result['event_timezone'] );
+						$results[$key]['event_start_date'] = $start->getDate();
+						$results[$key]['event_start_time'] = $start->getTime();
+						$end = new EM_DateTime( $result['timeslot_end'], 'UTC' );
+						$end->setTimezone( $result['event_timezone'] );
+						$results[$key]['event_end_date'] = $end->getDate();
+						$results[$key]['event_end_time'] = $end->getTime();
+					}
 				}
 			}
 			return apply_filters('em_events_get_array',$results, $args);
@@ -741,12 +745,7 @@ $orderby_sql";
 			}
 		}
 		if ( $args['timeslots'] ) {
-			$conditions['timeslots'] = "timeslot_status != 0";
-			// replace scope searches with timeslot fields
-			if ( !empty( $conditions['scope'] ) ) {
-				$conditions['scope'] = str_replace( ['event_start_date', 'event_start'], 'timeslot_start', $conditions['scope'] );
-				$conditions['scope'] = str_replace( ['event_end_date', 'event_end'], 'timeslot_end', $conditions['scope'] );
-			}
+			$conditions['timeslots'] = "( timeslot_status != 0 OR timeslot_status IS NULL )";
 		}
 		return apply_filters( 'em_events_build_sql_conditions', $conditions, $args );
 	}
@@ -779,8 +778,8 @@ $orderby_sql";
 		$orderby = self::build_sql_ambiguous_fields_helper($orderby); //fix ambiguous fields
 		if ( $args['timeslots'] ) {
 			foreach ( $orderby as $key => $value ) {
-				$orderby[$key] = str_replace( ['event_start_date', 'event_start_time', 'event_start'], 'timeslot_start', $value );
-				$orderby[$key] = str_replace( ['event_end_date', 'event_end_time', 'event_end'], 'timeslot_end', $orderby[$key] );
+				$orderby[$key] = str_replace( ['event_start_date', 'event_start_time', 'event_start'], 'event_start, timeslot_start', $value );
+				$orderby[$key] = str_replace( ['event_end_date', 'event_end_time', 'event_end'], 'event_end, timeslot_end', $orderby[$key] );
 
 				if ( str_contains( $value, 'timeslot_start' ) || str_contains( $value, 'timeslot_start' ) ) {
 					if ( !empty( $switched ) ) {

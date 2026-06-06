@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andorra",
   ae: "United Arab Emirates",
   af: "Afghanistan",
@@ -8,7 +7,6 @@ export default {
   al: "Albania",
   am: "Armenia",
   ao: "Angola",
-  aq: "Antarctica",
   ar: "Argentina",
   as: "American Samoa",
   at: "Austria",
@@ -33,7 +31,6 @@ export default {
   br: "Brazil",
   bs: "Bahamas",
   bt: "Bhutan",
-  bv: "Bouvet Island",
   bw: "Botswana",
   by: "Belarus",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Guadeloupe",
   gq: "Equatorial Guinea",
   gr: "Greece",
-  gs: "South Georgia & South Sandwich Islands",
   gt: "Guatemala",
   gu: "Guam",
   gw: "Guinea-Bissau",
   gy: "Guyana",
   hk: "Hong Kong SAR China",
-  hm: "Heard & McDonald Islands",
   hn: "Honduras",
   hr: "Croatia",
   ht: "Haiti",
@@ -180,7 +175,6 @@ export default {
   pk: "Pakistan",
   pl: "Poland",
   pm: "St. Pierre & Miquelon",
-  pn: "Pitcairn Islands",
   pr: "Puerto Rico",
   ps: "Palestinian Territories",
   pt: "Portugal",
@@ -215,7 +209,6 @@ export default {
   sz: "Eswatini",
   tc: "Turks & Caicos Islands",
   td: "Chad",
-  tf: "French Southern Territories",
   tg: "Togo",
   th: "Thailand",
   tj: "Tajikistan",
@@ -231,7 +224,6 @@ export default {
   tz: "Tanzania",
   ua: "Ukraine",
   ug: "Uganda",
-  um: "U.S. Outlying Islands",
   us: "United States",
   uy: "Uruguay",
   uz: "Uzbekistan",
@@ -248,5 +240,6 @@ export default {
   yt: "Mayotte",
   za: "South Africa",
   zm: "Zambia",
-  zw: "Zimbabwe",
+  zw: "Zimbabwe"
 };
+export default countryTranslations;

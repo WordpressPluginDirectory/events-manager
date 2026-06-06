@@ -220,7 +220,7 @@ class Recurrence_Sets extends \EM_Object implements \Iterator, \ArrayAccess, \Co
 				$type_found = !empty($recurrence['event_id']) ? 'include' : 'exclude';
 				// overlap found, return if it matches type needed or if none specified
 				if ( !$type || $type_found === $type ) {
-					return $type;
+					return $type_found;
 				}
 			}
 		}
@@ -562,34 +562,11 @@ class Recurrence_Sets extends \EM_Object implements \Iterator, \ArrayAccess, \Co
 		$EM_Event->event_end_time = $dates['end_time'];
 		$EM_Event->event_all_day = $dates['all_day'];
 
-		// we need to update the event object RSVP cut-off date as well
-		if( $EM_Event->get_option('dbem_bookings_tickets_single') && count($EM_Event->get_tickets()->tickets) == 1 ){
-			//single ticket mode will use the ticket end date/time as cut-off date/time
-			$EM_Ticket = $EM_Event->get_tickets()->get_first();
-			$EM_Event->event_rsvp_date = null;
-			if ( !empty( $EM_Ticket->meta['recurrences']['end_date'] ) ) {
-				$ticket_end_days = $EM_Ticket->meta['recurrences']['end_days'] >= 0 ? '+' . $EM_Ticket->meta['recurrences']['end_days'] : $EM_Ticket->meta['recurrences']['end_days'];
-				$EM_DateTime = $EM_Event->end()->copy();
-				$EM_Event->event_rsvp_date = $EM_DateTime->modify( $ticket_end_days . ' days' )->getDate();
-				$EM_Event->event_rsvp_time = $EM_Ticket->meta['recurrences']['end_time'];
-			} else {
-				//no default ticket end time, so make it default to event end date/time which is roughly the last event
-				$EM_Event->event_rsvp_date = $EM_Event->event_end_date;
-				$EM_Event->event_rsvp_time = $EM_Event->event_end_time;
-			}
-		}else{
-			//if no rsvp cut-off date supplied, make it the event end date/time which is roughly the last event
-			$EM_Event->event_rsvp_date = $EM_Event->event_end_date;
-			$EM_Event->event_rsvp_time = $EM_Event->event_end_time;
-		}
-		//reset EM_DateTime object
-		$EM_Event->rsvp_end = null;
-
 		// Save the event data we just modified here
 		$event = $EM_Event->to_array( true );
 		// update the database row directly, and the post meta (if there's a post_id)
 		global $wpdb;
-		$keys = [ 'event_start', 'event_end', 'event_start_date', 'event_start_time', 'event_end_date', 'event_end_time', 'event_all_day', 'event_rsvp_date', 'event_rsvp_time' ];
+		$keys = [ 'event_start', 'event_end', 'event_start_date', 'event_start_time', 'event_end_date', 'event_end_time', 'event_all_day' ];
 		$event_data = array_intersect_key( $event, array_flip( $keys));
 		$wpdb->update( EM_EVENTS_TABLE, $event_data, ['event_id' => $this->event_id] );
 		if ( $EM_Event->post_id ) {

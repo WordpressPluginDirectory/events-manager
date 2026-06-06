@@ -1,0 +1,11 @@
+.DS_Store
+node_modules/
+vendor/
+*.log
+.idea/
+.vscode/
+*.swp
+*.swo
+languages/*.mo
+languages/*.po
+!languages/.gitkeep

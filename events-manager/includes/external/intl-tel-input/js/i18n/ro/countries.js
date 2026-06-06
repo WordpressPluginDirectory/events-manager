@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andorra",
   ae: "Emiratele Arabe Unite",
   af: "Afganistan",
@@ -8,7 +7,6 @@ export default {
   al: "Albania",
   am: "Armenia",
   ao: "Angola",
-  aq: "Antarctica",
   ar: "Argentina",
   as: "Samoa Americană",
   at: "Austria",
@@ -33,7 +31,6 @@ export default {
   br: "Brazilia",
   bs: "Bahamas",
   bt: "Bhutan",
-  bv: "Insula Bouvet",
   bw: "Botswana",
   by: "Belarus",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Guadelupa",
   gq: "Guineea Ecuatorială",
   gr: "Grecia",
-  gs: "Georgia de Sud și Insulele Sandwich de Sud",
   gt: "Guatemala",
   gu: "Guam",
   gw: "Guineea-Bissau",
   gy: "Guyana",
   hk: "R.A.S. Hong Kong a Chinei",
-  hm: "Insula Heard și Insulele McDonald",
   hn: "Honduras",
   hr: "Croația",
   ht: "Haiti",
@@ -180,7 +175,6 @@ export default {
   pk: "Pakistan",
   pl: "Polonia",
   pm: "Saint-Pierre și Miquelon",
-  pn: "Insulele Pitcairn",
   pr: "Puerto Rico",
   ps: "Teritoriile Palestiniene",
   pt: "Portugalia",
@@ -215,7 +209,6 @@ export default {
   sz: "eSwatini",
   tc: "Insulele Turks și Caicos",
   td: "Ciad",
-  tf: "Teritoriile Australe și Antarctice Franceze",
   tg: "Togo",
   th: "Thailanda",
   tj: "Tadjikistan",
@@ -231,7 +224,6 @@ export default {
   tz: "Tanzania",
   ua: "Ucraina",
   ug: "Uganda",
-  um: "Insulele Îndepărtate ale S.U.A.",
   us: "Statele Unite ale Americii",
   uy: "Uruguay",
   uz: "Uzbekistan",
@@ -248,5 +240,6 @@ export default {
   yt: "Mayotte",
   za: "Africa de Sud",
   zm: "Zambia",
-  zw: "Zimbabwe",
+  zw: "Zimbabwe"
 };
+export default countryTranslations;

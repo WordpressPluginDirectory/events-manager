@@ -200,8 +200,6 @@ function em_event_form($args = array()){
 				$EM_Event->location_id = $default_loc;
 				$EM_Event->location = new EM_Location($default_loc);
 			}
-			// add default recurrence set too
-			$EM_Event->get_recurrence_sets()->include[] = new EM\Recurrences\Recurrence_Set();
 		}
 		em_locate_template('forms/event-editor.php',true, array('args'=>$args));
 		EM_Events::add_editor_js_vars();

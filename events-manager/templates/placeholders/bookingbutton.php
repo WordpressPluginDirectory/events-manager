@@ -6,7 +6,6 @@
  * $EM_Event - EM_Event object 
  */
 $notice_full = em_get_option('dbem_booking_button_msg_full');
-$notice_full = em_get_option('dbem_booking_button_msg_event_cancelled');
 $button_text = em_get_option('dbem_booking_button_msg_book');
 $button_already_booked = em_get_option('dbem_booking_button_msg_already_booked');
 $button_closed = em_get_option('dbem_booking_button_msg_closed');
@@ -45,6 +44,6 @@ if( is_user_logged_in() ){ //only show this to logged in users
 			?><span class="em-closed-button"><?php echo $button_closed ?></span><?php
 		}
 	}
-	echo apply_filters( 'em_booking_button', ob_get_clean(), $EM_Event, $status, $EM_Booking );
+	echo apply_filters( 'em_booking_button', ob_get_clean(), $EM_Event, $status, $EM_Booking ?? new EM_Booking() );
 }; 
 ?>

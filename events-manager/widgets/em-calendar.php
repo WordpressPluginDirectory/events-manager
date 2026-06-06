@@ -22,6 +22,8 @@ class EM_Widget_Calendar extends WP_Widget {
     		'category' => 0,
 		    'scope' => 'all',
 		    'calendar_size' => em_get_option('dbem_calendar_default', 'auto'),
+		    'calendar_event_style' => em_get_option('dbem_calendar_event_style', 'pill'),
+		    'limit' => em_get_option('dbem_display_calendar_events_limit', 3),
 			'event_archetype' => '',
     	);
 	    $widget_ops = array('description' => "Display your events in a calendar widget.");
@@ -72,6 +74,9 @@ class EM_Widget_Calendar extends WP_Widget {
 	    $new_instance['scope'] = ($new_instance['scope'] == 'future') ? 'future':$this->defaults['scope'];
 	    $allowed_sizes = apply_filters('em_calendar_output_sizes', array('large', 'medium', 'small'));
 	    $new_instance['calendar_size'] = in_array( $new_instance['calendar_size'], $allowed_sizes) ? $new_instance['calendar_size'] : $this->defaults['calendar_size'];
+	    $allowed_styles = apply_filters('em_calendar_output_event_styles', array('pill', 'dot', 'dots', 'ring'));
+	    $new_instance['calendar_event_style'] = in_array( $new_instance['calendar_event_style'] ?? '', $allowed_styles, true ) ? $new_instance['calendar_event_style'] : $this->defaults['calendar_event_style'];
+	    $new_instance['limit'] = ( isset($new_instance['limit']) && is_numeric($new_instance['limit']) ) ? absint($new_instance['limit']) : $this->defaults['limit'];
 	    $new_instance['event_archetype'] = (!$new_instance['event_archetype']) ? EM_POST_TYPE_EVENT:$new_instance['event_archetype'];
     	return $new_instance;
     }
@@ -117,7 +122,21 @@ class EM_Widget_Calendar extends WP_Widget {
 			    <option value="small" <?php selected($instance['calendar_size'], 'small'); ?>><?php esc_html_e('Small', 'events-manager'); ?></option>
 		    </select>
 	    </p>
-        <?php 
+	    <p>
+		    <label for="<?php echo $this->get_field_id('calendar_event_style'); ?>"><?php _e('Event Style','events-manager'); ?>: </label>
+		    <select id="<?php echo $this->get_field_id('calendar_event_style'); ?>" name="<?php echo $this->get_field_name('calendar_event_style'); ?>">
+			    <option value="pill" <?php selected($instance['calendar_event_style'], 'pill'); ?>><?php esc_html_e('Pills', 'events-manager'); ?></option>
+			    <option value="dot" <?php selected($instance['calendar_event_style'], 'dot'); ?>><?php esc_html_e('Single dot', 'events-manager'); ?></option>
+				    <option value="dots" <?php selected($instance['calendar_event_style'], 'dots'); ?>><?php esc_html_e('Multiple dots', 'events-manager'); ?></option>
+			    <option value="ring" <?php selected($instance['calendar_event_style'], 'ring'); ?>><?php esc_html_e('Rings', 'events-manager'); ?></option>
+		    </select>
+	    </p>
+	    <p>
+		    <label for="<?php echo $this->get_field_id('limit'); ?>"><?php _e('Events per day','events-manager'); ?>: </label>
+		    <input type="number" min="0" id="<?php echo $this->get_field_id('limit'); ?>" name="<?php echo $this->get_field_name('limit'); ?>" size="3" value="<?php echo esc_attr($instance['limit']); ?>" /><br />
+		    <em><?php _e('Max events shown per calendar day (0 = no limit).','events-manager'); ?></em>
+	    </p>
+        <?php
     }
 
 }

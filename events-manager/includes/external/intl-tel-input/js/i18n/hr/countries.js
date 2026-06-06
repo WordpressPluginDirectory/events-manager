@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andora",
   ae: "Ujedinjeni Arapski Emirati",
   af: "Afganistan",
@@ -8,7 +7,6 @@ export default {
   al: "Albanija",
   am: "Armenija",
   ao: "Angola",
-  aq: "Antarktika",
   ar: "Argentina",
   as: "Američka Samoa",
   at: "Austrija",
@@ -33,7 +31,6 @@ export default {
   br: "Brazil",
   bs: "Bahami",
   bt: "Butan",
-  bv: "Otok Bouvet",
   bw: "Bocvana",
   by: "Bjelorusija",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Guadalupe",
   gq: "Ekvatorska Gvineja",
   gr: "Grčka",
-  gs: "Južna Georgija i Južni Sendvički Otoci",
   gt: "Gvatemala",
   gu: "Guam",
   gw: "Gvineja Bisau",
   gy: "Gvajana",
   hk: "PUP Hong Kong Kina",
-  hm: "Otoci Heard i McDonald",
   hn: "Honduras",
   hr: "Hrvatska",
   ht: "Haiti",
@@ -180,7 +175,6 @@ export default {
   pk: "Pakistan",
   pl: "Poljska",
   pm: "Saint-Pierre-et-Miquelon",
-  pn: "Otoci Pitcairn",
   pr: "Portoriko",
   ps: "Palestinsko područje",
   pt: "Portugal",
@@ -215,7 +209,6 @@ export default {
   sz: "Esvatini",
   tc: "Otoci Turks i Caicos",
   td: "Čad",
-  tf: "Francuski južni i antarktički teritoriji",
   tg: "Togo",
   th: "Tajland",
   tj: "Tadžikistan",
@@ -231,7 +224,6 @@ export default {
   tz: "Tanzanija",
   ua: "Ukrajina",
   ug: "Uganda",
-  um: "Mali udaljeni otoci SAD-a",
   us: "Sjedinjene Američke Države",
   uy: "Urugvaj",
   uz: "Uzbekistan",
@@ -248,5 +240,6 @@ export default {
   yt: "Mayotte",
   za: "Južnoafrička Republika",
   zm: "Zambija",
-  zw: "Zimbabve",
+  zw: "Zimbabve"
 };
+export default countryTranslations;

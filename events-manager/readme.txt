@@ -1,19 +1,19 @@
 === Events Manager - Calendar, Bookings, Tickets, and more!  ===
 Contributors: msykes, pxlite, nutsmuggler, netweblogic
 Donate link: https://wp-events-plugin.com
-Tags: events, calendar, tickets, bookings, appointments
+Tags: events, calendar, tickets, bookings, block
 Text Domain: events-manager
 Requires at least: 6.1
-Tested up to: 6.8
-Stable tag: 7.2.2.1
+Tested up to: 7.0
+Stable tag: 7.3.3
 Requires PHP: 7.0
 License: GPLv2
 
-Fully featured events calendar, booking registration, appointments, recurring events, locations management, Google Maps
+Events calendar with bookings, scheduling, appointments, event registration, tickets, recurring events, and venue management.
 
 == Description ==
 
-Events Manager is a full-featured event calendar, bookings, appointments and registration management plugin for WordPress based on the principles of flexibility, reliability and powerful features!
+Events Manager is a full-featured event calendar, bookings, appointments, scheduling, and registration management plugin for WordPress ideal for everything from simple meetups to full-scale event planning. Built with flexibility, reliability and powerful features in mind.
 
 * [Demo](https://eventsmanager.site)
 * [Documentation](http://wp-events-plugin.com/documentation/)
@@ -21,6 +21,8 @@ Events Manager is a full-featured event calendar, bookings, appointments and reg
 
 = Main Features =
 
+* **NEW** Integrate easily with your favourite AI via MCP, unlock the power of AI-powered Events!
+* **NEW** API Rest Integration
 * Beautiful calendars, search pages, lists, grids and booking forms to enhance your site events.
 * Easy event registration (single day with start/end times)
 * Recurring and long (multi-day) event registration
@@ -36,7 +38,7 @@ Events Manager is a full-featured event calendar, bookings, appointments and reg
  * Network-wide Global Booking Management
  * BuddyPress and BuddyBoss Support
  * Create modular (independent) event subsites or inter-networked events
-* **NEW** Multiple custom event types (Archetypes), such as Workshops, Events, Webinars, Appointments etc.
+* Multiple custom event types (Archetypes), such as Workshops, Events, Webinars, Appointments etc.
  * Customize your labels, slugs and CPT names
  * Enable or disable specific features for specific event archetypes.
 * Multiple Location Types
@@ -63,8 +65,10 @@ Events Manager is a full-featured event calendar, bookings, appointments and reg
 * Compatible with SEO plugins
 * Timezone Support - create events in different timezones
 * Plenty of template tags and shortcodes for use in your posts and pages
+* Gutenberg block editor support, with native blocks for the Events Calendar, Events List, and Locations List — usable in posts, pages, the site editor and the widget editor
 * Actively maintained and supported
 * Lots of documentation and tutorials
+* **NEW** Gutenberg Supported
 * And much more!
 
 = Data Privacy and GDPR Compliance =
@@ -148,6 +152,17 @@ For those upgrading from version 4 to 5, please [read these instructions](http:/
 
 == Frequently Asked Questions ==
 
+= What can I use Events Manager for? =
+Events Manager is built to handle a wide range of use cases, including:
+
+- Managing events, meetups, workshops and webinars
+- Scheduling appointments and recurring events
+- Planning and promoting conferences or festivals
+- Handling event registration, RSVP, ticketing and ticket sales
+- Accepting bookings with optional payments
+- Managing venues and multiple event locations
+- Creating a public event calendar for your website visitors
+
 See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps with Events Manager - Calendar, Bookings, Tickets, and more!
 
 == Screenshots ==
@@ -172,6 +187,110 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps wit
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
+= 7.3.3 =
+* Added: Calendar "dots" style — events can now be marked with coloured dots instead of (or alongside) titles, with a style choice and a per-day event limit exposed in the Events Calendar block.
+* Added: REST API support for featured images on events and locations (input and output), a media upload endpoint and ability, and term colour + image on event categories/tags.
+* Added: Location geo-discovery REST endpoints (countries, regions, states, towns) and an `upcoming_events_count` field on the location response.
+* Added: REST `/bookings` now accepts location filters (country/region/state/town/near) and a `scope` parameter to filter bookings by event date.
+* Added: MCP `get-booking-requirements` now returns per-field validation metadata with country-tuned phone examples, so AI agents can pre-validate bookings.
+* Tweaked: The recurring-booking calendar picker now respects the configured default calendar style.
+* Tweaked: Improved the MCP experience for AI agents — authentication now uses WordPress application passwords instead of timeout-prone OAuth tokens, with native-app support, and the MCP server now exposes Pro and other add-on abilities alongside core's.
+
+= 7.3.2 =
+* Added: REST API now accepts a booking UUID on `/bookings/{id}` routes alongside the numeric booking ID, so MCP agents and headless clients can look up bookings without needing the database row id.
+* Added: `booked_spaces` and `available_spaces` fields on the event REST API response, with corresponding entries in the event-bookings schema.
+* Added: MCP `get-booking-requirements` ability so AI agents can introspect which fields, attendees and gateway data a booking needs before submission. Booking validation errors are now agent-friendly (specific required-field names instead of a generic message).
+* Fixed: REST/MCP — booking validation errors now surface to the caller instead of being swallowed; ticket-by-id lookups return the right ticket; event timeranges round-trip cleanly through the API.
+* Fixed: `#_BOOKINGBUTTON` placeholder rendering the "Event Cancelled" message instead of "Fully Booked" when an event sold out (`templates/placeholders/bookingbutton.php`). Thanks to Jon Eiseman for the report.
+* Fixed: Unavailable Dates being ignored when generating events for a repeating series — `Recurrence_Sets::has_collision()` was returning the inbound filter argument instead of the matched recurrence type, so the save loop treated every collision as no-collision. Repeating events with exclusions (e.g. "every Monday June 1–30 except June 15") now correctly omit the excluded occurrences. Thanks to Jon Eiseman for the diagnosis.
+* Fixed: Event Categories and Event Tags panels not appearing in the Gutenberg block editor's Document sidebar — taxonomies now opt into the WordPress REST API alongside the CPT when the block editor is enabled, so Gutenberg users can assign them to events again. Thanks to Jon Eiseman for the report.
+* Fixed: Multilingual — booking-form settings keys that were missing the WPML globe icon are now in the translatable-options whitelist.
+* Fixed: Multilingual — guarded against fatal errors when WPML is partially configured and expanded the translatable-settings whitelist to cover newly added options.
+
+= 7.3.1 =
+* Bumped version to fix missing file dependency during build causing fatal errors in 7.3
+
+= 7.3 =
+* Added REST API v1 with full event, location, booking, and ticket endpoints under `events-manager/v1/`, PATCH partial-update support, a validation endpoint, and extension hooks so custom archetypes and Pro modules plug into the same save pipeline as Gutenberg, the classic editor, headless clients, and WP-CLI
+* Added documented input schemas for the REST API covering events, locations, bookings, per-attendee custom fields, embedded location creation, attributes, coupons, and Pro overlay fields
+* Added OAuth Application-Password support so apps can authenticate against the REST API without admin sessions
+* Added MCP (Model Context Protocol) adapter and setup wizard so AI agents can read and manage events through the authenticated REST surface
+* Added Gutenberg (block editor) support for events and locations with a Classic/Gutenberg toggle on Settings → General, defaulting to Classic on upgrade and Gutenberg on fresh install
+* Added Events Manager block category with three blocks (Events Calendar, Events List, Locations List), each delegating to the existing widget classes so output stays identical to shortcodes and widgets
+* Added ACF-style pre-save validation for the block editor — clicking Publish/Update runs EM's validate() pipeline against the classic metabox state via `events-manager/v1/blocks/event/validate`, surfacing errors as editor notices instead of silently demoting to draft
+* Tweaked repeating-event template CPTs to continue loading in classic editor since the Recurrences metabox does not render correctly in Gutenberg's metabox panel
+* Fixed XSS vulnerability CVE-2025-12976 (medium severity) reported by Muhammad Yudha-DJ via Wordfence
+* Fixed vulnerabilities CVE-2025-12407 and CVE-2025-12408 reported by thinnawarth mathuros via Wordfence
+* Changed REST API endpoints to require authentication by default
+* Fixed advanced formatting textareas being POSTed even when their group was hidden, which caused some host firewalls (Hostinger, SiteGround, Wordfence) to flag the raw HTML templates as XSS payloads and block the Settings save with a 403
+* Fixed pending events count in the WP admin sidebar menu incorrectly including or excluding recurring-event templates — counts now filter by event_type for both single and recurring totals
+* Updated intl-tel-input i18n files
+* Fixed some newly added settings missing multilingual translatable options
+* Fixed some PHP notices related to multilingual setups
+
+= 7.2.3.1 =
+* Fixed bug with counting approved bookings since 7.2.3
+* Fixed WP caching of event timeslots using only event ID instead of full UID, causing retrieval errors
+* Fixed `EM_Event::get_post_id()` to return `post_id` directly if already set before checking recurrence conditions
+* Fixed timeranges (timeslots) not being properly loaded for repeated events, resulting in booking forms without timeslot selection
+* Fixed calendar month picker display issue for western hemisphere timezones
+
+= 7.2.3  =
+* Fixed multi-timerange and timeslot settings not being reflected in the event submission UI in some setups
+* Fixed incorrect default timerange UI data when adding an extra timerange to an event
+* FAQ update
+* Fixed booking cut-off time reverting to 12AM upon save for single events
+* Fixed styling issues for timeslot/range editor where trash icon may not appear on front-end for multiple time-ranges
+* Fixed repeating event ticket descriptions not showing on booking form if not overridden
+* Fixed saving a repeated event ticket being set to price 0 rather than repeating event parent ticket price
+* Fixed adding exclusion recurrence set not working when creating new event
+* Changed template approach for recurrence sets so recurrence set template is within a template element
+* Fixed validation errors in recurring events creating an extra blank recurrence set in UI after save attempt
+* Fixed timerange validation errors not saving elements of an event such as recurrence set data, timeranges etc. requiring re-setup during submission
+* Fixed event booking cut-off times not being properly saved for recurring events
+* Fixed recurring/repeating event booking cut-off relative dates (by day) not being properly saved
+* Fixed quick-action recurring/repeated links showing up for trashed posts
+* Fixed event status inconsistencies whilst trashing and untrashing repeated events
+* Fixed trashed event_status in EM_Event objects always reverting to 0 when loaded from DB
+* Fixed inability to unmark an event as all-day once clicked/saved for first time
+* Fixed calendar month formatting option not reflected in calendar
+* Fixed booking form for timeslots showing the time picker if the event is closed to bookings
+* Fixed repeating events template showing in the events list
+* Fixed vulnerabilities CVE-2025-12407 and CVE-2025-12408 reported by thinnawarth mathuros via WordFence Security
+* Fixed medium XSS vulnerability CVE-2025-12976 reported by Muhammad Yudha – DJ via WordFence Security
+* Changed post_id and blog_id to protected properties with magic get/set, allowing post-less recurrences to reference parent post and blog IDs
+* Fixed recurrences not correctly referencing categories and category properties such as colors
+* Made improvements to spacing on mobile and general booking form views for better use of screen real estate
+* Fixed calendar not showing timeslot events with correct time
+* Fixed inconsistent results when showing events split by timeslot
+* Added default option for showing calendars with or without splitting by timeslot
+* Updated intl‑tel‑input to v25.12.5
+* Fixed submission and UI issues with the phone field
+* Fixed allowable HTML in ticket names not outputting in ticket summaries
+* Added booking and ticket counting of reserved vs. pending spaces, fixing inconsistent counts with custom pending status
+* Added #_UNAVAILABLESPACES and #_RESERVEDSPACES placeholders
+* Changed #_BOOKEDSPACES so reserved pending spaces are excluded
+* Added shared functions EM_Ticket::get_status_spaces() and EM_Bookings::get_status_count()
+* Fixed ticket required checkbox getting unchecked upon second save when editing an event
+* Fixed fatal error when supplying comma-separated list of views in event list or calendar shortcode
+* Fixed fatal error when supplying comma-separated list of views in event list or calendar shortcode (duplicate fix)
+* Fixed Google Map JS warnings
+* Upgraded Google Maps to async loading and Advanced Markers
+* Modified map balloon formats to exclude location name, now automatically included in balloon title
+* Updated how map info balloons are styled
+* Fixed privacy consent not being forced as required
+* Fixed “convert to recurrence” link not working outside the event editor
+* Updated readme.txt WordPress version
+* Updated readme.txt WordPress version (correction)
+* Fixed using event="x" in shortcode or PHP functions producing empty results in custom archetypes
+* Added support for iCal and RSS feeds for custom archetypes
+* Added support for taxonomy event lists to include all archetypes or specific ones via placeholders such as #_CATEGORYNEXTEVENTS{archetype}
+* Fixed interference with other scheduled post CPTs
+* Removed jQuery UI Touch Punch 0.2.3 from JS libraries
+* Fixed calendar month picker showing Jan 2025 when navigating from Dec 2025 when format is set to M Y instead of F Y
+* Fixed possible PHP warnings in em-event-post.php and em-location-post.php
+* Fixed PHP error associated with #_BOOKINGBUTTON
+
 = 7.2.2.1 =
 * Fixed blank admin pages for some server setups (possibly PHP version)
 

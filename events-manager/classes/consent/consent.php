@@ -14,7 +14,17 @@ class Consent {
 	public static $required = true;
 	
 	public static function init() {
-		if( !is_admin() || ( defined('DOING_AJAX') && DOING_AJAX && !empty($_REQUEST['action']) && $_REQUEST['action'] != 'booking_add_one' ) ){
+		// Consent validation is only ever meant to fire for public-facing
+		// submission contexts (frontend HTML POST, frontend AJAX). It must NOT
+		// fire during admin saves, and equally not during REST API requests —
+		// REST is used by the block editor's pre-save validation endpoint and
+		// by admin-authenticated third-party clients, neither of which need
+		// the submitter-consent gate. is_admin() returns false for REST, so
+		// we have to exclude it explicitly.
+		$is_rest_request   = defined('REST_REQUEST') && REST_REQUEST;
+		$is_frontend       = !is_admin() && !$is_rest_request;
+		$is_relevant_ajax  = defined('DOING_AJAX') && DOING_AJAX && !empty($_REQUEST['action']) && $_REQUEST['action'] != 'booking_add_one';
+		if( $is_frontend || $is_relevant_ajax ){
 			add_action('init', [ static::class, 'hooks' ]);
 		}
 		// build options array dynamically based on a prefix, unless already specified

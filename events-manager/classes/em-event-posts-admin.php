@@ -25,7 +25,9 @@ class EM_Event_Posts_Admin{
 			}
 			//deal with actions
 			$row_action_type = is_post_type_hierarchical( $post_type ) ? 'page_row_actions' : 'post_row_actions';
-			add_filter($row_action_type, [ $class, 'row_actions' ],10,2);
+			if ( ($_REQUEST['post_status'] ?? '') !== 'trash' ) {
+				add_filter($row_action_type, [ $class, 'row_actions' ],10,2);
+			}
 			add_action('admin_head', [ $class, 'admin_head' ] );
 
 		}
@@ -278,7 +280,7 @@ class EM_Event_Posts_Admin{
 					<?php if( $EM_Event->get_option('dbem_bookings_approval') == 1 ): ?>
 						| <?php _e("Pending",'events-manager') ?>: <?php echo $EM_Event->get_bookings()->get_pending_spaces(); ?>
 					<?php endif;
-					echo ( $EM_Event->is_recurrence() || $EM_Event->is_recurring() ) ? '<br />':''; // decide here in case bookings disabled
+					echo ( $EM_Event->is_repeated() || $EM_Event->is_recurrence() || $EM_Event->is_recurring() ) ? '<br />':''; // decide here in case bookings disabled
 				}
 				if ( ( $EM_Event->is_repeated() || $EM_Event->is_recurring() ) && current_user_can('edit_recurring_events','edit_others_recurring_events') ) {
 					$actions = array();
@@ -298,7 +300,7 @@ class EM_Event_Posts_Admin{
 						<?php endif; ?>
 						<?php echo $EM_Event->get_recurring_event()->get_recurrence_sets()->get_recurrence_description( !$EM_Event->is_recurring() ); ?>
 					</strong>
-					<?php if( !empty($actions) ): ?>
+					<?php if( $EM_Event->post_status !== 'trash' && !empty($actions) ): ?>
 					<br >
 					<div class="row-actions">
 						<?php echo implode(' | ', $actions); ?>
@@ -411,9 +413,11 @@ class EM_Event_Recurring_Posts_Admin{
 					echo $EM_Event->get_recurrence_description();
 					$edit_url = add_query_arg(array('scope'=>'all', 'recurring_event'=>$EM_Event->event_id), em_get_events_admin_url());
 					$link_text = sprintf(__('View %s', 'events-manager'), __('Recurrences', 'events-manager'));
-					echo "<br /><span class='row-actions'>
-							<a href='". esc_url($edit_url) ."'>". esc_html($link_text) ."</a>
+					if  ( $EM_Event->post_status !== 'trash' ) {
+						echo "<br /><span class='row-actions'>
+							<a href='" . esc_url( $edit_url ) . "'>" . esc_html( $link_text ) . "</a>
 						</span>";
+					}
 					break;
 			}
 		}

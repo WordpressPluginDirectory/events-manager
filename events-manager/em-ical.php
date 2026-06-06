@@ -15,7 +15,7 @@
 	add_action ( 'init', 'em_ical' );
 	
 	/**
-	 * Generates an ics file for a single event 
+	 * Generates an ics file for a single event, or a specific archetype
 	 */
 	function em_ical_item(){
 		global $wpdb, $wp_query;
@@ -23,38 +23,46 @@
 		if( !empty($wp_query) && $wp_query->get('ical') ){
 			$filename = 'events';
 			$args = array('scope' => 'all', 'status' => 1);
-			//single event
-			if( $wp_query->get(EM_POST_TYPE_EVENT) ){
-				$path = $wp_query->get(EM_POST_TYPE_EVENT);
-				if( preg_match('/\//', $path) ) {
-					$post_id = em_get_page_by_path_for_ical( $wp_query->get( EM_POST_TYPE_EVENT ), OBJECT, array(EM_POST_TYPE_EVENT) );
-					// get event by slug via WP, to account for complex permalink structures
-					if ( $post_id ) {
-						$EM_Event = em_get_event( $post_id, 'post_id' );
-						$event_id = $EM_Event->event_id;
-						$event_slug = $EM_Event->event_slug;
+			// check for archetype request
+			// single event
+			$archetype = $wp_query->get('event_archetype');
+			EM\Archetypes::set_current($archetype);
+			if ( $archetype ) {
+				$path = $wp_query->get( $archetype );
+				$args['event_archetype'] = $archetype;
+				if ( $path ) {
+					if( preg_match('/\//', $path) ) {
+						$post_id = em_get_page_by_path_for_ical( $path, OBJECT, [ $archetype ] );
+						// get event by slug via WP, to account for complex permalink structures
+						if ( $post_id ) {
+							$EM_Event = em_get_event( $post_id, 'post_id' );
+							$event_id = $EM_Event->event_id;
+							$event_slug = $EM_Event->event_slug;
+						}
+					} else {
+						// try to get event by slug directly from EM tables
+						$event = $wpdb->get_row("SELECT event_id, event_slug FROM " . EM_EVENTS_TABLE . " WHERE event_slug='{$path}' AND event_status=1 AND event_archetype='{$archetype}' LIMIT 1");
+						if ( $event ) {
+							$event_id = $event->event_id;
+							$event_slug = $event->event_slug;
+						}
+					}
+					if( !empty($event_id) ){
+						$filename = $event_slug;
+						$args['event'] = $event_id;
 					}
 				} else {
-					// try to get event by slug directly from EM tables
-					$event = $wpdb->get_row('SELECT event_id, event_slug FROM '.EM_EVENTS_TABLE." WHERE event_slug='".$wp_query->get(EM_POST_TYPE_EVENT)."' AND event_status=1 LIMIT 1");
-					if ( $event ) {
-						$event_id = $event->event_id;
-						$event_slug = $event->event_slug;
-					}
-				}
-				if( !empty($event_id) ){
-					$filename = $event_slug;
-					$args['event'] = $event_id;
+					unset( $args['scope'] );
 				}
 			//single location
-			}elseif( $wp_query->get(EM_POST_TYPE_LOCATION) ){
+			} elseif( $wp_query->get(EM_POST_TYPE_LOCATION) ) {
 				$location_id = $wpdb->get_var('SELECT location_id FROM '.EM_LOCATIONS_TABLE." WHERE location_slug='".$wp_query->get(EM_POST_TYPE_LOCATION)."' AND location_status=1 LIMIT 1");
 				if( !empty($location_id) ){
 					$filename = $wp_query->get(EM_POST_TYPE_LOCATION);
 					$args['location'] = $location_id;
 				}
 			//taxonomies
-			}else{
+			} else {
 				$taxonomies = EM_Object::get_taxonomies();
 				foreach($taxonomies as $tax_arg => $taxonomy_info){
 					$taxonomy_term = $wp_query->get($taxonomy_info['query_var']); 

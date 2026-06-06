@@ -1,5 +1,5 @@
 /*
- * International Telephone Input v23.8.0
+ * International Telephone Input v25.12.5
  * https://github.com/jackocnr/intl-tel-input.git
  * Licensed under the MIT license
  */
@@ -35,1083 +35,1706 @@ var factoryOutput = (() => {
   // src/js/intl-tel-input/data.ts
   var data_exports = {};
   __export(data_exports, {
-    default: () => data_default
+    default: () => data_default,
+    rawCountryData: () => rawCountryData
   });
   var rawCountryData = [
     [
       "af",
-      "93"
+      // Afghanistan
+      "93",
+      0,
+      null,
+      "0"
+    ],
+    [
+      "ax",
+      // Åland Islands
+      "358",
+      1,
+      ["18", "4"],
+      // (4 is a mobile range shared with FI)
+      "0"
     ],
     [
       "al",
-      "355"
+      // Albania
+      "355",
+      0,
+      null,
+      "0"
     ],
     [
       "dz",
-      "213"
+      // Algeria
+      "213",
+      0,
+      null,
+      "0"
     ],
     [
       "as",
+      // American Samoa
       "1",
       5,
-      ["684"]
+      ["684"],
+      "1"
     ],
     [
       "ad",
+      // Andorra
       "376"
     ],
     [
       "ao",
+      // Angola
       "244"
     ],
     [
       "ai",
+      // Anguilla
       "1",
       6,
-      ["264"]
+      ["264"],
+      "1"
     ],
     [
       "ag",
+      // Antigua and Barbuda
       "1",
       7,
-      ["268"]
+      ["268"],
+      "1"
     ],
     [
       "ar",
-      "54"
+      // Argentina
+      "54",
+      0,
+      null,
+      "0"
     ],
     [
       "am",
-      "374"
+      // Armenia
+      "374",
+      0,
+      null,
+      "0"
     ],
     [
       "aw",
+      // Aruba
       "297"
     ],
     [
       "ac",
+      // Ascension Island
       "247"
     ],
     [
       "au",
+      // Australia
       "61",
-      0
+      0,
+      ["4"],
+      // (mobile range shared with CX and CC)
+      "0"
     ],
     [
       "at",
-      "43"
+      // Austria
+      "43",
+      0,
+      null,
+      "0"
     ],
     [
       "az",
-      "994"
+      // Azerbaijan
+      "994",
+      0,
+      null,
+      "0"
     ],
     [
       "bs",
+      // Bahamas
       "1",
       8,
-      ["242"]
+      ["242"],
+      "1"
     ],
     [
       "bh",
+      // Bahrain
       "973"
     ],
     [
       "bd",
-      "880"
+      // Bangladesh
+      "880",
+      0,
+      null,
+      "0"
     ],
     [
       "bb",
+      // Barbados
       "1",
       9,
-      ["246"]
+      ["246"],
+      "1"
     ],
     [
       "by",
-      "375"
+      // Belarus
+      "375",
+      0,
+      null,
+      "8"
     ],
     [
       "be",
-      "32"
+      // Belgium
+      "32",
+      0,
+      null,
+      "0"
     ],
     [
       "bz",
+      // Belize
       "501"
     ],
     [
       "bj",
+      // Benin
       "229"
     ],
     [
       "bm",
+      // Bermuda
       "1",
       10,
-      ["441"]
+      ["441"],
+      "1"
     ],
     [
       "bt",
+      // Bhutan
       "975"
     ],
     [
       "bo",
-      "591"
+      // Bolivia
+      "591",
+      0,
+      null,
+      "0"
     ],
     [
       "ba",
-      "387"
+      // Bosnia and Herzegovina
+      "387",
+      0,
+      null,
+      "0"
     ],
     [
       "bw",
+      // Botswana
       "267"
     ],
     [
       "br",
-      "55"
+      // Brazil
+      "55",
+      0,
+      null,
+      "0"
     ],
     [
       "io",
+      // British Indian Ocean Territory
       "246"
     ],
     [
       "vg",
+      // British Virgin Islands
       "1",
       11,
-      ["284"]
+      ["284"],
+      "1"
     ],
     [
       "bn",
+      // Brunei
       "673"
     ],
     [
       "bg",
-      "359"
+      // Bulgaria
+      "359",
+      0,
+      null,
+      "0"
     ],
     [
       "bf",
+      // Burkina Faso
       "226"
     ],
     [
       "bi",
+      // Burundi
       "257"
     ],
     [
       "kh",
-      "855"
+      // Cambodia
+      "855",
+      0,
+      null,
+      "0"
     ],
     [
       "cm",
+      // Cameroon
       "237"
     ],
     [
       "ca",
+      // Canada
       "1",
       1,
-      ["204", "226", "236", "249", "250", "263", "289", "306", "343", "354", "365", "367", "368", "382", "387", "403", "416", "418", "428", "431", "437", "438", "450", "584", "468", "474", "506", "514", "519", "548", "579", "581", "584", "587", "604", "613", "639", "647", "672", "683", "705", "709", "742", "753", "778", "780", "782", "807", "819", "825", "867", "873", "879", "902", "905"]
+      ["204", "226", "236", "249", "250", "257", "263", "289", "306", "343", "354", "365", "367", "368", "382", "403", "416", "418", "428", "431", "437", "438", "450", "468", "474", "506", "514", "519", "548", "579", "581", "584", "587", "604", "613", "639", "647", "672", "683", "705", "709", "742", "753", "778", "780", "782", "807", "819", "825", "867", "873", "879", "902", "905", "942"],
+      "1"
     ],
     [
       "cv",
+      // Cape Verde
       "238"
     ],
     [
       "bq",
+      // Caribbean Netherlands
       "599",
       1,
       ["3", "4", "7"]
     ],
     [
       "ky",
+      // Cayman Islands
       "1",
       12,
-      ["345"]
+      ["345"],
+      "1"
     ],
     [
       "cf",
+      // Central African Republic
       "236"
     ],
     [
       "td",
+      // Chad
       "235"
     ],
     [
       "cl",
+      // Chile
       "56"
     ],
     [
       "cn",
-      "86"
+      // China
+      "86",
+      0,
+      null,
+      "0"
     ],
     [
       "cx",
+      // Christmas Island
       "61",
       2,
-      ["89164"]
+      ["4", "89164"],
+      // (4 is a mobile range shared with AU and CC)
+      "0"
     ],
     [
       "cc",
+      // Cocos (Keeling) Islands
       "61",
       1,
-      ["89162"]
+      ["4", "89162"],
+      // (4 is a mobile range shared with AU and CX)
+      "0"
     ],
     [
       "co",
-      "57"
+      // Colombia
+      "57",
+      0,
+      null,
+      "0"
     ],
     [
       "km",
+      // Comoros
       "269"
     ],
     [
       "cg",
+      // Congo (Brazzaville)
       "242"
     ],
     [
       "cd",
-      "243"
+      // Congo (Kinshasa)
+      "243",
+      0,
+      null,
+      "0"
     ],
     [
       "ck",
+      // Cook Islands
       "682"
     ],
     [
       "cr",
+      // Costa Rica
       "506"
     ],
     [
       "ci",
+      // Côte d'Ivoire
       "225"
     ],
     [
       "hr",
-      "385"
+      // Croatia
+      "385",
+      0,
+      null,
+      "0"
     ],
     [
       "cu",
-      "53"
+      // Cuba
+      "53",
+      0,
+      null,
+      "0"
     ],
     [
       "cw",
+      // Curaçao
       "599",
       0
     ],
     [
       "cy",
+      // Cyprus
       "357"
     ],
     [
       "cz",
+      // Czech Republic
       "420"
     ],
     [
       "dk",
+      // Denmark
       "45"
     ],
     [
       "dj",
+      // Djibouti
       "253"
     ],
     [
       "dm",
+      // Dominica
       "1",
       13,
-      ["767"]
+      ["767"],
+      "1"
     ],
     [
       "do",
+      // Dominican Republic
       "1",
       2,
-      ["809", "829", "849"]
+      ["809", "829", "849"],
+      "1"
     ],
     [
       "ec",
-      "593"
+      // Ecuador
+      "593",
+      0,
+      null,
+      "0"
     ],
     [
       "eg",
-      "20"
+      // Egypt
+      "20",
+      0,
+      null,
+      "0"
     ],
     [
       "sv",
+      // El Salvador
       "503"
     ],
     [
       "gq",
+      // Equatorial Guinea
       "240"
     ],
     [
       "er",
-      "291"
+      // Eritrea
+      "291",
+      0,
+      null,
+      "0"
     ],
     [
       "ee",
+      // Estonia
       "372"
     ],
     [
       "sz",
+      // Eswatini
       "268"
     ],
     [
       "et",
-      "251"
+      // Ethiopia
+      "251",
+      0,
+      null,
+      "0"
     ],
     [
       "fk",
+      // Falkland Islands (Malvinas)
       "500"
     ],
     [
       "fo",
+      // Faroe Islands
       "298"
     ],
     [
       "fj",
+      // Fiji
       "679"
     ],
     [
       "fi",
+      // Finland
       "358",
-      0
+      0,
+      ["4"],
+      // (mobile range shared with AX)
+      "0"
     ],
     [
       "fr",
-      "33"
+      // France
+      "33",
+      0,
+      null,
+      "0"
     ],
     [
       "gf",
-      "594"
+      // French Guiana
+      "594",
+      0,
+      null,
+      "0"
     ],
     [
       "pf",
+      // French Polynesia
       "689"
     ],
     [
       "ga",
+      // Gabon
       "241"
     ],
     [
       "gm",
+      // Gambia
       "220"
     ],
     [
       "ge",
-      "995"
+      // Georgia
+      "995",
+      0,
+      null,
+      "0"
     ],
     [
       "de",
-      "49"
+      // Germany
+      "49",
+      0,
+      null,
+      "0"
     ],
     [
       "gh",
-      "233"
+      // Ghana
+      "233",
+      0,
+      null,
+      "0"
     ],
     [
       "gi",
+      // Gibraltar
       "350"
     ],
     [
       "gr",
+      // Greece
       "30"
     ],
     [
       "gl",
+      // Greenland
       "299"
     ],
     [
       "gd",
+      // Grenada
       "1",
       14,
-      ["473"]
+      ["473"],
+      "1"
     ],
     [
       "gp",
+      // Guadeloupe
       "590",
-      0
+      0,
+      null,
+      "0"
     ],
     [
       "gu",
+      // Guam
       "1",
       15,
-      ["671"]
+      ["671"],
+      "1"
     ],
     [
       "gt",
+      // Guatemala
       "502"
     ],
     [
       "gg",
+      // Guernsey
       "44",
       1,
-      ["1481", "7781", "7839", "7911"]
+      ["1481", "7781", "7839", "7911"],
+      "0"
     ],
     [
       "gn",
+      // Guinea
       "224"
     ],
     [
       "gw",
+      // Guinea-Bissau
       "245"
     ],
     [
       "gy",
+      // Guyana
       "592"
     ],
     [
       "ht",
+      // Haiti
       "509"
     ],
     [
       "hn",
+      // Honduras
       "504"
     ],
     [
       "hk",
+      // Hong Kong SAR China
       "852"
     ],
     [
       "hu",
-      "36"
+      // Hungary
+      "36",
+      0,
+      null,
+      "06"
     ],
     [
       "is",
+      // Iceland
       "354"
     ],
     [
       "in",
-      "91"
+      // India
+      "91",
+      0,
+      null,
+      "0"
     ],
     [
       "id",
-      "62"
+      // Indonesia
+      "62",
+      0,
+      null,
+      "0"
     ],
     [
       "ir",
-      "98"
+      // Iran
+      "98",
+      0,
+      null,
+      "0"
     ],
     [
       "iq",
-      "964"
+      // Iraq
+      "964",
+      0,
+      null,
+      "0"
     ],
     [
       "ie",
-      "353"
+      // Ireland
+      "353",
+      0,
+      null,
+      "0"
     ],
     [
       "im",
+      // Isle of Man
       "44",
       2,
-      ["1624", "74576", "7524", "7924", "7624"]
+      ["1624", "74576", "7524", "7624", "7924"],
+      "0"
     ],
     [
       "il",
-      "972"
+      // Israel
+      "972",
+      0,
+      null,
+      "0"
     ],
     [
       "it",
+      // Italy
       "39",
-      0
+      0,
+      ["3"]
+      // (mobile range shared with VA)
     ],
     [
       "jm",
+      // Jamaica
       "1",
       4,
-      ["876", "658"]
+      ["658", "876"],
+      "1"
     ],
     [
       "jp",
-      "81"
+      // Japan
+      "81",
+      0,
+      null,
+      "0"
     ],
     [
       "je",
+      // Jersey
       "44",
       3,
-      ["1534", "7509", "7700", "7797", "7829", "7937"]
+      ["1534", "7509", "7700", "7797", "7829", "7937"],
+      "0"
     ],
     [
       "jo",
-      "962"
+      // Jordan
+      "962",
+      0,
+      null,
+      "0"
     ],
     [
       "kz",
+      // Kazakhstan
       "7",
       1,
-      ["33", "7"]
+      ["33", "7"],
+      // (33 is shared with RU)
+      "8"
     ],
     [
       "ke",
-      "254"
+      // Kenya
+      "254",
+      0,
+      null,
+      "0"
     ],
     [
       "ki",
-      "686"
+      // Kiribati
+      "686",
+      0,
+      null,
+      "0"
     ],
     [
       "xk",
-      "383"
+      // Kosovo
+      "383",
+      0,
+      null,
+      "0"
     ],
     [
       "kw",
+      // Kuwait
       "965"
     ],
     [
       "kg",
-      "996"
+      // Kyrgyzstan
+      "996",
+      0,
+      null,
+      "0"
     ],
     [
       "la",
-      "856"
+      // Laos
+      "856",
+      0,
+      null,
+      "0"
     ],
     [
       "lv",
+      // Latvia
       "371"
     ],
     [
       "lb",
-      "961"
+      // Lebanon
+      "961",
+      0,
+      null,
+      "0"
     ],
     [
       "ls",
+      // Lesotho
       "266"
     ],
     [
       "lr",
-      "231"
+      // Liberia
+      "231",
+      0,
+      null,
+      "0"
     ],
     [
       "ly",
-      "218"
+      // Libya
+      "218",
+      0,
+      null,
+      "0"
     ],
     [
       "li",
-      "423"
+      // Liechtenstein
+      "423",
+      0,
+      null,
+      "0"
     ],
     [
       "lt",
-      "370"
+      // Lithuania
+      "370",
+      0,
+      null,
+      "0"
     ],
     [
       "lu",
+      // Luxembourg
       "352"
     ],
     [
       "mo",
+      // Macao SAR China
       "853"
     ],
     [
       "mg",
-      "261"
+      // Madagascar
+      "261",
+      0,
+      null,
+      "0"
     ],
     [
       "mw",
-      "265"
+      // Malawi
+      "265",
+      0,
+      null,
+      "0"
     ],
     [
       "my",
-      "60"
+      // Malaysia
+      "60",
+      0,
+      null,
+      "0"
     ],
     [
       "mv",
+      // Maldives
       "960"
     ],
     [
       "ml",
+      // Mali
       "223"
     ],
     [
       "mt",
+      // Malta
       "356"
     ],
     [
       "mh",
-      "692"
+      // Marshall Islands
+      "692",
+      0,
+      null,
+      "1"
     ],
     [
       "mq",
-      "596"
+      // Martinique
+      "596",
+      0,
+      null,
+      "0"
     ],
     [
       "mr",
+      // Mauritania
       "222"
     ],
     [
       "mu",
+      // Mauritius
       "230"
     ],
     [
       "yt",
+      // Mayotte
       "262",
       1,
-      ["269", "639"]
+      ["269", "639"],
+      "0"
     ],
     [
       "mx",
+      // Mexico
       "52"
     ],
     [
       "fm",
+      // Micronesia
       "691"
     ],
     [
       "md",
-      "373"
+      // Moldova
+      "373",
+      0,
+      null,
+      "0"
     ],
     [
       "mc",
-      "377"
+      // Monaco
+      "377",
+      0,
+      null,
+      "0"
     ],
     [
       "mn",
-      "976"
+      // Mongolia
+      "976",
+      0,
+      null,
+      "0"
     ],
     [
       "me",
-      "382"
+      // Montenegro
+      "382",
+      0,
+      null,
+      "0"
     ],
     [
       "ms",
+      // Montserrat
       "1",
       16,
-      ["664"]
+      ["664"],
+      "1"
     ],
     [
       "ma",
+      // Morocco
       "212",
-      0
+      0,
+      ["6", "7"],
+      // (mobile ranges shared with EH)
+      "0"
     ],
     [
       "mz",
+      // Mozambique
       "258"
     ],
     [
       "mm",
-      "95"
+      // Myanmar (Burma)
+      "95",
+      0,
+      null,
+      "0"
     ],
     [
       "na",
-      "264"
+      // Namibia
+      "264",
+      0,
+      null,
+      "0"
     ],
     [
       "nr",
+      // Nauru
       "674"
     ],
     [
       "np",
-      "977"
+      // Nepal
+      "977",
+      0,
+      null,
+      "0"
     ],
     [
       "nl",
-      "31"
+      // Netherlands
+      "31",
+      0,
+      null,
+      "0"
     ],
     [
       "nc",
+      // New Caledonia
       "687"
     ],
     [
       "nz",
-      "64"
+      // New Zealand
+      "64",
+      0,
+      null,
+      "0"
     ],
     [
       "ni",
+      // Nicaragua
       "505"
     ],
     [
       "ne",
+      // Niger
       "227"
     ],
     [
       "ng",
-      "234"
+      // Nigeria
+      "234",
+      0,
+      null,
+      "0"
     ],
     [
       "nu",
+      // Niue
       "683"
     ],
     [
       "nf",
+      // Norfolk Island
       "672"
     ],
     [
       "kp",
-      "850"
+      // North Korea
+      "850",
+      0,
+      null,
+      "0"
     ],
     [
       "mk",
-      "389"
+      // North Macedonia
+      "389",
+      0,
+      null,
+      "0"
     ],
     [
       "mp",
+      // Northern Mariana Islands
       "1",
       17,
-      ["670"]
+      ["670"],
+      "1"
     ],
     [
       "no",
+      // Norway
       "47",
-      0
+      0,
+      ["4", "9"]
+      // (mobile ranges shared with SJ)
     ],
     [
       "om",
+      // Oman
       "968"
     ],
     [
       "pk",
-      "92"
+      // Pakistan
+      "92",
+      0,
+      null,
+      "0"
     ],
     [
       "pw",
+      // Palau
       "680"
     ],
     [
       "ps",
-      "970"
+      // Palestinian Territories
+      "970",
+      0,
+      null,
+      "0"
     ],
     [
       "pa",
+      // Panama
       "507"
     ],
     [
       "pg",
+      // Papua New Guinea
       "675"
     ],
     [
       "py",
-      "595"
+      // Paraguay
+      "595",
+      0,
+      null,
+      "0"
     ],
     [
       "pe",
-      "51"
+      // Peru
+      "51",
+      0,
+      null,
+      "0"
     ],
     [
       "ph",
-      "63"
+      // Philippines
+      "63",
+      0,
+      null,
+      "0"
     ],
     [
       "pl",
+      // Poland
       "48"
     ],
     [
       "pt",
+      // Portugal
       "351"
     ],
     [
       "pr",
+      // Puerto Rico
       "1",
       3,
-      ["787", "939"]
+      ["787", "939"],
+      "1"
     ],
     [
       "qa",
+      // Qatar
       "974"
     ],
     [
       "re",
+      // Réunion
       "262",
-      0
+      0,
+      null,
+      "0"
     ],
     [
       "ro",
-      "40"
+      // Romania
+      "40",
+      0,
+      null,
+      "0"
     ],
     [
       "ru",
+      // Russia
       "7",
-      0
+      0,
+      ["33"],
+      // (shared with KZ)
+      "8"
     ],
     [
       "rw",
-      "250"
+      // Rwanda
+      "250",
+      0,
+      null,
+      "0"
     ],
     [
       "ws",
+      // Samoa
       "685"
     ],
     [
       "sm",
+      // San Marino
       "378"
     ],
     [
       "st",
+      // São Tomé & Príncipe
       "239"
     ],
     [
       "sa",
-      "966"
+      // Saudi Arabia
+      "966",
+      0,
+      null,
+      "0"
     ],
     [
       "sn",
+      // Senegal
       "221"
     ],
     [
       "rs",
-      "381"
+      // Serbia
+      "381",
+      0,
+      null,
+      "0"
     ],
     [
       "sc",
+      // Seychelles
       "248"
     ],
     [
       "sl",
-      "232"
+      // Sierra Leone
+      "232",
+      0,
+      null,
+      "0"
     ],
     [
       "sg",
+      // Singapore
       "65"
     ],
     [
       "sx",
+      // Sint Maarten
       "1",
       21,
-      ["721"]
+      ["721"],
+      "1"
     ],
     [
       "sk",
-      "421"
+      // Slovakia
+      "421",
+      0,
+      null,
+      "0"
     ],
     [
       "si",
-      "386"
+      // Slovenia
+      "386",
+      0,
+      null,
+      "0"
     ],
     [
       "sb",
+      // Solomon Islands
       "677"
     ],
     [
       "so",
-      "252"
+      // Somalia
+      "252",
+      0,
+      null,
+      "0"
     ],
     [
       "za",
-      "27"
+      // South Africa
+      "27",
+      0,
+      null,
+      "0"
     ],
     [
       "kr",
-      "82"
+      // South Korea
+      "82",
+      0,
+      null,
+      "0"
     ],
     [
       "ss",
-      "211"
+      // South Sudan
+      "211",
+      0,
+      null,
+      "0"
     ],
     [
       "es",
+      // Spain
       "34"
     ],
     [
       "lk",
-      "94"
+      // Sri Lanka
+      "94",
+      0,
+      null,
+      "0"
     ],
     [
       "bl",
+      // St. Barthélemy
       "590",
-      1
+      1,
+      null,
+      "0"
     ],
     [
       "sh",
+      // St. Helena
       "290"
     ],
     [
       "kn",
+      // St. Kitts & Nevis
       "1",
       18,
-      ["869"]
+      ["869"],
+      "1"
     ],
     [
       "lc",
+      // St. Lucia
       "1",
       19,
-      ["758"]
+      ["758"],
+      "1"
     ],
     [
       "mf",
+      // St. Martin
       "590",
-      2
+      2,
+      null,
+      "0"
     ],
     [
       "pm",
-      "508"
+      // St. Pierre & Miquelon
+      "508",
+      0,
+      null,
+      "0"
     ],
     [
       "vc",
+      // St. Vincent & Grenadines
       "1",
       20,
-      ["784"]
+      ["784"],
+      "1"
     ],
     [
       "sd",
-      "249"
+      // Sudan
+      "249",
+      0,
+      null,
+      "0"
     ],
     [
       "sr",
+      // Suriname
       "597"
     ],
     [
       "sj",
+      // Svalbard & Jan Mayen
       "47",
       1,
-      ["79"]
+      ["4", "79", "9"]
+      // (4 and 9 are mobile ranges shared with NO)
     ],
     [
       "se",
-      "46"
+      // Sweden
+      "46",
+      0,
+      null,
+      "0"
     ],
     [
       "ch",
-      "41"
+      // Switzerland
+      "41",
+      0,
+      null,
+      "0"
     ],
     [
       "sy",
-      "963"
+      // Syria
+      "963",
+      0,
+      null,
+      "0"
     ],
     [
       "tw",
-      "886"
+      // Taiwan
+      "886",
+      0,
+      null,
+      "0"
     ],
     [
       "tj",
+      // Tajikistan
       "992"
     ],
     [
       "tz",
-      "255"
+      // Tanzania
+      "255",
+      0,
+      null,
+      "0"
     ],
     [
       "th",
-      "66"
+      // Thailand
+      "66",
+      0,
+      null,
+      "0"
     ],
     [
       "tl",
+      // Timor-Leste
       "670"
     ],
     [
       "tg",
+      // Togo
       "228"
     ],
     [
       "tk",
+      // Tokelau
       "690"
     ],
     [
       "to",
+      // Tonga
       "676"
     ],
     [
       "tt",
+      // Trinidad & Tobago
       "1",
       22,
-      ["868"]
+      ["868"],
+      "1"
     ],
     [
       "tn",
+      // Tunisia
       "216"
     ],
     [
       "tr",
-      "90"
+      // Turkey
+      "90",
+      0,
+      null,
+      "0"
     ],
     [
       "tm",
-      "993"
+      // Turkmenistan
+      "993",
+      0,
+      null,
+      "8"
     ],
     [
       "tc",
+      // Turks & Caicos Islands
       "1",
       23,
-      ["649"]
+      ["649"],
+      "1"
     ],
     [
       "tv",
+      // Tuvalu
       "688"
     ],
     [
+      "vi",
+      // U.S. Virgin Islands
+      "1",
+      24,
+      ["340"],
+      "1"
+    ],
+    [
       "ug",
-      "256"
+      // Uganda
+      "256",
+      0,
+      null,
+      "0"
     ],
     [
       "ua",
-      "380"
+      // Ukraine
+      "380",
+      0,
+      null,
+      "0"
     ],
     [
       "ae",
-      "971"
+      // United Arab Emirates
+      "971",
+      0,
+      null,
+      "0"
     ],
     [
       "gb",
+      // United Kingdom
       "44",
-      0
+      0,
+      null,
+      "0"
     ],
     [
       "us",
+      // United States
       "1",
-      0
+      0,
+      null,
+      "1"
     ],
     [
       "uy",
-      "598"
-    ],
-    [
-      "vi",
-      "1",
-      24,
-      ["340"]
+      // Uruguay
+      "598",
+      0,
+      null,
+      "0"
     ],
     [
       "uz",
+      // Uzbekistan
       "998"
     ],
     [
       "vu",
+      // Vanuatu
       "678"
     ],
     [
       "va",
+      // Vatican City
       "39",
       1,
-      ["06698"]
+      ["06698", "3"]
+      // (3 is a mobile range shared with IT)
     ],
     [
       "ve",
-      "58"
+      // Venezuela
+      "58",
+      0,
+      null,
+      "0"
     ],
     [
       "vn",
-      "84"
+      // Vietnam
+      "84",
+      0,
+      null,
+      "0"
     ],
     [
       "wf",
+      // Wallis & Futuna
       "681"
     ],
     [
       "eh",
+      // Western Sahara
       "212",
       1,
-      ["5288", "5289"]
+      ["5288", "5289", "6", "7"],
+      // (6 and 7 are mobile ranges shared with MA)
+      "0"
     ],
     [
       "ye",
-      "967"
+      // Yemen
+      "967",
+      0,
+      null,
+      "0"
     ],
     [
       "zm",
-      "260"
+      // Zambia
+      "260",
+      0,
+      null,
+      "0"
     ],
     [
       "zw",
-      "263"
-    ],
-    [
-      "ax",
-      "358",
-      1,
-      ["18"]
+      // Zimbabwe
+      "263",
+      0,
+      null,
+      "0"
     ]
   ];
   var allCountries = [];
-  for (let i = 0; i < rawCountryData.length; i++) {
-    const c = rawCountryData[i];
-    allCountries[i] = {
+  for (const c of rawCountryData) {
+    allCountries.push({
       name: "",
-      // this is now populated in the plugin
+      // populated in the plugin
       iso2: c[0],
       dialCode: c[1],
       priority: c[2] || 0,
       areaCodes: c[3] || null,
-      nodeById: {}
-    };
+      nodeById: {},
+      // populated by the plugin
+      nationalPrefix: c[4] || null,
+      normalisedName: "",
+      // populated in the plugin
+      initials: "",
+      // populated in the plugin
+      dialCodePlus: ""
+      // populated in the plugin
+    });
   }
   var data_default = allCountries;
   return __toCommonJS(data_exports);

@@ -12,7 +12,7 @@ function em_clean_shortcode_args( $args, $format = '' ) {
 	$supplied_args = $args;
 	$args['ajax'] = isset($args['ajax']) ? $args['ajax']:(!defined('EM_AJAX') || EM_AJAX );
 	if( !get_option('dbem_shortcodes_allow_format_params') ) {
-		unset($args['format'], $args['format_header'], $args['format_footer']);
+		unset($args['format'], $args['header_format'], $args['format_header'], $args['format_footer']);
 	}
 	if( empty($format) && !empty($args['format']) ) {
 		// If supplied via $args in shortcode context, we cannot guarantee the format HTML is safe as it can be invoked by any user. Therefore, we must wp_kses it.
@@ -33,6 +33,15 @@ function em_clean_shortcode_args( $args, $format = '' ) {
 			if( get_option('dbem_shortcodes_kses_decoded_content') ) {
 				$args['format'] = wp_kses( $args['format'], $allowedposttags ); //shorcode doesn't accept html
 			}
+		}
+	}
+	foreach ( ['format_headar', 'format_footer', 'header_format'] as $arg ) {
+		if ( !empty( $args[$arg] ) ) {
+			global $allowedposttags;
+			if( get_option('dbem_shortcodes_decode_params') ) {
+				$args[$arg] = html_entity_decode($args[$arg]); //shorcode doesn't accept html
+			}
+			$args[$arg] = wp_kses($args[$arg], $allowedposttags); //shorcode doesn't accept html
 		}
 	}
 	return apply_filters('em_clean_shortcode_args', $args, $format, $supplied_args);

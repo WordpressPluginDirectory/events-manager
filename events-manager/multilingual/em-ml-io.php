@@ -295,15 +295,18 @@ class EM_ML_IO {
 	 * @param EM_Event $EM_Event
 	 */
 	public static function event_save_meta_pre( $EM_Event ){
+		if( !($EM_Event instanceof EM_Event) ) return; //guard against null/invalid objects coming through the filter (see pixelitemedia/events-manager-wpml#117/#118)
 		$EM_Event->event_language = EM_ML::get_the_language( $EM_Event ); //do this early on so we know the language we're dealing with
 		// save parent info about this event
 		if( !EM_ML::is_original( $EM_Event ) ){
 			$event = EM_ML::get_original( $EM_Event );
-			if( $EM_Event->is_recurring( true ) ){
+			if( $event instanceof EM_Event && $EM_Event->is_recurring( true ) ){
 				// give the translation the same recurrence_set_id to
 				$EM_Event->recurrence_set_id = $event->recurrence_set_id;
 			}
-			static::event_merge_original_meta( $EM_Event, $event );
+			if( $event instanceof EM_Event ){
+				static::event_merge_original_meta( $EM_Event, $event );
+			}
 		}
 	}
 	
@@ -370,6 +373,7 @@ class EM_ML_IO {
 		global $wpdb;
 		if( $result ){
 			$event = EM_ML::get_original_event($EM_Event);
+			if( !($event instanceof EM_Event) ) return $result; //guard: get_original_event may return null when the WPML translation record is missing or in flux (see pixelitemedia/events-manager-wpml#117/#118/#124)
 			$is_original = $event->event_id == $EM_Event->event_id;
 			// only for repeating events, recurrences don't need translating since they're on one page
 			if( $EM_Event->is_repeating() ){
@@ -421,6 +425,7 @@ class EM_ML_IO {
 					$EM_EVENT_SAVE_POST = false;
 					EM_ML_Search::$active = false; //just in case
 					$event = em_get_event( $event_id );
+					if( !($event instanceof EM_Event) ) continue; //skip stale/missing recurrences rather than fatalling (pixelitemedia/events-manager-wpml#117)
 					EM_ML_IO::event_merge_original_meta( $event, $EM_Event );
 					$event->save_meta(); //this will save the current event and call this function again to pass through the top if clause
 				}

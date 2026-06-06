@@ -307,6 +307,7 @@ class EM_Calendar extends EM_Object {
 			//Go through the events and slot them into the right d-m index
 			foreach( $events as $event ) {
 				$event = apply_filters('em_calendar_output_loop_start', $event);
+				$event_id = !empty($args['timeslots']) && !empty($event['timeslot_id']) ? $event['event_id'] . ':' . $event['timeslot_id'] : $event['event_id'];
 				// first, we will ignore any past events that are still loaded within the month (these would be 'earlier today')
 				if( $args['scope'] === 'future' ){
 					$event_cutoff = em_get_option('dbem_events_current_are_past') ? $event['event_start']:$event['event_end']; // remember, this is UTC, not local!
@@ -329,7 +330,7 @@ class EM_Calendar extends EM_Object {
 						$event_eventful_date = $event_start->getDate();
 						if( empty($eventful_days_count[$event_eventful_date]) || !$limit || $eventful_days_count[$event_eventful_date] < $limit ){
 							//now we know this is an event that'll be used, convert it to an object
-							$EM_Event = em_get_event($event['event_id']);
+							$EM_Event = em_get_event( $event_id );
 							if( empty($eventful_days[$event_eventful_date]) || !is_array($eventful_days[$event_eventful_date]) ) $eventful_days[$event_eventful_date] = array();
 							//add event to array with a corresponding timestamp for sorting of times including long and all-day events
 							$event_ts_marker = ($EM_Event->event_all_day || ($EM_Event->event_start_date != $EM_Event->event_end_date)) ? 0 : (int) $event_start->getTimestamp();
@@ -348,7 +349,7 @@ class EM_Calendar extends EM_Object {
 					$event_eventful_date = $EM_DateTime->getDate( $timezone );
 					if( empty($eventful_days_count[$event_eventful_date]) || !$limit || $eventful_days_count[$event_eventful_date] < $limit ){
 						if( empty($eventful_days[$event_eventful_date]) || !is_array($eventful_days[$event_eventful_date]) ) $eventful_days[$event_eventful_date] = [];
-						$EM_Event = em_get_event($event['event_id']);
+						$EM_Event = em_get_event( $event_id );
 						//add event to array with a corresponding timestamp for sorting of times including long and all-day events
 						$event_ts_marker = $event['event_all_day'] ? 0 : (int) $EM_DateTime->getTimestamp();
 						while( !empty($eventful_days[$event_eventful_date][$event_ts_marker]) ){
@@ -533,6 +534,11 @@ class EM_Calendar extends EM_Object {
 			if( !empty($args['calendar_size']) ){
 				$allowed_sizes = apply_filters('em_calendar_output_sizes', array('large', 'medium', 'small'));
 				$args['calendar_size'] = in_array($args['calendar_size'], $allowed_sizes) ? $args['calendar_size'] : null;
+			}
+			// sanitize event display style, falling back to the site-wide default if an unknown style is supplied
+			$allowed_styles = apply_filters('em_calendar_output_event_styles', array('pill', 'dot', 'dots', 'ring'));
+			if( empty($args['calendar_event_style']) || !in_array($args['calendar_event_style'], $allowed_styles, true) ){
+				$args['calendar_event_style'] = em_get_option('dbem_calendar_event_style', 'pill');
 			}
 			// generate CSS classes based on $args
 			$calendar_array['css'] = array(
@@ -731,7 +737,7 @@ class EM_Calendar extends EM_Object {
 			'show_search' => false, // don't show the search bar above by default, filters yes
 			'has_search' => false, // by default no search
 			'css_classes' => false,
-			'calendar_event_style' => 'pill', // default is pill view
+			'calendar_event_style' => em_get_option('dbem_calendar_event_style', 'pill'), // pill, dot or ring; defaults to the site-wide setting
 			'calendar_preview_mode' => em_get_option('dbem_calendar_preview_mode'), //modal, tooltips, none
 			'calendar_preview_mode_date' => em_get_option('dbem_calendar_preview_mode_date'), //modal, none
 			'calendar_nav_nofollow' => false,
@@ -740,7 +746,7 @@ class EM_Calendar extends EM_Object {
 			'calendar_month_nav' => true,
 			'empty_months' => true, // if empty months are to be shown
 			'calendar_timezone' => false, // if set to a timezone, we search and show dates/times in the specified timezone rather than local time
-			'timeslots' => false,
+			'timeslots' => em_get_option('dbem_calendar_timeslots'),
 		);
 
 		//sort out whether defaults were supplied or just the array of search values

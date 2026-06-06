@@ -115,6 +115,8 @@ class EM_Ticket extends EM_Object {
 	protected $pending_spaces = [];
 	protected $booked_spaces = [];
 	protected $bookings_count = [];
+	protected $reserved_spaces = [];
+	protected $status_counts = [];
 
 	/**
 	 * @var EM_Event
@@ -456,7 +458,7 @@ class EM_Ticket extends EM_Object {
 		$this->ticket_uuid = !empty($post['ticket_uuid']) && wp_is_uuid($post['ticket_uuid']) ? $post['ticket_uuid'] : wp_generate_uuid4();
 		$this->ticket_status = ( isset($post['ticket_status']) && $post['ticket_status'] !== '-1' ) ? ( $post['ticket_status'] ? 1:0 ) : ( $this->ticket_parent ? null : 0 );
 		$this->event_id = ( !empty($post['event_id']) && is_numeric($post['event_id']) ) ? absint($post['event_id']):null;
-		$this->ticket_name = ( !empty($post['ticket_name']) ) ? wp_kses_data(wp_unslash($post['ticket_name'])):null;
+		$this->ticket_name = ( !empty($post['ticket_name']) ) ? wp_kses(wp_unslash($post['ticket_name']), 'em_ticket_name'):null;
 		$this->ticket_description = ( !empty($post['ticket_description']) ) ? wp_kses(wp_unslash($post['ticket_description']), $allowedposttags):null;
 		//spaces and limits
 		$this->ticket_min = ( !empty($post['ticket_min']) && is_numeric($post['ticket_min']) ) ? absint($post['ticket_min']):null;
@@ -470,6 +472,8 @@ class EM_Ticket extends EM_Object {
 		$price = ( !empty($post['ticket_price']) ) ? wp_kses_data($post['ticket_price']):'';
 		if( preg_match('/^[0-9]*\.[0-9]+$/', $price) || preg_match('/^[0-9]+$/', $price) ){
 			$this->ticket_price = (float) $price;
+		} elseif ( $price === '' && $this->ticket_parent ) {
+			$this->ticket_price = null;
 		}else{
 			$this->ticket_price = (float) str_replace( array( em_get_option('dbem_bookings_currency_thousands_sep'), em_get_option('dbem_bookings_currency_decimal_point') ), array('','.'), $price );
 		}
@@ -497,7 +501,7 @@ class EM_Ticket extends EM_Object {
 		}
 		if ( !empty($post['ticket_required']) && $post['ticket_required'] !== 'default' ) {
 		    $this->ticket_required = 1;
-		} elseif ( $post['ticket_required'] === 'default' && $this->ticket_parent ) {
+		} elseif ( ($post['ticket_required'] ?? 'default') === 'default' && $this->ticket_parent ) {
 		    $this->ticket_required = null;
 		} else {
 		    $this->ticket_required = 0;
@@ -761,9 +765,7 @@ class EM_Ticket extends EM_Object {
 	function get_available_spaces(){
 		$event_available_spaces = $this->get_event()->get_bookings()->get_available_spaces();
 		$ticket_available_spaces = $this->get_spaces() - $this->get_booked_spaces();
-		if( $this->get_event()->get_option('dbem_bookings_approval_reserved')){
-		    $ticket_available_spaces = $ticket_available_spaces - $this->get_pending_spaces();
-		}
+	    $ticket_available_spaces = $ticket_available_spaces - $this->get_reserved_spaces();
 		$return = ($ticket_available_spaces <= $event_available_spaces) ? $ticket_available_spaces:$event_available_spaces;
 		return apply_filters( 'em_ticket_get_available_spaces', $return, $this, array('event_spaces' => $event_available_spaces, 'ticket_spaces' => $ticket_available_spaces) );
 	}
@@ -774,15 +776,30 @@ class EM_Ticket extends EM_Object {
 	 * @return int
 	 */
 	function get_pending_spaces( $force_refresh = false ){
-		global $wpdb;
 		if( !array_key_exists($this->event_id, $this->pending_spaces) || $force_refresh ){
-			$sub_sql = 'SELECT booking_id FROM '.EM_BOOKINGS_TABLE." WHERE event_id=%d AND booking_status=0";
-			$sql = 'SELECT SUM(ticket_booking_spaces) FROM '.EM_TICKETS_BOOKINGS_TABLE. " WHERE booking_id IN ($sub_sql) AND ticket_id=%d";
-			$pending_spaces = $wpdb->get_var($wpdb->prepare($sql, $this->event_id, $this->ticket_id));
+			$pending_spaces = $this->get_status_spaces( 0, $force_refresh );
 			$this->pending_spaces[$this->event_id] = $pending_spaces > 0 ? $pending_spaces : 0;
 			$this->pending_spaces[$this->event_id] = apply_filters('em_ticket_get_pending_spaces', $this->pending_spaces[$this->event_id], $this, $force_refresh);
 		}
 		return $this->pending_spaces[$this->event_id];
+	}
+
+	/**
+	 * Get the total number of pending spaces for this ticket. Identical to get_pending_spaces(), but allows differentiation between a PENDING booking and a reserved booking (for example, a booking temporarily awaiting online payment)
+	 * @param boolean $force_refresh
+	 * @return int
+	 */
+	function get_reserved_spaces( $force_refresh = false ){
+		if( $this->get_event()->get_option('dbem_bookings_approval_reserved')) {
+			if ( !array_key_exists( $this->event_id, $this->reserved_spaces ) || $force_refresh ) {
+				$reserved_spaces = $this->get_status_spaces( 0, $force_refresh );
+				$reserved_spaces = $reserved_spaces > 0 ? $reserved_spaces : 0;
+				$this->reserved_spaces[ $this->event_id ] = apply_filters( 'em_ticket_get_reserved_spaces', $reserved_spaces, $this, $force_refresh );
+			}
+			return $this->reserved_spaces[ $this->event_id ];
+		}
+		// if we reach here, always run the filter to allow other bookings to override other reserved spaces with bookings of different status
+		return apply_filters( 'em_ticket_get_reserved_spaces', 0, $this, $force_refresh );
 	}
 
 	/**
@@ -791,19 +808,35 @@ class EM_Ticket extends EM_Object {
 	 * @return int
 	 */
 	function get_booked_spaces( $force_refresh = false ){
-		global $wpdb;
 		if( !array_key_exists($this->event_id, $this->pending_spaces) || $force_refresh ){
-			$status_cond = !$this->get_event()->get_option('dbem_bookings_approval') ? 'booking_status IN (0,1)' : 'booking_status = 1';
-			$sub_sql = 'SELECT booking_id FROM '.EM_BOOKINGS_TABLE." WHERE event_id=%d AND $status_cond";
-			if ( $this->get_event()->is_timeslot() ) {
-				$sub_sql .= " AND timeslot_id=" . absint($this->get_event()->timeslot_id);
-			}
-			$sql = 'SELECT SUM(ticket_booking_spaces) FROM '.EM_TICKETS_BOOKINGS_TABLE. " WHERE booking_id IN ($sub_sql) AND ticket_id=%d";
-			$booked_spaces = $wpdb->get_var($wpdb->prepare($sql, $this->event_id, $this->ticket_id));
-			$this->booked_spaces[$this->event_id] = $booked_spaces > 0 ? $booked_spaces : 0;
-			$this->booked_spaces[$this->event_id] = apply_filters('em_ticket_get_booked_spaces', $this->booked_spaces[$this->event_id], $this, $force_refresh);
+			$status = !$this->get_event()->get_option('dbem_bookings_approval') ? '0,1' : 1;
+			$booked_spaces = $this->get_status_spaces( $status, $force_refresh );
+			$booked_spaces = $booked_spaces > 0 ? $booked_spaces : 0;
+			$this->booked_spaces[$this->event_id] = apply_filters('em_ticket_get_booked_spaces', $booked_spaces, $this, $force_refresh);
 		}
 		return $this->booked_spaces[$this->event_id];
+	}
+
+	public function get_status_spaces( $status, $force_refresh = false ) {
+		global $wpdb;
+		// clean up $status
+		if ( is_array($status) ) {
+			$status = implode(',', $status);
+		}
+		$status = str_replace(' ', '', $status);
+		// run if $status is clean
+		if ( preg_match('/[^0-9,]/', $status) ) {
+			if ( !isset( $this->status_counts[ $this->event_id ][ $status ] ) || $force_refresh ) {
+				$status_cond = !$this->get_event()->get_option('dbem_bookings_approval') ? 'booking_status IN (0,1)' : 'booking_status = 1';
+				$sub_sql = 'SELECT booking_id FROM '.EM_BOOKINGS_TABLE." WHERE event_id=%d AND booking_status IN ($status)";
+				if ( $this->get_event()->is_timeslot() ) {
+					$sub_sql .= " AND timeslot_id=" . absint($this->get_event()->timeslot_id);
+				}
+				$sql = 'SELECT SUM(ticket_booking_spaces) FROM '.EM_TICKETS_BOOKINGS_TABLE. " WHERE booking_id IN ($sub_sql) AND ticket_id=%d";
+				$this->status_counts[ $this->event_id ][ $status ] = $wpdb->get_var( $sql );
+			}
+		}
+		return apply_filters('em_ticket_get_status_spaces', $this->status_counts[ $this->event_id ][ $status ] ?? 0, $this, $status, $force_refresh);
 	}
 
 	/**

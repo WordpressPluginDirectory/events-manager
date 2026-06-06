@@ -161,7 +161,7 @@ class EM_Person extends WP_User{
 			'name_last' => $this->last_name,
 			'email' => $this->user_email,
 			'phone' => $this->phone,
-			'guest' => $this->ID > 0, // whether person is registered or not
+			'guest' => $this->ID <= 0, // whether person is registered or not
 		);
 		$person = array_merge( $person, $this->custom_user_fields );
 		return apply_filters('em_person_to_api', $person);

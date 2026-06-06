@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andorra",
   ae: "Verenigde Arabische Emiraten",
   af: "Afghanistan",
@@ -8,7 +7,6 @@ export default {
   al: "Albanië",
   am: "Armenië",
   ao: "Angola",
-  aq: "Antarctica",
   ar: "Argentinië",
   as: "Amerikaans-Samoa",
   at: "Oostenrijk",
@@ -33,7 +31,6 @@ export default {
   br: "Brazilië",
   bs: "Bahama’s",
   bt: "Bhutan",
-  bv: "Bouveteiland",
   bw: "Botswana",
   by: "Belarus",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Guadeloupe",
   gq: "Equatoriaal-Guinea",
   gr: "Griekenland",
-  gs: "Zuid-Georgia en Zuidelijke Sandwicheilanden",
   gt: "Guatemala",
   gu: "Guam",
   gw: "Guinee-Bissau",
   gy: "Guyana",
   hk: "Hongkong SAR van China",
-  hm: "Heard en McDonaldeilanden",
   hn: "Honduras",
   hr: "Kroatië",
   ht: "Haïti",
@@ -180,7 +175,6 @@ export default {
   pk: "Pakistan",
   pl: "Polen",
   pm: "Saint-Pierre en Miquelon",
-  pn: "Pitcairneilanden",
   pr: "Puerto Rico",
   ps: "Palestijnse gebieden",
   pt: "Portugal",
@@ -215,7 +209,6 @@ export default {
   sz: "eSwatini",
   tc: "Turks- en Caicoseilanden",
   td: "Tsjaad",
-  tf: "Franse Gebieden in de zuidelijke Indische Oceaan",
   tg: "Togo",
   th: "Thailand",
   tj: "Tadzjikistan",
@@ -231,7 +224,6 @@ export default {
   tz: "Tanzania",
   ua: "Oekraïne",
   ug: "Oeganda",
-  um: "Kleine afgelegen eilanden van de Verenigde Staten",
   us: "Verenigde Staten",
   uy: "Uruguay",
   uz: "Oezbekistan",
@@ -248,5 +240,6 @@ export default {
   yt: "Mayotte",
   za: "Zuid-Afrika",
   zm: "Zambia",
-  zw: "Zimbabwe",
+  zw: "Zimbabwe"
 };
+export default countryTranslations;

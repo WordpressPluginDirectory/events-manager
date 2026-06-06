@@ -147,10 +147,15 @@ table.em-tickets-bookings-table tbody td { text-align:center; }
 #em-bookings-admin-booking .em-booking-single-form { padding-right:20px; }
 
 /* Google Map Object */
+#em-map .em-map-balloon-title {
+	font-size: 14px !important;
+	font-weight: bold !important;
+}
 #location-balloon-content {
 	margin: 0px 0px 0px 0px !important;
-	padding: 0px 12px 20px 0px !important;
-	font-size: 12px !important;
+	padding: 0px 0px 15px 0px !important;
+	font-size: 13px !important;
+	line-height: 18px !important;
 	color: #000000 !important;
 	width: auto !important;
 	max-width: none !important;

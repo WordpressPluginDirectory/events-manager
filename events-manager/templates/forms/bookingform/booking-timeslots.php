@@ -17,6 +17,17 @@ $Timeslots = $EM_Event->get_timeranges()->get_timeslots();
 $time_format = esc_attr( $EM_Event->get_option('dbem_time_format') );
 $scope = $EM_Event->start()->getDate();
 ?>
+<?php if( $already_booked && !em_get_option('dbem_bookings_double') ): //Double bookings not allowed ?>
+	<?php do_action('em_booking_form_status_already_booked', $EM_Event); // do not delete ?>
+<?php elseif( !$EM_Event->event_rsvp ): //bookings not enabled ?>
+	<?php do_action('em_booking_form_status_disabled', $EM_Event); // do not delete ?>
+<?php elseif( $EM_Event->event_active_status === 0 ): //event is cancelled ?>
+	<?php do_action('em_booking_form_status_cancelled', $EM_Event); // do not delete ?>
+<?php elseif( $EM_Event->get_bookings()->get_available_spaces() <= 0 && !EM_Bookings::$disable_restrictions ): ?>
+	<?php do_action('em_booking_form_status_full', $EM_Event); // do not delete ?>
+<?php elseif( !$is_open ): //event has started ?>
+	<?php do_action('em_booking_form_status_closed', $EM_Event); // do not delete ?>
+<?php else: ?>
 <section class="em em-event-booking-form em-booking-recurring em-booking-event-timeslots" data-event="<?php echo $id; ?>">
 	<?php if( $EM_Event->get_option('dbem_bookings_header_timeslots') ): ?>
 		<h3 class="em-booking-section-title em-booking-form-timeslots-title"><?php echo esc_html( $EM_Event->get_option('dbem_bookings_header_timeslots') ); ?></h3>
@@ -43,3 +54,4 @@ $scope = $EM_Event->start()->getDate();
 	</div>
 	<?php include em_locate_template( 'forms/bookingform/summary-skeleton.php' ); ?>
 </section>
+<?php endif; ?>

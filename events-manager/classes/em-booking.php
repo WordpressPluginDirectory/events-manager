@@ -831,6 +831,10 @@ class EM_Booking extends EM_Object{
 	            $this->booking_tax_rate = $this->get_event()->get_tax_rate();
 	        }
 	    }
+		if ( !is_float($this->booking_tax_rate) ) {
+			$this->booking_tax_rate = str_replace(',', '.', (string) $this->booking_tax_rate);
+			$this->booking_tax_rate = (float) preg_replace('/[^0-9.]/', '', $this->booking_tax_rate);
+		}
 	    $this->booking_tax_rate = $this->booking_tax_rate > 0 ? $this->booking_tax_rate : 0;
 	    $this->booking_tax_rate = apply_filters('em_booking_get_tax_rate', $this->booking_tax_rate, $this);
 	    if( $this->booking_tax_rate > 0 && $decimal ){

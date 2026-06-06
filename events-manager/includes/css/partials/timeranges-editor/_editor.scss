@@ -1,6 +1,5 @@
 // Timeranges Editor Styles
 .em-timeranges {
-	width: min-content;
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 10px;
@@ -72,6 +71,7 @@
 
     // Advanced section - hidden by default, shown when checkbox is checked
     .em-timerange-timeslots {
+	    width: min-content;
 	    margin-top: 10px;
 
         .em-timerange-row {
@@ -116,7 +116,7 @@
 
 }
 .em-timeranges-editor {
-	width: auto;
+	width: 100%;
 
 	.em-timeranges-actions {
 		// Minimal reset only

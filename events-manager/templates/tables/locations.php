@@ -35,8 +35,9 @@
 				<?php if( empty($_REQUEST['view']) && current_user_can('delete_events') ) : ?>
 				<option value="location_delete"><?php _e ( 'Delete selected','events-manager'); ?></option>
 				<?php endif; ?>
-			</select> 
-			<input type="submit" value="<?php _e ( 'Apply' ); ?>" id="doaction2" class="button-secondary action" /> 
+			</select>
+			<input type="hidden" name="nonce" value="<?php echo wp_create_nonce('location_delete'); ?>">
+			<input type="submit" value="<?php _e ( 'Apply' ); ?>" id="doaction2" class="button-secondary action">
 		</div>
 		<?php else: $hide_checkboxes = true; /* @todo this and the first condition of this if statement will need to change when other bulk actions are added */ ?>
 		<?php endif; ?>

@@ -30,7 +30,7 @@ $collumns = $EM_Tickets->get_ticket_collumns(); //array of collumn type => title
 					switch($type){
 						case 'type':
 							?>
-							<td class="em-bookings-ticket-table-type"><?php echo wp_kses_data($EM_Ticket->ticket_name); ?><?php if(!empty($EM_Ticket->ticket_description)) :?><br><span class="ticket-desc"><?php echo wp_kses($EM_Ticket->ticket_description,$allowedposttags); ?></span><?php endif; ?></td>
+							<td class="em-bookings-ticket-table-type"><?php echo wp_kses($EM_Ticket->name, 'em_ticket_name'); ?><?php if(!empty($EM_Ticket->description)) :?><br><span class="ticket-desc"><?php echo wp_kses($EM_Ticket->description,$allowedposttags); ?></span><?php endif; ?></td>
 							<?php
 							break;
 						case 'price':

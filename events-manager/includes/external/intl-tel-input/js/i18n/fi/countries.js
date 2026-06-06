@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andorra",
   ae: "Arabiemiirikunnat",
   af: "Afganistan",
@@ -8,7 +7,6 @@ export default {
   al: "Albania",
   am: "Armenia",
   ao: "Angola",
-  aq: "Antarktis",
   ar: "Argentiina",
   as: "Amerikan Samoa",
   at: "Itävalta",
@@ -33,7 +31,6 @@ export default {
   br: "Brasilia",
   bs: "Bahama",
   bt: "Bhutan",
-  bv: "Bouvet’nsaari",
   bw: "Botswana",
   by: "Valko-Venäjä",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Guadeloupe",
   gq: "Päiväntasaajan Guinea",
   gr: "Kreikka",
-  gs: "Etelä-Georgia ja Eteläiset Sandwichsaaret",
   gt: "Guatemala",
   gu: "Guam",
   gw: "Guinea-Bissau",
   gy: "Guyana",
   hk: "Hongkong – Kiinan e.h.a.",
-  hm: "Heard ja McDonaldinsaaret",
   hn: "Honduras",
   hr: "Kroatia",
   ht: "Haiti",
@@ -180,7 +175,6 @@ export default {
   pk: "Pakistan",
   pl: "Puola",
   pm: "Saint-Pierre ja Miquelon",
-  pn: "Pitcairn",
   pr: "Puerto Rico",
   ps: "Palestiinalaisalueet",
   pt: "Portugali",
@@ -215,7 +209,6 @@ export default {
   sz: "Swazimaa",
   tc: "Turks- ja Caicossaaret",
   td: "Tšad",
-  tf: "Ranskan eteläiset alueet",
   tg: "Togo",
   th: "Thaimaa",
   tj: "Tadžikistan",
@@ -231,7 +224,6 @@ export default {
   tz: "Tansania",
   ua: "Ukraina",
   ug: "Uganda",
-  um: "Yhdysvaltain erillissaaret",
   us: "Yhdysvallat",
   uy: "Uruguay",
   uz: "Uzbekistan",
@@ -248,5 +240,6 @@ export default {
   yt: "Mayotte",
   za: "Etelä-Afrikka",
   zm: "Sambia",
-  zw: "Zimbabwe",
+  zw: "Zimbabwe"
 };
+export default countryTranslations;

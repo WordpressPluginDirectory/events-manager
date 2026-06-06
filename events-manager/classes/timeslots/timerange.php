@@ -126,7 +126,7 @@ class Timerange extends EM_Object {
 			$this->timerange_all_day = 0;
 			foreach( ['start', 'end'] as $timeName ){
 				$match = array();
-				if( !empty($post[$timeName]) && preg_match ( '/^([01]\d|[0-9]|2[0-3])(:([0-5]\d))? ?(AM|PM)?$/', $post[$timeName], $match ) ){
+				if( !empty($post[$timeName]) && preg_match ( '/^([01]\d|[0-9]|2[0-3])(:([0-5]\d))?(?::[0-5]\d)? ?(AM|PM)?$/', $post[$timeName], $match ) ){
 					if( empty($match[3]) ) $match[3] = '00';
 					if( strlen($match[1]) == 1 ) $match[1] = '0'.$match[1];
 					if( !empty($match[4]) && $match[4] == 'PM' && $match[1] != 12 ){

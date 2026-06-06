@@ -241,6 +241,7 @@ class Scripts_and_Styles {
 			'autocomplete_limit' => apply_filters('em_locations_autocomplete_limit', 10),
 			'calendar' => array(
 				'breakpoints' => array( 'small' => 560, 'medium' => 908, 'large' => false, ), // reorder this array for efficiency if you override it, so smallest is first, largest or false is last
+				'month_format' => em_get_option('dbem_full_calendar_month_format', 'F Y'),
 			),
 			'phone' => false,
 			'datepicker' => array(

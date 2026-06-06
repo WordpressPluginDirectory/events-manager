@@ -11,6 +11,7 @@ class Privacy extends Consent {
 	);
 	
 	public static $prefix = 'privacy_consent';
+	public static $required = true;
 	
 	public static function init() {
 		parent::init();

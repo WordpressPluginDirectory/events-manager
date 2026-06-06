@@ -228,3 +228,4 @@ class EM_Location_Post_Admin{
 	}
 }
 add_action('admin_init',array('EM_Location_Post_Admin','init'));
+add_action('rest_api_init',array('EM_Location_Post_Admin','init')); //also register save/edit hooks for REST-driven saves (e.g. Gutenberg)

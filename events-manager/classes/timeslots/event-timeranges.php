@@ -32,7 +32,7 @@ class Timeranges extends \EM\Timeranges {
 			$this->event = new EM_Event();
 		}
 		parent::__construct( $group_id );
-		$this->allow_timeranges = $this->event->get_option( 'dbem_event_timeranges', true );
+		$this->allow_timeranges = $this->event->get_option( 'dbem_event_timeranges_enabled', true );
 		$this->allow_edit = !$this->event->event_id;
 		$this->delete_action = $this->event->get_option('dbem_event_status_enabled') ? 'cancel' : 'delete';
 	}
@@ -49,9 +49,11 @@ class Timeranges extends \EM\Timeranges {
 	 */
 	public function load_timeranges ( $padding = true ) {
 		if ( !$this->timeranges ) {
-			if ( $this->event->is_recurring( true ) && $this->group_id === 'event_' . $this->event->get_event_id() ) {
+			if ( ( $this->event->is_recurring( true ) || $this->event->is_repeated() ) && $this->group_id === 'event_' . $this->event->get_event_id() ) {
 				// we load all timeranges from recurrence sets, not this event itself, which has no timeranges associated directly with it
-				foreach ( $this->event->get_recurrence_sets() as $Recurrence_Set ) {
+				// for a repeated event (not the repeating template) we also load from recurrence sets, but a repated event belongs to a single recurrence set
+				$Recurrence_Sets = $this->event->is_repeated() ? [ $this->event->get_recurrence_set() ] : $this->event->get_recurrence_sets();
+				foreach ( $Recurrence_Sets as $Recurrence_Set ) {
 					$Timeranges = $Recurrence_Set->get_timeranges();
 					foreach ( $Timeranges as $Timerange ) {
 						if ( !array_key_exists( $Timerange->timerange_id, $this->timeranges ) ) {
@@ -88,7 +90,7 @@ class Timeranges extends \EM\Timeranges {
 			$this->timeslots = [];
 			if ( $this->event->get_event_id() > 0 && !$this->event->is_recurring( true ) ) {
 				// get timeslots from DB
-				$timeslots_data = $wpdb->get_results( "SELECT * FROM " . EM_EVENT_TIMESLOTS_TABLE . " WHERE event_id=" . absint( $this->event->get_event_id() ), ARRAY_A );
+				$timeslots_data = $wpdb->get_results( "SELECT * FROM " . EM_EVENT_TIMESLOTS_TABLE . " WHERE event_id=" . absint( $this->event->get_event_id() ) . " ORDER BY timeslot_start", ARRAY_A );
 				if ( !$timeslots_data ) {
 					// prefill with start and end dates of the event
 					$timeslots_data = [[
@@ -143,7 +145,7 @@ class Timeranges extends \EM\Timeranges {
 			if ( !$event && $this->event->is_recurring( true ) && $has_timeslots) {
 				// just save the timeranges, recurring and repeating doesn't have timeslots themselves, only the recurrences
 				parent::save();
-			} elseif ( $has_timeslots ){
+			} elseif ( $has_timeslots && $this->validate() ){ // do not create event timeslots if timeranges are invalid
 				// we have more than one timerange or Timeslot here,
 				// save group id to timeranges, in case it's a new event
 				$this->group_id = 'event_' . $this->event->event_id;

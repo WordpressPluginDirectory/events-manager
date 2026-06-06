@@ -15,7 +15,7 @@ if( EM_MS_GLOBAL ){
 define('EM_TAXONOMY_TAG_SLUG', get_option('dbem_taxonomy_tag_slug', 'events/tags'));
 
 /*
- * This checks that you have post thumbnails enabled, if not, it enables it. 
+ * This checks that you have post thumbnails enabled, if not, it enables it.
  * You can always disable this by adding remove_action('after_setup_theme','wp_events_plugin_after_setup_theme'); in your functions.php theme file.
  */
 add_action('after_setup_theme','wp_events_plugin_after_setup_theme',100);
@@ -34,7 +34,7 @@ function wp_events_plugin_after_setup_theme(){
 			}
 		}else{
 			$post_thumbnails = array(EM_POST_TYPE_EVENT, 'event-recurring', EM_POST_TYPE_LOCATION);
-			add_theme_support('post-thumbnails', $post_thumbnails); //need to add this for themes that don't have it. 
+			add_theme_support('post-thumbnails', $post_thumbnails); //need to add this for themes that don't have it.
 		}
 	}
 }
@@ -116,7 +116,7 @@ function wp_events_plugin_init(){
 		)));
 	}
 	$event_post_type_supports = apply_filters('em_cp_event_supports', array('custom-fields','title','editor','excerpt','comments','thumbnail','author'));
-	$event_post_type = apply_filters('em_cpt_event', array(	
+	$event_post_type = apply_filters('em_cpt_event', array(
 		'public' => true,
 		'hierarchical' => false,
 		'show_ui' => true,
@@ -138,7 +138,7 @@ function wp_events_plugin_init(){
 			'read_private_posts' => 'read_private_events',
 			'edit_post' => 'edit_event',
 			'delete_post' => 'delete_event',
-			'read_post' => 'read_event',		
+			'read_post' => 'read_event',
 		),
 		'label' => __('Events','events-manager'),
 		'description' => __('Display events on your blog.','events-manager'),
@@ -162,7 +162,7 @@ function wp_events_plugin_init(){
 		'yarpp_support'=>true
 	));
 	if ( get_option('dbem_repeating_enabled') ){
-		$event_recurring_post_type = apply_filters('em_cpt_event_recurring', array(	
+		$event_recurring_post_type = apply_filters('em_cpt_event_recurring', array(
 			'public' => apply_filters('em_cp_event_recurring_public', false),
 			'show_ui' => true,
 			'show_in_admin_bar' => true,
@@ -208,7 +208,7 @@ function wp_events_plugin_init(){
 		));
 	}
 	if( get_option('dbem_locations_enabled', true) ){
-		$location_post_type = apply_filters('em_cpt_location', array(	
+		$location_post_type = apply_filters('em_cpt_location', array(
 			'public' => true,
 			'hierarchical' => false,
 			'show_in_admin_bar' => true,
@@ -256,8 +256,8 @@ function wp_events_plugin_init(){
 			'yarpp_support'=>true
 		));
 	}
-	//gutenberg support - define EM_GUTENBERG in your wp-config.php page to enable
-	if( defined('EM_GUTENBERG') && EM_GUTENBERG ){
+	//gutenberg support - controlled by the "Editor" option on the General settings tab (em_use_block_editor()), or by defining EM_GUTENBERG in wp-config.php to override
+	if( em_use_block_editor() ){
 		$event_post_type['show_in_rest'] = true;
 		if ( get_option('dbem_repeating_enabled') ) $event_recurring_post_type['show_in_rest'] = true;
 		if( get_option('dbem_locations_enabled', true) ) $location_post_type['show_in_rest'] = true;
@@ -269,7 +269,7 @@ function wp_events_plugin_init(){
 		}
 		add_filter('gutenberg_can_edit_post_type', 'em_gutenberg_support', 10, 2 ); //Gutenberg
 	}
-	
+
 	if( EM_POST_TYPE_LOCATION_SLUG !== '' && strstr(EM_POST_TYPE_EVENT_SLUG, EM_POST_TYPE_LOCATION_SLUG) !== FALSE ){
 		//Now register posts, but check slugs in case of conflicts and reorder registrations
 		register_post_type(EM_POST_TYPE_EVENT, $event_post_type);

@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andorra",
   ae: "Emirados Árabes Unidos",
   af: "Afeganistão",
@@ -8,7 +7,6 @@ export default {
   al: "Albânia",
   am: "Armênia",
   ao: "Angola",
-  aq: "Antártida",
   ar: "Argentina",
   as: "Samoa Americana",
   at: "Áustria",
@@ -33,7 +31,6 @@ export default {
   br: "Brasil",
   bs: "Bahamas",
   bt: "Butão",
-  bv: "Ilha Bouvet",
   bw: "Botsuana",
   by: "Bielorrússia",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Guadalupe",
   gq: "Guiné Equatorial",
   gr: "Grécia",
-  gs: "Ilhas Geórgia do Sul e Sandwich do Sul",
   gt: "Guatemala",
   gu: "Guam",
   gw: "Guiné-Bissau",
   gy: "Guiana",
   hk: "Hong Kong, RAE da China",
-  hm: "Ilhas Heard e McDonald",
   hn: "Honduras",
   hr: "Croácia",
   ht: "Haiti",
@@ -180,7 +175,6 @@ export default {
   pk: "Paquistão",
   pl: "Polônia",
   pm: "São Pedro e Miquelão",
-  pn: "Ilhas Pitcairn",
   pr: "Porto Rico",
   ps: "Territórios palestinos",
   pt: "Portugal",
@@ -215,7 +209,6 @@ export default {
   sz: "Essuatíni",
   tc: "Ilhas Turcas e Caicos",
   td: "Chade",
-  tf: "Territórios Franceses do Sul",
   tg: "Togo",
   th: "Tailândia",
   tj: "Tadjiquistão",
@@ -231,7 +224,6 @@ export default {
   tz: "Tanzânia",
   ua: "Ucrânia",
   ug: "Uganda",
-  um: "Ilhas Menores Distantes dos EUA",
   us: "Estados Unidos",
   uy: "Uruguai",
   uz: "Uzbequistão",
@@ -248,5 +240,6 @@ export default {
   yt: "Mayotte",
   za: "África do Sul",
   zm: "Zâmbia",
-  zw: "Zimbábue",
+  zw: "Zimbábue"
 };
+export default countryTranslations;

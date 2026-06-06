@@ -681,21 +681,6 @@ document.addEventListener('em_event_editor_ready', function() {
 		handleRecurring();
 	});
 
-
-	// Add click handler for recurrence conversion links
-	document.querySelectorAll( '.em-convert-recurrence-link' ).forEach( link => {
-		link.addEventListener( 'click', function ( e ) {
-			if ( !confirm( EM.convert_recurring_warning ) ) {
-				e.preventDefault();
-				return false;
-			}
-			let nonce = this.getAttribute( 'data-nonce' );
-			if ( nonce ) {
-				this.href = this.href.replace( 'nonce=x', 'nonce=' + nonce );
-			}
-		} );
-	} );
-
 	document.dispatchEvent( new CustomEvent('em_event_editor_loaded') );
 });
 
@@ -719,20 +704,28 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		// Count existing recurrence sets to determine the new index.
 		let index = recurrenceTypeSets.querySelectorAll('.em-recurrence-set').length + 1;
 
-		// Clone the template (deep clone).
-		let recurrenceSet = recurrenceSets.querySelector('.em-recurrence-set-template').cloneNode(true);
+		// Copy template HTML
+		let templateHtml = recurrenceSets.querySelector('.em-recurrence-set-template')?.innerHTML;
+		let recurrenceSet;
+		if ( templateHtml === null ) {
+			// legacy template which didn't use the template element to enclose the recurrence set type
+			let recurrenceSet = recurrenceSets.querySelector('.em-recurrence-set-template').cloneNode(true);
+			recurrenceSet.classList.remove('em-recurrence-set-template', 'hidden');
+			recurrenceSet.innerHTML = recurrenceSet.innerHTML.replace(/T%/g, `${recurrenceType}`).replace(/N%/g, `${index}`);
+		} else {
+			// create a blank div which we'll add classes etc. to
+			recurrenceSet = document.createElement('div');
+			// Replace all occurrences of "[N%]" with the new index.
+			recurrenceSet.innerHTML = templateHtml.replace(/T%/g, `${recurrenceType}`).replace(/N%/g, `${index}`);
+		}
 
 		// Remove the 'hidden' class and template-specific class; add the active class.
-		recurrenceSet.classList.remove('em-recurrence-set-template', 'hidden');
 		recurrenceSet.classList.add('em-recurrence-set', 'new-recurrence-set');
 		recurrenceSet.querySelector('.em-recurrence-set-type').value = recurrenceType;
 		recurrenceSet.dataset.type = recurrenceType;
 		recurrenceSet.dataset.index = index;
 
-		// Replace all occurrences of "[N%]" with the new index.
-		recurrenceSet.innerHTML = recurrenceSet.innerHTML.replace(/T%/g, `${recurrenceType}`);
-		recurrenceSet.innerHTML = recurrenceSet.innerHTML.replace(/N%/g, `${index}`);
-
+		// remove include/exclude specific elements depending on type
 		if ( recurrenceType === 'exclude' ) {
 			recurrenceSet.querySelectorAll('.em-recurrence-advanced .only-include-type').forEach(el => el.remove() );
 		}
@@ -763,11 +756,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		addButton.addEventListener( 'click', () => addRecurrence('include') );
 	});
 	// set up listner to add recurrences, exclude and include, the exclude trigger is in reschedule.js
-	recurrenceSets.querySelectorAll('.em-recurrence-type').forEach( function( recurrenceSetsType ){
-		recurrenceSetsType.addEventListener( 'addRecurrence', function( e ) {
-			e.detail.recurrenceSet = addRecurrence( recurrenceSetsType.dataset.type );
-		});
-	});
+	recurrenceSets.addEventListener( 'addRecurrence', ( e ) => addRecurrence( e.detail.type ) );
 
 	// REMOVE A RECURRENCE RULE
 	recurrenceSets.addEventListener('click', function ( e ) {
@@ -1057,7 +1046,8 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 	recurrenceSets.querySelectorAll('.em-add-recurrence-set[data-type="exclude"]').forEach( function( addButton ) {
 		addButton.addEventListener('click', function (e) {
 			if ( recurrenceExcludeSets.querySelectorAll('[data-rescheduled]').length > 0 || !recurrenceSets.dataset.event_id ) {
-				addButton.closest('.em-recurrence-type-exclude')?.dispatchEvent( new CustomEvent('addRecurrence', { bubbles: true }) );
+				let event = new CustomEvent('addRecurrence', { bubbles: true, detail: { type : 'exclude' } });
+				recurrenceSets.dispatchEvent( event );
 			} else {
 				openModal( recurrenceExcludeModal );
 			}
@@ -1826,7 +1816,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 	// Update the recurrence summary of recurrences
 	recurrenceSets.addEventListener('updateRecurrenceSummary', function( e ) {
 		let sets = e.target.matches('.em-recurrence-set') ? [ e.target ] : e.target.querySelectorAll('.em-recurrence-set');
-		let timerangeDefault = e.target.querySelector('.em-recurrence-set[data-primary] .em-recurrence-timeranges .em-timeranges');
+		let timerangeDefault = recurrenceSets.querySelector('.em-recurrence-set[data-primary] .em-recurrence-timeranges .em-timeranges');
 
 		sets.forEach( function ( recurrenceSet ){
 			let advancedSummary = recurrenceSet.querySelector('.advanced-summary');
@@ -1900,7 +1890,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 				let timezoneSelect = recurrenceSet.querySelector('.em-recurrence-timezone select');
 				let timezoneValue = '';
 
-				if (timezoneSelect) {
+				if ( timezoneSelect ) {
 					let value = timezoneSelect.value;
 
 					if (value) {

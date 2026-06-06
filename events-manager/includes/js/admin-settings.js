@@ -113,7 +113,11 @@ jQuery(document).ready(function($){
 			let input = e.target;
 			let condition = input.classList.contains( 'em-trigger' ) ? input.value === '1' : input.value === '0';
 			document.querySelectorAll( input.getAttribute( 'data-trigger' ) ).forEach( trigger => {
-				trigger.classList.toggle( 'hidden', input.value === '' || !condition );
+				let shouldHide = input.value === '' || !condition;
+				trigger.classList.toggle( 'hidden', shouldHide );
+				if ( trigger.classList.contains('am-af') || trigger.closest('.am-af') ) {
+					em_af_apply_submit_state( trigger, shouldHide );
+				}
 				// unset related values if trigger is false
 				let archetype = input.closest('.em-archetype-option')?.dataset.archetype;
 				if ( archetype ) {
@@ -127,7 +131,11 @@ jQuery(document).ready(function($){
 			let input = e.target;
 			let condition = input.classList.contains( 'em-trigger' ) ? input.checked : !input.checked;
 			document.querySelectorAll( input.getAttribute( 'data-trigger' ) ).forEach( trigger => {
-				trigger.classList.toggle( 'hidden', !condition );
+				let shouldHide = !condition;
+				trigger.classList.toggle( 'hidden', shouldHide );
+				if ( trigger.classList.contains('am-af') || trigger.closest('.am-af') ) {
+					em_af_apply_submit_state( trigger, shouldHide );
+				}
 			} );
 		} );
 	} );
@@ -235,12 +243,23 @@ jQuery(document).ready(function($){
 	    })
 	});
 
+    // Disable hidden formatting fields so they're not POSTed. Some hosting
+    // WAFs (Hostinger, SiteGround, Wordfence) flag raw HTML template POSTs
+    // as XSS payloads. Hidden = unchanged = nothing to submit.
+    let em_af_apply_submit_state = function( container, shouldHide ){
+        container.querySelectorAll('input[name], textarea[name], select[name]').forEach( el => {
+            el.disabled = shouldHide;
+        });
+    };
+
     let af_toggle_action = function( af ){
         const am = af.find('input').val();
         if( am === '0' ){
             $('.am-af').addClass('hidden');
+            document.querySelectorAll('.am-af').forEach( el => em_af_apply_submit_state(el, true) );
         }else if( am === '1' ){
             $('.am-af').removeClass('hidden');
+            document.querySelectorAll('.am-af').forEach( el => em_af_apply_submit_state(el, false) );
             $('.dbem_advanced_formatting_modes_row').show(); // show toggles
 	        // trigger radio and chckboxes with triggers to show/hide based on selected archetype
 	        let selectorBase = archetype === 'all' ? '.am-af .em-default-option' : '.am-af .em-archetype-option[data-archetype="' + archetype +'"]';
@@ -249,6 +268,7 @@ jQuery(document).ready(function($){
 	        });
         }else{
             $('.am-af').removeClass('hidden') // show everything
+            document.querySelectorAll('.am-af').forEach( el => em_af_apply_submit_state(el, false) );
             $('.dbem_advanced_formatting_modes_row').hide().find('input[type="radio"]').attr('data-trigger', false); // hide toggles
 	        $('.am-af [name]:disabled').prop('disabled', false);
         }

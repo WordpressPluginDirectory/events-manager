@@ -1247,6 +1247,26 @@ class EM_Location extends EM_Object {
 		return apply_filters('em_location_get_google_maps_embed_url', $url, $this);
 	}
 	
+	/**
+	 * Returns the $_POST-shape array that EM_Location::get_post() expects.
+	 * Used by API consumers to pre-load $_REQUEST before applying partial updates.
+	 * @return array
+	 */
+	public function to_request_data() {
+		return array(
+			'location_name'      => $this->location_name,
+			'content'            => $this->post_content,
+			'location_address'   => $this->location_address,
+			'location_town'      => $this->location_town,
+			'location_state'     => $this->location_state,
+			'location_postcode'  => $this->location_postcode,
+			'location_region'    => $this->location_region,
+			'location_country'   => $this->location_country,
+			'location_latitude'  => $this->location_latitude,
+			'location_longitude' => $this->location_longitude,
+		);
+	}
+
 	public function to_api(){
 		return array (
 			'name' => $this->location_name,
@@ -1270,6 +1290,8 @@ class EM_Location extends EM_Object {
 				'postcode' => $this->location_postcode,
 				'country' => $this->location_country,
 			),
+			'image' => ( $em_api_image = $this->get_image_url( 'thumbnail' ) ) ? array( 'thumbnail' => $em_api_image, 'full' => $this->get_image_url( 'full' ) ) : null,
+			'upcoming_events_count' => class_exists( 'EM_Events' ) ? absint( EM_Events::count( array( 'location' => $this->location_id, 'scope' => 'future', 'owner' => false ) ) ) : null,
 			'language' => $this->location_language,
 			'translation' => $this->location_translation,
 		);

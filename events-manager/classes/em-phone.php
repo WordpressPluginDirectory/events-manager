@@ -81,6 +81,44 @@ class Phone {
 	}
 	
 	/**
+	 * Returns a libphonenumber-derived E.164 example for $country (ISO alpha-2),
+	 * preferring a mobile sample where available. Falls back to the site's default
+	 * phone country and finally to null if libphonenumber is unavailable.
+	 *
+	 * Surfaced through the REST API's booking-requirements payload so AI clients
+	 * (and any other UI) can show a country-tuned example instead of a generic
+	 * "5551234567" that fails E.164 validation.
+	 *
+	 * @param string|null $country ISO 3166-1 alpha-2 (e.g. 'GB'). Falls back to dbem_phone_default_country.
+	 * @return string|null E.164 example (e.g. '+447400123456') or null if unobtainable.
+	 */
+	public static function example_number( $country = null ) {
+		if ( !$country ) {
+			$country = em_get_option( 'dbem_phone_default_country' );
+		}
+		$country = $country ? strtoupper( (string) $country ) : '';
+		if ( !$country || !static::is_enabled() ) {
+			return null;
+		}
+		try {
+			$phoneUtil = static::get();
+			$sample = null;
+			if ( class_exists( '\\libphonenumber\\PhoneNumberType' ) ) {
+				$sample = $phoneUtil->getExampleNumberForType( $country, \libphonenumber\PhoneNumberType::MOBILE );
+			}
+			if ( !$sample ) {
+				$sample = $phoneUtil->getExampleNumber( $country );
+			}
+			if ( !$sample ) {
+				return null;
+			}
+			return $phoneUtil->format( $sample, \libphonenumber\PhoneNumberFormat::E164 );
+		} catch ( \Exception $e ) {
+			return null;
+		}
+	}
+
+	/**
 	 * Hooks into pre-registration filter and checks phone number before a user is created in Events Manager
 	 * @param \WP_Error $errors
 	 * @param string $sanitized_user_login

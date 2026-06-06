@@ -58,10 +58,13 @@ class EM_ML_IO_Locations {
 	 * @return boolean
 	 */
 	public static function location_get_post_meta($result, $EM_Location, $validate = true){
+		//guard: when Physical Locations are disabled or an event uses a non-physical event_location, $EM_Location may be null/false and there is nothing to merge (pixelitemedia/events-manager-wpml#94)
+		if( !($EM_Location instanceof EM_Location) || empty($EM_Location->location_id) ) return $result;
 		//check if this is a master location, if not then we need to get the relevant master location info and populate this object with it so it passes validation and saves correctly.
 		if( !EM_ML::is_original($EM_Location) ){
 			//get original location object
 			$location = EM_ML::get_original_location($EM_Location);
+			if( !($location instanceof EM_Location) ) return $result; //original may have been deleted or not yet registered with the ML plugin
 			self::location_merge_original_meta($EM_Location, $location);
 			if ($validate) $result = $EM_Location->validate();
 		}
@@ -74,11 +77,14 @@ class EM_ML_IO_Locations {
 	 * @param EM_Location $EM_Location
 	 */
 	public static function location_save_meta_pre( $EM_Location ){
+		if( !($EM_Location instanceof EM_Location) ) return; //guard against missing/empty location objects (pixelitemedia/events-manager-wpml#94)
 		$EM_Location->location_language = EM_ML::get_the_language( $EM_Location ); //do this early on so we know the language we're dealing with
 		// save parent info about this location
 		if( !EM_ML::is_original( $EM_Location ) ){
 			$location = EM_ML::get_original( $EM_Location );
-			static::location_merge_original_meta($EM_Location, $location); //in case it didnt' go through get_post
+			if( $location instanceof EM_Location ){
+				static::location_merge_original_meta($EM_Location, $location); //in case it didnt' go through get_post
+			}
 		}else{
 			// we need to search translations of this location and update untranslated address fields which are still stored in the translation record
 			global $wpdb;

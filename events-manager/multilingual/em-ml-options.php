@@ -42,6 +42,10 @@ class EM_ML_Options {
 				'dbem_search_form_state_label',
 				'dbem_search_form_towns_label',
 				'dbem_search_form_town_label',
+				'dbem_search_form_tags_label',
+				'dbem_search_form_tag_label',
+				'dbem_search_form_tags_placeholder',
+				'dbem_search_form_categories_placeholder',
 				'dbem_search_form_geo_label',
 				'dbem_search_form_geo_units_label',
 				'dbem_search_form_dates_label',
@@ -125,6 +129,7 @@ class EM_ML_Options {
 				'dbem_booking_warning_cancel',
 				'dbem_bookings_form_msg_disabled',
 				'dbem_bookings_form_msg_closed',
+				'dbem_bookings_form_msg_cancelled',
 				'dbem_bookings_form_msg_full',
 				'dbem_bookings_form_msg_attending',
 				'dbem_bookings_form_msg_bookings_link',
@@ -144,6 +149,7 @@ class EM_ML_Options {
 				'dbem_booking_button_msg_already_booked',
 				'dbem_booking_button_msg_error',
 				'dbem_booking_button_msg_full',
+				'dbem_booking_button_msg_event_cancelled',
 				'dbem_booking_button_msg_closed',
 				'dbem_booking_button_msg_cancel',
 				'dbem_booking_button_msg_canceling',
@@ -151,6 +157,16 @@ class EM_ML_Options {
 				'dbem_booking_button_msg_cancel_error',
 				//booking form options
 				'dbem_bookings_submit_button',
+				'dbem_bookings_submit_button_paid',
+				'dbem_bookings_submit_button_processing',
+				//booking summary
+				'dbem_bookings_summary_message',
+				//booking form section headers (event front-end booking form)
+				'dbem_bookings_header_tickets',
+				'dbem_bookings_header_reg_info',
+				'dbem_bookings_header_summary',
+				'dbem_bookings_header_confirm',
+				'dbem_bookings_header_confirm_free',
 			//Emails
 				//booking email templates
 				'dbem_bookings_contact_email_pending_subject',

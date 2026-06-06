@@ -43,14 +43,13 @@ class EM_Event_Post {
 		add_action('publish_future_post',array('EM_Event_Post','publish_future_post'),10,1);
 	}
 	
-	public static function publish_future_post($post_id){
+	public static function publish_future_post( $post_id ){
 		global $EM_Event;
 		$post_type = get_post_type($post_id);
-		$is_post_type = Archetypes::is_repeating( $post_type ) ? Archetypes::get_repeating_archetype( $post_type ) : $post_type;
 		$saving_status = !in_array(get_post_status($post_id), array('trash','auto-draft')) && !defined('DOING_AUTOSAVE');
-		if(!defined('UNTRASHING_'.$post_id) && $is_post_type && $saving_status ){
-		    $EM_Event = em_get_event($post_id, 'post_id');
-		    $EM_Event->set_status(1);
+		if( !defined('UNTRASHING_'.$post_id) && $saving_status && Archetypes::is_event( $post_type ) ){
+			$EM_Event = em_get_event($post_id, 'post_id');
+			$EM_Event->set_status(1);
 		}
 	}
 	
@@ -61,7 +60,7 @@ class EM_Event_Post {
 	 */
 	public static function single_template($template){
 		global $post;
-		if( Archetypes::is_event( $post->post_type ) && !locate_template('single-'. $post->post_type .'.php') ){
+		if( !empty($post) && Archetypes::is_event( $post->post_type ) && !locate_template('single-'. $post->post_type .'.php') ){
 			if( function_exists('wp_is_block_theme')  && wp_is_block_theme() && current_theme_supports( 'block-templates' ) ) {
 				$is_block_theme = true;
 				$template_name = 'single';

@@ -19,12 +19,15 @@ class Timerange extends \EM\Timerange {
 
 	public function __construct( $data = false, $EM_Event = null ) {
 		parent::__construct($data);
+		// deactivate dynamic timeranges if disabled
 		if ( $EM_Event instanceof EM_Event ) {
 			$this->event = $EM_Event;
-			$this->allow_timeslots = $EM_Event->get_option( 'dbem_event_timeslots', true );
+			$allow_timeranges = $EM_Event->get_option( 'dbem_event_timeranges_enabled', true );
+			$this->allow_timeslots = $allow_timeranges && $EM_Event->get_option( 'dbem_event_timeranges_advanced', true );
+
+		} else {
+			$this->allow_timeslots = em_get_option( 'dbem_event_timeranges_enabled', true ) && em_get_option( 'dbem_event_timeranges_advanced', true );
 		}
-		// deactivate dynamic timeranges if disabled
-		$this->allow_timeslots = (bool) $this->event->get_option('dbem_event_timeranges_advanced');
 	}
 
 	/**

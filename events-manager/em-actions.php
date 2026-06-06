@@ -13,10 +13,31 @@ function em_init_actions_start() {
 	//TODO Clean this up.... use a uniformed way of calling EM Ajax actions
 	if( !empty($_REQUEST['em_ajax']) || !empty($_REQUEST['em_ajax_action']) ){
 		if(isset($_REQUEST['em_ajax_action']) && $_REQUEST['em_ajax_action'] == 'get_location') {
-			if(isset($_REQUEST['id'])){
+			if( isset($_REQUEST['id']) ){
 				$EM_Location = new EM_Location( absint($_REQUEST['id']), 'location_id' );
-				$location_array = $EM_Location->to_array();
-				$location_array['location_balloon'] = $EM_Location->output( em_get_option('dbem_location_baloon_format') );
+				if ( $EM_Location->status == 1 && ( is_post_publicly_viewable( $EM_Location->post_id ) || ( is_user_logged_in() && current_user_can('read_post', $EM_Location->post_id) ) ) ) { // second one is for other plugins that may hide stuff
+					$location_data = $EM_Location->to_array();
+					// remove any data we don't need to show on the map
+					$location_array = [
+						'location_id' => $location_data['location_id'],
+						'location_latitude' => $location_data['location_latitude'],
+						'location_longitude' => $location_data['location_longitude'],
+						'location_name' => $location_data['location_name'],
+					];
+					if ( !post_password_required($EM_Location->post_id) || $EM_Location->can_manage('edit_locations','edit_others_locations') ) {
+						// do some minor checks to make sure event can be viewed by user, if password protected remove any content and just show location data
+						$location_array['location_balloon'] = $EM_Location->output( em_get_option('dbem_location_baloon_format') );
+					}
+				}
+				if ( empty( $location_array ) ) {
+					// provide an anonymous location
+					$location_array = [
+						'location_id' => 0,
+						'location_latitude' => 0,
+						'location_longitude' => 0,
+						'location_name' => 'Undisclosed Location',
+					];
+				}
 		     	echo EM_Object::json_encode($location_array);
 			}
 			die();
@@ -221,6 +242,7 @@ function em_init_actions_start() {
 			}
 		}elseif( !empty($_REQUEST['action']) && $_REQUEST['action'] == "location_delete" ){
 			//delete location
+			em_verify_nonce($_REQUEST['action'], 'nonce');
 			//get object or objects			
 			if( !empty($_REQUEST['locations']) || !empty($_REQUEST['location_id']) ){
 				$args = false;

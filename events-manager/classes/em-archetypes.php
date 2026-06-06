@@ -39,7 +39,7 @@ class Archetypes {
 		static::$event = [
 			'cpt' => $event_cpt,
 			'cpts' => get_option('em_cp_events_cpts') ?: $event_cpt . 's',
-			'show_in_rest' => defined('EM_GUTENBERG') && EM_GUTENBERG,
+			'show_in_rest' => em_use_block_editor(),
 			'slug' => get_option('dbem_cp_events_slug', 'events'),
 			'label' => get_option('dbem_cp_events_label' ),
 			'label_single' => get_option('dbem_cp_events_label_single' ),
@@ -65,7 +65,7 @@ class Archetypes {
 				'capabilities' => true, // created in create_archetype_cpt based on capability_type
 				'show_ui' => !(EM_MS_GLOBAL && !is_main_site() && get_site_option('dbem_ms_mainblog_locations')),
 				'show_in_menu' => 'edit.php?post_type='.$event_cpt,
-				'show_in_rest' => defined('EM_GUTENBERG') && EM_GUTENBERG,
+				'show_in_rest' => em_use_block_editor(),
 				'exclude_from_search' => !get_option('dbem_cp_locations_search_results'),
 				'has_archive' => get_option( 'dbem_cp_locations_has_archive', false ) == true,
 				'supports' => apply_filters('em_cp_location_supports', $location_cpt_supports),
@@ -77,7 +77,7 @@ class Archetypes {
 		define( 'EM_POST_TYPE_LOCATION_SLUG', Archetypes::$location['slug'] ?? 'locations' );
 
 		// Deal with Gutenberg
-		if( defined('EM_GUTENBERG') && EM_GUTENBERG ){
+		if( em_use_block_editor() ){
 			add_filter('gutenberg_can_edit_post_type', [ static::class, 'gutenberg_can_edit_post_type' ], 10, 2 ); //Gutenberg
 		}
 
@@ -325,7 +325,7 @@ class Archetypes {
 				'show_ui' => true,
 				'show_in_menu' => true,
 				'show_in_nav_menus'=>true,
-				'show_in_rest' => defined('EM_GUTENBERG') && EM_GUTENBERG,
+				'show_in_rest' => em_use_block_editor(),
 				'can_export' => true,
 				'exclude_from_search' => !get_option('dbem_cp_events_search_results'),
 				'publicly_queryable' => true,

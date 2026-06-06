@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "アンドラ",
   ae: "アラブ首長国連邦",
   af: "アフガニスタン",
@@ -8,7 +7,6 @@ export default {
   al: "アルバニア",
   am: "アルメニア",
   ao: "アンゴラ",
-  aq: "南極",
   ar: "アルゼンチン",
   as: "米領サモア",
   at: "オーストリア",
@@ -33,7 +31,6 @@ export default {
   br: "ブラジル",
   bs: "バハマ",
   bt: "ブータン",
-  bv: "ブーベ島",
   bw: "ボツワナ",
   by: "ベラルーシ",
   bz: "ベリーズ",
@@ -89,13 +86,11 @@ export default {
   gp: "グアドループ",
   gq: "赤道ギニア",
   gr: "ギリシャ",
-  gs: "サウスジョージア・サウスサンドウィッチ諸島",
   gt: "グアテマラ",
   gu: "グアム",
   gw: "ギニアビサウ",
   gy: "ガイアナ",
   hk: "中華人民共和国香港特別行政区",
-  hm: "ハード島・マクドナルド諸島",
   hn: "ホンジュラス",
   hr: "クロアチア",
   ht: "ハイチ",
@@ -180,7 +175,6 @@ export default {
   pk: "パキスタン",
   pl: "ポーランド",
   pm: "サンピエール島・ミクロン島",
-  pn: "ピトケアン諸島",
   pr: "プエルトリコ",
   ps: "パレスチナ自治区",
   pt: "ポルトガル",
@@ -215,7 +209,6 @@ export default {
   sz: "エスワティニ",
   tc: "タークス・カイコス諸島",
   td: "チャド",
-  tf: "仏領極南諸島",
   tg: "トーゴ",
   th: "タイ",
   tj: "タジキスタン",
@@ -231,7 +224,6 @@ export default {
   tz: "タンザニア",
   ua: "ウクライナ",
   ug: "ウガンダ",
-  um: "合衆国領有小離島",
   us: "アメリカ合衆国",
   uy: "ウルグアイ",
   uz: "ウズベキスタン",
@@ -248,5 +240,6 @@ export default {
   yt: "マヨット",
   za: "南アフリカ",
   zm: "ザンビア",
-  zw: "ジンバブエ",
+  zw: "ジンバブエ"
 };
+export default countryTranslations;

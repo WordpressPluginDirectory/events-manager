@@ -36,7 +36,7 @@ $types = [
 			<button type="button" class="em-add-recurrence-set" data-nostyle data-type="exclude">+ <?php esc_html_e('Unavailable Dates', 'events-manager') ?></button>
 		</div>
 	<?php endforeach; ?>
-	<div class="em-recurrence-set-template hidden">
+	<template class="em-recurrence-set-template">
 		<?php
 			$i = 'N%';
 			$type = 'T%';
@@ -44,5 +44,5 @@ $types = [
 			$is_recurrence_template = true;
 			include( em_locate_template('forms/event/when/recurring/recurrences/set.php') );
 		?>
-	</div>
+	</template>
 </div>

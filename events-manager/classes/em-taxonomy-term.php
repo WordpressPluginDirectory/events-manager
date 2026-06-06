@@ -150,8 +150,8 @@ class EM_Taxonomy_Term extends EM_Object {
 		return $this->image_id;
 	}
 	
-	function has_events( $status = 1 ){
-		$events_count = EM_Events::count( array($this->option_name=>$this->term_id, 'scope'=>'future', 'status' => $status) );
+	function has_events( $status = 1, $args = [] ){
+		$events_count = EM_Events::count( array_merge( [ $this->option_name=>$this->term_id, 'scope'=>'future', 'status' => $status, 'event_archetype' => false ], $args ) );
 		return apply_filters('em_'. $this->option_name .'_has_events', $events_count > 0, $this);
 	}
 	
@@ -180,6 +180,15 @@ class EM_Taxonomy_Term extends EM_Object {
 				}elseif ($condition == 'no_events'){
 					//does this tax NOT have any upcoming events?
 					$show_condition = $this->has_events() == false;
+				}
+				foreach ( EM\Archetypes::get_cpts( [], ['event', 'types'] ) as $cpt ) {
+					if ($condition == 'has_events_' . $cpt ) {
+						//does this tax have any upcoming events
+						$show_condition = $this->has_events( [ 'event_archetype' => $cpt ] );
+					} elseif ($condition == 'no_events_' . $cpt ) {
+						//does this tax NOT have any upcoming events?
+						$show_condition = $this->has_events( [ 'event_archetype' => $cpt ] ) == false;
+					}
 				}
 				$show_condition = apply_filters('em_'.$this->option_name.'_output_show_condition', $show_condition, $condition, $conditionals[0][$key], $this);
 				if($show_condition){
@@ -324,10 +333,18 @@ class EM_Taxonomy_Term extends EM_Object {
 						$args['pagination'] = 0;
 						$args['page'] = 1;
 					}
+					// archetype
+					if( !empty($placeholders[3][$key]) && EM\Archetypes::is_valid_cpt($placeholders[3][$key]) ) {
+						$args['event_archetype'] = $placeholders[3][ $key ];
+					}
 				    $replace = EM_Events::output($args);
 					break;
 				case '#_'. $ph .'NEXTEVENT':
-					$events = EM_Events::get( array($this->option_name=>$this->term_id, 'scope'=>'future', 'limit'=>1, 'orderby'=>'event_start_date,event_start_time') );
+					$args = [ $this->option_name=>$this->term_id, 'scope'=>'future', 'limit'=>1, 'orderby'=>'event_start_date,event_start_time', 'event_archetype' => false ];
+					if( !empty($placeholders[3][$key]) && EM\Archetypes::is_valid_cpt($placeholders[3][$key]) ) {
+						$args['event_archetype'] = $placeholders[3][ $key ];
+					}
+					$events = EM_Events::get( $args );
 					$replace = em_get_option('dbem_'. $this->option_name .'_no_event_message');
 					foreach($events as $EM_Event){
 						$replace = $EM_Event->output( $EM_Event->get_option('dbem_'. $this->option_name .'_event_single_format'));

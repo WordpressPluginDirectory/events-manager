@@ -309,9 +309,9 @@ function em_get_days_names(){
  */
 function em_verify_nonce($action, $nonce_name='_wpnonce'){
 	if( is_admin() ){
-		if( !wp_verify_nonce($_REQUEST[$nonce_name], $action) ) check_admin_referer('trigger_error');
+		if( !wp_verify_nonce( $_REQUEST[$nonce_name] ?? '', $action) ) check_admin_referer('trigger_error');
 	}else{
-		if( !wp_verify_nonce($_REQUEST[$nonce_name], $action) ) exit( __('Trying to perform an illegal action.','events-manager') );
+		if( !wp_verify_nonce( $_REQUEST[$nonce_name] ?? '', $action) ) exit( __('Trying to perform an illegal action.','events-manager') );
 	}
 }
 
@@ -942,9 +942,16 @@ function em_output_events_view( $args, $view = null ){
 		$default_args = EM_Events::get_default_search( $args );
 		$search_args = em_get_search_form_defaults($default_args);
 		$search_args['has_view'] = true;
-		$search_args['view'] = $view;
+		if ( $view ) {
+			$search_args['view'] = $view;
+		}
 		if ( isset($args['views']) ) {
-			$search_args['views'] = $args['views'];
+			$search_views = em_get_search_views();
+			if( !is_array($args['views']) ) {
+				$args['views'] = explode(',', str_replace(' ', '', $args['views']));
+			}
+			$search_args['views'] = array_intersect( $args['views'], array_keys($search_views) );
+			if( empty($search_views[$args['view']]) ) $search_args['views'] = 'list';
 		}
 		em_locate_template('templates/events-search.php', true, array('args'=>$search_args));
 		if ( empty($args['ajax']) ) {

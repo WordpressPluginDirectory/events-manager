@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andorra",
   ae: "Emirats Àrabs Units",
   af: "Afganistan",
@@ -8,7 +7,6 @@ export default {
   al: "Albània",
   am: "Armènia",
   ao: "Angola",
-  aq: "Antàrtida",
   ar: "Argentina",
   as: "Samoa Nord-americana",
   at: "Àustria",
@@ -33,7 +31,6 @@ export default {
   br: "Brasil",
   bs: "Bahames",
   bt: "Bhutan",
-  bv: "Bouvet",
   bw: "Botswana",
   by: "Belarús",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Guadeloupe",
   gq: "Guinea Equatorial",
   gr: "Grècia",
-  gs: "Illes Geòrgia del Sud i Sandwich del Sud",
   gt: "Guatemala",
   gu: "Guam",
   gw: "Guinea Bissau",
   gy: "Guyana",
   hk: "Hong Kong (RAE Xina)",
-  hm: "Illa Heard i Illes McDonald",
   hn: "Hondures",
   hr: "Croàcia",
   ht: "Haití",
@@ -180,7 +175,6 @@ export default {
   pk: "Pakistan",
   pl: "Polònia",
   pm: "Saint-Pierre-et-Miquelon",
-  pn: "Illes Pitcairn",
   pr: "Puerto Rico",
   ps: "Territoris palestins",
   pt: "Portugal",
@@ -215,7 +209,6 @@ export default {
   sz: "eSwatini",
   tc: "Illes Turks i Caicos",
   td: "Txad",
-  tf: "Territoris Australs Francesos",
   tg: "Togo",
   th: "Tailàndia",
   tj: "Tadjikistan",
@@ -231,7 +224,6 @@ export default {
   tz: "Tanzània",
   ua: "Ucraïna",
   ug: "Uganda",
-  um: "Illes Perifèriques Menors dels EUA",
   us: "Estats Units",
   uy: "Uruguai",
   uz: "Uzbekistan",
@@ -248,5 +240,6 @@ export default {
   yt: "Mayotte",
   za: "República de Sud-àfrica",
   zm: "Zàmbia",
-  zw: "Zimbàbue",
+  zw: "Zimbàbue"
 };
+export default countryTranslations;

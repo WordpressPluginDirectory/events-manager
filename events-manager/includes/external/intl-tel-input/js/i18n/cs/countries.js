@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andorra",
   ae: "Spojené arabské emiráty",
   af: "Afghánistán",
@@ -8,7 +7,6 @@ export default {
   al: "Albánie",
   am: "Arménie",
   ao: "Angola",
-  aq: "Antarktida",
   ar: "Argentina",
   as: "Americká Samoa",
   at: "Rakousko",
@@ -33,7 +31,6 @@ export default {
   br: "Brazílie",
   bs: "Bahamy",
   bt: "Bhútán",
-  bv: "Bouvetův ostrov",
   bw: "Botswana",
   by: "Bělorusko",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Guadeloupe",
   gq: "Rovníková Guinea",
   gr: "Řecko",
-  gs: "Jižní Georgie a Jižní Sandwichovy ostrovy",
   gt: "Guatemala",
   gu: "Guam",
   gw: "Guinea-Bissau",
   gy: "Guyana",
   hk: "Hongkong – ZAO Číny",
-  hm: "Heardův ostrov a McDonaldovy ostrovy",
   hn: "Honduras",
   hr: "Chorvatsko",
   ht: "Haiti",
@@ -180,7 +175,6 @@ export default {
   pk: "Pákistán",
   pl: "Polsko",
   pm: "Saint-Pierre a Miquelon",
-  pn: "Pitcairnovy ostrovy",
   pr: "Portoriko",
   ps: "Palestinská území",
   pt: "Portugalsko",
@@ -215,7 +209,6 @@ export default {
   sz: "Svazijsko",
   tc: "Turks a Caicos",
   td: "Čad",
-  tf: "Francouzská jižní území",
   tg: "Togo",
   th: "Thajsko",
   tj: "Tádžikistán",
@@ -231,7 +224,6 @@ export default {
   tz: "Tanzanie",
   ua: "Ukrajina",
   ug: "Uganda",
-  um: "Menší odlehlé ostrovy USA",
   us: "Spojené státy",
   uy: "Uruguay",
   uz: "Uzbekistán",
@@ -248,5 +240,6 @@ export default {
   yt: "Mayotte",
   za: "Jihoafrická republika",
   zm: "Zambie",
-  zw: "Zimbabwe",
+  zw: "Zimbabwe"
 };
+export default countryTranslations;

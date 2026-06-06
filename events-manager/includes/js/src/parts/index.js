@@ -336,6 +336,20 @@ jQuery(document).ready( function($){
 		}
 	}
 
+	// Add click handler for recurrence conversion links
+	document.querySelectorAll( '.em-convert-recurrence-link' ).forEach( link => {
+		link.addEventListener( 'click', function ( e ) {
+			if ( !confirm( EM.convert_recurring_warning ) ) {
+				e.preventDefault();
+				return false;
+			}
+			let nonce = this.getAttribute( 'data-nonce' );
+			if ( nonce ) {
+				this.href = this.href.replace( 'nonce=x', 'nonce=' + nonce );
+			}
+		} );
+	} );
+
 	// trigger selectize loader
 	em_setup_ui_elements(document);
 

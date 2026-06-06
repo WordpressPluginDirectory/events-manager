@@ -1,5 +1,4 @@
-//* THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
-export default {
+const countryTranslations = {
   ad: "Andora",
   ae: "Ujedinjeni Arapski Emirati",
   af: "Afganistan",
@@ -8,7 +7,6 @@ export default {
   al: "Albanija",
   am: "Armenija",
   ao: "Angola",
-  aq: "Antarktika",
   ar: "Argentina",
   as: "Američka Samoa",
   at: "Austrija",
@@ -33,7 +31,6 @@ export default {
   br: "Brazil",
   bs: "Bahami",
   bt: "Butan",
-  bv: "Ostrvo Buve",
   bw: "Bocvana",
   by: "Bjelorusija",
   bz: "Belize",
@@ -89,13 +86,11 @@ export default {
   gp: "Gvadalupe",
   gq: "Ekvatorijalna Gvineja",
   gr: "Grčka",
-  gs: "Južna Džordžija i Južna Sendvič ostrva",
   gt: "Gvatemala",
   gu: "Guam",
   gw: "Gvineja-Bisao",
   gy: "Gvajana",
   hk: "Hong Kong (SAR Kina)",
-  hm: "Herd i arhipelag MekDonald",
   hn: "Honduras",
   hr: "Hrvatska",
   ht: "Haiti",
@@ -180,7 +175,6 @@ export default {
   pk: "Pakistan",
   pl: "Poljska",
   pm: "Sveti Petar i Mikelon",
-  pn: "Pitkernska Ostrva",
   pr: "Porto Riko",
   ps: "Palestinska Teritorija",
   pt: "Portugal",
@@ -215,7 +209,6 @@ export default {
   sz: "Esvatini",
   tc: "Ostrva Turks i Kaikos",
   td: "Čad",
-  tf: "Francuske Južne Teritorije",
   tg: "Togo",
   th: "Tajland",
   tj: "Tadžikistan",
@@ -231,7 +224,6 @@ export default {
   tz: "Tanzanija",
   ua: "Ukrajina",
   ug: "Uganda",
-  um: "Američka Vanjska Ostrva",
   us: "Sjedinjene Države",
   uy: "Urugvaj",
   uz: "Uzbekistan",
@@ -248,5 +240,6 @@ export default {
   yt: "Majote",
   za: "Južnoafrička Republika",
   zm: "Zambija",
-  zw: "Zimbabve",
+  zw: "Zimbabve"
 };
+export default countryTranslations;
