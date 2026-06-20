@@ -14,7 +14,7 @@
 /* @var bool $already_booked */
 $id = $EM_Event->event_id;
 $Timeslots = $EM_Event->get_timeranges()->get_timeslots();
-$time_format = esc_attr( $EM_Event->get_option('dbem_time_format') );
+$timeslot_options = em_booking_timeslots_get_display_options( $EM_Event );
 $scope = $EM_Event->start()->getDate();
 ?>
 <?php if( $already_booked && !em_get_option('dbem_bookings_double') ): //Double bookings not allowed ?>
@@ -38,7 +38,21 @@ $scope = $EM_Event->start()->getDate();
 				<option value="0"><?php esc_html_e('Select a time', 'events-manager'); ?></option>
 				<?php foreach( $Timeslots as $Timeslot ) : ?>
 					<?php if ( $Timeslot->timeslot_status === 0 ) continue; ?>
-					<option value="<?php echo $id . ':' . absint( $Timeslot->timeslot_id ); ?>"><?php echo $Timeslot->start->i18n( $time_format ); ?></option>
+					<?php
+					$Timeslot_Event = $Timeslot->get_event();
+					$available_spaces = $Timeslot_Event->get_bookings()->get_available_spaces();
+					$is_fully_booked = $available_spaces <= 0 && !EM_Bookings::$disable_restrictions;
+					if ( $is_fully_booked && !$timeslot_options['show_unavailable'] ) continue;
+					$option_label = $Timeslot_Event->output_times( $timeslot_options['time_format'] ?: false );
+					if ( $timeslot_options['show_dates'] ) {
+						$option_label = $Timeslot_Event->output_dates( $timeslot_options['date_format'] ?: false ) . ' @ ' . $option_label;
+					}
+					if ( $timeslot_options['show_spaces'] || $is_fully_booked ) {
+						$spaces_label = $is_fully_booked ? __('Fully Booked', 'events-manager') : sprintf( _n('%d space', '%d spaces', $available_spaces, 'events-manager'), $available_spaces );
+						$option_label .= ' (' . $spaces_label . ')';
+					}
+					?>
+					<option value="<?php echo esc_attr( $id . ':' . absint( $Timeslot->timeslot_id ) ); ?>" <?php disabled( !$Timeslot_Event->get_bookings()->is_open() ); ?>><?php echo esc_html( $option_label ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		</div>

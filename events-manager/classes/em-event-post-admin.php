@@ -36,6 +36,20 @@ class EM_Event_Post_Admin{
 		if( empty($EM_Event) && !empty($post) && Archetypes::is_event($post) ){
 			$EM_Event = em_get_event($post->ID, 'post_id');
 		}
+		// In the block editor the em/event-when canvas block renders the When and
+		// Recurrences UIs inline. Hide the classic postboxes so they don't appear
+		// twice — but keep them in the DOM (display:none, not removed) so their
+		// form inputs are still included in Gutenberg's meta-box-loader POST.
+		if ( em_use_block_editor() && ! empty($post) && Archetypes::is_event($post) ) {
+			?>
+			<style>
+				.block-editor-page #em-event-when,
+				.block-editor-page #em-event-recurring {
+					display: none !important;
+				}
+			</style>
+			<?php
+		}
 	}
 
 	public static function admin_body_class($classes){

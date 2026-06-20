@@ -322,6 +322,8 @@ class Recurrence_Sets extends \EM_Object implements \Iterator, \ArrayAccess, \Co
 
 		// first go through all requested values and mark those for deletion
 		if ( !empty( $_REQUEST['recurrences'] ) && is_array( $_REQUEST['recurrences'] ) ) {
+			// $order is only populated from include sets below, but the uksort() further down runs unconditionally — initialise it here so a payload with no include sets (e.g. exclude-only, or a malformed recurrences array with no include/exclude keys) can't pass null to uksort() and fatal.
+			$order = array();
 			// we go through all the recurrences that are set to delete, we must have a nonce to set this to delete, as a fail-safe
 			foreach ( $_REQUEST['recurrences'] as $type => $type_sets ) {
 				if ( !in_array( $type, [ 'include', 'exclude' ] ) ) {

@@ -174,7 +174,8 @@ class OAuth_API {
 		// Redirect to settings page
 		$query_args = array( 'page' => 'events-manager-options' );
 		$url = add_query_arg( $query_args, admin_url( 'admin.php' ) );
-		wp_redirect( $url );
+		// em_oauth_authorize_redirect_url lets a gateway/integration override where the admin lands after connecting. Default is oauth_return_url() (the page they connected from); the second arg is the service option_name (e.g. 'xero') for scoping.
+		wp_safe_redirect( apply_filters( 'em_oauth_authorize_redirect_url', static::oauth_return_url( $url ), static::$option_name ) );
 		die();
 	}
 
@@ -237,8 +238,34 @@ class OAuth_API {
 		// Redirect to settings page
 		$query_args = array( 'page' => 'events-manager-options' );
 		$url = add_query_arg( $query_args, admin_url( 'admin.php' ) );
-		wp_redirect( $url );
+		// em_oauth_disconnect_redirect_url — counterpart to em_oauth_authorize_redirect_url above.
+		wp_safe_redirect( apply_filters( 'em_oauth_disconnect_redirect_url', static::oauth_return_url( $url ), static::$option_name ) );
 		die();
+	}
+
+	/**
+	 * Returns the admin URL the connection was initiated from, so the OAuth
+	 * callback sends the user back to the page they clicked from. The originating
+	 * URL is stored as a per-user transient when the connect link is generated
+	 * (see OAuth_API_Client::get_oauth_url()); falls back to the referer
+	 * (same-host only) and finally the supplied default. All candidates are
+	 * host-validated, so this can't be turned into an open redirect.
+	 *
+	 * @param string $default Fallback URL (the Events Manager settings page).
+	 * @return string
+	 */
+	protected static function oauth_return_url( $default ){
+		$user_id = get_current_user_id();
+		if ( $user_id ) {
+			$stored = get_transient( 'em_oauth_return_' . $user_id );
+			if ( ! empty( $stored ) ) {
+				delete_transient( 'em_oauth_return_' . $user_id );
+				$validated = wp_validate_redirect( $stored, '' );
+				if ( ! empty( $validated ) ) return $validated;
+			}
+		}
+		$referer = wp_validate_redirect( wp_get_referer(), '' );
+		return ! empty( $referer ) ? $referer : $default;
 	}
 }
 //include dependents

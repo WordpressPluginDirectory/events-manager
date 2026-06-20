@@ -9,7 +9,9 @@ class EM_Admin_Modals {
 		add_filter('wp_ajax_em-admin-popup-modal', 'EM_Admin_Modals::ajax');
 		add_filter('em_admin_notice_review-nudge_message', 'EM_Admin_Modals::review_notice');
 		//add_filter('em_admin_notice_newsletter-signup_message', 'EM_Admin_Modals::newsletter_notice');
-		add_filter( 'em_admin_notice_promo-popup_message', 'EM_Admin_Modals::promo_notice' );
+		if( time() < 1781506800 ) {
+			add_filter( 'em_admin_notice_promo-popup_message', 'EM_Admin_Modals::promo_notice' );
+		}
 		add_filter( 'em_admin_notice_expired-reminder_message', 'EM_Admin_Modals::expired_reminder_notice' );
 		add_filter( 'em_admin_notice_expiry-reminder_message', 'EM_Admin_Modals::expiry_reminder_notice' );
 	}
@@ -81,7 +83,7 @@ class EM_Admin_Modals {
 				$key = em_get_option('dbem_pro_api_key');
 				$has_lifetime_already = $key && date('Y', $key['until'] ?? time() ) === '2125';
 			}
-			if( !empty($data['admin-modals']['promo-popup']) && empty($has_lifetime_already) ) {
+			if( time() < 1781506800 && !empty($data['admin-modals']['promo-popup']) && empty($has_lifetime_already) ) {
 				if( $data['admin-modals']['promo-popup'] && ($show_plugin_pages || $show_network_admin) ) {
 					// enqueue script and load popup action
 					if( empty($data['admin-modals']['promo-popup-count']) ){
@@ -107,7 +109,7 @@ class EM_Admin_Modals {
 		
 		// EM Pro License Expired Promo & Reminder
 		$pro_license_active = defined('EMP_VERSION');
-		$promo_time = 1729857600;
+		$promo_time = 1781510400;
 		if( $pro_license_active ){
 			$key = em_get_option('dbem_pro_api_key');
 			// add a promo for license
@@ -278,39 +280,6 @@ class EM_Admin_Modals {
 		static::output_js();
 	}
 	
-	public static function promo_popup(){
-		// check admin data and see if show data is still enabled
-		?>
-		<div class="em pixelbones em-modal <?php em_template_classes('search', 'search-advanced'); ?> em-admin-modal" id="em-promo-popup" data-nonce="<?php echo wp_create_nonce('em-promo-popup'); ?>">
-			<div class="em-modal-popup">
-				<header>
-					<a class="em-close-modal dismiss-modal" href="#"></a><!-- close modal -->
-					<div class="em-modal-title">Limited Lifetime Offer</div>
-				</header>
-				<div class="em-modal-content has-image" style="--font-size:16px;">
-					<div>
-						<p>For the first time (and <em>possibly the only time</em>) ever, we are offering lifetime licenses.</p>
-						<p>These are limited in supply, <em><strong>once sold out, they're gone</strong></em>.</p>
-						<a href="https://em.cm/lifetime/" target="_blank">Claim your once-in-a-lifetime opportunity now!</a>
-					</div>
-					<div class="image">
-						<img src="<?php echo EM_DIR_URI . '/includes/images/events-manager.svg'; ?>">
-					</div>
-				</div><!-- content -->
-				<footer class="em-submit-section input">
-					<div>
-						<a href="https://em.cm/lifetime/" class="button button-primary input" target="_blank" style="margin:10px auto; --accent-color:#429543; --accent-color-hover:#429543;">More Info</a>
-					</div>
-					<div>
-						<button class="button button-secondary dismiss-modal">Dismiss Notice</button>
-					</div>
-				</footer>
-			</div><!-- modal -->
-		</div>
-		<?php
-		static::output_js();
-	}
-	
 	public static function newsletter_notice(){
 		ob_start();
 		?>
@@ -330,6 +299,38 @@ class EM_Admin_Modals {
 		<?php
 		return ob_get_clean();
 	}
+
+	public static function promo_popup(){
+		// check admin data and see if show data is still enabled
+		?>
+		<div class="em pixelbones em-modal <?php em_template_classes('search', 'search-advanced'); ?> em-admin-modal" id="em-promo-popup" data-nonce="<?php echo wp_create_nonce('em-promo-popup'); ?>">
+			<div class="em-modal-popup">
+				<header>
+					<a class="em-close-modal dismiss-modal" href="#"></a><!-- close modal -->
+					<div class="em-modal-title">Pro Discount Weekend - Up to 41% off!</div>
+				</header>
+				<div class="em-modal-content has-image" style="--font-size:16px;">
+					<div>
+						<p>We're celebrating the kick-off of a wave of upcoming updates, including AI features, Block Support and even an upcoming Mobile App!</p>
+						<p>Get your Pro version now, and make the best of your events!</p>
+					</div>
+					<div class="image">
+						<img src="<?php echo EM_DIR_URI . '/includes/images/events-manager.svg'; ?>">
+					</div>
+				</div><!-- content -->
+				<footer class="em-submit-section input">
+					<div>
+						<a href="https://em.cm/promo-gopro" class="button button-primary input" target="_blank" style="margin:10px auto; --accent-color:#429543; --accent-color-hover:#429543;">Go Pro</a>
+					</div>
+					<div>
+						<button class="button button-secondary dismiss-modal">Dismiss Notice</button>
+					</div>
+				</footer>
+			</div><!-- modal -->
+		</div>
+		<?php
+		static::output_js();
+	}
 	
 	public static function promo_notice(){
 		$key = em_get_option('dbem_pro_api_key');
@@ -341,11 +342,11 @@ class EM_Admin_Modals {
 					<img src="<?php echo EM_DIR_URI . '/includes/images/events-manager.svg'; ?>" style="width: 100%;">
 				</div>
 				<div>
-					<h3 style="margin: 0 0 5px; padding-bottom:0;">One-Time Lifetime Offer</h3>
-					<p>For the first time (and <em>possibly the only time</em>) ever, we are offering lifetime licenses.</p>
-					<p>These are limited in supply, <em><strong>once sold out, they're gone</strong></em>. Claim your once-in-a-lifetime opportunity now!</p>
+					<h3 style="margin: 0 0 5px; padding-bottom:0;">Pro Discount Weekend - Up to 41% off!</h3>
+					<p>We're celebrating the kick-off of a wave of upcoming updates, including AI features, Block Support and even an upcoming Mobile App!</p>
+					<p>Get your Pro version now, and make the best of your events!</p>
 					<div>
-						<a href="https://em.cm/lifetime-n" class="button button-primary input" target="_blank" style="margin-right:10px; --accent-color:#429543; --accent-color-hover:#429543;">Read More!</a>
+						<a href="https://em.cm/promo-gopro-n" class="button button-primary input" target="_blank" style="margin-right:10px; --accent-color:#429543; --accent-color-hover:#429543;">Go Pro!</a>
 						<a href="<?php echo esc_url( admin_url('admin-ajax.php?action=em_dismiss_admin_notice&notice=promo-popup&redirect=1&nonce='. wp_create_nonce('em_dismiss_admin_noticepromo-popup'.get_current_user_id()) ) ); ?>" class="button button-secondary"><?php esc_html_e('Dismiss', 'events-manager'); ?></a>
 					</div>
 				</div>

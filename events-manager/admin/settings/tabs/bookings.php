@@ -154,7 +154,18 @@
 			$free_description = esc_html__('If the booking is free, this will be displayed instead of the %s heading.', 'events-manager') . ' ' . esc_html__('The default value is blank so that the booking submission button appears just below the %s section.', 'events-manager');
 			$free_description = sprintf($free_description, '<em>'.esc_html__('Payment and Confirmation', 'events-manager').'</em>', '<em>'.esc_html__('Booking Summary', 'events-manager').'</em>' );
 			em_options_input_text ( esc_html__('Booking Confirmation', 'events-manager'), 'dbem_bookings_header_confirm_free', $free_description );
-			
+			?>
+			<tr class="em-header"><td colspan='2'><h4><?php esc_html_e('Timeslots','events-manager') ?></h4></td></tr>
+			<tr><td colspan='2'><?php echo esc_html__('Choose how timeslots are listed in booking forms for recurring events and events with multiple timeslots.','events-manager'); ?></td></tr>
+			<?php
+			em_options_radio_binary ( __( 'Show fully booked timeslots?', 'events-manager'), 'dbem_bookings_timeslots_show_unavailable', __( 'If enabled, fully booked timeslots remain visible but cannot be selected.', 'events-manager') );
+			em_options_radio_binary ( __( 'Show spaces left?', 'events-manager'), 'dbem_bookings_timeslots_show_spaces', __( 'Display the number of available spaces (or booking status if full/closed/cancelled) in each timeslot button or dropdown option.', 'events-manager') );
+			em_options_radio_binary ( __( 'Show dates in timeslots?', 'events-manager'), 'dbem_bookings_timeslots_show_dates', __( 'Display the timeslot date as well as the time when viewing a specific calendar day.', 'events-manager'), '' );
+			em_options_input_text ( __( 'Timeslot date format', 'events-manager'), 'dbem_bookings_timeslots_date_format', sprintf( __( 'Optional PHP date format for timeslot dates. Leave blank to use the default event date format. Example: %s', 'events-manager'), '<code>j F Y</code>' ) );
+			em_options_input_text ( __( 'Timeslot time format', 'events-manager'), 'dbem_bookings_timeslots_time_format', sprintf( __( 'Optional PHP date format for timeslot times. Leave blank to use the default event time format. Example: %s', 'events-manager'), '<code>g:i a</code>' ) );
+			em_options_radio_binary ( __( 'Show upcoming timeslots?', 'events-manager'), 'dbem_bookings_timeslots_show_upcoming', __( 'Show upcoming timeslots on the initial booking form load before a visitor chooses a calendar date.', 'events-manager'), '' );
+			em_options_input_text ( __( 'Upcoming timeslot limit', 'events-manager'), 'dbem_bookings_timeslots_upcoming_limit', __( 'Maximum number of upcoming timeslots to show on initial page load. Enter 0 to show all upcoming timeslots.', 'events-manager') );
+
 			do_action('em_options_booking_form_options');
 			echo $save_button;
 			?>

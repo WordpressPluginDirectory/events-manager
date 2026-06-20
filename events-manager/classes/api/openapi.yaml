@@ -1668,20 +1668,18 @@ components:
             workshop:
               summary: Create a workshop event
               value:
-                name: Summer Pottery Workshop
+                event_name: Summer Pottery Workshop
                 content: Learn hand-building basics in a relaxed studio session.
-                type: single
+                event_type: single
                 post_status: publish
-                when:
-                  start_date: "2026-07-12"
-                  start_time: "10:00:00"
-                  end_date: "2026-07-12"
-                  end_time: "13:00:00"
-                  timezone: Australia/Sydney
-                  all_day: false
+                event_start_date: "2026-07-12"
+                event_start_time: "10:00:00"
+                event_end_date: "2026-07-12"
+                event_end_time: "13:00:00"
+                event_timezone: Australia/Sydney
                 location_id: 45
-                categories: [12]
-                tags: [34]
+                event_categories: [12]
+                event_tags: [34]
     LocationInput:
       required: true
       content:
@@ -2305,6 +2303,21 @@ components:
             - type: boolean
         location_type:
           type: string
+        categories:
+          type: array
+          description: >-
+            The event's categories. To change them on create/update send
+            `event_categories` as an array of term IDs; omitting it on update
+            leaves the existing categories unchanged (send `[]` to clear).
+          items:
+            $ref: "#/components/schemas/TermRef"
+        tags:
+          type: array
+          description: >-
+            The event's tags. Set via `event_tags` (array of term IDs); omitting
+            on update preserves them, `[]` clears them.
+          items:
+            $ref: "#/components/schemas/TermRef"
         recurrence:
           oneOf:
             - $ref: "#/components/schemas/GenericObject"
@@ -2328,6 +2341,8 @@ components:
             - $ref: "#/components/schemas/Attachment"
             - type: "null"
           description: Featured image attachment, or `null` if none is set.
+        warnings:
+          $ref: "#/components/schemas/ApiWarnings"
         permissions:
           $ref: "#/components/schemas/Permissions"
       additionalProperties: true
@@ -2506,12 +2521,17 @@ components:
 
         event_categories:
           type: array
-          description: Category term IDs. Canonical name matches the live event form $_POST contract.
+          description: >-
+            Category term IDs. Canonical name matches the live event form $_POST
+            contract. PATCH semantics: omit this key on update to leave the
+            existing categories unchanged; send an explicit `[]` to clear them.
           items:
             type: integer
         event_tags:
           type: array
-          description: Tag term IDs.
+          description: >-
+            Tag term IDs. Omit on update to preserve existing tags; send `[]` to
+            clear.
           items:
             type: integer
         categories:
@@ -2784,6 +2804,8 @@ components:
             - $ref: "#/components/schemas/Attachment"
             - type: "null"
           description: Featured image attachment, or `null` if none is set.
+        warnings:
+          $ref: "#/components/schemas/ApiWarnings"
         permissions:
           $ref: "#/components/schemas/Permissions"
       additionalProperties: true
@@ -2963,7 +2985,15 @@ components:
       description: |
         Booking create/update payload. Top-level field names mirror `EM_Booking::get_post()`'s
         `$_REQUEST` contract — the same shape the live booking form posts. Person fields are
-        flat (`user_name`, `user_email`, `dbem_phone`, `dbem_country`) — no `person` wrapper.
+        flat (`user_name`, `user_email`, `dbem_phone`, `dbem_country`), or you may send a
+        structured `person` object instead.
+
+        **Booking on someone's behalf (Events Manager Pro only):** core always attributes a
+        booking to the authenticated account. With Pro, an authenticated manager can send the
+        booker's identity (`user_name` + `user_email`, or a `person` object) to file the booking
+        under that guest instead. No WP user is created — this uses EM's guest-person model. Pass
+        `person_id` (Pro) to attribute the booking to an existing WP user. Without Pro these
+        attribution fields are ignored and the booking is the authenticated account's.
 
         Admin-only fields (`booking_status`, `booking_tax_rate`, `person_id`, `manual_booking*`,
         `payment_*`) are accepted in the schema but **stripped server-side for callers without
@@ -2986,11 +3016,13 @@ components:
             $ref: "#/components/schemas/BookingTicketInput"
         user_name:
           type: string
-          description: Booker's display name. Required for guest bookings (when not logged in).
+          description: "Booker's display name. `::pro::` With Events Manager Pro, a manager supplying `user_name` + `user_email` books on behalf of that guest (attributed to them, not the calling account). Ignored for attribution without Pro."
         user_email:
           type: string
           format: email
-          description: Booker's email address. Required for guest bookings.
+          description: "Booker's email address, paired with `user_name`. `::pro::` Used by Pro to book on behalf of a guest (stored as a guest, no WP user account, unless `person_id` is supplied). Ignored for attribution without Pro."
+        person:
+          $ref: "#/components/schemas/BookingPersonInput"
         dbem_phone:
           type: string
           description: Booker's phone number. Legacy field name — the `dbem_` prefix matches EM core's $_POST contract.
@@ -3052,7 +3084,9 @@ components:
           description: Admin-only. Assigns the booking to an existing user ID instead of the logged-in caller.
         booking_status:
           type: integer
-          description: Admin-only. Directly sets the booking status (see `BookingStatusInput.status` for the enum).
+          description: >-
+            Admin-only (requires booking-management capability). Sets the booking status (see `BookingStatusInput.status` for the enum).
+            On create, a payment gateway may assign its own initial status (e.g. the offline gateway sets 5 = awaiting payment); this value is re-applied afterwards so the booking ends in the status you requested. Status-change emails are not sent for this re-apply unless you also pass `send_email: true`.
         booking_tax_rate:
           type: number
           description: Admin-only. Override the booking's tax rate (decimal, e.g. `0.20` = 20%).
@@ -3255,6 +3289,7 @@ components:
       properties:
         guest:
           type: boolean
+          description: '`true` when the booking is filed under EM''s guest-person model (no backing WP user account, `person_id` of 0); `false` when attributed to a registered WP user.'
         email:
           type: string
           format: email
@@ -3264,8 +3299,18 @@ components:
           type: string
     BookingPersonInput:
       type: object
+      description: |
+        `::pro::` Structured booker identity — an alternative to the flat `user_name` /
+        `user_email` / `dbem_phone` fields. Requires Events Manager Pro: when a manager supplies
+        this, the booking is attributed to this guest rather than to the calling account (no WP
+        user account is created). Ignored without Pro.
       properties:
         name:
+          type: string
+          description: Full display name. Or supply `first_name`/`last_name` and a name is composed from them.
+        first_name:
+          type: string
+        last_name:
           type: string
         email:
           type: string
@@ -3314,6 +3359,20 @@ components:
             $ref: "#/components/schemas/Term"
         pagination:
           $ref: "#/components/schemas/Pagination"
+    TermRef:
+      type: object
+      description: Compact term reference embedded in event responses (categories/tags).
+      required: [id, name, slug]
+      properties:
+        id:
+          type: integer
+          example: 12
+        name:
+          type: string
+          example: Workshops
+        slug:
+          type: string
+          example: workshops
     Term:
       type: object
       required: [id, name, slug, taxonomy, description, parent, count]
@@ -3469,7 +3528,23 @@ components:
           description: Long-form attachment description (`post_content`).
         post_id:
           type: integer
-          description: Optional parent post ID to attach the upload to.
+          description: >-
+            Media-library organisation only — sets the attachment's `post_parent`.
+            Does NOT set a featured image. Use `featured_image_for_event` /
+            `featured_image_for_location` for that, or pass the returned id as
+            `featured_image` to update-event / update-location.
+        featured_image_for_event:
+          type: integer
+          description: >-
+            After uploading, set this attachment as the featured image (thumbnail)
+            of the given Events Manager event ID, in one call. Requires permission
+            to edit that event. The response carries a `featured_image_set`
+            confirmation, or a `warnings` entry if it couldn't be applied.
+        featured_image_for_location:
+          type: integer
+          description: >-
+            After uploading, set this attachment as the featured image of the given
+            Events Manager location ID. Requires permission to edit that location.
     Attachment:
       type: object
       properties:
@@ -3490,13 +3565,52 @@ components:
           type: string
           example: Person knitting with a teal yarn ball
         width:
-          type: integer
-          nullable: true
+          type:
+            - integer
+            - "null"
           example: 1920
         height:
-          type: integer
-          nullable: true
+          type:
+            - integer
+            - "null"
           example: 1080
+        featured_image_set:
+          type: object
+          description: >-
+            Present only on an upload-media response when `featured_image_for_event`
+            / `featured_image_for_location` was supplied and applied successfully.
+            Confirms which resource now uses this attachment as its featured image.
+          properties:
+            event_id:
+              type: integer
+            location_id:
+              type: integer
+            post_id:
+              type: integer
+            attachment_id:
+              type: integer
+        warnings:
+          $ref: "#/components/schemas/ApiWarnings"
+    ApiWarnings:
+      type: array
+      description: >-
+        Non-fatal issues encountered while saving. Present only when something
+        secondary failed but the primary resource was still created/updated —
+        e.g. a featured-image sideload that couldn't fetch the source URL. The
+        resource is valid; the caller can act on each warning (e.g. re-upload
+        the image) without re-creating the resource.
+      items:
+        type: object
+        properties:
+          field:
+            type: string
+            example: featured_image
+          code:
+            type: string
+            example: http_404
+          message:
+            type: string
+            example: "The event was saved but its featured image could not be attached: ..."
     ImageAssignmentInput:
       description: |
         Polymorphic image reference used by `featured_image` on events/locations

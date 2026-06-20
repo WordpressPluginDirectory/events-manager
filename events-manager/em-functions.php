@@ -975,10 +975,10 @@ function em_output_events_view( $args, $view = null ){
 				$args['format'] = em_get_option( 'dbem_event_grid_item_format' );
 			}
 			if( empty($args['format_header']) ){
-				$args['format_header'] = em_get_option('dbem_event_grid_format_header');
+				$args['format_header'] = em_get_option('dbem_event_grid_item_format_header');
 			}
 			if( empty($args['format_footer']) ){
-				$args['format_footer'] = em_get_option('dbem_event_grid_format_footer');
+				$args['format_footer'] = em_get_option('dbem_event_grid_item_format_footer');
 			}
 			em_locate_template('templates/events-grid.php', true, array('args'=>$args)); //if successful, this template overrides the settings and defaults, including search
 			break;
@@ -1149,6 +1149,22 @@ function em_options_input_get_value( $name, $default = '' ){
 		$value = get_option($name, $default);
 	}
 	return $value;
+}
+
+function em_booking_timeslots_get_display_options( $EM_Event = null ) {
+	$get_option = function( $option, $default ) use ( $EM_Event ) {
+		return $EM_Event instanceof EM_Event ? $EM_Event->get_option( $option, $default ) : em_get_option( $option, $default );
+	};
+	$options = array(
+		'show_unavailable' => (bool) $get_option( 'dbem_bookings_timeslots_show_unavailable', 0 ),
+		'show_spaces' => (bool) $get_option( 'dbem_bookings_timeslots_show_spaces', 1 ),
+		'show_dates' => (bool) $get_option( 'dbem_bookings_timeslots_show_dates', 1 ),
+		'show_upcoming' => (bool) $get_option( 'dbem_bookings_timeslots_show_upcoming', 1 ),
+		'upcoming_limit' => absint( $get_option( 'dbem_bookings_timeslots_upcoming_limit', 3 ) ),
+		'date_format' => trim( (string) $get_option( 'dbem_bookings_timeslots_date_format', '' ) ),
+		'time_format' => trim( (string) $get_option( 'dbem_bookings_timeslots_time_format', '' ) ),
+	);
+	return apply_filters( 'em_booking_timeslots_display_options', $options, $EM_Event );
 }
 
 function em_options_input_text($title, $name, $description ='', $default='', $resetable = false) {

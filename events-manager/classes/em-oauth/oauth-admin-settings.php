@@ -56,9 +56,9 @@ class OAuth_API_Admin_Settings {
 		$callback_url = $api_client_class::get_oauth_callback_url();
 		$service_name = $api::get_service_name();
 		?>
-		<div  class="postbox em-oaut-connect em-oauth-connect-<?php echo esc_attr($api::get_authorization_scope()); ?>" id="em-opt-<?php echo esc_attr($api::get_option_name()); ?>-app" >
-			<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php echo esc_html($api::get_service_name()) ?></span></h3>
-			<div class="inside">
+		<div class="em-oauth-connect-box em-oaut-connect em-oauth-connect-<?php echo esc_attr($api::get_authorization_scope()); ?>" id="em-opt-<?php echo esc_attr($api::get_option_name()); ?>-app">
+			<h3 class="em-oauth-connect-title"><?php echo esc_html($api::get_service_name()) ?></h3>
+			<div class="em-oauth-connect-inside">
 				<?php static::em_settings_apps_header(); ?>
 				<h4><?php esc_html_e('Server API Credentials', 'events-manager-zoom'); ?></h4>
 				<p><?php printf( $desc, $service_name, '<a href="'. $api::get_service_url() .'">'. $api::get_service_url() .'</a>'); ?></p>
@@ -74,8 +74,8 @@ class OAuth_API_Admin_Settings {
 				static::em_settings_user_auth();
 				static::em_settings_apps_footer();
 				?>
-			</div> <!-- . inside -->
-		</div> <!-- .postbox -->
+			</div> <!-- .em-oauth-connect-inside -->
+		</div> <!-- .em-oauth-connect-box -->
 		<?php
 	}
 	
@@ -140,10 +140,10 @@ class OAuth_API_Admin_Settings {
 				<?php endif; ?>
 				<?php if( $connected || $reconnect_required ): ?>
 					<p><?php echo esc_html(sprintf(_n('You are successfully connected to the following %s account:', 'You are successfully connected to the following %s accounts:', count($oauth_accounts), 'events-manager-zoom'), $service_name)); ?></p>
-					<ul clss="em-oauth-service-accounts">
+					<ul class="em-oauth-service-accounts">
 						<?php foreach ( $oauth_accounts as $oauth_account ): ?>
 							<li class="em-oauth-service-account em-oauth-account-<?php echo empty($oauth_account['reconnect']) ? 'connected':'disconnected'; ?>">
-								<img src="<?php echo esc_url($oauth_account['photo']); ?>" width="25" height="25">
+								<?php if( !empty($oauth_account['photo']) ): ?><img src="<?php echo esc_url($oauth_account['photo']); ?>" width="25" height="25" alt="" /><?php endif; ?>
 								<div class="em-oauth-account-description">
                                 <span class="em-oauth-account-label">
                                     <?php if( !empty($oauth_account['reconnect']) ): ?><span class="dashicons dashicons-warning"></span><?php endif; ?>

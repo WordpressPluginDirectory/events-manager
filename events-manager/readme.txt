@@ -5,7 +5,7 @@ Tags: events, calendar, tickets, bookings, block
 Text Domain: events-manager
 Requires at least: 6.1
 Tested up to: 7.0
-Stable tag: 7.3.3
+Stable tag: 7.3.6
 Requires PHP: 7.0
 License: GPLv2
 
@@ -70,6 +70,12 @@ Events Manager is a full-featured event calendar, bookings, appointments, schedu
 * Lots of documentation and tutorials
 * **NEW** Gutenberg Supported
 * And much more!
+
+= AI Integration =
+
+AI is here, and we're on board! Check out what's possible with our new and evolving AI integration possibilities:
+
+https://www.youtube.com/watch?v=NYjCel9eBwY
 
 = Data Privacy and GDPR Compliance =
 We provide the tools to [help you be GDPR compliant](http://wp-events-plugin.com/documentation/data-privacy-gdpr-compliance/), including:
@@ -187,6 +193,30 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps wit
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
+= 7.3.6 =
+* Added: EU right of withdrawal (Widerrufsbutton) — guests and registered users can now submit a statutory cancellation request directly from a booking confirmation email or the My Bookings page, fulfilling the § 356a BGB obligation for distance contracts. Includes a configurable site-wide footer link, admin and guest acknowledgement emails, and magic-link access so guests without a WordPress account can reach the cancellation form.
+* Fixed: Recurring events with an exclude-only recurrence set (or a malformed payload with no include/exclude keys) caused a fatal TypeError in uksort() — the order array is now initialised before sorting.
+* Tweaked: OAuth connect and disconnect flows now return the admin to the page where they initiated the connection rather than always landing on the Events Manager settings page; the `em_oauth_authorize_redirect_url` and `em_oauth_disconnect_redirect_url` filters let gateways and integrations customise the destination further.
+
+= 7.3.5 =
+* Security: Private events and locations could be exposed to non-privileged visitors when the `private` query argument was supplied — the fix ensures only users with the `read_private_events` / `read_private_locations` capability can request private content. CVE-2025-14945, responsibly disclosed by shark3y via WordFence. We recommend updating.
+* Fixed: A custom Grid format header/footer set in Formatting settings was never shown on grid event lists — the view was reading the wrong option name, so the header/footer text was silently dropped on both initial load and AJAX search.
+* Fixed: Custom Google Maps JSON styling (Styling Wizard / Snazzy Maps) stopped applying after the Advanced Markers upgrade — Google ignores legacy map styles when a Map ID is present. Front-end maps with custom styling now render correctly again, without the "styles property cannot be set when a mapId is present" console warning.
+* Fixed: Block editor — recurring events no longer trigger a false "recurrence times are required" error on second save (disabled recurrence fields are now included in form serialisation); the Event When block's edits are no longer silently dropped in Gutenberg 6.6+ where the canvas renders inside an iframe.
+* Tweaked: The default event editor has been switched back to Classic while block editor support is further refined — existing installs are unaffected and the setting can be changed under Events Manager → Settings.
+
+= 7.3.4 =
+* Security: Free-text event and location fields submitted by non-privileged users (e.g. front-end event submitters) are now sanitised, closing a stored-XSS vector. We recommend everyone update.
+* Added: New "Event When" block for the block editor — edit an event's date, time and recurrence inline from the canvas.
+* Added: New display options for timeslot booking cards, giving you more control over how timeslot selection appears on the booking form.
+* Fixed: Timeslot and recurring booking pickers are now a single shared template, resolving several layout and timezone-picker glitches, multiday date display, and a card-gap regression.
+* Fixed: Recurring events now regenerate their timeslots when the event duration changes, and event listings sort and scope correctly by timeslot date/time across a series.
+* Fixed: Block editor — recurring events no longer fail validation on a second save, and the date picker now initialises correctly inside the editor's iframe.
+* Fixed: Several REST/MCP API issues found in live testing — bookings made through the API were all being attributed to the authenticated admin rather than the intended account; partial event updates could wipe categories and tags; and media upload, booking-status and consent handling have been tightened. Booking on behalf of another person is now correctly a Pro-only capability.
+* Fixed: MCP installer buttons on the settings page not triggering the install.
+* Fixed: CSS glitches in the selectize search dropdown when resizing or typing.
+* Tweaked: The selected day is now shown in bold across every calendar event style.
+
 = 7.3.3 =
 * Added: Calendar "dots" style — events can now be marked with coloured dots instead of (or alongside) titles, with a style choice and a per-day event limit exposed in the Events Calendar block.
 * Added: REST API support for featured images on events and locations (input and output), a media upload endpoint and ability, and term colour + image on event categories/tags.

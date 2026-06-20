@@ -2142,6 +2142,49 @@ jQuery(document).on('em_view_loaded_map', function( e, view, form ){
 		em_maps_load_locations( map[0] );
 	}
 });
+/*
+ * Custom JSON map styling vs Advanced Markers. Google forbids the legacy `styles` property when a `mapId` is present, and Advanced Markers require a `mapId` — the two are mutually exclusive. So when the site has custom JSON styling configured we build a raster map with NO mapId (so the styles apply) and fall back to the legacy google.maps.Marker that a raster map can host; otherwise we keep the mapId + Advanced Markers path.
+ */
+function em_map_get_styles( map_id ){
+	if( typeof EM.google_map_id_styles == 'object' && typeof EM.google_map_id_styles[map_id] !== 'undefined' ){
+		return EM.google_map_id_styles[map_id];
+	}
+	if( typeof EM.google_maps_styles !== 'undefined' ){
+		return EM.google_maps_styles;
+	}
+	return null;
+}
+function em_map_create( el, map_options, map_id ){
+	let styles = em_map_get_styles( map_id );
+	if( styles ){
+		map_options = jQuery.extend({}, map_options, { styles: styles });
+		delete map_options.mapId; // styles are ignored (and warned about) while a mapId is present
+	}
+	let map = new google.maps.Map( el, map_options );
+	map.em_styled = !!styles;
+	return map;
+}
+function em_map_create_marker( AdvancedMarkerElement, map, marker_options, map_id ){
+	let marker;
+	if( map.em_styled ){
+		// a styled raster map cannot host Advanced Markers, so use the legacy marker
+		marker = new google.maps.Marker({
+			position: marker_options.position,
+			map: map,
+			title: marker_options.title,
+			draggable: !!marker_options.gmpDraggable,
+		});
+		marker.em_advanced = false;
+	}else{
+		marker = new AdvancedMarkerElement( marker_options );
+		marker.em_advanced = true;
+	}
+	marker.em_map_id = map_id;
+	return marker;
+}
+function em_marker_position( marker ){
+	return ( typeof marker.getPosition === 'function' ) ? marker.getPosition() : marker.position;
+}
 //re-usable function to load global location maps
 async function em_maps_load_locations( element ){
 	const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
@@ -2165,13 +2208,11 @@ async function em_maps_load_locations( element ){
 				mapTypeId: google.maps.MapTypeId.ROADMAP,
 				mapId: 'em-locations-map-' + map_id
 			};
-			if( typeof EM.google_map_id_styles == 'object' && typeof EM.google_map_id_styles[map_id] !== 'undefined' ){ console.log(EM.google_map_id_styles[map_id]); map_options.styles = EM.google_map_id_styles[map_id]; }
-			else if( typeof EM.google_maps_styles !== 'undefined' ){ map_options.styles = EM.google_maps_styles; }
 			jQuery(document).triggerHandler('em_maps_locations_map_options', map_options);
 			let marker_options = {};
 			jQuery(document).triggerHandler('em_maps_location_marker_options', marker_options);
 
-			maps[map_id] = new google.maps.Map(el, map_options);
+			maps[map_id] = em_map_create(el, map_options, map_id);
 			maps_markers[map_id] = [];
 
 			let bounds = new google.maps.LatLngBounds();
@@ -2186,7 +2227,7 @@ async function em_maps_load_locations( element ){
 						position: location_position,
 						map: maps[map_id]
 					})
-					let marker = new AdvancedMarkerElement(marker_options);
+					let marker = em_map_create_marker(AdvancedMarkerElement, maps[map_id], marker_options, map_id);
 					maps_markers[map_id] = marker;
 					em_map_InfoWindow ( location.location_name, location.location_balloon, marker );
 					//extend bounds
@@ -2241,17 +2282,15 @@ async function em_maps_load_location(el){
 		gestureHandling: 'cooperative',
 		mapId: mapId,
 	};
-	if( typeof EM.google_map_id_styles == 'object' && typeof EM.google_map_id_styles[map_id] !== 'undefined' ){ console.log(EM.google_map_id_styles[map_id]); map_options.styles = EM.google_map_id_styles[map_id]; }
-	else if( typeof EM.google_maps_styles !== 'undefined' ){ map_options.styles = EM.google_maps_styles; }
 	jQuery(document).triggerHandler('em_maps_location_map_options', map_options);
-	maps[map_id] = new google.maps.Map( document.getElementById('em-location-map-'+map_id), map_options);
+	maps[map_id] = em_map_create( document.getElementById('em-location-map-'+map_id), map_options, map_id);
 	let marker_options = {
 		position: em_LatLng,
 		map: maps[map_id],
 		title: map_title,
 	};
 	jQuery(document).triggerHandler('em_maps_location_marker_options', marker_options);
-	let marker = new AdvancedMarkerElement(marker_options);
+	let marker = em_map_create_marker(AdvancedMarkerElement, maps[map_id], marker_options, map_id);
 	maps_markers[map_id] = marker;
 	let content = jQuery('#em-location-map-info-'+map_id + ' .em-map-balloon-content').get(0);
 	em_map_InfoWindow( map_title, content, marker, true );
@@ -2262,7 +2301,7 @@ async function em_maps_load_location(el){
 	//map resize listener
 	jQuery(window).on('resize', function(e) {
 		google.maps.event.trigger(maps[map_id], "resize");
-		maps[map_id].setCenter(maps_markers[map_id].position);
+		maps[map_id].setCenter(em_marker_position(maps_markers[map_id]));
 		maps[map_id].panBy(40,-70);
 	});
 }
@@ -2407,7 +2446,7 @@ async function em_maps() {
 				gestureHandling: 'cooperative',
 				mapId: 'em-map',
 			};
-			if( typeof EM.google_maps_styles !== 'undefined' ){ map_options.styles = EM.google_maps_styles; }
+			// the location editor keeps Advanced Markers (mapId) for the draggable coordinate picker; custom front-end JSON styling is intentionally not applied here (it can't coexist with a mapId, and a dark style hinders coordinate picking)
 			map = new google.maps.Map( document.getElementById('em-map'), map_options);
 			marker = new AdvancedMarkerElement({
 				position: em_LatLng,
@@ -2441,7 +2480,7 @@ async function em_maps() {
 
 function em_map_InfoWindow( title, content, marker, open = false ) {
 	let title_content = document.createElement("div");
-	let map_id = marker.map.mapId.replace(/em-location-maps?-/,'');
+	let map_id = ('em_map_id' in marker) ? marker.em_map_id : marker.map.mapId.replace(/em-location-maps?-/,'');
 	title_content.className = "em-map-balloon-title";
 	title_content.innerHTML = title;
 	if ( typeof content === 'string' ) {
@@ -2467,7 +2506,8 @@ function em_map_InfoWindow( title, content, marker, open = false ) {
 		anchor: marker,
 		map: marker.map,
 	};
-	marker.addListener("gmp-click", () => {
+	let click_event = ( ('em_advanced' in marker) ? marker.em_advanced : !(marker instanceof google.maps.Marker) ) ? 'gmp-click' : 'click';
+	marker.addListener(click_event, () => {
 		maps_infoWindows[ map_id ]?.forEach( ( infoWindow ) => infoWindow.close() );
 		infoWindow.open( open_options );
 	});

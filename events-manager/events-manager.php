@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Events Manager
-Version: 7.3.3
+Version: 7.3.6
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Setting constants
 use EM\Archetypes;
 
-define('EM_VERSION', '7.3.3'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_VERSION', '7.3.6'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
 define('EM_PRO_MIN_VERSION', '3.7.2'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.6.0.2'); //self expanatory
 define('EM_FILE', __FILE__); //an absolute path to this directory
@@ -159,6 +159,7 @@ include( EM_DIR . '/blocks/_bootstrap.php' );
 include( EM_DIR . '/classes/em-list-table.php' );
 include( EM_DIR . '/classes/em-booking.php' );
 include( EM_DIR . '/classes/em-bookings.php' );
+include( EM_DIR . '/classes/em-withdrawal.php' );
 include( EM_DIR . '/classes/em-bookings-table.php' );
 include( EM_DIR . '/classes/em-list-table-events-bookings.php' );
 include( EM_DIR . '/classes/em-calendar.php' );

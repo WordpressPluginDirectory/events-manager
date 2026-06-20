@@ -2642,7 +2642,7 @@
         // static list
         var nodes = Array.prototype.slice
             .call(nodeList)
-            .filter(function (x) { return x instanceof HTMLElement; });
+            .filter(function (x) { return x && x.nodeType === 1; }); // nodeType===1 works cross-document (iframe elements fail instanceof HTMLElement from a different window)
         var instances = [];
         for (var i = 0; i < nodes.length; i++) {
             var node = nodes[i];
@@ -2679,7 +2679,7 @@
         if (typeof selector === "string") {
             return _flatpickr(window.document.querySelectorAll(selector), config);
         }
-        else if (selector instanceof Node) {
+        else if (selector instanceof Node || (selector && selector.nodeType === 1)) {
             return _flatpickr([selector], config);
         }
         else {

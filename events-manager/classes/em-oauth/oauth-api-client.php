@@ -153,6 +153,10 @@ class OAuth_API_Client {
 	public function get_oauth_url(){
 		$scope = is_array($this->scope) ? urlencode(implode('+', $this->scope)) : $this->scope;
 		$state_nonce = wp_create_nonce($this->option_name.'_authorize');
+		// Remember the admin page this connection was initiated from, so the OAuth callback can return the user here instead of the generic settings page. Keyed by user so it survives the provider round-trip independent of the state value.
+		if ( is_admin() && get_current_user_id() && ! empty( $_SERVER['REQUEST_URI'] ) ) {
+			set_transient( 'em_oauth_return_' . get_current_user_id(), esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ), 15 * MINUTE_IN_SECONDS );
+		}
 		$replacements = array( urlencode($this->id), $scope, urlencode(static::get_oauth_callback_url()), $state_nonce );
 		$return = str_replace( array('CLIENT_ID','ACCESS_SCOPE','REDIRECT_URI', 'STATE'), $replacements, $this->oauth_authorize_url );
 		if( $this->oauth_state ){

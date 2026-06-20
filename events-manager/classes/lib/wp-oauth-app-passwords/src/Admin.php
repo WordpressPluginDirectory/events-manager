@@ -255,12 +255,13 @@ class Admin {
 	}
 
 	private static function action_form( string $action, string $label ): void {
+		// Rendered inside the EM settings page which wraps all tab content in a single outer <form>. Nested HTML forms are invalid — browsers ignore the inner <form> tag and the submit button ends up submitting the outer form instead. We avoid nesting by using a plain button with data attributes; the JS below constructs and submits a detached form on click so admin-post.php is actually reached.
 		?>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<?php wp_nonce_field( self::NONCE ); ?>
-			<input type="hidden" name="action" value="<?php echo esc_attr( $action ); ?>" />
-			<button type="submit" class="button button-primary"><?php echo esc_html( $label ); ?></button>
-		</form>
+		<button type="button" class="button button-primary"
+			data-pixelite-post-action="<?php echo esc_attr( $action ); ?>"
+			data-pixelite-post-nonce="<?php echo esc_attr( wp_create_nonce( self::NONCE ) ); ?>"
+			data-pixelite-post-url="<?php echo esc_attr( admin_url( 'admin-post.php' ) ); ?>"
+		><?php echo esc_html( $label ); ?></button>
 		<?php
 	}
 
@@ -441,8 +442,9 @@ class Admin {
 		?>
 		<script>
 			(function () {
-				var buttons = document.querySelectorAll('[data-pixelite-mcp-copy-target]');
-				buttons.forEach(function (button) {
+				// Copy-to-clipboard buttons.
+				var copyButtons = document.querySelectorAll('[data-pixelite-mcp-copy-target]');
+				copyButtons.forEach(function (button) {
 					button.addEventListener('click', function () {
 						var target = document.querySelector(button.getAttribute('data-pixelite-mcp-copy-target'));
 						if (!target) { return; }
@@ -454,6 +456,24 @@ class Admin {
 							return;
 						}
 						try { if (document.execCommand('copy')) { done(); } } catch (e) {}
+					});
+				});
+
+				// Action buttons (install / activate). These cannot use a nested <form> because the EM settings page already wraps its tab content in an outer form; browsers ignore inner form tags. Instead we build and submit a detached form via JS so admin-post.php is actually reached.
+				var actionButtons = document.querySelectorAll('[data-pixelite-post-action]');
+				actionButtons.forEach(function (button) {
+					button.addEventListener('click', function () {
+						var form = document.createElement('form');
+						form.method = 'post';
+						form.action = button.getAttribute('data-pixelite-post-url');
+						var nonce = document.createElement('input');
+						nonce.type = 'hidden'; nonce.name = '_wpnonce'; nonce.value = button.getAttribute('data-pixelite-post-nonce');
+						var action = document.createElement('input');
+						action.type = 'hidden'; action.name = 'action'; action.value = button.getAttribute('data-pixelite-post-action');
+						form.appendChild(nonce);
+						form.appendChild(action);
+						document.body.appendChild(form);
+						form.submit();
 					});
 				});
 			})();

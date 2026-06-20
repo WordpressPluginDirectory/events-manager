@@ -2058,9 +2058,9 @@ class EM_Booking extends EM_Object{
 		if( !empty($args['event']) ) {
 			$booking['event'] = $this->get_event()->to_api();
 		}
-		// user
+		// user — a person_id of 0 is EM's guest-person model (no WP user account), so report it honestly rather than always claiming a registered user.
 		$booking['person'] = array(
-			'guest' => false,
+			'guest' => empty( $this->person_id ),
 			'email' => $this->get_person()->user_email,
 			'name' => $this->get_person()->get_name(),
 		);

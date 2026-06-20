@@ -431,7 +431,7 @@
 
 	.em-booking-timeslots-list {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 		gap: 5px;
 		text-align: center;
 	}
@@ -445,7 +445,8 @@
 		border-radius: 4px;
 		transition: all 0.2s ease-in-out;
 		line-height: 20px;
-		display: block;
+		display: grid;
+		gap: 4px;
 
 		&.selected {
 			border: 2px solid var(--accent-color) !important;
@@ -524,7 +525,7 @@
 
 	&.size-small {
 		// For small: Side by side with specific width ratios
-		grid-template-columns: 1fr minmax(200px, auto);
+		grid-template-columns: 1fr minmax(200px, 1fr);
 		align-items: start;
 
 		.em-view-container[data-view="calendar"] {
@@ -610,10 +611,26 @@
 		}
 
 		p.em-timezone {
-			margin: 0 0 10px !important;
-			.em-selectize {
-				margin: 0 !important;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+			margin: 0 !important;
+			// The selectize input inside the timezone picker can retain its typed width after a keyboard selection because `width:auto !important` in _selectize.scss beats selectize's own `width:4px` collapse. Switching to flex layout on the control prevents the input from ever growing the container: the input is pinned to a 1px flex basis (collapses to zero in practice) and `min-width:0` lets it shrink below any browser default.
+			.selectize-input {
+				display: flex !important;
+				align-items: center;
+				flex-wrap: nowrap;
+				overflow: hidden;
+				> input {
+					flex: 0 1 1px !important
+				}
 			}
+		}
+
+		.em-booking-timeslots-list {
+			display: grid;
+			gap: 10px;
+			grid-template-columns: 1fr;
 		}
 
 		// Individual recurrence date buttons

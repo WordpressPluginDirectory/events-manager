@@ -419,8 +419,14 @@ class EM_Object {
 		if ( $args['timezone_scope'] ) {
 			$timezone_scope = in_array( $args['timezone_scope'], [1,'1',true], true )  ? em_get_option( 'timezone_string', $args['event_archetype'] ) : $args['timezone_scope'];
 			$cast = 'DATETIME';
-			$event_start_col = 'event_start';
-			$event_end_col = 'event_end';
+			if ( !empty( $args['timeslots'] ) ) {
+				// Timeslot rows are joined via the `ets` alias in EM_Events::get(). Scope on the timeslot's own datetime so cross-midnight rows from a neighbouring local day aren't included just because their parent event row happens to overlap the requested local date. Falls back to the parent event's datetime for rows the LEFT JOIN didn't match.
+				$event_start_col = 'COALESCE(ets.timeslot_start, ' . EM_EVENTS_TABLE . '.event_start)';
+				$event_end_col   = 'COALESCE(ets.timeslot_end, '   . EM_EVENTS_TABLE . '.event_end)';
+			} else {
+				$event_start_col = 'event_start';
+				$event_end_col = 'event_end';
+			}
 		}
 		if ( is_array($scope) ) {
 			if ( $timezone_scope ) {

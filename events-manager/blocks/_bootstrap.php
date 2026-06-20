@@ -36,6 +36,9 @@ class EM_Blocks {
 	public static function init() {
 		add_filter( 'block_categories_all', [ __CLASS__, 'register_block_category' ], 10, 2 );
 		add_action( 'init', [ __CLASS__, 'register_blocks' ] );
+		// register_post_type_args fires inside register_post_type() during init;
+		// adding the filter here (before init runs) ensures we catch every CPT.
+		add_filter( 'register_post_type_args', [ __CLASS__, 'add_event_when_template' ], 10, 2 );
 		add_action( 'rest_api_init', [ __CLASS__, 'register_rest_field' ] );
 		add_action( 'rest_api_init', [ __CLASS__, 'register_validation_endpoint' ] );
 		add_action( 'enqueue_block_editor_assets', [ __CLASS__, 'enqueue_editor_assets' ] );
@@ -151,6 +154,41 @@ class EM_Blocks {
 				'render_callback' => [ __CLASS__, 'render_locations' ],
 			] );
 		}
+
+		// Event When — inline date/time/recurrence canvas block. Editor-only;
+		// no frontend render callback needed (save() returns null in JS).
+		if ( file_exists( $build_dir . '/event-when/block.json' ) ) {
+			register_block_type( $build_dir . '/event-when' );
+		}
+	}
+
+	/**
+	 * Add the em/event-when block as the first entry in the event CPT template
+	 * so new events start with it pre-inserted and locked. The JS guard also
+	 * injects it into existing events that don't have it yet.
+	 */
+	public static function add_event_when_template( $args, $post_type ) {
+		if ( ! em_use_block_editor() ) {
+			return $args;
+		}
+		// Match all EM event CPTs (event, event-recurring, and archetype variants)
+		// but not location CPTs.
+		if ( ! isset( $args['labels'] ) || ! preg_match( '/event/i', $post_type ) ) {
+			return $args;
+		}
+		// Guard: only apply to CPTs that EM itself registers.
+		if ( ! class_exists( 'EM\Archetypes' ) ) {
+			return $args;
+		}
+		$event_cpts = \EM\Archetypes::get_cpts( [ 'location', 'repeating' ] );
+		if ( ! in_array( $post_type, $event_cpts, true ) ) {
+			return $args;
+		}
+		$args['template'] = array_merge(
+			[ [ 'em/event-when', [ 'lock' => [ 'move' => true, 'remove' => true ] ] ] ],
+			$args['template'] ?? []
+		);
+		return $args;
 	}
 
 	/* -----------------------------------------------------------------

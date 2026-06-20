@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "em/event-when",
+  "version": "1.0.0",
+  "title": "Event — When",
+  "category": "events-manager",
+  "icon": "calendar-alt",
+  "description": "Inline date, time, and recurrence controls. Pinned below the event title; not rendered on the front end.",
+  "keywords": [
+    "event",
+    "date",
+    "time",
+    "when",
+    "recurrence"
+  ],
+  "supports": {
+    "html": false,
+    "reusable": false,
+    "customClassName": false,
+    "inserter": false
+  },
+  "textdomain": "events-manager",
+  "editorScript": "file:./index.js"
+}

@@ -37,7 +37,9 @@ class Schemas {
 				'alt_text'       => array( 'type' => 'string', 'description' => 'Alt text stored on `_wp_attachment_image_alt`. Important for accessibility.' ),
 				'caption'        => array( 'type' => 'string', 'description' => 'Attachment caption (`post_excerpt`).' ),
 				'description'    => array( 'type' => 'string', 'description' => 'Long-form attachment description (`post_content`).' ),
-				'post_id'        => array( 'type' => 'integer', 'description' => 'Parent post ID. Attaches the upload to a specific post so it appears under that post in the media library.' ),
+				'post_id'        => array( 'type' => 'integer', 'description' => 'Media-library organisation only: sets the attachment\'s `post_parent` so it shows under that post in the library. This does NOT make it the post\'s featured image — for that use `featured_image_for_event` / `featured_image_for_location` below, or pass the returned attachment id to `featured_image` on update-event / update-location.' ),
+				'featured_image_for_event'    => array( 'type' => 'integer', 'description' => 'Convenience: after uploading, set this attachment as the featured image (thumbnail) of the given Events Manager event ID, in one call. Requires permission to edit that event. The response includes a `featured_image_set` confirmation, or a `warnings` entry if it could not be applied.' ),
+				'featured_image_for_location' => array( 'type' => 'integer', 'description' => 'Convenience: after uploading, set this attachment as the featured image (thumbnail) of the given Events Manager location ID, in one call. Requires permission to edit that location.' ),
 			),
 		);
 	}
@@ -275,9 +277,20 @@ class Schemas {
 					'description' => 'Tickets being booked. Object keyed by ticket ID (the real `ticket_id`, not a positional index). Value: `{ spaces: integer, ticket_bookings?: array }`. `ticket_bookings[i].attendee` carries per-attendee form-field values when the Pro `bookings-form` add-on is active. Required.',
 					'additionalProperties' => true,
 				),
-				'user_name'   => array( 'type' => 'string', 'description' => 'Booker\'s display name. Required for guest bookings (when not logged in).' ),
-				'user_email'  => array( 'type' => 'string', 'format' => 'email', 'description' => 'Booker\'s email address. Required for guest bookings.' ),
+				'user_name'   => array( 'type' => 'string', 'description' => 'Booker\'s display name. ::pro:: With Events Manager Pro, an authenticated manager supplying `user_name` + `user_email` books on behalf of that guest (the booking is attributed to them, not to your account). Without Pro the booking is always attributed to the authenticated account and this field is ignored for attribution.' ),
+				'user_email'  => array( 'type' => 'string', 'format' => 'email', 'description' => 'Booker\'s email address, paired with `user_name`. ::pro:: Used by Pro to book on behalf of a guest (stored as a guest, no WP user account created, unless you pass `person_id`). Ignored for attribution without Pro.' ),
 				'dbem_phone'  => array( 'type' => 'string', 'description' => 'Booker\'s phone number. Legacy field name — the `dbem_` prefix matches EM core\'s $_POST contract.' ),
+				'person'      => array(
+					'type'        => 'object',
+					'description' => '::pro:: Structured booker identity, an alternative to the flat `user_name`/`user_email`/`dbem_phone` fields. `{ name|first_name|last_name, email, phone }`. When an Events Manager Pro manager supplies this, the booking is attributed to this guest rather than to the calling account (no WP user is created). Requires Pro; without it, booking-on-behalf is not available and this is ignored.',
+					'properties'  => array(
+						'name'       => array( 'type' => 'string', 'description' => 'Full display name. Or send `first_name`/`last_name` and a name is composed from them.' ),
+						'first_name' => array( 'type' => 'string' ),
+						'last_name'  => array( 'type' => 'string' ),
+						'email'      => array( 'type' => 'string', 'format' => 'email' ),
+						'phone'      => array( 'type' => 'string' ),
+					),
+				),
 				'dbem_country'=> array( 'type' => 'string', 'description' => 'Booker\'s country (ISO 3166-1 alpha-2). Optional, used by some Pro forms.' ),
 
 				'booking_comment'      => array( 'type' => 'string',  'description' => 'Free-text note attached to the booking.' ),
@@ -298,8 +311,8 @@ class Schemas {
 				'send_email'     => array( 'type' => 'boolean', 'description' => 'When true (default), EM sends the configured booking-confirmation email after save.' ),
 
 				// Admin-only — stripped server-side for callers without `manage_bookings`.
-				'person_id'              => array( 'type' => 'integer', 'description' => 'Admin-only. Assigns the booking to an existing user ID instead of the logged-in caller.' ),
-				'booking_status'         => array( 'type' => 'integer', 'description' => 'Admin-only. Directly sets the booking status (see `set_booking_status` for the enum).' ),
+				'person_id'              => array( 'type' => 'integer', 'description' => '::pro:: Admin-only (Events Manager Pro). Assigns the booking to an existing user ID instead of the authenticated caller. Ignored without Pro.' ),
+				'booking_status'         => array( 'type' => 'integer', 'description' => 'Admin-only (requires booking-management capability). Sets the booking status (0 pending, 1 approved, 2 rejected, 3 cancelled, 5 awaiting online payment — see `set_booking_status`). On create, a payment gateway may assign its own initial status (e.g. the offline gateway sets 5); this field is re-applied afterwards so the booking ends up in the status you asked for. Status-change emails are NOT sent for this unless you also pass `send_email: true`.' ),
 				'booking_tax_rate'       => array( 'type' => 'number',  'description' => 'Admin-only. Override the booking\'s tax rate (decimal, e.g. `0.20` = 20%).' ),
 				'manual_booking'         => array( 'type' => 'string',  'description' => 'Admin-only. Nonce that triggers the admin manual-booking flow (bypasses some public-form validations).' ),
 				'manual_booking_confirm' => array( 'type' => 'boolean', 'description' => 'Admin-only. Confirms the booking immediately after creation.' ),
@@ -324,8 +337,10 @@ class Schemas {
 	public static function booking_status_input() {
 		return array(
 			'type'     => 'object',
-			'required' => array( 'status' ),
+			'required' => array( 'id', 'status' ),
 			'properties' => array(
+				// Over REST the booking ID comes from the path (/bookings/{id}/status), but MCP abilities have no path component — every parameter must be declared here or the client can't supply it. Without this the MCP tool could set a status but never say which booking, so every call 404'd.
+				'id'            => array( 'type' => array( 'integer', 'string' ), 'description' => 'Booking ID (integer) or booking UUID (32-char hex). Required. (Over REST this comes from the URL path instead.)' ),
 				'status'        => array( 'type' => 'integer', 'description' => 'New booking status code. See `EM_Booking::$status_array` for the enum (0 pending, 1 approved, 2 rejected, 3 cancelled, etc.). Required.' ),
 				'send_email'    => array( 'type' => 'boolean', 'description' => 'When true (default), sends the configured status-change email.' ),
 				'ignore_spaces' => array( 'type' => 'boolean', 'description' => 'When true, allow the status change even if the event\'s spaces are already exhausted.' ),

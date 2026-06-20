@@ -34,10 +34,15 @@ global $events_placeholder_tip, $locations_placeholder_tip, $categories_placehol
 					        </label>
 					        <label>
 						        <input type="radio" name="dbem_editor" value="gutenberg" <?php checked($em_editor_value, 'gutenberg'); ?><?php echo $em_editor_disabled; ?> />
-						        <?php esc_html_e('Gutenberg', 'events-manager'); ?>
+						        <?php esc_html_e('Block Editor (Gutenberg)', 'events-manager'); ?>
 					        </label>
 				        </div>
-				        <p><em><?php esc_html_e("Select the editor type you'd like to use for submitting content in your dashboard.", 'events-manager'); ?>
+				        <p>
+					        <em>
+						    <?php esc_html_e("Select the editor type you'd like to use for submitting content in your dashboard.", 'events-manager'); ?>
+						    <?php esc_html_e("Block Editor development is still ongoing, switch back to the Classic Editor if you experience issues.", 'events-manager'); ?>
+					        </em>
+				        </p>
 					        <?php if ( defined('EM_GUTENBERG') ) : ?>
 						        <br><strong><?php echo esc_html( sprintf( __('Currently overridden by the EM_GUTENBERG constant in wp-config.php (%s).', 'events-manager'), EM_GUTENBERG ? 'true' : 'false' ) ); ?></strong>
 					        <?php endif; ?>

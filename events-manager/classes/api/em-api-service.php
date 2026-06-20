@@ -14,13 +14,15 @@ class Service {
 			}
 		}
 		$events = \EM_Events::get( $args );
+		// Snapshot the matched-row count now, before the loop below: prepare_event() -> EM_Event::to_api() runs a nested EM_Events::get() (recurrence lookup) that overwrites the EM_Events::$num_rows_found global, so reading it after the loop returns the last page-event's nested-query count instead of ours — wrong, and orderby-dependent because it's whichever event sorts last. See linked issue.
+		$total = (int) \EM_Events::$num_rows_found;
 		$items = array();
 		foreach ( $events as $EM_Event ) {
 			$items[] = static::prepare_event( $EM_Event, $params['context'] ?? 'view' );
 		}
 		return array(
 			'items' => $items,
-			'pagination' => Utils::pagination( \EM_Events::$num_rows_found, $args['page'], $args['limit'] ),
+			'pagination' => Utils::pagination( $total, $args['page'], $args['limit'] ),
 		);
 	}
 
@@ -110,6 +112,12 @@ class Service {
 		);
 		$payload = apply_filters( 'em_api_booking_requirements', $payload, $EM_Event );
 		$payload['example_payload'] = static::build_booking_example( $payload );
+		// When the form has optional fields beyond the required minimum, also emit a full example so a client can see every field at its correct location (especially the per-attendee nesting). It's a structure reference, not data to submit — values are illustrative.
+		$full_example = static::build_booking_example( $payload, true );
+		if ( $full_example != $payload['example_payload'] ) {
+			$payload['example_payload_full'] = $full_example;
+			$payload['notes'][] = __( '`example_payload` is the minimal valid booking (required fields only). `example_payload_full` additionally shows every optional field at its correct location — the values are illustrative placeholders, so replace them with the booker\'s real input and omit any field they did not provide.', 'events-manager' );
+		}
 		return $payload;
 	}
 
@@ -206,7 +214,12 @@ class Service {
 		return $phone_default ? strtoupper( (string) $phone_default ) : '';
 	}
 
-	protected static function build_booking_example( $payload ) {
+	/**
+	 * Build a ready-to-submit example booking payload from the requirements.
+	 *
+	 * With $include_optional = false (default) only required fields are emitted — the minimal valid booking, safe for a client to copy and fill. With $include_optional = true every field is emitted (a full structure reference). Upload fields are always skipped: a file can't be expressed as a JSON scalar, so a placeholder would mislead — they stay visible in booking_fields/attendee_fields with their own metadata.
+	 */
+	protected static function build_booking_example( $payload, $include_optional = false ) {
 		$example = array( 'event_id' => (string) ( $payload['event_id'] ?? '' ) );
 		if ( !empty( $payload['payment']['active_gateways'] ) ) {
 			$slugs = array_column( $payload['payment']['active_gateways'], 'slug' );
@@ -214,7 +227,7 @@ class Service {
 		}
 		$booking = array();
 		foreach ( (array) ( $payload['booking_fields'] ?? array() ) as $field ) {
-			if ( empty( $field['required'] ) ) continue;
+			if ( ( !$include_optional && empty( $field['required'] ) ) || ( $field['type'] ?? '' ) === 'upload' ) continue;
 			$booking[ $field['field'] ] = static::booking_example_value( $field );
 		}
 		if ( $booking ) {
@@ -225,7 +238,7 @@ class Service {
 			$ticket_entry = array( 'spaces' => 1 );
 			$attendee = array();
 			foreach ( (array) ( $payload['attendee_fields'] ?? array() ) as $field ) {
-				if ( empty( $field['required'] ) ) continue;
+				if ( ( !$include_optional && empty( $field['required'] ) ) || ( $field['type'] ?? '' ) === 'upload' ) continue;
 				$attendee[ $field['field'] ] = static::booking_example_value( $field );
 			}
 			if ( $attendee ) {
@@ -282,7 +295,6 @@ class Service {
 		if ( !empty( $data['em_tickets'] ) && !$EM_Event->can_manage( 'manage_bookings', 'manage_others_bookings' ) ) {
 			return Utils::object_error( 'em_api_ticket_forbidden', $EM_Event, __( 'You do not have permission to manage tickets for this event.', 'events-manager' ), 403 );
 		}
-		static::apply_consent_to_cpt( $EM_Event, $data );
 		do_action( 'em_api_event_save_pre', $EM_Event, $data, $id );
 		// For partial updates, pre-load current event state so EM_Event::get_post()
 		// (which is destructive on missing $_POST keys) doesn't wipe untouched fields.
@@ -304,7 +316,8 @@ class Service {
 				}
 			}
 		}
-		$request_data = static::normalize_em_tickets_keys( array_merge( $base, $data ) );
+		// Consent must travel in the request data, not be pre-set on the object: EM core's consent handler reads $_REQUEST[data_privacy_consent] during get_post (cpt_get_post on em_event_get_post_meta) and get_post rebuilds event_attributes from the request, wiping anything set beforehand. Defaults to granted so admin event creation doesn't trip the privacy-consent validator that fires when the site requires it. Mirrors what booking_request_data already does for bookings.
+		$request_data = static::apply_consent_to_request_data( static::normalize_em_tickets_keys( array_merge( $base, $data ) ), $data, 'event' );
 		$valid = Utils::with_request_data( $request_data, function() use ( $EM_Event, $data ) {
 			if ( !$EM_Event->get_post( true ) ) {
 				return false;
@@ -319,12 +332,11 @@ class Service {
 			return Utils::object_error( 'em_api_event_save_failed', $EM_Event, __( 'Event could not be saved.', 'events-manager' ), 500 );
 		}
 		static::save_event_terms( $EM_Event, $data );
+		// The event is saved and valid at this point. A featured-image failure (e.g. the source URL blocks hotlinking, or the file isn't a valid image) is non-fatal — don't 400 the whole create and strand a created-but-imageless event. Keep the event, surface a warning naming the problem so the caller can retry just the image.
 		$featured_result = static::apply_featured_image( $EM_Event->post_id ?? 0, $data );
-		if ( is_wp_error( $featured_result ) ) {
-			return Utils::object_error( 'em_api_event_featured_image_failed', $EM_Event, $featured_result->get_error_message(), 400 );
-		}
+		$warnings = is_wp_error( $featured_result ) ? array( static::featured_image_warning( $featured_result ) ) : array();
 		do_action( 'em_api_event_save', $EM_Event, $data, $id );
-		return static::prepare_event( $EM_Event, 'edit' );
+		return static::with_warnings( static::prepare_event( $EM_Event, 'edit' ), $warnings );
 	}
 
 	public static function delete_event( $id, $force = false ) {
@@ -567,10 +579,10 @@ class Service {
 		if ( !$EM_Location->can_manage( 'edit_locations', 'edit_others_locations' ) ) {
 			return Utils::object_error( 'em_api_location_forbidden', $EM_Location, __( 'You do not have permission to save this location.', 'events-manager' ), 403 );
 		}
-		static::apply_consent_to_cpt( $EM_Location, $data );
 		// For partial updates, pre-load current location state — same reasoning as save_event().
 		$base = $id ? $EM_Location->to_request_data() : array();
-		$request_data = array_merge( $base, $data );
+		// Consent flows through the request data (see save_event() for why pre-setting the attribute doesn't survive get_post).
+		$request_data = static::apply_consent_to_request_data( array_merge( $base, $data ), $data, 'location' );
 		$valid = Utils::with_request_data( $request_data, function() use ( $EM_Location, $data ) {
 			if ( !$EM_Location->get_post( true ) ) {
 				return false;
@@ -584,11 +596,10 @@ class Service {
 		if ( !$EM_Location->save() ) {
 			return Utils::object_error( 'em_api_location_save_failed', $EM_Location, __( 'Location could not be saved.', 'events-manager' ), 500 );
 		}
+		// Non-fatal featured-image handling — same reasoning as save_event(): keep the saved location, warn rather than 400 on an image sideload failure.
 		$featured_result = static::apply_featured_image( $EM_Location->post_id ?? 0, $data );
-		if ( is_wp_error( $featured_result ) ) {
-			return Utils::object_error( 'em_api_location_featured_image_failed', $EM_Location, $featured_result->get_error_message(), 400 );
-		}
-		return static::prepare_location( $EM_Location, 'edit' );
+		$warnings = is_wp_error( $featured_result ) ? array( static::featured_image_warning( $featured_result ) ) : array();
+		return static::with_warnings( static::prepare_location( $EM_Location, 'edit' ), $warnings );
 	}
 
 	/**
@@ -610,6 +621,29 @@ class Service {
 			update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( $data['featured_image_alt'] ) );
 		}
 		return true;
+	}
+
+	/**
+	 * Builds a structured warning entry from a featured-image WP_Error, so the response can tell the caller the image step failed (and why) without failing the whole create/update.
+	 */
+	protected static function featured_image_warning( $wp_error ) {
+		return array(
+			'field'   => 'featured_image',
+			'code'    => $wp_error->get_error_code() ?: 'em_api_featured_image_failed',
+			/* translators: %s: underlying error detail from the image sideload */
+			'message' => sprintf( __( 'Saved, but the featured image could not be attached: %s. To fix it: call upload-media (use content_base64 if the source blocks server-side fetches, e.g. Unsplash), then either pass featured_image_for_event/featured_image_for_location on that same upload-media call, or pass the returned attachment id as featured_image to update-event / update-location.', 'events-manager' ), $wp_error->get_error_message() ),
+		);
+	}
+
+	/**
+	 * Attaches a non-empty `warnings` array to a prepared response. No-op (returns the response unchanged) when there are no warnings, so successful responses stay clean.
+	 */
+	protected static function with_warnings( $response, $warnings ) {
+		if ( is_wp_error( $response ) || empty( $warnings ) || !is_array( $response ) ) {
+			return $response;
+		}
+		$response['warnings'] = array_values( $warnings );
+		return $response;
 	}
 
 	/**
@@ -701,29 +735,65 @@ class Service {
 		if ( !$id && !static::can_create_booking() ) {
 			return Utils::error( 'em_api_booking_forbidden', __( 'You do not have permission to create bookings through the API.', 'events-manager' ), 403 );
 		}
-		$request_data = static::booking_request_data( $data, $EM_Booking );
+		// Let an add-on (Events Manager Pro) reshape the request data — e.g. map a structured booker `person` object onto the booking-form field names. Core books under the authenticated account, so it leaves the request data as-is.
+		$request_data = apply_filters( 'em_api_booking_request_data', static::booking_request_data( $data, $EM_Booking ), $data, $EM_Booking, $id );
 		$override_availability = !empty( $data['override_availability'] ) && current_user_can( 'manage_bookings' );
-		$result = Utils::with_request_data( $request_data, function() use ( $EM_Booking, $override_availability ) {
-			return $EM_Booking->get_post( $override_availability );
-		} );
-		if ( !$result || !$EM_Booking->validate( $override_availability ) ) {
-			return static::booking_invalid_error( $EM_Booking );
-		}
-		static::assign_booking_person( $EM_Booking, $data );
-		if ( !$EM_Booking->person_id && !empty( $EM_Booking->booking_meta['registration'] ) ) {
-			if ( empty( $EM_Booking->booking_meta['registration']['user_email'] ) || !is_email( $EM_Booking->booking_meta['registration']['user_email'] ) ) {
-				return Utils::error( 'em_api_booking_person_invalid', __( 'A valid guest email address is required for guest bookings.', 'events-manager' ), 400 );
+		// "Booking on behalf of someone else" — attributing a booking to a guest or another user instead of the authenticated account — is a Pro capability (it depends on Pro's manual-booking / custom-form machinery). Core never does it: it always books as the authenticated account. Pro opts a create in by returning true here, and core then flips EM_Bookings::$force_registration for the save cycle so the booking form reads the supplied booker details rather than the current user. The API add() path never calls em_booking_add_registration(), so this can't create a WordPress account on its own — it only steers the form's person resolution.
+		$force_registration = (bool) apply_filters( 'em_api_booking_force_registration', false, $EM_Booking, $data, $id );
+		// Run the whole get_post → validate → save cycle with the form-post environment in place. EM core and the Pro booking form re-read $_REQUEST during validate() and add()/save() (gateways, custom form fields, uploads), so the request data has to stay in $_REQUEST for the entire cycle, not just get_post().
+		$persist = function() use ( $EM_Booking, $data, $id, $override_availability ) {
+			if ( !$EM_Booking->get_post( $override_availability ) || !$EM_Booking->validate( $override_availability ) ) {
+				return static::booking_invalid_error( $EM_Booking );
 			}
+			// Extension point: an add-on (Pro) can assign an explicit booker here — a guest person or a different WP user — returning a WP_Error to abort (e.g. an invalid guest email). Core does nothing, leaving the booking attributed to the authenticated account.
+			$person_result = apply_filters( 'em_api_assign_booking_person', null, $EM_Booking, $data, $id );
+			if ( is_wp_error( $person_result ) ) {
+				return $person_result;
+			}
+			if ( !$id ) {
+				$saved = $EM_Booking->get_event()->get_bookings()->add( $EM_Booking );
+			} else {
+				$saved = $EM_Booking->save( !isset( $data['send_email'] ) || Utils::is_truthy( $data['send_email'] ) );
+			}
+			if ( !$saved ) {
+				return Utils::object_error( 'em_api_booking_save_failed', $EM_Booking, __( 'Booking could not be saved.', 'events-manager' ), 500 );
+			}
+			return true;
+		};
+		$result = Utils::with_request_data( $request_data, function() use ( $persist, $force_registration ) {
+			if ( !$force_registration ) {
+				return $persist();
+			}
+			$previous_force_registration = \EM_Bookings::$force_registration;
+			\EM_Bookings::$force_registration = true;
+			try {
+				return $persist();
+			} finally {
+				\EM_Bookings::$force_registration = $previous_force_registration;
+			}
+		} );
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
-		if ( !$id ) {
-			$result = $EM_Booking->get_event()->get_bookings()->add( $EM_Booking );
-		} else {
-			$result = $EM_Booking->save( !isset( $data['send_email'] ) || Utils::is_truthy( $data['send_email'] ) );
-		}
-		if ( !$result ) {
-			return Utils::object_error( 'em_api_booking_save_failed', $EM_Booking, __( 'Booking could not be saved.', 'events-manager' ), 500 );
-		}
+		static::enforce_explicit_booking_status( $EM_Booking, $data );
 		return static::prepare_booking( $EM_Booking, 'edit' );
+	}
+
+	/**
+	 * Honour an explicitly-requested `booking_status` after the booking is created/saved.
+	 *
+	 * On create, EM_Bookings::add() runs the gateway's post-create hook, which for the offline gateway forces the booking to status 5 (awaiting payment) — clobbering any booking_status the caller set through the $_POST contract. That's correct for a real customer checkout, but an admin seeding bookings (or confirming one) wants the status they asked for. So when the caller can manage bookings AND passed an explicit numeric booking_status that differs from where the gateway left it, re-apply it via set_status() (which runs after the gateway and is the canonical status-change path). No-op for non-managers (the field was already stripped in booking_request_data) and when no explicit status was given.
+	 */
+	protected static function enforce_explicit_booking_status( $EM_Booking, $data ) {
+		if ( !isset( $data['booking_status'] ) || !is_numeric( $data['booking_status'] ) || !$EM_Booking->can_manage() ) {
+			return;
+		}
+		$requested = absint( $data['booking_status'] );
+		if ( !array_key_exists( $requested, $EM_Booking->status_array ) || (int) $EM_Booking->booking_status === $requested ) {
+			return;
+		}
+		$send_email = isset( $data['send_email'] ) ? Utils::is_truthy( $data['send_email'] ) : false; // Seeding/admin status corrections default to silent — don't fire a status-change email unless the caller asks.
+		$EM_Booking->set_status( $requested, $send_email );
 	}
 
 	/**
@@ -1204,24 +1274,6 @@ class Service {
 		return static::apply_consent_to_request_data( $request, $data, 'booking' );
 	}
 
-	protected static function assign_booking_person( $EM_Booking, $data ) {
-		$can_assign_person = current_user_can( 'manage_bookings' ) || current_user_can( 'manage_others_bookings' );
-		if ( isset( $data['person_id'] ) && $can_assign_person ) {
-			$EM_Booking->person_id = absint( $data['person_id'] );
-		}
-		if ( ( !$EM_Booking->person_id || $can_assign_person ) && !empty( $data['person'] ) && is_array( $data['person'] ) ) {
-			if ( $can_assign_person || !is_user_logged_in() ) {
-				$EM_Booking->person_id = 0;
-				$EM_Booking->person = new \EM_Person( 0 );
-			}
-			$EM_Booking->booking_meta['registration'] = array_merge( $EM_Booking->booking_meta['registration'] ?? array(), array_filter( array(
-				'user_name' => !empty( $data['person']['name'] ) ? sanitize_text_field( $data['person']['name'] ) : null,
-				'user_email' => !empty( $data['person']['email'] ) ? sanitize_email( $data['person']['email'] ) : null,
-				'dbem_phone' => !empty( $data['person']['phone'] ) ? sanitize_text_field( $data['person']['phone'] ) : null,
-			) ) );
-		}
-	}
-
 	protected static function apply_consent_to_request_data( $request, $data, $context ) {
 		foreach ( static::get_consent_classes() as $class ) {
 			$options = $class::$options;
@@ -1235,27 +1287,6 @@ class Service {
 			}
 		}
 		return $request;
-	}
-
-	protected static function apply_consent_to_cpt( $EM_Object, $data ) {
-		$attributes = $EM_Object instanceof \EM_Event ? 'event_attributes' : ( $EM_Object instanceof \EM_Location ? 'location_attributes' : '' );
-		if ( !$attributes ) {
-			return;
-		}
-		foreach ( static::get_consent_classes() as $class ) {
-			$options = $class::$options;
-			if ( empty( $options['param'] ) || empty( $options['meta_key'] ) ) {
-				continue;
-			}
-			if ( array_key_exists( $options['param'], $data ) ) {
-				$consented = Utils::is_truthy( $data[ $options['param'] ] );
-			} else {
-				$consented = apply_filters( 'em_api_consent_default', true, $attributes === 'event_attributes' ? 'event' : 'location', $class, $data );
-			}
-			if ( $consented ) {
-				$EM_Object->{$attributes}[ '_' . $options['meta_key'] ] = 1;
-			}
-		}
 	}
 
 	/**
@@ -1274,9 +1305,6 @@ class Service {
 		if ( !current_user_can( 'upload_files' ) ) {
 			return Utils::error( 'em_api_media_forbidden', __( 'You do not have permission to upload media.', 'events-manager' ), 403 );
 		}
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		require_once ABSPATH . 'wp-admin/includes/media.php';
-		require_once ABSPATH . 'wp-admin/includes/image.php';
 		$attachment_id = static::resolve_attachment_id( $data );
 		if ( is_wp_error( $attachment_id ) ) return $attachment_id;
 		// Optional post-upload metadata.
@@ -1287,7 +1315,62 @@ class Service {
 		if ( !empty( $data['post_id'] ) ) $post_update['post_parent'] = absint( $data['post_id'] );
 		if ( count( $post_update ) > 1 ) wp_update_post( $post_update );
 		if ( isset( $data['alt_text'] ) ) update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( $data['alt_text'] ) );
-		return static::prepare_attachment( $attachment_id );
+		$response = static::prepare_attachment( $attachment_id );
+		// Optional one-call convenience: set this attachment as an event/location featured image (thumbnail), so the agent doesn't have to follow up with update-event/update-location just to wire the image. `post_id` above only sets post_parent (library organisation), never _thumbnail_id — this is the param that actually makes it the featured image.
+		list( $featured_set, $featured_warning ) = static::maybe_set_uploaded_featured_image( $attachment_id, $data );
+		if ( $featured_set ) {
+			$response['featured_image_set'] = $featured_set;
+		}
+		return static::with_warnings( $response, $featured_warning ? array( $featured_warning ) : array() );
+	}
+
+	/**
+	 * Handle the `featured_image_for_event` / `featured_image_for_location` convenience params on upload-media: set the freshly-uploaded attachment as that resource's featured image, capability-checked. Returns [ $confirmation|null, $warning|null ] — a confirmation array on success, or a warning (resource not found / no permission) so the caller learns the image uploaded fine but wasn't wired as featured, without failing the whole upload.
+	 */
+	protected static function maybe_set_uploaded_featured_image( $attachment_id, $data ) {
+		$event_id    = !empty( $data['featured_image_for_event'] ) ? $data['featured_image_for_event'] : 0;
+		$location_id = !empty( $data['featured_image_for_location'] ) ? $data['featured_image_for_location'] : 0;
+		if ( !$event_id && !$location_id ) {
+			return array( null, null );
+		}
+		if ( $event_id ) {
+			$EM_Event = em_get_event( $event_id );
+			if ( !$EM_Event || !$EM_Event->get_id() ) {
+				return array( null, static::featured_target_warning( 'featured_image_for_event', __( 'Event not found, so the uploaded image was not set as its featured image.', 'events-manager' ) ) );
+			}
+			if ( !$EM_Event->can_manage( 'edit_events', 'edit_others_events' ) ) {
+				return array( null, static::featured_target_warning( 'featured_image_for_event', __( 'You do not have permission to edit that event, so the uploaded image was not set as its featured image.', 'events-manager' ) ) );
+			}
+			set_post_thumbnail( $EM_Event->post_id, $attachment_id );
+			return array( array( 'event_id' => absint( $EM_Event->event_id ), 'post_id' => absint( $EM_Event->post_id ), 'attachment_id' => absint( $attachment_id ) ), null );
+		}
+		$EM_Location = em_get_location( $location_id );
+		if ( !$EM_Location || !$EM_Location->get_id() ) {
+			return array( null, static::featured_target_warning( 'featured_image_for_location', __( 'Location not found, so the uploaded image was not set as its featured image.', 'events-manager' ) ) );
+		}
+		if ( !$EM_Location->can_manage( 'edit_locations', 'edit_others_locations' ) ) {
+			return array( null, static::featured_target_warning( 'featured_image_for_location', __( 'You do not have permission to edit that location, so the uploaded image was not set as its featured image.', 'events-manager' ) ) );
+		}
+		set_post_thumbnail( $EM_Location->post_id, $attachment_id );
+		return array( array( 'location_id' => absint( $EM_Location->location_id ), 'post_id' => absint( $EM_Location->post_id ), 'attachment_id' => absint( $attachment_id ) ), null );
+	}
+
+	protected static function featured_target_warning( $field, $message ) {
+		return array(
+			'field'   => $field,
+			'code'    => 'em_api_featured_target_unavailable',
+			/* translators: %s: detail of why the image could not be set as featured */
+			'message' => sprintf( __( 'The image uploaded successfully but was not set as a featured image: %s The attachment ID is in this response — pass it to update-event/update-location `featured_image` once the target is editable.', 'events-manager' ), $message ),
+		);
+	}
+
+	/**
+	 * Load the WordPress media-handling includes (media_sideload_image, media_handle_sideload, media_handle_upload, wp_generate_attachment_metadata, …). These are wp-admin-only files not loaded during a front-end REST request, so any media path must pull them in first. Idempotent — require_once is cheap on repeat.
+	 */
+	protected static function load_media_functions() {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
 	}
 
 	/**
@@ -1296,6 +1379,8 @@ class Service {
 	 * @return int|\WP_Error
 	 */
 	protected static function resolve_attachment_id( $data ) {
+		// Ensure the WP media-handling functions are loaded. These live in wp-admin/includes and aren't present on a front-end REST request, so any path that sideloads/handles an upload (upload-media, but also featured_image / term image on event/location/term saves) must pull them in. Previously this require sat only inside upload_media(), so calling resolve_image_input() from save_event() fataled with "undefined function media_sideload_image()".
+		static::load_media_functions();
 		// Existing ID — caller's done the work.
 		if ( !empty( $data['id'] ) || !empty( $data['attachment_id'] ) ) {
 			$id = absint( $data['id'] ?? $data['attachment_id'] );

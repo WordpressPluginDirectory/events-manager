@@ -127,6 +127,7 @@ class EM_Admin_Notice {
 	}
 	
 	public function can_show(){
+		global $pagenow;
 		//check that we have at least a notice to show
 		if( empty($this->name) ) return false;
 		//can we display due to time?
@@ -152,10 +153,16 @@ class EM_Admin_Notice {
 				elseif( empty($_REQUEST['page']) && in_array($this->where, array(EM_POST_TYPE_EVENT, EM_POST_TYPE_LOCATION, 'event-recurring')) ) $return = true;
 				elseif( $this->where == 'settings' && !empty($_REQUEST['page']) && $_REQUEST['page'] == 'events-manager-options' ) $return = true;
 				elseif( !empty($_REQUEST['page']) && ($this->where == $_REQUEST['page'] || (is_array($this->where) && in_array($_REQUEST['page'], $this->where))) ) $return = true;
+				elseif ( $this->where === 'classic-editor' && $pagenow === 'post-new.php' ) $return = true;
 			}elseif( is_network_admin() && !empty($_REQUEST['page']) && preg_match('/^events\-manager\-/', $_REQUEST['page']) ){
 				$return = $this->where == 'plugin' || $this->where == 'settings' || $this->where == 'network_admin';
 			}elseif( !empty($_REQUEST['page']) && ($this->where == $_REQUEST['page'] || (is_array($this->where) && in_array($_REQUEST['page'], $this->where))) ){
 				$return = true;
+			}elseif( $this->where == 'classic-editor' && $pagenow === 'post.php' && ($_REQUEST['action'] ?? false) === 'edit' ){
+				$post_type = $_REQUEST['post_type'] ?? false;
+				if ( in_array( get_post_type($post_type), \EM\Archetypes::get_cpts() ) ) {
+					$return = true;
+				}
 			}
 		}
 		//does this even have a message we can display?

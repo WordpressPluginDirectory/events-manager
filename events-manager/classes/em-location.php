@@ -338,7 +338,12 @@ class EM_Location extends EM_Object {
 					if( (in_array($att_key, $location_available_attributes['names']) || array_key_exists($att_key, $this->location_attributes) ) ){
 						$att_vals = count($location_available_attributes['values'][$att_key]);
 						if( $att_vals == 0 || ($att_vals > 0 && in_array($att_value, $location_available_attributes['values'][$att_key])) ){
-							$this->location_attributes[$att_key] = wp_unslash($att_value);
+							// Same sanitization logic as event attributes: strip HTML for non-privileged users to prevent stored XSS via anonymous location submissions.
+							if( $att_vals == 0 && !current_user_can('unfiltered_html') ){
+								$this->location_attributes[$att_key] = wp_unslash(wp_kses($att_value, $allowedtags));
+							}else{
+								$this->location_attributes[$att_key] = wp_unslash($att_value);
+							}
 						}elseif($att_vals > 0){
 							$this->location_attributes[$att_key] = wp_unslash(wp_kses($location_available_attributes['values'][$att_key][0], $allowedtags));
 						}

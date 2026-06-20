@@ -7142,9 +7142,6 @@
   margin-top: -8px;
   transform: rotate(180deg);
 }
-.wp-admin .em .selectize-control.em-selectize:not(.always-open, .multidropdown) .selectize-input:not(.has-items) input, .wp-admin .em .selectize-control.em-selectize-autocomplete:not(.always-open, .multidropdown) .selectize-input:not(.has-items) input {
-  width: calc(100% - 40px) !important;
-}
 .wp-admin .em .selectize-control.em-selectize:not(.always-open, .multidropdown).selectize-control, .wp-admin .em .selectize-control.em-selectize-autocomplete:not(.always-open, .multidropdown).selectize-control {
   margin-bottom: 15px !important;
 }

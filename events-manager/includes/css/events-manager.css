@@ -1412,6 +1412,7 @@
 }
 .em.em-calendar .em-cal-body .em-cal-day {
   text-align: right;
+  /* The clicked/selected day gets a bold date number, in every calendar style */
   /* WP block style undo */
 }
 .em.em-calendar .em-cal-body .em-cal-day .em-cal-day-date {
@@ -1446,6 +1447,9 @@
   line-height: 18px;
   border-width: 2px !important;
   padding-top: 4px;
+}
+.em.em-calendar .em-cal-body .em-cal-day .em-cal-day-date.selected a, .em.em-calendar .em-cal-body .em-cal-day .em-cal-day-date.selected span {
+  font-weight: bold !important;
 }
 .em.em-calendar .em-cal-body .em-cal-day span.date-day-colors {
   display: none;
@@ -1729,7 +1733,7 @@
   display: none;
   visibility: hidden;
 }
-.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-today .em-cal-day-date a, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventless-today .em-cal-day-date a, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-today .em-cal-day-date a, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventless-today .em-cal-day-date a {
+.em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-today .em-cal-day-date a, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventful-today .em-cal-day-date span, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventless-today .em-cal-day-date a, .em.em-calendar.size-medium .em-cal-body .em-cal-day.eventless-today .em-cal-day-date span, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-today .em-cal-day-date a, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventful-today .em-cal-day-date span, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventless-today .em-cal-day-date a, .em.em-calendar.size-small .em-cal-body .em-cal-day.eventless-today .em-cal-day-date span {
   text-decoration: underline !important;
   text-underline-offset: 6px;
 }
@@ -2757,9 +2761,6 @@
 .em .selectize-control.em-selectize:not(.always-open, .multidropdown) .selectize-input.focus.dropdown-active:after, .em .selectize-control.em-selectize-autocomplete:not(.always-open, .multidropdown) .selectize-input.focus.dropdown-active:after {
   margin-top: -8px;
   transform: rotate(180deg);
-}
-.em .selectize-control.em-selectize:not(.always-open, .multidropdown) .selectize-input:not(.has-items) input, .em .selectize-control.em-selectize-autocomplete:not(.always-open, .multidropdown) .selectize-input:not(.has-items) input {
-  width: calc(100% - 40px) !important;
 }
 .em .selectize-control.em-selectize:not(.always-open, .multidropdown).selectize-control, .em .selectize-control.em-selectize-autocomplete:not(.always-open, .multidropdown).selectize-control {
   margin-bottom: 15px !important;
@@ -3914,7 +3915,7 @@
 }
 .em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslots-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 5px;
   text-align: center;
 }
@@ -3926,7 +3927,8 @@
   border-radius: 4px;
   transition: all 0.2s ease-in-out;
   line-height: 20px;
-  display: block;
+  display: grid;
+  gap: 4px;
 }
 .em .em-booking-timeslot-picker.mode-buttons .em-booking-timeslot.selected {
   border: 2px solid var(--accent-color) !important;
@@ -3984,7 +3986,7 @@
   width: 100%;
 }
 .em .em-booking-recurrence-picker.mode-calendar.size-small {
-  grid-template-columns: 1fr minmax(200px, auto);
+  grid-template-columns: 1fr minmax(200px, 1fr);
   align-items: start;
 }
 .em .em-booking-recurrence-picker.mode-calendar.size-small .em-view-container[data-view=calendar] {
@@ -4043,10 +4045,24 @@
   margin-bottom: 10px !important;
 }
 .em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences p.em-timezone {
-  margin: 0 0 10px !important;
-}
-.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences p.em-timezone .em-selectize {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   margin: 0 !important;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences p.em-timezone .selectize-input {
+  display: flex !important;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences p.em-timezone .selectize-input > input {
+  flex: 0 1 1px !important;
+}
+.em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences .em-booking-timeslots-list {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
 }
 .em .em-booking-recurrence-picker.mode-calendar .em-booking-recurrences .em-booking-recurrence {
   --accent-color: var(--text-color-softer);

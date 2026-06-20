@@ -273,6 +273,13 @@
 				}
 			}
 
+			/* The clicked/selected day gets a bold date number, in every calendar style */
+			.em-cal-day-date.selected {
+				a, span {
+					font-weight: bold !important;
+				}
+			}
+
 			span.date-day-colors {
 				display: none;
 				visibility: hidden;
@@ -672,7 +679,7 @@
 				}
 
 				&.eventful-today, &.eventless-today {
-					.em-cal-day-date a {
+					.em-cal-day-date a, .em-cal-day-date span {
 						text-decoration: underline !important;
 						text-underline-offset: 6px;
 					}

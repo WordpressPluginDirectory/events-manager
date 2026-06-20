@@ -735,7 +735,14 @@ class Recurrence_Set extends EM_Object {
 		// order
 		$this->recurrence_order = ( !empty($_DATA['recurrence_order']) && is_numeric($_DATA['recurrence_order']) ) ? (int) $_DATA['recurrence_order']:0;
 		// duration in days of each event
-		$this->recurrence_duration = ( !empty($_DATA['recurrence_duration']) && is_numeric($_DATA['recurrence_duration']) && $this->recurrence_type === 'include' ) ? (int) $_DATA['recurrence_duration']:null;
+		$old_duration = $this->recurrence_duration;
+		$new_duration = ( !empty($_DATA['recurrence_duration']) && is_numeric($_DATA['recurrence_duration']) && $this->recurrence_type === 'include' ) ? (int) $_DATA['recurrence_duration']:null;
+		$this->recurrence_duration = $new_duration;
+		// On an existing recurrence set, a duration change re-derives each parent event's end date in update_recurrence() but does NOT trigger timeslot regeneration on its own — the timeslot save path is gated on reschedule['times']/allow_edit, neither of which the duration field flips. Force a times-reschedule when the value actually changed so the existing update_recurrence() path rewrites stale timeslot_end values that were anchored to the previous duration.
+		if ( $this->recurrence_set_id && (int) $old_duration !== (int) $new_duration ) {
+			$this->reschedule['times'] = true;
+			$this->get_timeranges()->allow_edit = true;
+		}
 		// Sort out event times
 		if ( $this->has_reschedule('times') ) {
 			if ( !empty($_DATA['override_time']) || $this->is_primary() ) {

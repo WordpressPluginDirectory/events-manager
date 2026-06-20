@@ -744,6 +744,18 @@ function em_add_options() {
 		'dbem_event_cancelled_email_body' => str_replace("<br/>", "\n\r", $respondent_email_event_cancelled),
 		'dbem_event_cancelled_bookings' => !$already_installed,
 		'dbem_event_cancelled_bookings_email' => !$already_installed,
+		// EU right of withdrawal (Widerrufsbutton / § 356a BGB) — opt-in and off by default, since fixed-date events are exempt from the right of withdrawal. Label and email defaults are intentionally left empty: EM_Withdrawal supplies locale-aware defaults at read time so the feature reads correctly even without .po coverage.
+		'dbem_eu_withdrawal_enabled' => false,
+		'dbem_eu_withdrawal_period_days' => 14,
+		'dbem_eu_withdrawal_page' => 0,
+		'dbem_eu_withdrawal_footer_link' => true,
+		'dbem_eu_withdrawal_label_button' => '',
+		'dbem_eu_withdrawal_label_confirm' => '',
+		'dbem_eu_withdrawal_label_heading' => '',
+		'dbem_eu_withdrawal_email_subject' => '',
+		'dbem_eu_withdrawal_email_body' => '',
+		'dbem_eu_withdrawal_admin_email' => '',
+		'dbem_eu_withdrawal_policy' => '',
 		//Tags Page Formatting
 		'dbem_tags_list_item_format_header' => EM_Formats::dbem_tags_list_item_format_header(''),
 		'dbem_tags_list_item_format' => EM_Formats::dbem_tags_list_item_format(''),
@@ -835,7 +847,7 @@ function em_add_options() {
 		'dbem_calendar_preview_tooltip_event_format' => EM_Formats::dbem_calendar_preview_tooltip_event_format(''),
 		'dbem_calendar_large_pill_format' => '#_12HSTARTTIME - #_EVENTLINK',
 		//General Settings
-		'dbem_editor' => get_option('dbem_version', false) === false ? 'gutenberg' : 'classic', //fresh installs get block editor, upgrades stay on classic
+		'dbem_editor' => 'classic', // go classic for now
 		'dbem_timezone_enabled' => 1,
 		'dbem_timezone_default' => EM_DateTimeZone::create()->getName(),
 		'dbem_require_location' => 0,
@@ -889,6 +901,13 @@ function em_add_options() {
 			// Timeslot stuff
 			'dbem_bookings_header_timeslots' => esc_html__('Select a time', 'events-manager'),
 			'dbem_bookings_timeslots_timezone_picker' => 0,
+			'dbem_bookings_timeslots_show_unavailable' => 0,
+			'dbem_bookings_timeslots_show_spaces' => 1,
+			'dbem_bookings_timeslots_show_dates' => 1,
+			'dbem_bookings_timeslots_show_upcoming' => 1,
+			'dbem_bookings_timeslots_upcoming_limit' => 3,
+			'dbem_bookings_timeslots_date_format' => '',
+			'dbem_bookings_timeslots_time_format' => '',
 			//Messages
 			'dbem_bookings_form_msg_disabled' => __('Online bookings are not available for this event.','events-manager'),
 			'dbem_bookings_form_msg_closed' => __('Bookings are closed for this event.','events-manager'),
@@ -1148,13 +1167,11 @@ function em_upgrade_current_installation(){
 		$data['admin-modals']['review-nudge'] = time() + (DAY_IN_SECONDS * 14);
 		update_site_option('dbem_data', $data);
 	}
-	// promo - lt
-	if( ( version_compare($current_version, '7.2.2', '<') || !empty($data['admin-modals']['review-nudge']) )  ) {
-		//$EM_Admin_Notice = new EM_Admin_Notice(array( 'name' => 'promo-popup', 'who' => 'admin', 'where' => 'all', 'raw_output' => true ));
-		//EM_Admin_Notices::add($EM_Admin_Notice, is_multisite());
-		if(  empty($data['admin-modals'])  )  $data['admin-modals']  =  array();
-		$data['admin-modals']['promo-popup']  =  true;
-		update_site_option('dbem_data',  $data);
+	// temp promo
+	if( time() < 1781506800 && ( version_compare($current_version, '7.3.5', '<') || !empty($data['admin-modals']['review-nudge']) ) ) {
+		if( empty($data['admin-modals']) ) $data['admin-modals'] = array();
+		$data['admin-modals']['promo-popup'] = true;
+		update_site_option('dbem_data', $data);
 	}
 
 	// Check EM Pro update min
@@ -1979,6 +1996,15 @@ function em_upgrade_current_installation(){
 				$map_balloon = str_replace( ['<strong>#_LOCATIONNAME</strong><br />', '<strong>#_LOCATIONNAME</strong>'], '', $map_balloon );
 				update_option($opt, $map_balloon);
 			}
+		}
+		if ( version_compare( $current_version, '7.3.5', '<' ) ) {
+			// reset editor to classic mode, leave a one-shot notification on editor page so people know about it
+			update_option('dbem_editor', 'classic');
+			$message = sprintf( __('Want to use the block editor? You can now enable this on your %s page.', 'events-manager'), '<a href="'. EM_ADMIN_URL .'&amp;page=events-manager-options#general+general' .'">'. __('Settings', 'events-manager') .'</a>' );
+			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'editor-update', 'who' => 'admin', 'what' => 'success', 'where' => 'classic-editor', 'message' => $message )), is_multisite());
+			// notify
+			$message = 'Connect Events Manager to your favourite AI in just a few clicks via MCP! See our <a href="https://wp-events-plugin.com/blog/2026/06/10/events-manager-ai-mcp/">latest announcement</a> for more information.';
+			EM_Admin_Notices::add(new EM_Admin_Notice(array( 'name' => 'v-update', 'who' => 'admin', 'what' => 'success', 'where' => 'all', 'message' => $message )), is_multisite());
 		}
 		$pro_update = function() {
 			if ( defined('EMP_VERSION') && version_compare( EMP_VERSION, '3.7.2', '<' ) ) {

@@ -32,11 +32,6 @@
 					transform: rotate(180deg);
 				}
 			}
-			&:not(.has-items) {
-				input {
-					width: calc(100% - 40px) !important;
-				}
-			}
 		}
 		&.selectize-control {
 			margin-bottom: 15px !important; // mimick pixelbones select

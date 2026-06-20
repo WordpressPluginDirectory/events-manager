@@ -26,7 +26,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { dispatch, select } from '@wordpress/data';
+import { dispatch, select, subscribe } from '@wordpress/data';
 import domReady from '@wordpress/dom-ready';
 
 const NOTICE_ID    = 'em-validation';
@@ -116,13 +116,32 @@ function serialiseClassicForm() {
 	// Last-resort fallback so we never silently miss inputs.
 	containers.push( document.body );
 
+	// Also read from the em/event-when canvas block inside the editor iframe.
+	// Gutenberg 6.6+ renders block content in iframe[name="editor-canvas"], so
+	// document.querySelector can't reach it. The canvas block has the user's
+	// current (live, non-disabled) values and is the authoritative source for
+	// date/time/recurrence data when it is present.
+	const editorFrame = document.querySelector( 'iframe[name="editor-canvas"]' );
+	const canvasBlock = editorFrame?.contentDocument?.querySelector( '.em-event-when-block' );
+	if ( canvasBlock ) {
+		containers.push( canvasBlock );
+		dbg( 'container .em-event-when-block (iframe) FOUND' );
+	}
+
 	const seen = new Set();
 	const params = new URLSearchParams();
 	const debugFields = [];
 
 	for ( const root of containers ) {
 		const fields = root.querySelectorAll(
-			'input[name]:not([disabled]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]), select[name]:not([disabled]), textarea[name]:not([disabled])'
+			// Disabled fields are intentionally included: saved recurring events
+			// disable their primary recurrence inputs in the classic metabox HTML,
+			// causing `:not([disabled])` to silently drop the times and trigger a
+			// false "Main recurrence set times are required" validation error on
+			// second save. The canvas block always has enabled inputs (it re-fetches
+			// fresh HTML each load), so including disabled fields here is harmless
+			// when the canvas is the container, and necessary for the metabox fallback.
+			'input[name]:not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]), select[name], textarea[name]'
 		);
 
 		for ( const el of fields ) {
@@ -285,6 +304,10 @@ function onPublishClick( e ) {
 					editor.editPost( { status: 'publish' } );
 				}
 
+				// Mirror canvas-block inputs to hidden metaboxes before the
+				// meta-box-loader POST serialises them.
+				syncAllCanvasToMetabox();
+
 				editor.savePost();
 				return;
 			}
@@ -323,9 +346,261 @@ function onPublishClick( e ) {
 				),
 				{ id: NOTICE_ID, isDismissible: true }
 			);
+			syncAllCanvasToMetabox();
 			editor.unlockPostSaving( LOCK_KEY );
 			editor.savePost();
 		} );
+}
+
+/* -----------------------------------------------------------------
+ * Post-save metabox reload.
+ *
+ * Gutenberg mounts the classic-metabox HTML exactly once, on initial editor
+ * load, and never re-renders it from the server afterwards — on each save it
+ * only POSTs the metabox forms to the meta-box-loader endpoint to PERSIST them,
+ * then discards the (refreshed) HTML the server returns. EM's metaboxes are
+ * stateful in ways the DOM therefore never learns about after that first mount:
+ * the server mints record IDs and per-record nonces during the save that the
+ * frozen form never receives.
+ *
+ * The sharp edge is recurring events. A brand-new recurring event's recurrence
+ * form renders with an empty recurrence_set_id and its pattern fields enabled.
+ * The first save creates the recurrence set server-side and assigns it an id —
+ * but the DOM form still shows the empty id. On the NEXT save EM reads that
+ * stale form, treats the empty-id row as a brand-new set (creating a duplicate
+ * alongside the real one), and validation rejects it with "Main recurrence set
+ * times are required." From the user's seat: create a repeating event, save, try
+ * to save again → validation errors out of nowhere.
+ *
+ * Fix: after a save (and its metabox-loader follow-up) completes, re-fetch the
+ * rendered metabox HTML from the exact endpoint WordPress itself uses on initial
+ * mount (window._wpMetaBoxUrl) and swap the .inside of every EM postbox, then
+ * re-run EM's UI initialisation so Selectize / flatpickr / timepickers rebind to
+ * the fresh nodes. This gives every EM metabox the post-save recurrence_set_id,
+ * record ids and nonces — exactly what a classic-editor page reload would.
+ * ----------------------------------------------------------------- */
+
+/**
+ * Mirror every named input from the em/event-when canvas block into the hidden
+ * classic metaboxes so Gutenberg's meta-box-loader POST serialises the values
+ * the user actually edited. Called right before editor.savePost().
+ *
+ * For inputs that already exist in the metabox: copy the value (and un-disable
+ * if needed, inserting a shadow hidden input). For inputs that don't exist yet
+ * (e.g. a newly-added recurrence set): append a hidden input to the appropriate
+ * metabox .inside so it ends up in the serialised form.
+ */
+function syncAllCanvasToMetabox() {
+	// The canvas block renders inside iframe[name="editor-canvas"] in Gutenberg
+	// 6.6+. document.querySelector can't reach across document boundaries, so we
+	// must look inside the iframe's contentDocument explicitly.
+	const editorFrame = document.querySelector( 'iframe[name="editor-canvas"]' );
+	const canvas = editorFrame?.contentDocument?.querySelector( '.em-event-when-block' )
+	               || document.querySelector( '.em-event-when-block' ); // fallback: non-iframed context
+	if ( ! canvas ) {
+		return;
+	}
+
+	canvas.querySelectorAll( 'input[name], select[name], textarea[name]' ).forEach( ( input ) => {
+		const name = input.name;
+		if ( ! name ) {
+			return;
+		}
+		// Skip non-data controls.
+		if ( input.type === 'submit' || input.type === 'button' || input.type === 'reset' || input.type === 'file' ) {
+			return;
+		}
+		// Unchecked checkboxes/radios don't submit — skip them.
+		if ( ( input.type === 'checkbox' || input.type === 'radio' ) && ! input.checked ) {
+			return;
+		}
+
+		const escaped = CSS.escape( name );
+		const existing = document.querySelector(
+			`#em-event-when [name="${ escaped }"], #em-event-recurring [name="${ escaped }"]`
+		);
+
+		const getValue = ( el ) => {
+			if ( el.type === 'checkbox' || el.type === 'radio' ) {
+				return el.checked ? el.value : null;
+			}
+			if ( el.tagName === 'SELECT' && el.multiple ) {
+				return Array.from( el.selectedOptions ).map( ( o ) => o.value );
+			}
+			return el.value;
+		};
+
+		const val = getValue( input );
+
+		if ( existing ) {
+			if ( existing.type === 'checkbox' || existing.type === 'radio' ) {
+				existing.checked = input.checked;
+			} else if ( Array.isArray( val ) ) {
+				Array.from( existing.options || [] ).forEach( ( opt ) => {
+					opt.selected = val.includes( opt.value );
+				} );
+			} else {
+				existing.value = val ?? '';
+			}
+			// If canvas field is enabled but metabox field is disabled, the
+			// serialiser skips it. Shadow it with an enabled hidden input.
+			if ( ! input.disabled && existing.disabled ) {
+				const shadow = document.createElement( 'input' );
+				shadow.type  = 'hidden';
+				shadow.name  = name;
+				shadow.value = Array.isArray( val ) ? val.join( ',' ) : ( val ?? '' );
+				existing.insertAdjacentElement( 'afterend', shadow );
+			}
+		} else {
+			// New input not present in the hidden metabox (e.g. dynamically
+			// added recurrence set). Append a hidden copy so it gets POSTed.
+			const targetInside = /^recurrences/.test( name )
+				? document.querySelector( '#em-event-recurring .inside' )
+				: document.querySelector( '#em-event-when .inside' );
+			if ( targetInside ) {
+				const hidden = document.createElement( 'input' );
+				hidden.type  = 'hidden';
+				hidden.name  = name;
+				hidden.value = Array.isArray( val ) ? val.join( ',' ) : ( val ?? '' );
+				targetInside.appendChild( hidden );
+			}
+		}
+	} );
+
+	dbg( 'canvas → metabox sync complete' );
+}
+
+/**
+ * Insert the em/event-when block at position 0 if it isn't already in the post.
+ * Retries up to ~5 seconds to allow Gutenberg's block-editor store to populate.
+ * Called once on domReady.
+ */
+function ensureWhenBlock() {
+	if ( ! isEMPostType() ) {
+		return;
+	}
+
+	const MAX_ATTEMPTS = 25;
+	let attempts = 0;
+
+	const tryInsert = () => {
+		attempts++;
+
+		const blockEditorSelect = select( 'core/block-editor' );
+		if ( ! blockEditorSelect || typeof blockEditorSelect.getBlocks !== 'function' ) {
+			if ( attempts < MAX_ATTEMPTS ) {
+				setTimeout( tryInsert, 200 );
+			}
+			return;
+		}
+
+		const existing = blockEditorSelect.getBlocks().find( ( b ) => b.name === 'em/event-when' );
+		if ( existing ) {
+			return; // already present
+		}
+
+		const createBlock = window.wp?.blocks?.createBlock;
+		if ( ! createBlock ) {
+			return;
+		}
+
+		const block = createBlock( 'em/event-when' );
+		// Lock: prevent the user from accidentally removing or moving the block.
+		block.attributes = { ...block.attributes, lock: { move: true, remove: true } };
+
+		dispatch( 'core/block-editor' ).insertBlocks( block, 0 );
+		dbg( 'em/event-when block injected at position 0' );
+	};
+
+	setTimeout( tryInsert, 300 );
+}
+
+let emMetaBoxReloadInFlight = false;
+
+function reloadEMMetaBoxes() {
+	const url = typeof window !== 'undefined' ? window._wpMetaBoxUrl : null;
+	if ( ! url || emMetaBoxReloadInFlight ) {
+		return;
+	}
+	const liveBoxes = document.querySelectorAll( '.postbox[id^="em-"]' );
+	if ( ! liveBoxes.length ) {
+		return;
+	}
+
+	emMetaBoxReloadInFlight = true;
+	dbg( 'reloading EM metaboxes from', url.replace( /nonce=[^&]+/i, 'nonce=***' ) );
+
+	fetch( url, { credentials: 'same-origin' } )
+		.then( ( r ) => r.text() )
+		.then( ( html ) => {
+			const doc = new DOMParser().parseFromString( html, 'text/html' );
+			let swapped = 0;
+			liveBoxes.forEach( ( box ) => {
+				const fresh = doc.getElementById( box.id );
+				const liveInside = box.querySelector( '.inside' );
+				const freshInside = fresh && fresh.querySelector( '.inside' );
+				if ( ! liveInside || ! freshInside ) {
+					return;
+				}
+				// Tear down JS-driven widgets (Selectize, flatpickr, tippy) bound
+				// to the old nodes so we don't leak detached instances, then swap
+				// in the server-fresh markup and re-initialise.
+				if ( typeof window.em_unsetup_ui_elements === 'function' ) {
+					try { window.em_unsetup_ui_elements( liveInside ); } catch ( e ) { dbg( 'unsetup failed', box.id, e ); }
+				}
+				liveInside.innerHTML = freshInside.innerHTML;
+				if ( typeof window.em_setup_ui_elements === 'function' ) {
+					try { window.em_setup_ui_elements( liveInside ); } catch ( e ) { dbg( 'setup failed', box.id, e ); }
+				}
+				swapped++;
+			} );
+			// The swap rebuilt the recurrence form, so re-apply the visibility
+			// class the hide rule keys on (see syncRecurringMetabox()).
+			syncRecurringMetabox();
+			// Also reload the canvas block — it renders the same metabox HTML
+			// inline and needs fresh nonces/record-ids after each save.
+			if ( typeof window.emReloadWhenBlock === 'function' ) {
+				window.emReloadWhenBlock();
+			}
+			dbg( 'EM metaboxes reloaded:', swapped );
+		} )
+		.catch( ( e ) => dbg( 'metabox reload failed', e ) )
+		.finally( () => {
+			emMetaBoxReloadInFlight = false;
+		} );
+}
+
+/**
+ * Watch the save lifecycle and reload EM metaboxes each time the metabox-save
+ * phase finishes. isSavingMetaBoxes() is the LAST step of a Gutenberg save (it
+ * fires after the REST post save, once per real save — never on autosaves), so
+ * its true→false transition is the precise moment the server has persisted the
+ * EM meta and the freshly-rendered HTML is worth re-fetching.
+ */
+function watchSavesForMetaBoxReload() {
+	const editorRO = select( 'core/editor' );
+	if ( ! editorRO ) {
+		return;
+	}
+	// isSavingMetaBoxes lives on core/edit-post (the metabox machinery is part
+	// of the post editor, not the generic editor store).
+	const metaBoxesSavingFn = () => {
+		const editPost = select( 'core/edit-post' );
+		return !! ( editPost && typeof editPost.isSavingMetaBoxes === 'function' && editPost.isSavingMetaBoxes() );
+	};
+
+	let wasSavingMetaBoxes = false;
+	subscribe( () => {
+		if ( ! isEMPostType() ) {
+			return;
+		}
+		const saving = metaBoxesSavingFn();
+		if ( wasSavingMetaBoxes && ! saving ) {
+			// Metabox persistence just finished — pull the fresh server state in.
+			reloadEMMetaBoxes();
+		}
+		wasSavingMetaBoxes = saving;
+	} );
 }
 
 domReady( () => {
@@ -335,6 +610,15 @@ domReady( () => {
 
 	// Recurring metabox visibility sync — see syncRecurringMetabox().
 	startRecurringMetaboxSync();
+
+	// Reload EM metaboxes after each save so stateful forms (recurrences,
+	// tickets, bookings) pick up server-assigned ids and fresh nonces.
+	watchSavesForMetaBoxReload();
+
+	// Ensure the em/event-when canvas block is present in every EM event editor.
+	// For new events: the CPT template handles it. For existing events (saved
+	// before this feature existed) the block is missing — inject it here.
+	ensureWhenBlock();
 } );
 
 /**

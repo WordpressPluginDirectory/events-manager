@@ -391,7 +391,7 @@ $limit $offset
 		    }
 		}
 		//private locations
-		if( empty($args['private']) ){
+		if( empty($args['private']) || !current_user_can('read_private_locations') ){
 			$conditions['private'] = "(`location_private`=0)";
 		}elseif( !empty($args['private_only']) ){
 			$conditions['private_only'] = "(`location_private`=1)";
