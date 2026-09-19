@@ -17,18 +17,38 @@ function em_admin_actions_bookings() {
 add_action('admin_init','em_admin_actions_bookings',100);
 
 /**
+ * Whether a bookings admin action names a hook Events Manager already owns in the em_bookings_* namespace.
+ *
+ * Matched on prefix: that namespace also carries the booking lifecycle (em_bookings_add, em_bookings_deleted) and the admin templates (em_bookings_admin_*, em_bookings_table_*), whose listeners are called with arguments an admin action has none of.
+ *
+ * @param string $action Sanitized action name.
+ * @return bool
+ */
+function em_bookings_admin_action_is_reserved( $action ){
+	$reserved = array( 'add', 'admin_', 'build_sql_', 'dashboard', 'delete', 'event_', 'get', 'has_', 'is_', 'load', 'pending_count', 'person_', 'single_', 'sql_', 'table', 'ticket_' );
+	foreach( $reserved as $prefix ){
+		if( strpos( $action, $prefix ) === 0 ) return true;
+	}
+	return false;
+}
+
+/**
  * Decide what content to show in the bookings section. 
  */
 function em_bookings_page(){
 	//First any actions take priority
 	do_action('em_bookings_admin_page');
 	if( !empty($_REQUEST['_wpnonce']) ){ $_REQUEST['_wpnonce'] = $_GET['_wpnonce'] = $_POST['_wpnonce'] = esc_attr($_REQUEST['_wpnonce']); } //XSS fix just in case here too
-	if( !empty($_REQUEST['action']) && substr($_REQUEST['action'],0,7) != 'booking' && $_REQUEST['action'] !== 'em_bookings_table' ){ //actions not starting with booking_
+	$action = !empty($_REQUEST['action']) ? sanitize_key($_REQUEST['action']) : '';
+	if( $action !== '' && substr($action,0,7) != 'booking' && $action !== 'em_bookings_table' ){ //actions not starting with booking_
 		?>
-		<div class="wrap em-bookings-admin-custom-<?php esc_attr($_REQUEST['action']); ?> <?php em_template_classes('bookings-admin'); ?>">
+		<div class="wrap em-bookings-admin-custom-<?php echo esc_attr($action); ?> <?php em_template_classes('bookings-admin'); ?>">
 			<div class="input">
 			<?php
-			do_action('em_bookings_'.$_REQUEST['action']);
+			do_action('em_bookings_admin_action_'.$action, $action);
+			if( !em_bookings_admin_action_is_reserved($action) ){
+				do_action('em_bookings_'.$action); //deprecated by the hook above, kept one release so custom actions registered on this name keep working
+			}
 			?>
 			</div>
 		</div>
@@ -714,14 +734,7 @@ function em_bookings_single(){
  */
 function em_bookings_person(){	
 	global $EM_Person, $EM_Notices;
-	$EM_Person->get_bookings();
-	$has_booking = false;
-	foreach($EM_Person->get_bookings() as $EM_Booking){
-		if($EM_Booking->can_manage('manage_bookings','manage_others_bookings')){
-			$has_booking = true;
-		}
-	}
-	if( !$has_booking && !current_user_can('manage_others_bookings') ){
+	if( !$EM_Person->can_manage_bookings() ){
 		?>
 		<div class="wrap <?php em_template_classes('bookings-admin'); ?>">
 			<h2><?php esc_html_e('Unauthorized Access','events-manager'); ?></h2>

@@ -11,7 +11,7 @@ if( EMP_VERSION < 2.377 && (!defined('EMP_2376_FIXED') || !EMP_2376_FIXED) ){
 		?>
 		<div class="error">
 			<p>Due to some inevitable changes to some code in Events Manager, it is necessary to use Pro 2.3.7.7 or later. We have disabled the Pro plugin as a safety precaution.</p>
-			<p><a href="http://wp-events-plugin.com/blog/2014/04/15/important-changes-to-5-5-3-and-pro-2-3-8-versions/">Click here for detailed information about this change</a>, which includes some simple instructions for fixing older versions of Pro without requiring an update. </p>
+			<p><a href="https://wp-events-plugin.com/blog/2014/04/15/important-changes-to-5-5-3-and-pro-2-3-8-versions/">Click here for detailed information about this change</a>, which includes some simple instructions for fixing older versions of Pro without requiring an update. </p>
 			<p><?php echo EM_COMPAT_MESSAGE_BE_GONE; ?></p>
 		</div>
 		<?php

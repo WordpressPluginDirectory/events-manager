@@ -71,10 +71,19 @@ function em_setup_datepicker( container ){
 	let datePickerDivs = wrap.find('.em-datepicker, .em-datepicker-range');
 	if( datePickerDivs.length > 0 ){
 		// wrappers and locale
-		let datepicker_wrapper = jQuery('#em-flatpickr');
-		if( datepicker_wrapper.length === 0 ){
-			datepicker_wrapper = jQuery('<div class="em pixelbones em-flatpickr" id="em-flatpickr"></div>').appendTo('body');
+		// flatpickr appends its calendar to this wrapper; create it in the SAME document as
+		// the container so calendars for inputs inside the Gutenberg editor-canvas iframe
+		// render in the iframe, not the parent (where they'd be invisible / mispositioned).
+		// In the classic editor container.ownerDocument === document, so behaviour is unchanged.
+		let containerDoc = ( container && container.ownerDocument ) || document;
+		let wrapperEl = containerDoc.getElementById('em-flatpickr');
+		if( ! wrapperEl ){
+			wrapperEl = containerDoc.createElement('div');
+			wrapperEl.className = 'em pixelbones em-flatpickr';
+			wrapperEl.id = 'em-flatpickr';
+			containerDoc.body.appendChild( wrapperEl );
 		}
+		let datepicker_wrapper = jQuery( wrapperEl );
 		// locale
 		if( 'locale' in EM.datepicker ){
 			flatpickr.localize(flatpickr.l10ns[EM.datepicker.locale]);

@@ -10,7 +10,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 
 		recurrenceSets.dispatchEvent( new CustomEvent('setAdvancedDefaults') );
 
-		let eventType = recurrenceSets.closest('form').querySelector('input[name="event_type"]')?.value;
+		let eventType = emRecurrenceFormRoot( recurrenceSets ).querySelector('input[name="event_type"]')?.value;
 
 		// Add change handlers for selectize dropdowns in first recurrence set
 		// track selectize changes assuming recurrences are enabled
@@ -29,7 +29,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 				let recurrenceField = firstRecurrenceSet.querySelector(recurrenceSelector);
 
 				// Find the corresponding event field
-				let eventFormWhen = recurrenceSets.closest('form').querySelector('.event-form-when');
+				let eventFormWhen = emRecurrenceFormRoot( recurrenceSets ).querySelector('.event-form-when');
 				let eventField = eventFormWhen?.querySelector(eventSelector);
 
 				if ( recurrenceField && eventField ) {

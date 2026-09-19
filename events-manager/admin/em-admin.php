@@ -12,7 +12,7 @@ function em_admin_menu(){
 			$bookings_num = '';
 			$bookings_pending_count = apply_filters('em_bookings_pending_count',0);
 			if( em_get_option('dbem_bookings_approval') == 1){
-				$bookings_pending_count += EM_Bookings::count(array('status'=>'0', 'blog'=>get_current_blog_id()));
+				$bookings_pending_count += EM_Bookings::count(array('status'=>'0', 'blog'=>get_current_blog_id(), 'event_archetype'=>EM_Bookings_Table::get_archetype_search()));
 			}
 			if($bookings_pending_count > 0){
 				$bookings_num = '<span class="update-plugins count-'.$bookings_pending_count.'"><span class="plugin-count">'.$bookings_pending_count.'</span></span>';
@@ -46,7 +46,8 @@ function em_admin_menu(){
 		$plugin_pages['help'] = add_submenu_page('edit.php?post_type='.$post_type, __('Getting Help for Events Manager','events-manager'),__('Help','events-manager'), 'manage_options', "events-manager-help", 'em_admin_help_page');
 		//If multisite global with locations set to be saved in main blogs we can force locations to be created on the main blog only
 		if( EM_MS_GLOBAL && !is_main_site() && get_site_option('dbem_ms_mainblog_locations') ){
-			include( dirname(__FILE__)."/em-ms-locations.php" );
+			// include_once: em_admin_menu() builds menus inside a foreach over event archetypes, so a plain include would redeclare em_admin_ms_locations() on the second CPT (fatal on MS-global subsites). The function only needs defining once.
+			include_once( dirname(__FILE__)."/em-ms-locations.php" );
 			$plugin_pages['locations'] = add_submenu_page('edit.php?post_type='.$post_type, __('Locations','events-manager'),__('Locations','events-manager'), 'read_others_locations', "locations", 'em_admin_ms_locations');
 		}
 		if ( $post_type === Archetypes::$event['cpt'] ) {
@@ -215,59 +216,6 @@ function em_plugin_action_links($actions, $file, $plugin_data) {
 	return $new_actions;
 }
 add_filter( 'plugin_action_links_events-manager/events-manager.php', 'em_plugin_action_links', 10, 3 );
-
-//Updates and Dev versions
-function em_updates_check( $transient ) {
-    // Check if the transient contains the 'checked' information
-    if( empty( $transient->checked ) )
-        return $transient;
-        
-    //only bother if we're checking for dev versions
-    if( em_get_option('em_check_dev_version') || em_get_option('dbem_pro_dev_updates') ){     
-	    //check WP repo for trunk version, other EM-related plugins on .org can hook here to make the best of our admin setting option
-	    $plugins = apply_filters('em_org_dev_versions', array(
-	    	'events-manager'=> array(
-	    		'slug' => EM_SLUG,
-			    'version' => EM_VERSION
-		    )
-		));
-	    foreach( $plugins as $org_slug => $plugin_info ) {
-		    $request = wp_remote_get('https://plugins.svn.wordpress.org/'.$org_slug.'/trunk/'.$org_slug.'.php');
-		    $wp_slug = $plugin_info['slug'];
-		    if( empty($transient->checked[$wp_slug]) ){
-			    $transient->checked[$wp_slug] = !empty($plugin_info['version']) ? $plugin_info['version'] : 0;
-		    }
-		    if (!is_wp_error($request)) {
-			    preg_match('/Version: ([0-9a-z\.]+)/', $request['body'], $matches);
-			
-			    if (!empty($matches[1])) {
-				    //we have a version number!
-				    $response = new stdClass();
-				    $response->slug = $wp_slug;
-				    $response->new_version = $matches[1];
-				    $response->url = 'http://wordpress.org/extend/plugins/'.$org_slug.'/';
-				    $response->package = 'http://downloads.wordpress.org/plugin/'.$org_slug.'.zip';
-				    $icon_test = wp_remote_get('https://ps.w.org/'.$org_slug.'/assets/icon-128x128.png');
-				    if( !is_wp_error($icon_test) && $icon_test['response']['code'] == 200 ){
-					    $response->icons = array(
-					        '1x' => 'https://ps.w.org/'.$org_slug.'/assets/icon-128x128.png',
-					        '2x' => 'https://ps.w.org/'.$org_slug.'/assets/icon-256x256.png'
-					    );
-					}
-				    if ( version_compare($transient->checked[$wp_slug], $matches[1]) < 0) {
-					    $transient->response[$wp_slug] = $response;
-				    }else{
-					    $transient->no_update[$wp_slug] = $response;
-				    }
-			    }
-		    }
-	    }
-		delete_option('em_check_dev_version');
-    }
-    
-    return $transient;
-}
-add_filter('pre_set_site_transient_update_plugins', 'em_updates_check', 100); // Hook into the plugin update check and mod for dev version
 
 function em_user_action_links( $actions, $user ){
 	if ( !is_network_admin() && current_user_can( 'manage_others_bookings' ) ){

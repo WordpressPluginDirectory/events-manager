@@ -1,6 +1,6 @@
 /*!
  * EM Uploader 1.0
- * Copyright 2025, Pixelite SL
+ * Copyright 2026, Pixelite SL
  * Licensed under GPLv2, https://opensource.org/license/gpl-2-0
  * Please visit https://wp-events-plugin.com for details.
  */

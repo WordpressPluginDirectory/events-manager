@@ -432,6 +432,9 @@ class Archetypes {
 		if ( empty($type['rewrite']) ) {
 			$archetype['rewrite'] = [ 'slug' => $archetype['slug'], 'with_front' => false ];
 		}
+		if ( !isset( $archetype['taxonomies'] ) || $archetype['taxonomies'] === '' ) {
+			$archetype['taxonomies'] = [];
+		}
 		// return final post type of archetype
 		return $archetype;
 	}
@@ -560,34 +563,32 @@ class Archetypes {
 				$c = static::map_meta_cap_type( $c, $archetype );
 			}
 
-			if ( !empty( $c['read'][$post->post_type] ) || !empty( $c['edit'][$post->post_type] ) || !empty( $c['delete'][$post->post_type] ) ) {
-				/* Set an empty array for the caps. */
+			// Only reset $caps when the requested capability is one of our archetype meta caps for this post type. Resetting on any object-carrying cap emptied the requirement list for unrelated caps (e.g. edit_user, promote_user), which reads as allow.
+			if ( !empty( $c['read'][$post->post_type] ) && $c['read'][$post->post_type] == $cap ) {
 				$caps = [];
-
-				//Filter according to caps
-				if ( $c['read'][$post->post_type] == $cap ) {
-					if ( 'private' != $post->post_status ) {
-						$caps[] = 'read';
-					} elseif ( $user_id == $post->post_author ) {
-						$caps[] = 'read';
-					} else {
-						$post_type = get_post_type_object( $post->post_type );
-						$caps[] = $post_type->cap->read_private_posts;
-					}
-				} elseif ( $c['edit'][$post->post_type] == $cap  ) {
+				if ( 'private' != $post->post_status ) {
+					$caps[] = 'read';
+				} elseif ( $user_id == $post->post_author ) {
+					$caps[] = 'read';
+				} else {
 					$post_type = get_post_type_object( $post->post_type );
-					if ( $user_id == $post->post_author ) {
-						$caps[] = $post_type->cap->edit_posts;
-					} else {
-						$caps[] = $post_type->cap->edit_others_posts;
-					}
-				} elseif ( $c['delete'][$post->post_type] == $cap ) {
-					$post_type = get_post_type_object( $post->post_type );
-					if ( $user_id == $post->post_author ) {
-						$caps[] = $post_type->cap->delete_posts;
-					} else {
-						$caps[] = $post_type->cap->delete_others_posts;
-					}
+					$caps[] = $post_type->cap->read_private_posts;
+				}
+			} elseif ( !empty( $c['edit'][$post->post_type] ) && $c['edit'][$post->post_type] == $cap  ) {
+				$caps = [];
+				$post_type = get_post_type_object( $post->post_type );
+				if ( $user_id == $post->post_author ) {
+					$caps[] = $post_type->cap->edit_posts;
+				} else {
+					$caps[] = $post_type->cap->edit_others_posts;
+				}
+			} elseif ( !empty( $c['delete'][$post->post_type] ) && $c['delete'][$post->post_type] == $cap ) {
+				$caps = [];
+				$post_type = get_post_type_object( $post->post_type );
+				if ( $user_id == $post->post_author ) {
+					$caps[] = $post_type->cap->delete_posts;
+				} else {
+					$caps[] = $post_type->cap->delete_others_posts;
 				}
 			}
 		}
@@ -615,16 +616,18 @@ class Archetypes {
 	public static function map_meta_cap_type( $c, $archetype ) {
 		// create cap sets
 		$cpt = $archetype['cpt'];
-		if ( !empty($type['capabilities']) && is_array($type['capabilities']) ) {
-			$c['read'][$cpt] = $type['capabilities']['read_post'];
-			$c['edit'][$cpt] = $type['capabilities']['edit_post'];
-			$c['delete'][$cpt] = $type['capabilities']['delete_post'];
+		// WP rewrites the requested $cap to the post type's own meta cap name before firing this filter, so the registered CPT is the only thing we can match against, not what the archetype was stored with.
+		$post_type = get_post_type_object( $cpt );
+		if ( $post_type ) {
+			$caps = (array) $post_type->cap;
+		} elseif ( !empty($archetype['capabilities']) && is_array($archetype['capabilities']) ) {
+			$caps = $archetype['capabilities'];
 		} else {
 			$caps = static::generate_capabilities( $archetype );
-			$c['read'][$cpt] = $caps['read_post'];
-			$c['edit'][$cpt] = $caps['edit_post'];
-			$c['delete'][$cpt] = $caps['delete_post'];
 		}
+		$c['read'][$cpt] = $caps['read_post'];
+		$c['edit'][$cpt] = $caps['edit_post'];
+		$c['delete'][$cpt] = $caps['delete_post'];
 		$c = static::map_meta_cap_repeating( $c, $archetype );
 		return $c;
 	}
@@ -807,6 +810,9 @@ class Archetypes {
 	 * @return string|false
 	 */
 	public static function get_post_type( $cpt ) {
+		if ( is_array( $cpt ) ) {
+			return false;
+		}
 		if ( !is_string( $cpt ) ) {
 			if( !empty( $cpt->post_type ) ){
 				$cpt = $cpt->post_type;

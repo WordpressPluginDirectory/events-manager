@@ -2,7 +2,7 @@
 /*
 * This displays the content of the #_BOOKINGSUMMARY placeholder
 * You can override the default display settings pages by copying this file to yourthemefolder/plugins/events-manage/placeholders/ and modifying it however you need.
-* For more information, see http://wp-events-plugin.com/documentation/using-template-files/
+* For more information, see https://wp-events-plugin.com/documentation/using-template-files/
 */
 /* @var $EM_Booking EM_Booking */ ?>
 <?php foreach($EM_Booking->get_tickets_bookings() as $EM_Ticket_Booking): /* @var $EM_Ticket_Booking EM_Ticket_Booking */ ?>

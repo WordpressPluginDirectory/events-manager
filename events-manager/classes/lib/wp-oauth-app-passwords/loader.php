@@ -92,4 +92,4 @@ if ( ! function_exists( 'pixelite_oauth_app_passwords_register' ) ) {
  * Always register THIS copy. The version literal is the single source of truth
  * for this bundled copy and is bumped on every library release.
  */
-pixelite_oauth_app_passwords_register( '0.1.14', __DIR__ );
+pixelite_oauth_app_passwords_register( '0.1.15', __DIR__ );

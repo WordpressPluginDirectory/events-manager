@@ -107,11 +107,7 @@ function em_init_actions_start() {
 				exit();
 			} elseif ( $_REQUEST['action'] == 'booking_form_nonces' ) {
 				if ( ( defined( 'WP_CACHE' ) && WP_CACHE ) || defined( 'EM_CACHE' ) && EM_CACHE ) {
-					$nonces = array (
-						'booking_form' => wp_create_nonce( 'booking_form' ),
-						'booking_recurrences' => wp_create_nonce( 'booking_recurrences' ),
-					);
-					echo EM_Object::json_encode( $nonces );
+					echo EM_Object::json_encode( em_booking_form_nonces() );
 					exit();
 				}
 			}
@@ -359,7 +355,7 @@ function em_init_actions_start() {
 		if ( $_REQUEST['action'] == 'booking_add') {
 			//ADD/EDIT Booking
 			ob_start();
-			if( (!defined('WP_CACHE') || !WP_CACHE) && !isset($GLOBALS["wp_fastest_cache"]) ) em_verify_nonce('booking_add');
+			em_verify_booking_nonce('booking_add');
 			if( !is_user_logged_in() || $EM_Booking->get_option('dbem_bookings_double') || !$EM_Event->get_bookings()->has_booking(get_current_user_id()) ){
 				if ( $EM_Event->event_status != 1 || $EM_Event->event_active_status != 1 ) {
 					$EM_Notices->add_error( __('This event is not available or has been cancelled', 'events-manager') ); // uncommon, not needed for custom error.
@@ -507,6 +503,10 @@ function em_init_actions_start() {
 				$results = array();
 				foreach($_REQUEST['bookings'] as $booking_id){
 					$EM_Booking = em_get_booking($booking_id);
+					if( !$EM_Booking->get_event()->can_manage('manage_bookings','manage_others_bookings') ){
+						$results[] = false;
+						continue;
+					}
 					$result = $EM_Booking->$action();
 					$results[] = $result;
 					if( !in_array(false, $results) && !$result ){
@@ -648,26 +648,30 @@ function em_init_actions_start() {
 				$EM_Notices->add_error($EM_Booking->errors);
 			}
 		}elseif( $_REQUEST['action'] === 'booking_form_summary' ){
+			// Authorise against the booking's persisted event before get_post() re-assigns event_id from the request, otherwise an owner could substitute an event they manage to read another booking's summary.
+			$can_view_summary = $EM_Booking->can_manage() || ( is_user_logged_in() && !empty($EM_Booking->person->ID) && $EM_Booking->person->ID == get_current_user_id() );
 			$EM_Booking->get_post();
-			// wrap in main tag as we only need what's inside by JS
-			echo '<main>';
+			if( $can_view_summary ){
+				// wrap in main tag as we only need what's inside by JS
+				echo '<main>';
 				if( $EM_Booking->get_option('dbem_bookings_summary') ){
 					em_locate_template('forms/bookingform/summary.php', true, array('EM_Event' => $EM_Event, 'EM_Booking' => $EM_Booking));
 				}
 				echo $EM_Booking->output_intent_html();
-			echo '</main>';
+				echo '</main>';
+			}
 			exit();
 		}
 		Archetypes::revert_current();
 
 		if( $result && defined('DOING_AJAX') ){
 			$return = array('result'=>true, 'success'=>true, 'message'=>$feedback);
-			header( 'Content-Type: application/javascript; charset=UTF-8', true ); //add this for HTTP -> HTTPS requests which assume it's a cross-site request
+			if( !headers_sent() ) header( 'Content-Type: application/javascript; charset=UTF-8', true ); //add this for HTTP -> HTTPS requests which assume it's a cross-site request
 			echo EM_Object::json_encode(apply_filters('em_action_'.$_REQUEST['action'], $return, $EM_Booking));
 			die();
 		}elseif( !$result && defined('DOING_AJAX') ){
 			$return = array('result'=>false, 'success'=>false, 'message'=>$feedback, 'errors'=>$EM_Notices->get_errors());
-			header( 'Content-Type: application/javascript; charset=UTF-8', true ); //add this for HTTP -> HTTPS requests which assume it's a cross-site request
+			if( !headers_sent() ) header( 'Content-Type: application/javascript; charset=UTF-8', true ); //add this for HTTP -> HTTPS requests which assume it's a cross-site request
 			echo EM_Object::json_encode(apply_filters('em_action_'.$_REQUEST['action'], $return, $EM_Booking));
 			die();
 		}
@@ -686,7 +690,10 @@ function em_init_actions_start() {
 	if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'convert_to_recurrence' && !empty($_REQUEST['event_id']) && check_admin_referer('convert_to_recurrence_'.absint($_REQUEST['event_id']), 'nonce') ){
 		//Convert event to recurring event
 		$EM_Event = em_get_event( $_REQUEST['event_id'] );
-		if( $EM_Event->convert_to_recurring() ){
+		if( !$EM_Event->can_manage('edit_events','edit_others_events') ){
+			$EM_Notices->add_error( __('You do not have permission to edit this event.', 'events-manager'), true );
+			wp_safe_redirect( em_wp_get_referer() );
+		}elseif( $EM_Event->convert_to_recurring() ){
 			$message = __('The repeating event has been converted into a recurring event.', 'events-manager');
 			$EM_Notices->add_confirm( $message, true );
 			$redirect = add_query_arg( array('converted' => $EM_Event->event_id), $EM_Event->get_edit_url() );

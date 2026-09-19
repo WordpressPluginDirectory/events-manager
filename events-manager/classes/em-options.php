@@ -8,7 +8,15 @@
  *
  */
 class EM_Options {
-	
+
+	protected static function load_dataset( $dataset = 'dbem_data', $site = false ) {
+		$data = $site ? get_site_option( $dataset ) : em_get_option( $dataset );
+		if ( is_string( $data ) ) {
+			$data = maybe_unserialize( $data );
+		}
+		return is_array( $data ) ? $data : array();
+	}
+
 	/**
 	 * Get a specific setting form the EM options array. If no value is set, an empty array is provided by default.
 	 * @param string $option_name
@@ -18,7 +26,7 @@ class EM_Options {
 	 * @return mixed
 	 */
 	public static function get( $option_name, $default = array(), $dataset = 'dbem_data', $site = false ){
-		$data = $site ? get_site_option($dataset) : em_get_option($dataset);
+		$data = self::load_dataset( $dataset, $site );
 		if( isset($data[$option_name]) ){
 			return $data[$option_name];
 		}else{
@@ -35,8 +43,7 @@ class EM_Options {
 	 * @return boolean
 	 */
 	public static function set( $option_name, $option_value, $dataset = 'dbem_data', $site = false ){
-		$data = $site ? get_site_option($dataset) : em_get_option($dataset);
-		if( empty($data) ) $data = array();
+		$data = self::load_dataset( $dataset, $site );
 		$data[$option_name] = $option_value;
 		return $site ? update_site_option($dataset, $data) : update_option($dataset, $data);
 	}
@@ -52,7 +59,7 @@ class EM_Options {
 	 * @return boolean
 	 */
 	public static function add( $option_name, $option_key, $option_value, $dataset = 'dbem_data', $site = false ){
-		$data = $site ? get_site_option($dataset) : em_get_option($dataset);
+		$data = self::load_dataset( $dataset, $site );
 		if( empty($data[$option_name]) ){
 			$data[$option_name] = array( $option_key => $option_value );
 		}else{
@@ -71,7 +78,7 @@ class EM_Options {
 	 * @return boolean
 	 */
 	public static function remove( $option_name, $option_key = null, $dataset = 'dbem_data', $site = false ){
-		$data = $site ? get_site_option($dataset) : em_get_option($dataset);
+		$data = self::load_dataset( $dataset, $site );
 		if( $option_key === null && isset($data[$option_name]) ){
 			unset($data[$option_name]);
 			return $site ? update_site_option($dataset, $data) : update_option($dataset, $data);

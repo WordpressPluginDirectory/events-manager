@@ -13,13 +13,13 @@ function em_admin_help_page(){
 				This page is only a small portion of the event documentation which is here for quick reference. If you're just starting out, we recommend you visit the following places for further support:
 			</p>
 			<ol>
-				<li>New users are strongly encouraged to have a look at our <a href="http://wp-events-plugin.com/documentation/getting-started-guide/">getting started guide</a>.</li>
-				<li>Browse the other documentation pages and <a href="http://wp-events-plugin.com/tutorials/">tutorials</a>.</li>
-				<li>View the <a href="http://wp-events-plugin.com/documentation/faq/">FAQ</a> for general questions and <a href="http://wp-events-plugin.com/documentation/troubleshooting/">Troubleshooting</a> for common issues. These are regularly updated with recent issues.</li>
-				<li>Rather than trying to contact us directly, we request you use the <a href="http://wordpress.org/tags/events-manager?forum_id=10">support forums</a> as others may be experiencing the same issues as you. For faster support via private member forums and extra features please consider <a href="http://wp-events-plugin.com/events-manager-pro/">upgrading to pro</a>.</li>
+				<li>New users are strongly encouraged to have a look at our <a href="https://wp-events-plugin.com/documentation/getting-started-guide/">getting started guide</a>.</li>
+				<li>Browse the other documentation pages and <a href="https://wp-events-plugin.com/tutorials/">tutorials</a>.</li>
+				<li>View the <a href="https://wp-events-plugin.com/documentation/faq/">FAQ</a> for general questions and <a href="https://wp-events-plugin.com/documentation/troubleshooting/">Troubleshooting</a> for common issues. These are regularly updated with recent issues.</li>
+				<li>Rather than trying to contact us directly, we request you use the <a href="http://wordpress.org/tags/events-manager?forum_id=10">support forums</a> as others may be experiencing the same issues as you. For faster support via private member forums and extra features please consider <a href="https://wp-events-plugin.com/events-manager-pro/">upgrading to pro</a>.</li>
 			</ol>
 			<p>
-				If you can't find what you're looking for in the documentation, you may find help on our <a href="http://wp-events-plugin.com/forums/">support forums</a>. 
+				If you can't find what you're looking for in the documentation, you may find help on our <a href="https://wp-events-plugin.com/forums/">support forums</a>. 
 			</p>
 			<h2><?php _e('Placeholders for customizing event pages','events-manager'); ?></h2>
 			<p><?php echo sprintf( __("In the <a href='%s'>settings page</a>, you'll find various textboxes where you can edit how event information looks, such as for event and location lists. Using the placeholders below, you can choose what information should be displayed.",'events-manager'), EM_ADMIN_URL .'&amp;events-manager-options'); ?></p>

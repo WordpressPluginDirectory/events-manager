@@ -19,19 +19,19 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		let index = recurrenceTypeSets.querySelectorAll('.em-recurrence-set').length + 1;
 
 		// Copy template HTML
-		let templateHtml = recurrenceSets.querySelector('.em-recurrence-set-template')?.innerHTML;
+		let template = recurrenceSets.querySelector('.em-recurrence-set-template');
+		if ( !template ) return null;
 		let recurrenceSet;
-		if ( templateHtml === null ) {
-			// legacy template which didn't use the template element to enclose the recurrence set type
-			let recurrenceSet = recurrenceSets.querySelector('.em-recurrence-set-template').cloneNode(true);
-			recurrenceSet.classList.remove('em-recurrence-set-template', 'hidden');
-			recurrenceSet.innerHTML = recurrenceSet.innerHTML.replace(/T%/g, `${recurrenceType}`).replace(/N%/g, `${index}`);
-		} else {
+		if ( template instanceof HTMLTemplateElement ) {
 			// create a blank div which we'll add classes etc. to
 			recurrenceSet = document.createElement('div');
-			// Replace all occurrences of "[N%]" with the new index.
-			recurrenceSet.innerHTML = templateHtml.replace(/T%/g, `${recurrenceType}`).replace(/N%/g, `${index}`);
+		} else {
+			// legacy template override which didn't use a template element to enclose the recurrence set type
+			recurrenceSet = template.cloneNode(true);
+			recurrenceSet.classList.remove('em-recurrence-set-template', 'hidden');
 		}
+		// Replace all occurrences of "[N%]" with the new index.
+		recurrenceSet.innerHTML = template.innerHTML.replace(/T%/g, `${recurrenceType}`).replace(/N%/g, `${index}`);
 
 		// Remove the 'hidden' class and template-specific class; add the active class.
 		recurrenceSet.classList.add('em-recurrence-set', 'new-recurrence-set');
@@ -70,7 +70,13 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		addButton.addEventListener( 'click', () => addRecurrence('include') );
 	});
 	// set up listner to add recurrences, exclude and include, the exclude trigger is in reschedule.js
-	recurrenceSets.addEventListener( 'addRecurrence', ( e ) => addRecurrence( e.detail.type ) );
+	// CustomEvent.detail defaults to null, so fall back to the dispatching section's own type rather than throwing on a dispatch that omits it.
+	recurrenceSets.addEventListener( 'addRecurrence', function ( e ) {
+		let recurrenceType = e.detail?.type ?? e.target.closest?.('.em-recurrence-type')?.dataset.type;
+		if ( !recurrenceType ) return;
+		let recurrenceSet = addRecurrence( recurrenceType );
+		if ( e.detail ) e.detail.recurrenceSet = recurrenceSet;
+	});
 
 	// REMOVE A RECURRENCE RULE
 	recurrenceSets.addEventListener('click', function ( e ) {

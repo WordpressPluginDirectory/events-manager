@@ -31,8 +31,8 @@ function em_docs_init($force_init = false){
 					'year' => array( 'desc'=> 'If set to a year (e.g. 2010) only events that start or end during this year/month will be returned. Does not work as intended if used with scope.', 'default'=>''),
 					'has_location' => array( 'desc'=> 'When set to true, only events WITH an assigned location will be shown, has priority over no_location.', 'default'=>''),
 					'no_location' => array( 'desc'=> 'When set to true, only events WITHOUT an assigned location will be shown.', 'default'=>''),
-					'groupby' => array( 'desc'=> 'Show one event for each unique value of the provide field name, along with events contaning no defined value for that field. See our <a href="http://wp-events-plugin.com/documentation/event-search-attributes/event-location-grouping-ordering/">grouping documentation</a> for more information.', 'default'=>0, 'args'=>'Database field name from the wp_em_events or wp_em_locations tables, e.g. <code>event_name</code> or <code>location_name</code>', 'since'=>'5.8'),
-					'groupby_orderby' => array( 'desc'=> 'When groupby is defined, the fields defined here will determine the sorting of events in each group. See our <a href="http://wp-events-plugin.com/documentation/event-search-attributes/event-location-grouping-ordering/">grouping documentation</a> for more information.', 'default'=>'event_start_date,event_start_time', 'args'=>'Database fields (comma-seperated) in the wp_em_events and wp_em_locations tables, e.g. <code>event_start_date,event_start_time</code> or <code>location_name</code>', 'since'=>'5.8'),
+					'groupby' => array( 'desc'=> 'Show one event for each unique value of the provide field name, along with events contaning no defined value for that field. See our <a href="https://wp-events-plugin.com/documentation/event-search-attributes/event-location-grouping-ordering/">grouping documentation</a> for more information.', 'default'=>0, 'args'=>'Database field name from the wp_em_events or wp_em_locations tables, e.g. <code>event_name</code> or <code>location_name</code>', 'since'=>'5.8'),
+					'groupby_orderby' => array( 'desc'=> 'When groupby is defined, the fields defined here will determine the sorting of events in each group. See our <a href="https://wp-events-plugin.com/documentation/event-search-attributes/event-location-grouping-ordering/">grouping documentation</a> for more information.', 'default'=>'event_start_date,event_start_time', 'args'=>'Database fields (comma-seperated) in the wp_em_events and wp_em_locations tables, e.g. <code>event_start_date,event_start_time</code> or <code>location_name</code>', 'since'=>'5.8'),
 					'groupby_order' => array( 'desc'=> 'Indicates the alphabeitcal/numerical/date order of the sorting in groupby_orderby. Choose between ASC (ascending) and DESC (descending), case insensitive.', 'default'=>'ASC', 'since'=>'5.8'),
 				),
 				'locations' => array(
@@ -54,8 +54,8 @@ function em_docs_init($force_init = false){
 					'state' => array( 'desc'=> sprintf('Search for %s in this %s (no partial matches, case sensitive).','locations','State'), 'default' => 'none'),
 					'status' => array( 'desc' => sprintf('Limit search to %s with a spefic status (1 is active, 0 is pending approval)','locations'), 'default'=>1),
 					'town' => array( 'desc'=> sprintf('Search for %s in this %s (no partial matches, case sensitive).','locations','Town'), 'default' => 'none'),
-					'groupby' => array( 'desc'=> 'Show one location for each unique value of the provide field name, along with locations contaning no defined value for that field. See our <a href="http://wp-events-plugin.com/documentation/event-search-attributes/event-location-grouping-ordering/">grouping documentation</a> for more information.', 'default'=>0, 'args'=>'Database field name from the wp_em_events or wp_em_locations tables, e.g. <code>event_name</code> or <code>location_name</code>', 'since'=>'5.8'),
-					'groupby_orderby' => array( 'desc'=> 'When groupby is defined, the fields defined here will determine the sorting of events in each group. See our <a href="http://wp-events-plugin.com/documentation/event-search-attributes/event-location-grouping-ordering/">grouping documentation</a> for more information.', 'default'=>'event_start_date,event_start_time', 'args'=>'Database fields (comma-seperated) in the wp_em_events and wp_em_locations tables, e.g. <code>location_country,location_town</code> or <code>location_name</code>', 'since'=>'5.8'),
+					'groupby' => array( 'desc'=> 'Show one location for each unique value of the provide field name, along with locations contaning no defined value for that field. See our <a href="https://wp-events-plugin.com/documentation/event-search-attributes/event-location-grouping-ordering/">grouping documentation</a> for more information.', 'default'=>0, 'args'=>'Database field name from the wp_em_events or wp_em_locations tables, e.g. <code>event_name</code> or <code>location_name</code>', 'since'=>'5.8'),
+					'groupby_orderby' => array( 'desc'=> 'When groupby is defined, the fields defined here will determine the sorting of events in each group. See our <a href="https://wp-events-plugin.com/documentation/event-search-attributes/event-location-grouping-ordering/">grouping documentation</a> for more information.', 'default'=>'event_start_date,event_start_time', 'args'=>'Database fields (comma-seperated) in the wp_em_events and wp_em_locations tables, e.g. <code>location_country,location_town</code> or <code>location_name</code>', 'since'=>'5.8'),
 					'groupby_order' => array( 'desc'=> 'Indicates the alphabeitcal/numerical/date order of the sorting in groupby_orderby. Choose between ASC (ascending) and DESC (descending), case insensitive.', 'default'=>'ASC', 'since'=>'5.8'),
 				),
 				'categories' => array(
@@ -158,7 +158,7 @@ function em_docs_init($force_init = false){
 						)
 					),
 					'Custom Attributes' => array(
-						'desc' => 'Events Manager allows you to create dynamic attributes to your events, which act as extra information fields for your events (e.g. "Dress Code"). For more information see <a href="http://wp-events-plugin.com/documentation/event-attributes/">our online documentation</a> for more info on attributes.',
+						'desc' => 'Events Manager allows you to create dynamic attributes to your events, which act as extra information fields for your events (e.g. "Dress Code"). For more information see <a href="https://wp-events-plugin.com/documentation/event-attributes/">our online documentation</a> for more info on attributes.',
 						'placeholders' => array( 
 							'#_ATT{key}' => array('desc'=> 'This key will appear as an option when adding attributes to your event.'),
 							'#_ATT{key}{alternative text}' => array('desc'=> 'This key will appear as an option when adding attributes to your event. The text in the second braces will appear if the attribute is not defined or left blank for that event.'),
@@ -325,7 +325,7 @@ function em_docs_init($force_init = false){
 						)
 					),
 					'Custom Attributes' => array(
-						'desc' => 'Events Manager allows you to create dynamic attributes to your locations, which act as extra information fields for your locations (e.g. "Dress Code"). For more information see <a href="http://wp-events-plugin.com/documentation/event-attributes/">our online documentation</a> for more info on attributes.',
+						'desc' => 'Events Manager allows you to create dynamic attributes to your locations, which act as extra information fields for your locations (e.g. "Dress Code"). For more information see <a href="https://wp-events-plugin.com/documentation/event-attributes/">our online documentation</a> for more info on attributes.',
 						'placeholders' => array( 
 							'#_LATT{key}' => array('desc'=> 'This key will appear as an option when adding attributes to your location.'),
 							'#_LATT{key}{alternative text}' => array('desc'=> 'This key will appear as an option when adding attributes to your location. The text in the second braces will appear if the attribute is not defined or left blank for that location.'),
@@ -375,10 +375,10 @@ function em_docs_init($force_init = false){
 							'#_BOOKINGTICKETPRICE' => array( 'desc' => 'Booked ticket price with currency symbol (e.g. $ 10.00). Useful in single ticket mode, if multiple tickets are booked a random ticket is used.' ),
 							'#_BOOKINGTICKETS' => array( 'desc' => 'A list of booked tickets. You can modify this by using template files and modifying templates/emails/bookingtickets.php' ),
 							'#_BOOKINGSUMMARY' => array( 'desc' => 'Shows a breakdown of price/quantity booked by ticket, followed by a summary of price totals, taxes, and other discounts applied.' ),
-							'#_BOOKINGFORMCUSTOM{field_id}' => array( 'desc' => sprintf('(<a href="%s">pro only</a>) Shows booking form custom fields. The field_id value must match that of your custom booking form field.','http://wp-events-plugin.com/features/') ),
-							'#_BOOKINGFORMCUSTOMREG{field_id}' => array( 'desc' => sprintf('(<a href="%s">pro only</a>) Shows booking form custom fields that are used for guest user registration. The field_id value must match that of your custom booking form field.','http://wp-events-plugin.com/features/') ),
-							'#_BOOKINGFORMCUSTOMFIELDS' => array( 'desc' => sprintf('(<a href="%s">pro only</a>) Generates a list of booking form custom fields that are used in the booking.','http://wp-events-plugin.com/features/') ),
-							'#_BOOKINGATTENDEES' => array('desc' => sprintf('(<a href="%s">pro only</a>) Generates a list of attendee information displaying the filled in form data for each attendee (requires individual attendee forms enabled for the event). This list is split by ticket type, then by individual attendee.','http://wp-events-plugin.com/features/')), //coupons too!
+							'#_BOOKINGFORMCUSTOM{field_id}' => array( 'desc' => sprintf('(<a href="%s">pro only</a>) Shows booking form custom fields. The field_id value must match that of your custom booking form field.','https://wp-events-plugin.com/features/') ),
+							'#_BOOKINGFORMCUSTOMREG{field_id}' => array( 'desc' => sprintf('(<a href="%s">pro only</a>) Shows booking form custom fields that are used for guest user registration. The field_id value must match that of your custom booking form field.','https://wp-events-plugin.com/features/') ),
+							'#_BOOKINGFORMCUSTOMFIELDS' => array( 'desc' => sprintf('(<a href="%s">pro only</a>) Generates a list of booking form custom fields that are used in the booking.','https://wp-events-plugin.com/features/') ),
+							'#_BOOKINGATTENDEES' => array('desc' => sprintf('(<a href="%s">pro only</a>) Generates a list of attendee information displaying the filled in form data for each attendee (requires individual attendee forms enabled for the event). This list is split by ticket type, then by individual attendee.','https://wp-events-plugin.com/features/')), //coupons too!
 							'#_BOOKINGADMINURL' => array( 'desc' => 'URL for admins to view and manage the booking. This should only be used on admin-specific email templates.' ),
 							'#_BOOKINGADMINLINK' => array( 'desc' => 'HTML link for admins to view and manage the booking. This should only be used on admin-specific email templates.' ),
 						)
@@ -395,7 +395,7 @@ function em_docs_init($force_init = false){
 					'Ticket Information' => array(
 						'desc' => '',
 						'placeholders' => array(
-							'#_BOOKINGTICKETS' => array( 'desc' => 'Shows a breakdown of tickets and pricing, defined in the <code>emails/bookingtickets.php</code> template. (See <a href="http://wp-events-plugin.com/documentation/using-template-files/">Using Template Files</a> for more information)' ),
+							'#_BOOKINGTICKETS' => array( 'desc' => 'Shows a breakdown of tickets and pricing, defined in the <code>emails/bookingtickets.php</code> template. (See <a href="https://wp-events-plugin.com/documentation/using-template-files/">Using Template Files</a> for more information)' ),
 							'#_BOOKINGTICKETDESCRIPTION' => array( 'desc' => 'Shows the description of the first ticket booked (useful in single ticket mode/events).' ),
 							'#_BOOKINGTICKETPRICE' => array( 'desc' => 'Shows the price of the first ticket booked, tax inclusion depending on your booking settings (useful in single ticket mode/events).' ),
 							'#_BOOKINGTICKETTAX' => array( 'desc' => 'Shows the tax of the first ticket booked (useful in single ticket mode/events).' ),
@@ -410,13 +410,13 @@ function em_docs_init($force_init = false){
 						)
 					),
 					'Gateway-Specific Information' => array(
-						'desc' => 'Information pertaining to speicifc gateways. '. sprintf('Requires <a href="%s">Events Manager Pro</a>','http://wp-events-plugin.com/features/'),
+						'desc' => 'Information pertaining to specific gateways. '. sprintf('Requires <a href="%s">Events Manager Pro</a>','https://wp-events-plugin.com/features/'),
 						'placeholders' => array(
 							'#_BOOKINGTXNID' => array( 'desc' => '<em>Online Payments Only</em> - Prints the transaction ID of this booking if available.' )
 						)
 					),
 					'Coupon Information' => array(
-						'desc' => 'When a booking has been made with a coupon, you can display coupon information using these placeholders. If no coupon is used, nothing will be shown. '.sprintf('Requires <a href="%s">Events Manager Pro</a>','http://wp-events-plugin.com/features/'),
+						'desc' => 'When a booking has been made with a coupon, you can display coupon information using these placeholders. If no coupon is used, nothing will be shown. '.sprintf('Requires <a href="%s">Events Manager Pro</a>','https://wp-events-plugin.com/features/'),
 						'placeholders' => array(
 							'#_BOOKINGCOUPON' => array('desc' => 'Displays the coupon code followed by the amount/percentage discounted.'),
 							'#_BOOKINGCOUPONCODE' => array('desc' => 'Displays the coupon code used.'),

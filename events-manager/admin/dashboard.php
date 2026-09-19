@@ -27,24 +27,24 @@ class Dashboard {
 			$screen = get_current_screen();
 			if ( $screen->id == 'dashboard' ) {
 				$min = \EM_Scripts_and_Styles::min_suffix();
-				wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd' . $min . '.js', array(), EM_VERSION );
+				wp_enqueue_script( 'chart-js', EM_DIR_URI . 'includes/external/chartjs/chart.umd' . $min . '.js', array(), EM_VERSION );
 				\EM_Scripts_and_Styles::admin_enqueue( true );
 				//wp_enqueue_script( 'chart-js', 'https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.umd.min.js', array(), EM_VERSION);
 				//wp_enqueue_script( 'chart-js-utils', 'https://www.chartjs.org/samples/2.9.4/utils.js', array());
 			} elseif ( !empty( $_REQUEST['page'] ) && $_REQUEST['page'] == 'events-manager-bookings' ) {
 				// we need to call this before enqueue, otherwise it'll get enqueued at footer and possibly dependent EM stuff isn't loaded
 				$min = \EM_Scripts_and_Styles::min_suffix();
-				wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd' . $min . '.js', array( 'moment' ), EM_VERSION );
+				wp_enqueue_script( 'chart-js', EM_DIR_URI . 'includes/external/chartjs/chart.umd' . $min . '.js', array( 'moment' ), EM_VERSION );
 			} elseif ( $hook_suffix === true ) {
 				// we need to call this before enqueue, otherwise it'll get enqueued at footer and possibly dependent EM stuff isn't loaded
 				$min = \EM_Scripts_and_Styles::min_suffix();
-				wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd' . $min . '.js', array(), EM_VERSION, true );
+				wp_enqueue_script( 'chart-js', EM_DIR_URI . 'includes/external/chartjs/chart.umd' . $min . '.js', array(), EM_VERSION, true );
 				\EM_Scripts_and_Styles::admin_enqueue( true );
 			}
 		} elseif ( em_get_option( 'dbem_booking_charts_frontend' ) ) {
 			// we assume it's the bookings admin page if this class was loaded
 			$min = \EM_Scripts_and_Styles::min_suffix();
-			wp_enqueue_script( 'chart-js', EM_DIR_URI . '/includes/external/chartjs/chart.umd' . $min . '.js', array( 'moment' ), EM_VERSION );
+			wp_enqueue_script( 'chart-js', EM_DIR_URI . 'includes/external/chartjs/chart.umd' . $min . '.js', array( 'moment' ), EM_VERSION );
 		}
 	}
 	

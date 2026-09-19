@@ -331,10 +331,9 @@ $orderby_sql";
 		//Detect array type and generate SQL for event IDs
 		$results = array();
 		$event_ids = array();
-		if ( is_array( $array ) ) {
-			if( !empty($array) && !( current($array) instanceof EM_Event ) ) {
-				$events = self::get($array);
-			}
+		$events = array();
+		if ( is_array( $array ) && !empty($array) ) {
+			$events = ( current($array) instanceof EM_Event ) ? $array : self::get($array);
 			foreach ($events as $EM_Event){
 				if ( !empty($EM_Event->event_id) ) {
 					$event_ids[] = $EM_Event->event_id;
@@ -343,7 +342,7 @@ $orderby_sql";
 			}
 		}
 		//TODO add better error feedback on events delete fails
-		return apply_filters('em_events_delete',  in_array(false, $results), $event_ids);
+		return apply_filters('em_events_delete', !in_array(false, $results, true), $event_ids);
 	}
 	
 	
@@ -435,6 +434,8 @@ $orderby_sql";
 
 		$args['mode'] = !empty($args['mode']) ? $args['mode'] : em_get_option('dbem_event_list_groupby');
 		$args['header_format'] = !empty($args['header_format']) ? $args['header_format'] :  em_get_option('dbem_event_list_groupby_header_format', '<h2>#s</h2>');
+		// header_format is echoed unescaped below; the shortcode path filters it but the search_events_grouped AJAX action does not, so sanitize here for every caller.
+		$args['header_format'] = wp_kses_post( $args['header_format'] );
 		$args['date_format'] = !empty($args['date_format']) ? $args['date_format'] :  em_get_option('dbem_event_list_groupby_format','');
 		$args = apply_filters('em_events_output_grouped_args', self::get_default_search($args));
 		//Reset some vars for counting events and displaying set arrays of events
@@ -466,7 +467,7 @@ $orderby_sql";
 					$events_dates = apply_filters('em_events_output_grouped_events_dates', $events_dates, $args);
 					foreach ($events_dates as $year => $events){
 						$EM_DateTime = new EM_DateTime($year.'-01-01');
-						echo str_replace('#s', $EM_DateTime->i18n($format), $args['header_format']);
+						echo str_replace('#s', esc_html( $EM_DateTime->i18n($format) ), $args['header_format']);
 						echo self::output($events, $atts);
 					}
 					break;
@@ -489,7 +490,7 @@ $orderby_sql";
 					$events_dates = apply_filters('em_events_output_grouped_events_dates', $events_dates, $args);
 					foreach ($events_dates as $month => $events){
 						$EM_DateTime = new EM_DateTime($month);
-						echo str_replace('#s', $EM_DateTime->i18n($format), $args['header_format']);
+						echo str_replace('#s', esc_html( $EM_DateTime->i18n($format) ), $args['header_format']);
 						echo self::output($events, $atts);
 					}
 					break;
@@ -515,7 +516,7 @@ $orderby_sql";
 					}
 					$events_dates = apply_filters('em_events_output_grouped_events_dates', $events_dates, $args);
 					foreach ($events_dates as $date => $events){
-						$dates_formatted = $EM_DateTime->modify($date)->i18n($format). em_get_option('dbem_dates_separator') . $EM_DateTime->add('P6D')->i18n($format);
+						$dates_formatted = esc_html( $EM_DateTime->modify($date)->i18n($format) ). em_get_option('dbem_dates_separator') . esc_html( $EM_DateTime->add('P6D')->i18n($format) );
 						echo str_replace('#s', $dates_formatted, $args['header_format']);
 						echo self::output($events, $atts);
 					}
@@ -538,7 +539,7 @@ $orderby_sql";
 					}
 					$events_dates = apply_filters('em_events_output_grouped_events_dates', $events_dates, $args);
 					foreach ($events_dates as $date => $events){
-						echo str_replace('#s', $EM_DateTime->modify($date)->i18n($format), $args['header_format']);
+						echo str_replace('#s', esc_html( $EM_DateTime->modify($date)->i18n($format) ), $args['header_format']);
 						echo self::output($events, $atts);
 					}
 					break;
@@ -908,6 +909,15 @@ $orderby_sql";
 			}
 		}
 		$args = parent::get_default_search($defaults,$array);
+		// Prevent disclosure of non-published events via the public/AJAX search: a request `status` can otherwise expose draft/pending/trashed events to anyone. Users without edit_others_events may only see non-published events they own; guests are clamped to published only.
+		if ( !current_user_can('edit_others_events') && !in_array($args['status'], array(1, '1', true), true) ) {
+			if ( is_user_logged_in() ) {
+				// Forced, not defaulted: filling this in only when it was blank let a caller supply someone else's id (or a comma list of them) and read their unpublished events anyway, which is how the 7.4.1 clamp was still bypassable.
+				$args['owner'] = get_current_user_id();
+			} else {
+				$args['status'] = 1;
+			}
+		}
 		//do some post-parnet cleaning up here if locations are enabled or disabled
 		if( !em_get_option('dbem_locations_enabled') ){
 			//locations disabled, wipe any args to do with locations so they're ignored

@@ -171,17 +171,13 @@ class EM_Blocks {
 		if ( ! em_use_block_editor() ) {
 			return $args;
 		}
-		// Match all EM event CPTs (event, event-recurring, and archetype variants)
-		// but not location CPTs.
-		if ( ! isset( $args['labels'] ) || ! preg_match( '/event/i', $post_type ) ) {
+		// Only the canvas layout seeds the in-editor block; the tabs/metaboxes layouts present the real metaboxes instead.
+		if ( ! class_exists( 'EM\Editor\Editor' ) ) {
 			return $args;
 		}
-		// Guard: only apply to CPTs that EM itself registers.
-		if ( ! class_exists( 'EM\Archetypes' ) ) {
-			return $args;
-		}
-		$event_cpts = \EM\Archetypes::get_cpts( [ 'location', 'repeating' ] );
-		if ( ! in_array( $post_type, $event_cpts, true ) ) {
+		// Seed the canvas block only for CPTs whose editor effectively renders in the canvas — events (incl. recurring + archetypes); the location editor shelves canvas.
+		$registry = isset( $args['labels'] ) ? \EM\Editor\Editor::registry_for_post_type( $post_type ) : null;
+		if ( ! $registry || \EM\Editor\Editor::effective_layout( $registry ) !== 'canvas' ) {
 			return $args;
 		}
 		$args['template'] = array_merge(
@@ -536,13 +532,99 @@ class EM_Blocks {
 			return;
 		}
 		EM_Scripts_and_Styles::register();
-		EM_Scripts_and_Styles::enqueue_public_styles();
+		if ( is_admin() || self::frontend_post_has_em_block() ) {
+			EM_Scripts_and_Styles::enqueue_public_styles();
+		}
 		// is_admin() is true in the block editor iframe (it's an admin page)
 		// and false on the public frontend. Gate the JS enqueue on it so we
 		// only push the calendar-indicator JS into the editor.
 		if ( is_admin() ) {
 			EM_Scripts_and_Styles::enqueue_scripts();
+			// The em/event-when canvas block renders EM's classic When /
+			// Recurrences / Bookings metabox HTML inside the editor iframe. Those
+			// forms are styled by EM's admin + event-editor stylesheets, which
+			// normally only reach the parent admin document: admin CSS via
+			// admin_enqueue, and the event-editor CSS via EM's JS asset-loader
+			// keyed on the .em-event-editor body class. Neither crosses into the
+			// iframe, leaving the canvas forms unstyled. Push them in here (gated
+			// to EM CPT editors so unrelated page/post editors stay untouched).
+			// Both stylesheets are .em-namespaced so they can't leak into the
+			// block editor's own chrome. enqueue_admin_styles also fires
+			// em_enqueue_admin_styles, which is how EM Pro adds its bookings/
+			// tickets admin CSS for the Bookings tab.
+			if ( self::is_em_cpt_editor_screen() ) {
+				EM_Scripts_and_Styles::enqueue_admin_styles();
+				// Fire em_enqueue_admin_scripts inside the iframe too, so add-ons (e.g. Pro custom emails) can inject their editor JS into the canvas — the scripts analogue of the admin-styles hook above.
+				EM_Scripts_and_Styles::enqueue_admin_scripts();
+				EM_Scripts_and_Styles::enqueue_event_editor_styles();
+				// Also pull WordPress core's own admin stylesheets into the iframe so the
+				// metabox forms inherit the standard backend styling (inputs, selects,
+				// .button, .postbox, .form-table, dashicons). The canvas iframe is a bare
+				// document that otherwise only has EM's admin CSS, so the controls look
+				// unstyled next to the classic editor. These rules are .wp-admin /
+				// .wp-core-ui scoped, matching the wrapper the canvas block renders around
+				// the metabox HTML, so they don't leak into the block editor's own chrome.
+				foreach ( array( 'common', 'forms', 'buttons', 'dashicons' ) as $core_style ) {
+					wp_enqueue_style( $core_style );
+				}
+				// The canvas iframe inherits the theme's editor content font (often a
+				// serif at 16px), so the metabox content reads differently to the classic
+				// backend, which uses the admin system-font stack at 13px. Pin that stack
+				// on the wrapper so the panels match the classic editor exactly. Scoped to
+				// .em-event-editor so it only touches our consolidated metabox content.
+				wp_add_inline_style( 'forms',
+					'.em-event-when-block,.em-event-editor{font-family:-apple-system,"system-ui","Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;}'
+					. '.em-event-editor{font-size:13px;line-height:1.4em;}'
+				);
+			}
 		}
+	}
+
+	/**
+	 * True when the current admin request is the block editor for an EM CPT
+	 * (event / event-recurring / location). Used to gate the admin-side
+	 * stylesheets we push into the editor iframe. Prefers the current screen
+	 * (reliable on post.php / post-new.php) and falls back to the request so it
+	 * still resolves if the screen isn't set yet.
+	 */
+	private static function is_em_cpt_editor_screen() {
+		if ( ! is_admin() ) {
+			return false;
+		}
+		$post_types = self::em_post_types();
+		if ( empty( $post_types ) ) {
+			return false;
+		}
+		if ( function_exists( 'get_current_screen' ) ) {
+			$screen = get_current_screen();
+			if ( $screen && $screen->post_type ) {
+				return in_array( $screen->post_type, $post_types, true );
+			}
+		}
+		if ( ! empty( $_GET['post_type'] ) ) {
+			return in_array( sanitize_key( wp_unslash( $_GET['post_type'] ) ), $post_types, true );
+		}
+		if ( ! empty( $_GET['post'] ) ) {
+			$pt = get_post_type( absint( $_GET['post'] ) );
+			return $pt && in_array( $pt, $post_types, true );
+		}
+		return false;
+	}
+
+	protected static function frontend_post_has_em_block() {
+		if ( is_admin() || ! function_exists( 'has_block' ) ) {
+			return false;
+		}
+		$post = get_post();
+		if ( ! $post ) {
+			return false;
+		}
+		foreach ( [ 'events-manager/events', 'events-manager/calendar', 'events-manager/locations', 'events-manager/event-when' ] as $block ) {
+			if ( has_block( $block, $post ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static function enqueue_editor_assets() {
@@ -607,6 +689,17 @@ class EM_Blocks {
 	}
 
 	private static function em_post_types() {
+		// Union of the editor registries' post types — events (incl. archetypes + recurring) and the location CPT even when renamed. Falls back to the legacy set if the editor classes aren't loaded.
+		if ( class_exists( '\\EM\\Editor\\Editor' ) ) {
+			$types = \EM\Editor\Event::instance()->post_types();
+			if ( get_option( 'dbem_locations_enabled', true ) ) {
+				$types = array_merge( $types, \EM\Editor\Location::instance()->post_types() );
+			}
+			$types = array_values( array_unique( array_filter( $types ) ) );
+			if ( ! empty( $types ) ) {
+				return $types;
+			}
+		}
 		$types = [];
 		if ( defined( 'EM_POST_TYPE_EVENT' ) ) {
 			$types[] = EM_POST_TYPE_EVENT;
@@ -622,3 +715,5 @@ class EM_Blocks {
 }
 
 EM_Blocks::init();
+
+// The editor tab registry + layout controller now live in classes/editor/ (\EM\Editor\*), loaded from events-manager.php.

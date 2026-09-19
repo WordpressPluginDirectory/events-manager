@@ -41,7 +41,7 @@ function em_content($page_content) {
 				if ( !empty($_REQUEST['calendar_day']) ) {
 					//Events for a specific day
 					$args['id'] = 2; // for easier reference in customizations
-					$args = EM_Events::get_post_search( array_merge($args, $_REQUEST) );
+					$args = EM_Events::get_post_search( $args );
 					$args['limit'] = !empty($args['limit']) ? $args['limit'] : em_get_option('dbem_events_default_limit');
 					em_locate_template('templates/calendar-day.php',true, array('args'=>$args));
 				}elseif ( is_object($EM_Event)) {
@@ -58,10 +58,10 @@ function em_content($page_content) {
 					}else{
 						//Intercept search request, if defined
 						if( !empty($_REQUEST['action']) && ($_REQUEST['action'] == 'search_events' || $_REQUEST['action'] == 'search_events_grouped') ){
-							$args = EM_Events::get_post_search( array_merge($args, $_REQUEST) );
+							$args = EM_Events::get_post_search( $args );
 						} elseif( !empty($_COOKIE['em_search_events']) ) {
 							$cookie_args = json_decode(base64_decode($_COOKIE['em_search_events']), true);
-							$args = array_merge($args, $cookie_args);
+							if( is_array($cookie_args) ) $args = EM_Events::get_post_search( $args, false, $cookie_args );
 						}
 						$args['id'] = 1; // for easier reference in customizations
 						if( empty($args['scope']) ){
@@ -84,7 +84,7 @@ function em_content($page_content) {
 				}else{
 					//Intercept search request, if defined
 					if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'search_locations' ){
-						$args = EM_Locations::get_post_search( array_merge($args, $_REQUEST) );
+						$args = EM_Locations::get_post_search( $args );
 					}
 					$args['has_search'] = em_get_option('dbem_locations_page_search_form');
 					em_output_locations_view( $args );

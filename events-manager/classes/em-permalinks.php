@@ -89,13 +89,13 @@ if( !class_exists('EM_Permalinks') ){
 			if ( is_object( $wp_query ) && $wp_query->get( 'em_redirect' ) ) {
 				//is this a querystring url?
 				if ( $wp_query->get( 'event_slug' ) ) {
-					$event = $wpdb->get_row( 'SELECT event_id, post_id FROM ' . EM_EVENTS_TABLE . " WHERE event_slug='" . $wp_query->get( 'event_slug' ) . "' AND (blog_id=" . get_current_blog_id() . " OR blog_id IS NULL OR blog_id=0)", ARRAY_A );
+					$event = $wpdb->get_row( $wpdb->prepare( 'SELECT event_id, post_id FROM ' . EM_EVENTS_TABLE . " WHERE event_slug=%s AND (blog_id=%d OR blog_id IS NULL OR blog_id=0)", $wp_query->get( 'event_slug' ), get_current_blog_id() ), ARRAY_A );
 					if ( !empty( $event ) ) {
 						$EM_Event = em_get_event( $event['event_id'] );
 						$url = get_permalink( $EM_Event->post_id );
 					}
 				} elseif ( $wp_query->get( 'location_slug' ) ) {
-					$location = $wpdb->get_row( 'SELECT location_id, post_id FROM ' . EM_LOCATIONS_TABLE . " WHERE location_slug='" . $wp_query->get( 'location_slug' ) . "' AND (blog_id=" . get_current_blog_id() . " OR blog_id IS NULL OR blog_id=0)", ARRAY_A );
+					$location = $wpdb->get_row( $wpdb->prepare( 'SELECT location_id, post_id FROM ' . EM_LOCATIONS_TABLE . " WHERE location_slug=%s AND (blog_id=%d OR blog_id IS NULL OR blog_id=0)", $wp_query->get( 'location_slug' ), get_current_blog_id() ), ARRAY_A );
 					if ( !empty( $location ) ) {
 						$EM_Location = em_get_location( $location['location_id'] );
 						$url = get_permalink( $EM_Location->post_id );
@@ -115,13 +115,14 @@ if( !class_exists('EM_Permalinks') ){
 			global $wpdb;
 			//get the slug of the event page
 			$events_page_id = em_get_option( 'dbem_events_page' );
-			$events_page = get_post( $events_page_id );
+			$events_page = $events_page_id ? get_post( $events_page_id ) : null;
 			$em_rules = array ();
 			if ( is_object( $events_page ) ) {
 				$events_slug = urldecode( preg_replace( '/\/$/', '', str_replace( trailingslashit( home_url() ), '', get_permalink( $events_page_id ) ) ) );
 				$events_slug = ( !empty( $events_slug ) ) ? trailingslashit( $events_slug ) : $events_slug;
 				$events_pagename = trim( $events_slug, '/' );
 				$em_rules[ $events_slug . '(\d{4}-\d{2}-\d{2})$' ] = 'index.php?pagename=' . $events_pagename . '&calendar_day=$matches[1]'; //event calendar date search
+				$em_rules[ $events_slug . '(\d{4}-\d{2}-\d{2})/page/?([0-9]{1,})/?$' ] = 'index.php?pagename=' . $events_pagename . '&calendar_day=$matches[1]&paged=$matches[2]'; //event calendar date search paged
 				if ( $events_page_id != em_get_option( 'page_on_front' ) && EM_POST_TYPE_EVENT_SLUG != $events_slug ) { //ignore this rule if events page is the home page
 					$em_rules[ $events_slug . 'rss/?$' ] = 'index.php?post_type=' . EM_POST_TYPE_EVENT . '&feed=feed'; //rss page
 					$em_rules[ $events_slug . 'feed/?$' ] = 'index.php?post_type=' . EM_POST_TYPE_EVENT . '&feed=feed'; //compatible rss page
@@ -202,7 +203,7 @@ if( !class_exists('EM_Permalinks') ){
 			foreach ( array ( 'tags', 'categories' ) as $taxonomy_name ) {
 				if ( em_get_option( 'dbem_' . $taxonomy_name . '_enabled' ) ) {
 					$taxonomy_page_id = em_get_option( 'dbem_' . $taxonomy_name . '_page' );
-					$taxonomy_page = get_post( $taxonomy_page_id );
+					$taxonomy_page = $taxonomy_page_id ? get_post( $taxonomy_page_id ) : null;
 					if ( is_object( $taxonomy_page ) ) {
 						//we are using a categories page, so we add it to permalinks if it's not a parent of the events page
 						if ( !is_object( $events_page ) || !in_array( $events_page->ID, get_post_ancestors( $taxonomy_page_id ) ) ) {
@@ -229,7 +230,7 @@ if( !class_exists('EM_Permalinks') ){
 			//If in MS global mode and locations are linked on same site
 			if ( EM_MS_GLOBAL && !get_site_option( 'dbem_ms_global_locations_links', true ) ) {
 				$locations_page_id = em_get_option( 'dbem_locations_page' );
-				$locations_page = get_post( $locations_page_id );
+				$locations_page = $locations_page_id ? get_post( $locations_page_id ) : null;
 				if ( is_object( $locations_page ) ) {
 					$locations_slug = preg_replace( '/\/$/', '', str_replace( trailingslashit( home_url() ), '', get_permalink( $locations_page_id ) ) );
 					$em_rules[ $locations_slug . '/' . get_site_option( 'dbem_ms_locations_slug', EM_LOCATION_SLUG ) . '/(.+)$' ] = 'index.php?pagename=' . trim( $locations_slug, '/' ) . '&location_slug=$matches[1]'; //single event booking form with slug
@@ -374,23 +375,46 @@ if( !class_exists('EM_Permalinks') ){
 
 /**
  * returns the url of the my bookings page, depending on the settings page and if BP is installed.
+ * @param int $person_id if given and BP is active, returns that member's bookings url instead of the displayed user's
  * @return string
  */
-function em_get_my_bookings_url(){
+function em_get_my_bookings_url( $person_id = 0 ){
 	global $bp, $wp_rewrite;
-	// @todo add filter for bookings url, remove bp condition and add it to bp-em-core.php
+	$person_id = absint($person_id);
+	// @todo remove bp condition and add it to bp-em-core.php
 	if( !empty($bp->events->link) ){
 		//get member url
-		return $bp->events->link.'attending/';
+		if( $person_id && function_exists('bp_core_get_user_domain') ){
+			$url = trailingslashit( bp_core_get_user_domain($person_id) ).BP_EM_SLUG.'/attending/';
+		}else{
+			$url = $bp->events->link.'attending/';
+		}
 	}elseif( em_get_option('dbem_my_bookings_page') ){
-		return get_permalink(em_get_option('dbem_my_bookings_page'));
+		$url = get_permalink(em_get_option('dbem_my_bookings_page'));
 	}else{
 		if( $wp_rewrite->using_permalinks() && !defined('EM_DISABLE_PERMALINKS') ){
-			return trailingslashit(EM_URI)."my-bookings/";
+			$url = trailingslashit(EM_URI)."my-bookings/";
 		}else{
-			return preg_match('/\?/',EM_URI) ? EM_URI.'&bookings_page=1':EM_URI.'?bookings_page=1';
+			$url = preg_match('/\?/',EM_URI) ? EM_URI.'&bookings_page=1':EM_URI.'?bookings_page=1';
 		}
 	}
+	return apply_filters('em_get_my_bookings_url', $url, $person_id);
+}
+
+/**
+ * Returns the URL a search form should submit to, for either events or locations.
+ * @param string $context Either 'events' or 'locations', anything else is treated as events.
+ * @return string
+ */
+function em_get_search_form_url( $context = 'events' ){
+	// the page options are translated at runtime by EM_ML, whereas EM_URI is frozen during init before EM_ML registers its option filters
+	$page_id = $context === 'locations' ? em_get_option('dbem_locations_page') : em_get_option('dbem_events_page');
+	if( $page_id ){
+		$url = get_permalink($page_id);
+	}else{
+		$url = defined('EM_URI') ? EM_URI : '';
+	}
+	return apply_filters('em_get_search_form_url', $url, $context);
 }
 
 /**

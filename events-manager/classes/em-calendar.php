@@ -587,7 +587,7 @@ class EM_Calendar extends EM_Object {
 			?>
 			<div class="em-view-custom-data" id="em-view-custom-data-<?php echo absint($args['id']); ?>">
 				<?php
-				$ignore_keys = array('page','offset', 'pagination', 'array','ajax','month', 'year'); // stuff we don't need to consider
+				$ignore_keys = array('page','offset', 'pagination', 'array','ajax','month', 'year', 'search_url'); // stuff we don't need to consider
 				$global_args_keys = array('has_advanced_trigger', 'id', 'view_id', 'calendar_size', 'scope'); // things both searches and caelendar navs need
 				$default_search = static::get_default_search();
 				$search_exclusive_args_keys = array_keys( array_diff_key( em_get_search_form_defaults(), $default_search )); //vars only searches need

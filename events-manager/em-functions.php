@@ -316,6 +316,57 @@ function em_verify_nonce($action, $nonce_name='_wpnonce'){
 }
 
 /**
+ * Verifies a booking form nonce, ending the request in the format it expects if verification fails.
+ * @param string $action
+ * @param string $nonce_name
+ * @return bool
+ */
+function em_verify_booking_nonce( $action, $nonce_name = '_wpnonce' ){
+	if( wp_verify_nonce( $_REQUEST[$nonce_name] ?? '', $action ) ) return true;
+	$message = __('This booking form has expired, please reload the page and try again.','events-manager');
+	if( !empty($_REQUEST['em_ajax']) ){
+		$return = array('result'=>false, 'success'=>false, 'message'=>$message, 'errors'=>array($message));
+		if( !headers_sent() ) header( 'Content-Type: application/javascript; charset=UTF-8', true );
+		// wp_die() rather than exit() so the body leaves through WP's ajax die handler, as core's own wp_send_json() does
+		wp_die( EM_Object::json_encode( apply_filters( 'em_booking_nonce_expired', $return, $action ) ), '', array('response' => null) );
+	}
+	exit( $message );
+}
+
+/**
+ * Booking form actions whose nonce is refreshed on cached pages. Add-ons with a booking form action of their own, such as waitlists, add theirs here so the refresh reaches their forms too.
+ * @return array
+ */
+function em_booking_form_nonce_actions(){
+	$actions = apply_filters( 'em_booking_form_nonce_actions', array('booking_add') );
+	return array_values( array_unique( array_filter( array_map( 'sanitize_key', (array) $actions ) ) ) );
+}
+
+/**
+ * Whether a booking form action's nonce is served by the cached-page nonce refresh.
+ * @param string $action
+ * @return bool
+ */
+function em_booking_form_nonce_refreshable( $action ){
+	return in_array( $action, em_booking_form_nonce_actions(), true );
+}
+
+/**
+ * Fresh nonces for booking forms on cached pages, keyed by the form action they belong to.
+ * @return array
+ */
+function em_booking_form_nonces(){
+	$nonces = array(
+		'booking_form' => wp_create_nonce( 'booking_form' ),
+		'booking_recurrences' => wp_create_nonce( 'booking_recurrences' ),
+	);
+	foreach( em_booking_form_nonce_actions() as $booking_action ){
+		$nonces[$booking_action] = wp_create_nonce( $booking_action );
+	}
+	return apply_filters( 'em_booking_form_nonces', $nonces );
+}
+
+/**
  * Since WP 4.5 em_wp_get_referer() returns false if URL is the same. We use it to get a safe referrer url, so we use the new wp_get_raw_referer() argument instead.
  * @since 5.6.3
  * @return string 
@@ -607,6 +658,7 @@ function em_get_search_form_defaults($base_args = array(), $context = 'events') 
 	$search_args['id'] = !empty($base_args['id']) ? $base_args['id'] : rand(100, getrandmax());
 	$search_args['css'] = em_get_option('dbem_css_search'); // deprecated
 	$search_args['search_action'] = 'search_events';
+	$search_args['search_url'] = em_get_search_form_url( $context );
 	$search_args['search_advanced_text'] = em_get_option('dbem_search_form_advanced_show');
 	$search_args['search_text_show'] = em_get_option('dbem_search_form_advanced_show'); // deprecated
 	$search_args['search_text_hide'] = em_get_option('dbem_search_form_advanced_hide'); // deprecated

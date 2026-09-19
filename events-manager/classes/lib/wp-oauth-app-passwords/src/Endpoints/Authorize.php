@@ -115,7 +115,8 @@ class Authorize {
 		if ( '' === $scope ) {
 			$scope = Server::default_scope();
 		}
-		$client_name = self::param( 'client_name' );
+		// The displayed name comes from the stored client record, never from the request. Taking it from a `client_name` parameter let anyone who could register a client (registration is open by RFC 7591's open profile) put an arbitrary trusted-looking name on a consent screen served from the site's own domain.
+		$client_name = is_array( $client ) ? (string) ( $client['name'] ?? '' ) : '';
 
 		return array(
 			'client_id'             => $client_id,
@@ -126,7 +127,6 @@ class Authorize {
 			'code_challenge'        => self::param( 'code_challenge' ),
 			'code_challenge_method' => self::param( 'code_challenge_method' ),
 			'response_type'         => self::param( 'response_type' ),
-			'client_name'           => $client_name,
 			'app_name'              => Support::guess_app_name( $client_name, $redirect ),
 		);
 	}
@@ -140,7 +140,6 @@ class Authorize {
 			'scope'                 => $p['scope'],
 			'code_challenge'        => $p['code_challenge'],
 			'code_challenge_method' => $p['code_challenge_method'],
-			'client_name'           => $p['client_name'],
 		) ) ), self::url() );
 	}
 

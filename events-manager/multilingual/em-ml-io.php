@@ -113,8 +113,8 @@ class EM_ML_IO {
 	 */
 	public static function event_merge_original_attributes($EM_Event, $event){
 		//merge attributes
-		$event->event_attributes = maybe_unserialize($event->event_attributes);
-		$EM_Event->event_attributes = maybe_unserialize($EM_Event->event_attributes);
+		$event->event_attributes = EM_Object::maybe_unserialize($event->event_attributes);
+		$EM_Event->event_attributes = EM_Object::maybe_unserialize($EM_Event->event_attributes);
 		foreach($event->event_attributes as $event_attribute_key => $event_attribute){
 			if( !empty($event_attribute) && empty($EM_Event->event_attributes[$event_attribute_key]) ){
 				$EM_Event->event_attributes[$event_attribute_key] = $event_attribute;
@@ -177,10 +177,13 @@ class EM_ML_IO {
 				//make that translation the master event by changing event ids of bookings, tickets etc. to the new master event
 				$wpdb->update(EM_TICKETS_TABLE, array('event_id'=>$event->event_id), array('event_id'=>$EM_Event->event_id));
 				$wpdb->update(EM_BOOKINGS_TABLE, array('event_id'=>$event->event_id), array('event_id'=>$EM_Event->event_id));
-				//adjust the event_parent pointer
-				$wpdb->update(EM_EVENTS_TABLE, array('event_parent'=>$event->event_id), array('event_parent'=>$EM_Event->event_id));
+				//the master being deleted is the canonical/original row, so its own event_parent (when set) is the structural parent the promoted row must inherit
+				$structural_parent = !empty($EM_Event->event_parent) ? $EM_Event->event_parent : null;
+				//adjust the event_parent pointers, keeping translations and structural children as distinct meanings via event_translation
+				$wpdb->update(EM_EVENTS_TABLE, array('event_parent'=>$event->event_id), array('event_parent'=>$EM_Event->event_id, 'event_translation'=>1));
+				$wpdb->update(EM_EVENTS_TABLE, array('event_parent'=>$event->event_id), array('event_parent'=>$EM_Event->event_id, 'event_translation'=>0));
 				$EM_Event->ms_global_switch();
-				$wpdb->update(EM_EVENTS_TABLE, array('event_parent'=>null, 'event_translation'=>0), array('event_id'=>$event->event_id));
+				$wpdb->update(EM_EVENTS_TABLE, array('event_parent'=>$structural_parent, 'event_translation'=>0), array('event_id'=>$event->event_id));
 				$wpdb->update($wpdb->postmeta, array('meta_value'=>$event->event_id), array('meta_key'=>'_event_parent', 'meta_value'=>$EM_Event->event_id));
 				delete_post_meta( $event->post_id, '_event_parent');
 				delete_post_meta( $event->post_id, '_event_translation');

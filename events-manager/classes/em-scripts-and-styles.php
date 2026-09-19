@@ -163,6 +163,7 @@ class Scripts_and_Styles {
 				static::enqueue_public_styles();
 			}
 			do_action('em_enqueue_admin_styles');
+			static::enqueue_admin_scripts();
 			self::localize_script();
 			if( !empty($_REQUEST['page']) && $_REQUEST['page'] === 'events-manager-options' ){
 				wp_enqueue_code_editor( array( 'type' => 'text/html' ) );
@@ -197,6 +198,21 @@ class Scripts_and_Styles {
 		$min = static::get_minified_extension_css( $min );
 		wp_enqueue_style('events-manager-admin', plugins_url('includes/css/events-manager-admin'.$min.'.css',EM_FILE), $deps, EM_VERSION);
 		do_action('em_enqueue_admin_styles', $deps, $min);
+	}
+
+	/**
+	 * Enqueue admin-only scripts for EM editor screens and fire em_enqueue_admin_scripts so add-ons can inject admin JS. The scripts analogue of enqueue_admin_styles()/em_enqueue_admin_styles. Called on the classic admin (admin_enqueue) AND inside the Gutenberg canvas iframe (EM_Blocks::enqueue_block_styles), so add-on editor JS reaches the canvas the same way add-on CSS does.
+	 */
+	public static function enqueue_admin_scripts( $deps = array(), $min = true ){
+		do_action( 'em_enqueue_admin_scripts', $deps, $min );
+	}
+
+	/**
+	 * Enqueue the event-editor stylesheet that styles the When/Recurrences/Bookings forms. In the classic editor this is loaded on demand by EM's JS asset-loader when it sees the .em-event-editor body class, so it has no dedicated enqueue path. The block editor renders those same forms inside the canvas iframe, which the JS loader can't reach, so the iframe enqueue (EM_Blocks::enqueue_block_styles) calls this directly. Depends on events-manager-admin so the cascade order matches the classic editor.
+	 */
+	public static function enqueue_event_editor_styles( $deps = array('events-manager-admin'), $min = true ){
+		$min = static::get_minified_extension_css( $min );
+		wp_enqueue_style('events-manager-event-editor', plugins_url('includes/css/events-manager-event-editor'.$min.'.css',EM_FILE), $deps, EM_VERSION);
 	}
 
 	public static function get_minified_extension_css( $minified = true ) {

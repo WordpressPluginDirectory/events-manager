@@ -7,13 +7,13 @@
 ?>
 <section class="em-cal-nav em-cal-nav-<?php echo esc_attr($args['calendar_header']); ?>">
 	<?php if( $args['has_advanced_trigger'] ): ?>
-		<button class="em-search-advanced-trigger em-clickable" data-search-advanced-id="em-search-advanced-<?php echo $id; ?>"  data-parent-trigger="em-search-advanced-trigger-<?php echo $id; ?>"></button>
+		<button class="em-search-advanced-trigger em-clickable" data-search-advanced-id="em-search-advanced-<?php echo esc_attr($id); ?>"  data-parent-trigger="em-search-advanced-trigger-<?php echo esc_attr($id); ?>"></button>
 	<?php endif; ?>
 	<?php ob_start(); ?>
 	<div class="month input">
 		<?php if( !empty($args['calendar_nav']) && !empty($args['calendar_month_nav']) ): ?>
 			<form action="" method="get">
-				<input type="month" class="em-month-picker" value="<?php echo $EM_DateTime->i18n('Y-m') ?>" data-month-value="<?php echo $EM_DateTime->i18n( em_get_option('dbem_full_calendar_month_format') ) ?>">
+				<input type="month" class="em-month-picker" value="<?php echo esc_attr($EM_DateTime->i18n('Y-m')) ?>" data-month-value="<?php echo esc_attr($EM_DateTime->i18n( em_get_option('dbem_full_calendar_month_format') )) ?>">
 				<span class="toggle"></span>
 			</form>
 		<?php else: ?>

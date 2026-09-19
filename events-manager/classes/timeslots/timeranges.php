@@ -257,11 +257,21 @@ class Timeranges extends \EM_Object implements \Iterator, \ArrayAccess, \Countab
 					unset( $this->timeranges[0] );
 				}
 				// add or update timeranges
+				// A form rendered before this group had stored rows posts its entries with no timerange_id, so an id-less entry is matched positionally against whichever rows no other entry claimed. Appending it instead leaves a spurious extra timerange, which either trips the overlap validator or sends save() down the branch that drops the group's stored rows. Rows already marked for deletion are excluded so that deleting and re-adding in one submission cannot claim the row being deleted.
+				$claimable = [];
+				foreach ( $this->timeranges as $timerange_id => $Timerange ) {
+					if ( empty( $post_array['delete'][ $timerange_id ] ) ) {
+						$claimable[] = $timerange_id;
+					}
+				}
 				foreach ( $post_array as $key => $timerange_data ) {
 					if ( $key !== 'edit_nonce' && $key !== 'delete' ) {
 						if ( isset( $timerange_data['timerange_id'] ) && array_key_exists( $timerange_data['timerange_id'], $this->timeranges ) ) {
 							$Timerange = $this->timeranges[ $timerange_data['timerange_id'] ];
+							$claimable = array_diff( $claimable, [ $timerange_data['timerange_id'] ] );
 							// check for edit nonce or delete nonce
+						} elseif ( empty( $timerange_data['timerange_id'] ) && $claimable ) {
+							$Timerange = $this->timeranges[ array_shift( $claimable ) ];
 						} else {
 							$Timerange = $this->get_timerange( ['timerange_group_id' => $this->group_id ]);
 							$this->timeranges[] = $Timerange;

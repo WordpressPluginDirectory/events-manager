@@ -679,6 +679,10 @@ class Recurrence_Sets extends \EM_Object implements \Iterator, \ArrayAccess, \Co
 		foreach ( $this->include as $Recurrence_Set ) {
 			$api['sets'][] = $Recurrence_Set->to_api();
 		}
+		// Excludes were dropped historically — surface them too (discriminated by `type`) so the write contract can round-trip them.
+		foreach ( $this->exclude as $Recurrence_Set ) {
+			$api['sets'][] = $Recurrence_Set->to_api();
+		}
 
 		return $api;
 	}

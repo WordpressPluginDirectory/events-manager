@@ -1,11 +1,11 @@
-=== Events Manager - Calendar, Bookings, Tickets, and more!  ===
+=== Events Manager - Calendar, Bookings, Tickets, Appointments and more! ===
 Contributors: msykes, pxlite, nutsmuggler, netweblogic
 Donate link: https://wp-events-plugin.com
-Tags: events, calendar, tickets, bookings, block
+Tags: events, calendar, tickets, bookings, appointments
 Text Domain: events-manager
 Requires at least: 6.1
 Tested up to: 7.0
-Stable tag: 7.3.6
+Stable tag: 7.4.5
 Requires PHP: 7.0
 License: GPLv2
 
@@ -23,6 +23,7 @@ Events Manager is a full-featured event calendar, bookings, appointments, schedu
 
 * **NEW** Integrate easily with your favourite AI via MCP, unlock the power of AI-powered Events!
 * **NEW** API Rest Integration
+* **NEW** EU Compliance Tools for ["Right of withdrawal" (EU 'Widerrufsbutton')](https://wp-events-plugin.com/documentation/compliance/right-of-withdrawal/)
 * Beautiful calendars, search pages, lists, grids and booking forms to enhance your site events.
 * Easy event registration (single day with start/end times)
 * Recurring and long (multi-day) event registration
@@ -89,8 +90,8 @@ We provide the tools to [help you be GDPR compliant](http://wp-events-plugin.com
 
 We have a premium [Pro add-on for Events Manager](http://eventsmanagerpro.com/gopro/) which not only demonstrates the flexibility of Events Manager, but also adds some important features including but not limited to:
 
-* WooCommerce integration ([sold separately](https://em.cm/wc))
-* PayPal, Stripe, Authorize.net and Offline Payments
+* WooCommerce integration ([sold separately](https://pxlink.cc/wc))
+* PayPal, Stripe, Authorize.net, Square, Xero and Offline Payments
 * Custom booking forms
 * Individual Attendee custom forms
 * Upload fields for bookings, attendees and users
@@ -193,6 +194,122 @@ See our [FAQ](http://wp-events-plugin.com/documentation/faq/) page for helps wit
 18. Grid view for displaying your upcoming events at a glance
 
 == Changelog ==
+= 7.4.5 =
+* Security: Fixed a broken access control vulnerability. Reported by Hasyros via WPScan.
+* Security: Fixed an information disclosure vulnerability. Reported by Karthik Ramakrishnan via WPScan.
+* Fixed: scheduled imports failed because wp-cron and WP-CLI requests were subject to the public submitter consent check
+* Fixed: deleting a recurring event's bookings reported success without deleting anything
+* Fixed: a PHP deprecation notice was printed on the admin bookings pages when debugging was enabled
+* Fixed: events with an emoji in their name or content could not be saved on older database tables
+* Fixed: events using a custom archetype could not be edited, reporting "Sorry, you are not allowed to edit this post"
+* Fixed: publishing an event in the block editor saved it as a draft when pre-publish checks were disabled
+* Fixed: the events search form could submit to the default language events page under WPML, and to the wrong page on themes overriding the search template
+* Changed: the admin bookings list and pending badge now show only the event type you are viewing, with an All Event Types filter for the combined list
+* Fixed: an end time earlier than the start time was not flagged while editing an event
+* Fixed: the booking form security token was only refreshed for the standard booking form on cached sites
+* Fixed: the edit icon in the admin bookings list spilled out of its column on narrow screens
+
+= 7.4.4 =
+* Security: Fixed an information disclosure vulnerability. Reported via Patchstack.
+* Security: Fixed a missing authorization vulnerability, CVE-2026-92711. Reported by M4r0u4n3 via Wordfence.
+* Security: Fixed a spoofing vulnerability, CVE-2026-92614. Reported by Shirshak via Wordfence.
+* Fixed: calendar date previews still rendered their modals when Date Preview Mode was set to Direct Link
+* Fixed: booking submissions on cached sites failed with "unexpected network error" once the form's security token expired, the form now says it expired and should be reloaded
+* Fixed: newly booked attendees did not show on the event page until caches were flushed on sites with a persistent object cache, the event was cached with an emptied bookings list and never invalidated when bookings changed
+* Fixed: bookings with a zero booking date in the database displayed as "November 29, -0001"
+* Fixed: fatal error on first activation from WP-CLI or other non-admin contexts because the admin notice class was not loaded
+* Fixed: the pending spaces count ignored a forced refresh and could stay stale after a booking
+* Fixed: the booking meta migration from 6.1 could rerun on every page load when a batch of bookings had no meta, slowing or crashing the site after an upgrade
+* Fixed: events created by imports or the REST API were missing from listings until re-saved because their type and archetype were never set, existing events are repaired on upgrade
+* Fixed: repeating event occurrences had every previous occurrence's date appended to their slug, breaking their URLs
+* Fixed: fatal error on the category page after updating when an archetype has both categories and tags disabled
+* Fixed: bulk actions such as Move to Trash in the admin failed to redirect due to a warning from the archetype post type check
+* Fixed: an empty events page setting could write a rewrite rule that broke the page being viewed until rewrite rules regenerated
+* Fixed: a PHP warning was printed above the header row of CSV booking exports
+* Fixed: an event ending after midnight on a later day was flagged as ending before it started
+* Fixed: the day view of the events page could not be paginated
+* Fixed: deleting a booking from the admin bookings table still rendered its row actions and could print a warning into the response
+* Fixed: admin booking tables could stop responding when the export or settings form was picked up before the main table form, notably on multisite
+* Fixed: the booking submit button read "null" after an AJAX submission
+* Fixed: radio buttons were invisible on the admin Add Booking form due to checkbox styling applied to radios
+* Fixed: uninstalling from a sub-site in MS Global mode dropped the shared network event and booking tables, it is now refused with a link to the network settings
+* Fixed: the bookings admin page turned the URL action into a booking lifecycle hook name, so listeners of em_bookings_add could fatal, a dedicated em_bookings_admin_action_* hook now fires alongside the legacy name
+* Fixed: the REST API bookings list only returned bookings on the caller's own events, even for users who can manage all bookings
+* Fixed: the Test Email Settings button reported "Server Error" for administrators without the activate_plugins capability
+* Fixed: EM_Event::set_timeslot_id() could never load a timeslot due to malformed SQL
+* Fixed: the waiting list could not be joined for a fully booked occurrence of a recurring event
+* Added: em_get_my_bookings_url() accepts a person id and runs through the em_get_my_bookings_url filter, so BuddyPress links resolve the booking owner rather than the displayed user
+* Tweaked: typo on the help page
+
+= 7.4.3 =
+* Security: Fixed an XSS vulnerability CVE-2026-66457. Reported by Mukhlis Amien via Patchstack.
+* Security: Fixed low-severity (self-diagnosed) vulnerability allowing unfiltered shortcode output under specific setup/variable circumstances.
+* Fixed: fatal error when the booking cancellation cut-off is set as an interval such as `P2D` rather than a number of hours
+* Fixed: fatal error saving a location with an attribute no longer in your configured attribute list
+* Fixed: quotes in a custom calendar month format broke the month picker
+* Tweaked: documentation links now use https
+
+= 7.4.2 =
+* Security: Fixed an XSS vulnerability in grouped event lists.
+
+= 7.4.1 =
+* Fixed: events could revert to Draft on save reporting that timeranges cannot overlap, and in some cases the event's timeslots were silently removed
+* Fixed: events saved in the block editor failed validation asking for consent that cannot be given there
+* Fixed: saving a booking in the admin area failed with "The link you followed has expired" on sites running a page cache plugin
+* Fixed: adding unavailable dates to a saved recurring event did nothing
+* Fixed: recurrences set to specific dates could not be published, reporting that the end date must be greater than the start date
+* Fixed: individually edited occurrences of a repeating event had their name, content and other details overwritten from the parent
+* Fixed: detaching an occurrence from a repeating event silently failed and left the event out of sync with its post, with affected events repaired on upgrade
+* Fixed: detaching tickets did nothing on sites not using the default `wp_` database prefix
+* Fixed: fatal error when booking meta was saved with an empty value
+* Fixed: deleting multiple events at once reported the wrong result
+* Fixed: waitlist re-checks and other listeners of `em_bookings_deleted` received no event ids
+* Fixed: listeners of `em_event_delete_pre` never fired, due to a trailing space in the hook name
+* Fixed: on multilingual sites, bookings could resolve to the wrong event, and deleting a master event could detach occurrences from their series
+* Fixed: on multisite, deleting a site left the timeslot, recurrence and booking meta tables behind
+* Fixed: columns added to the timeslots table in a later release were never applied to existing sites, and upgrades could remove database indexes added elsewhere
+* Security: Fixed a privilege escalation vulnerability. Reported by Jakub Herman.
+* Security: Fixed an SQLi vulnerability. Reported by Jakub Herman.
+* Security: Fixed an SQLi vulnerability (CVE-2026-15023). Reported by Dmitrii Ignatyev (CleanTalk) via Wordfence.
+* Security: Fixed an XSS vulnerability (CVE-2026-17089). Reported by Wordfence PRISM.
+* Security: Fixed an information disclosure vulnerability (CVE-2026-10627). Reported by molten bit via Wordfence.
+
+= 7.4.0.1 =
+* Fixed (in-dev): dbDelta warnings and malformed ALTER TABLE queries on upgrade for the new timeranges table due to blank lines in the CREATE TABLE definition
+* Update notice for Pro users.
+
+= 7.4 =
+* Added: a "check for the latest stable version" option that bypasses the staggered update rollout, plus an EM_AUTO_UPDATES constant to auto-install held-back versions
+* Fixed: "_load_textdomain_just_in_time was called incorrectly" notice logged on every page load
+* Fixed: on multisite, the image maximum file size and minimum width settings were not applied network-wide
+* Fixed: form uploads could be silently dropped on save when another upload field was left empty
+* Fixed: malformed double-slash URL for the admin dashboard chart script
+
+= 7.3.7.4.2 =
+* Added: Stable update checking options, excluded from automatic background updates
+* Moved update checks into em-updates.php so the auto-update veto loads during cron
+
+= 7.3.7.4 =
+* Fixed: Critical error on front-end event pages for events with a location URL since 7.3.7
+
+= 7.3.7.3 =
+* Added: webp as accepted upload image type
+* Fixed: SQL syntax error affecting ticket counts due to unprepared SQL statement (props @joneiseman)
+
+= 7.3.7 =
+* Added: Push notification framework for the upcoming Events Manager mobile app — device registration, per-notification-type controls, and a settings UI.
+* Added: Block editor — Event Details canvas panel with tabbed When and Bookings sections; canvas/tabbed/stacked layout setting; namespaced EM\Editor tab system for event and location editors; EM runtime now loads inside the canvas iframe with full admin CSS and recurrence support.
+* Added: REST API recurring-event and timeslot read/write support.
+* Security: Fixed unauthenticated object injection via booking meta, SQL injection in iCal/feed/permalink slug lookups, and unauthenticated booking summary disclosure. Reported by Jakub Herman. We recommend updating.
+* Fixed: PHP 8.x infinite loop in the multi-day calendar slot allocator when two events overlap on the same day.
+* Fixed: WordPress 6.7+ "translation triggered too early" debug notice — API consent-scope now registers on `init` instead of `plugins_loaded`.
+* Fixed: Fatal `array_intersect()` error on the Bookings list when sorted by a single column.
+* Fixed: Fatal "Cannot access offset of type string on string" on settings save when `dbem_data` was corrupted to a plain string.
+* Fixed: Booked seat and ticket counts showed as 0 throughout the admin due to an inverted condition.
+* Fixed: "Limit CSS loading" setting ignored since 7.3 — stylesheet enqueued on every front-end page regardless of the setting.
+* Fixed: Fatal "Cannot redeclare em_admin_ms_locations()" on multisite subsite admin.
+* Fixed: Recurrence reschedule button and double timeslot bug in the block canvas.
+
 = 7.3.6 =
 * Added: EU right of withdrawal (Widerrufsbutton) — guests and registered users can now submit a statutory cancellation request directly from a booking confirmation email or the My Bookings page, fulfilling the § 356a BGB obligation for distance contracts. Includes a configurable site-wide footer link, admin and guest acknowledgement emails, and magic-link access so guests without a WordPress account can reach the cancellation form.
 * Fixed: Recurring events with an exclude-only recurrence set (or a malformed payload with no include/exclude keys) caused a fatal TypeError in uksort() — the order array is now initialised before sorting.

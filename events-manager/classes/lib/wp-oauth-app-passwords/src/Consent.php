@@ -26,6 +26,10 @@ class Consent {
 			 */
 			'account_note' => (string) apply_filters( 'pixelite_oauth_consent_account_note', '', $user ),
 			'branding'    => self::branding(),
+			// Where approving actually sends the credential. Without this the user sees only a name the client chose and has no way to tell a first-party integration from someone else's host.
+			'destination' => self::destination_label( $params['redirect_uri'] ),
+			// A client that registered itself through the open /register endpoint has been vetted by nobody, so say so rather than letting its chosen name imply otherwise.
+			'self_registered' => ! empty( $params['client']['dynamic'] ),
 			'hidden'      => array_filter( array(
 				'response_type'         => 'code',
 				'client_id'             => $params['client_id'],
@@ -34,7 +38,6 @@ class Consent {
 				'scope'                 => $params['scope'],
 				'code_challenge'        => $params['code_challenge'],
 				'code_challenge_method' => $params['code_challenge_method'],
-				'client_name'           => $params['client_name'],
 			) ),
 			'form_action' => Authorize::url(),
 			'switch_url'  => wp_logout_url( self::current_url() ),
@@ -47,6 +50,22 @@ class Consent {
 		// Expose $view to the template.
 		$pixelite_oauth_view = $view;
 		require Support::dir() . '/templates/consent.php';
+	}
+
+	/**
+	 * Short, readable form of the redirect URI for display: the host for an http(s) URI, the scheme itself for a custom-scheme app redirect, and the raw URI as a last resort.
+	 */
+	private static function destination_label( string $redirect_uri ): string {
+		if ( '' === $redirect_uri ) {
+			return '';
+		}
+		$host = (string) wp_parse_url( $redirect_uri, PHP_URL_HOST );
+		if ( '' !== $host ) {
+			$port = wp_parse_url( $redirect_uri, PHP_URL_PORT );
+			return $port ? $host . ':' . (int) $port : $host;
+		}
+		$scheme = (string) wp_parse_url( $redirect_uri, PHP_URL_SCHEME );
+		return '' !== $scheme ? $scheme . '://' : $redirect_uri;
 	}
 
 	/**

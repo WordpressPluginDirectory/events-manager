@@ -1155,7 +1155,12 @@ class EM_Object {
 	
 	/**
 	 * Gets array of searchable variables that should be considered in a $_REQUEST variable
-	 * @param array $args Arguments to include in returned array
+	 *
+	 * WARNING: $args must never contain unsanitized data. This method vets $request, not $args — anything already in
+	 * $args is taken as trusted and returned as-is. Never pass $_REQUEST, $_GET, $_POST or cookie data in as $args
+	 * (array_merge($args, $_REQUEST) included); pass it as $request and let this method extract what is allowed.
+	 *
+	 * @param array $args Arguments to include in returned array, from trusted code only - see warning above
 	 * @param string $filter Filters out any unrecognized arguments already passed into $args
 	 * @param array $request defaults to $_REQUEST if empty but can be an array of items to go through instead
 	 * @param array $accepted_searches defaults to EM_Object::get_search_defaults(), objects should call self::get_search_defaults() to get around late static binding problems
@@ -1165,8 +1170,17 @@ class EM_Object {
 		if( empty($request) ) $request = $_REQUEST;
 		if( !empty($request['em_search']) && empty($args['search']) ) $request['search'] = $request['em_search']; //em_search is included to circumvent wp search GET/POST clashes
 		$accepted_searches = !empty($accepted_searches) ? $accepted_searches : static::get_default_search();
-		$accepted_searches = array_diff($accepted_searches, array('format', 'format_header', 'format_footer'));
+		// header_format and date_format are display templates too, despite the inverted naming.
+		$display_templates = array('format', 'format_header', 'format_footer', 'header_format', 'date_format');
+		$accepted_searches = array_diff($accepted_searches, $display_templates);
 		$accepted_searches = apply_filters('em_accepted_searches', $accepted_searches, $args);
+		// templates are echoed as HTML, so a request may only name one and get the format registered under that name
+		foreach( $display_templates as $display_template ){
+			if( !empty($request[$display_template]) ){
+				$format = EM_Formats::get_registered_format( $request[$display_template] );
+				if( $format !== false ) $args[$display_template] = $format;
+			}
+		}
 		//merge variables from the $request into $args
 		foreach($request as $post_key => $post_value){
 			if( in_array($post_key, $accepted_searches) && !empty($post_value) ){
@@ -1216,7 +1230,7 @@ class EM_Object {
 		}
 		//go through default arguments (if defined) and build a list of unique non-default arguments that should go into the querystring
 		$unique_args = array(); //this is the set of unique arguments we'll add to the querystring
-		$ignored_args = array('offset', 'ajax', 'array', 'pagination','format','format_header','format_footer','page');
+		$ignored_args = array('offset', 'ajax', 'array', 'pagination','format','format_header','format_footer','header_format','date_format','page');
 		foreach( $default_args as $arg_key => $arg_default_val){
 			if( array_key_exists($arg_key, $args) && !in_array($arg_key, $ignored_args) ){
 				//if array exists, implode it in case one value is already imploded for matching purposes
@@ -1899,6 +1913,16 @@ class EM_Object {
 	function generate_uuid(){
 		return str_replace('-', '', wp_generate_uuid4());
 	}
+
+	/**
+	 * maybe_unserialize() variant that never instantiates objects (allowed_classes => false).
+	 */
+	public static function maybe_unserialize( $original ){
+		if ( is_serialized( $original ) ) {
+			return @unserialize( trim( $original ), array( 'allowed_classes' => false ) );
+		}
+		return $original;
+	}
 	
 	/**
 	 * Process meta stored in a meta table. Meta stored without a preceding _ are considered as-is values and added as a key/value pair to returned meta array, otherwise they are considered as arrays and parsed accordingly, so that each array item is stored as a separate row in the database and rebuilt when loaded.
@@ -1914,7 +1938,7 @@ class EM_Object {
 	function process_meta( $raw_meta ){
 		$processed_meta = array();
 		foreach( $raw_meta as $meta ){
-			$meta_value = maybe_unserialize($meta['meta_value']);
+			$meta_value = self::maybe_unserialize($meta['meta_value']);
 			$meta_key = $meta['meta_key'];
 			if( preg_match('/^_([a-zA-Z\-0-9 _]+)\|([^\|]+)?$/', $meta_key, $match) || preg_match('/^_([a-zA-Z\-0-9]+)_(.+)$/', $meta_key, $match) ){
 				$key = $match[1];

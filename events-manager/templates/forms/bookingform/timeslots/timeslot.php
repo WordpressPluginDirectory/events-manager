@@ -19,6 +19,8 @@ $can_book = $EM_Event->get_bookings()->is_open();
 $timeslot_options = $timeslot_options ?? em_booking_timeslots_get_display_options( $EM_Event );
 $available_spaces = $EM_Event->get_bookings()->get_available_spaces();
 $is_fully_booked = $available_spaces <= 0 && !EM_Bookings::$disable_restrictions;
+// a full occurrence may still be selectable, e.g. to join a waitlist, which can only be reached by loading its booking form
+$can_book = apply_filters( 'em_booking_timeslot_can_book', $can_book, $EM_Event, $is_fully_booked );
 if ( $is_fully_booked && !$timeslot_options['show_unavailable'] ) {
 	return;
 }
@@ -42,7 +44,7 @@ $event_id = $EM_Event->event_id;
 		<?php elseif( $EM_Event->event_active_status === 0 ): //event is cancelled ?>
 			<?php do_action('em_booking_form_status_cancelled', $EM_Event); // do not delete ?>
 		<?php elseif( $is_fully_booked ): ?>
-			<?php esc_html_e('Fully Booked', 'events-manager') ?>
+			<?php echo esc_html( apply_filters( 'em_booking_timeslot_fully_booked_label', __('Fully Booked', 'events-manager'), $EM_Event ) ); ?>
 		<?php elseif( !$is_open ): //event has started ?>
 			<?php do_action('em_booking_form_status_closed', $EM_Event); // do not delete ?>
 		<?php else : ?>

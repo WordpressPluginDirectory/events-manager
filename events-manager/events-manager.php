@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Events Manager
-Version: 7.3.6
+Version: 7.4.5
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
@@ -30,8 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Setting constants
 use EM\Archetypes;
 
-define('EM_VERSION', '7.3.6'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
-define('EM_PRO_MIN_VERSION', '3.7.2'); //self expanatory
+define('EM_VERSION', '7.4.5'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_PRO_MIN_VERSION', '3.9'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.6.0.2'); //self expanatory
 define('EM_FILE', __FILE__); //an absolute path to this directory
 define('EM_DIR', dirname( __FILE__ )); //an absolute path to this directory
@@ -140,6 +140,7 @@ include( EM_DIR . '/em-actions.php' );
 include( EM_DIR . '/em-events.php' );
 include( EM_DIR . '/em-emails.php' );
 include( EM_DIR . '/em-functions.php' );
+include( EM_DIR . '/em-updates.php' );
 include( EM_DIR . '/em-ical.php' );
 include( EM_DIR . '/em-shortcode.php' );
 include( EM_DIR . '/em-template-tags.php' );
@@ -155,6 +156,8 @@ if( get_option('dbem_locations_enabled') ){
 include( EM_DIR . '/widgets/em-calendar.php' );
 //Gutenberg blocks + validation guard (registers blocks, REST field, editor JS)
 include( EM_DIR . '/blocks/_bootstrap.php' );
+//Event/Location editor: tab registry (EM\Editor\Tabs + Event/Location) + canvas/tabs/metaboxes layout controller
+include( EM_DIR . '/classes/editor/em-editor.php' );
 //Classes
 include( EM_DIR . '/classes/em-list-table.php' );
 include( EM_DIR . '/classes/em-booking.php' );
@@ -193,6 +196,8 @@ include( EM_DIR . '/classes/em-tickets.php' );
 include( EM_DIR . '/classes/em-phone.php' );
 // EM's API bootstrap loads the bundled OAuth library, registers REST routes, abilities, and the MCP server — see EM\API\API::init().
 include( EM_DIR . '/classes/api/em-api.php' );
+// Push-notification framework for the mobile app: a generic type registry (bookings, events, …) that dispatches to Expo and registers its own /app/* REST routes under the API namespace — see EM\Notifications\Notifications::init(). Loaded after the API so it can reuse the same namespace and auth layer.
+include( EM_DIR . '/classes/notifications/em-notifications.php' );
 
 
 //Admin / API context
@@ -833,6 +838,37 @@ class EM_Formats {
 		} // if set to 2 (or something else) we're loading everything direct from settings
 		return $default_formats;
 	}
+
+	/**
+	 * Formats a request may select by name, as id => option name. Empty by default; nothing is exposed to requests
+	 * until it is registered here:
+	 *
+	 *     add_filter('em_registered_formats', function( $formats ){
+	 *         $formats['front-page-format'] = 'mytheme_front_page_format';
+	 *         return $formats;
+	 *     });
+	 *
+	 * @return array<string,string>
+	 */
+	public static function get_registered_formats(){
+		return apply_filters('em_registered_formats', array());
+	}
+
+	/**
+	 * Resolves a format id to the format stored against it, false if the id isn't registered. Never falls back to the
+	 * id itself, or an injected format would pass straight through.
+	 *
+	 * @param string $format_id
+	 * @return string|false
+	 */
+	public static function get_registered_format( $format_id ){
+		if( !is_string($format_id) || !preg_match('/^[a-zA-Z0-9_-]+$/', $format_id) ) return false;
+		$registered_formats = static::get_registered_formats();
+		if( !isset($registered_formats[$format_id]) ) return false;
+		$format = em_get_option( $registered_formats[$format_id] );
+		if( !is_string($format) || $format === '' ) return false;
+		return apply_filters('em_registered_format', $format, $format_id);
+	}
 }
 EM_Formats::init();
 
@@ -852,7 +888,7 @@ function em_rss() {
 		$args['event_archetype'] = false;
 	}elseif( is_feed() && $wp_query->get('post_type') == EM_POST_TYPE_LOCATION && $wp_query->get(EM_POST_TYPE_LOCATION) ){
 		//location feeds
-		$location_id = $wpdb->get_var('SELECT location_id FROM '.EM_LOCATIONS_TABLE." WHERE location_slug='".$wp_query->get(EM_POST_TYPE_LOCATION)."' AND location_status=1 LIMIT 1");
+		$location_id = $wpdb->get_var($wpdb->prepare('SELECT location_id FROM '.EM_LOCATIONS_TABLE." WHERE location_slug=%s AND location_status=1 LIMIT 1", $wp_query->get(EM_POST_TYPE_LOCATION)));
 		if( !empty($location_id) ){
 			$args = array('location'=> $location_id);
 		}
@@ -904,6 +940,15 @@ function em_delete_blog( $blog_id ){
 	$wpdb->query('DROP TABLE '.$prefix.'em_tickets');
 	$wpdb->query('DROP TABLE '.$prefix.'em_tickets_bookings');
 	$wpdb->query('DROP TABLE '.$prefix.'em_meta');
+	//em_timeranges/em_event_timeslots are always per-site (even under MS Global), so drop them in every mode
+	$wpdb->query('DROP TABLE IF EXISTS '.$prefix.'em_timeranges');
+	$wpdb->query('DROP TABLE IF EXISTS '.$prefix.'em_event_timeslots');
+	//these are per-site only in plain multisite; under MS Global they are base-prefix/shared and must never be dropped per-blog
+	if( !EM_MS_GLOBAL ){
+		$wpdb->query('DROP TABLE IF EXISTS '.$prefix.'em_event_recurrences');
+		$wpdb->query('DROP TABLE IF EXISTS '.$prefix.'em_bookings_meta');
+		$wpdb->query('DROP TABLE IF EXISTS '.$prefix.'em_tickets_bookings_meta');
+	}
 	//delete events if MS Global
 	if( EM_MS_GLOBAL ){
 	    EM_Events::delete(array('limit'=>0, 'blog'=>$blog_id));

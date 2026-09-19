@@ -5872,6 +5872,8 @@
 .wp-admin .em.pixelbones.input input[type=radio]:not([data-nostyle]) {
   margin-bottom: 0 !important;
   display: inline-block !important;
+}
+.wp-admin .em.pixelbones .input input[type=checkbox]:not([data-nostyle]), .wp-admin .em.pixelbones.input input[type=checkbox]:not([data-nostyle]) {
   background-color: var(--background-color-checkboxes) !important;
   text-align: start !important;
   background-color: var(--background-color-checkboxes) !important;
@@ -6677,8 +6679,11 @@
   .wp-admin .em .em-list-table .wp-list-table thead th.column-primary {
     content: "";
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody th.check-column {
-    width: 77px;
+  .wp-admin .em .em-list-table .wp-list-table thead .check-column {
+    width: 96px;
+  }
+  .wp-admin .em .em-list-table .wp-list-table tbody .check-column {
+    width: 96px;
   }
   .wp-admin .em .em-list-table .wp-list-table tbody td:not(.check-column) {
     display: block !important;

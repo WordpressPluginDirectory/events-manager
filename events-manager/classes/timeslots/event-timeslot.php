@@ -45,7 +45,12 @@ class Timeslot extends \EM\Timeslot {
 		global $wpdb;
 		// load timeslot from database if id supplied
 		if ( is_numeric( $args ) ) {
-			$args = $wpdb->get_row( "SELECT * FROM " . EM_EVENT_TIMESLOTS_TABLE . " WHERE timeslot_id = " . absint( $args ), ARRAY_A );
+			// Bound to the event as well as the id: a slot id posted from the browser could otherwise name any event's slot, and the booking would land on this event carrying the other one's times and a fresh per-slot count.
+			$sql = "SELECT * FROM " . EM_EVENT_TIMESLOTS_TABLE . " WHERE timeslot_id = " . absint( $args );
+			if ( ! empty( $EM_Event->event_id ) ) {
+				$sql .= " AND event_id = " . absint( $EM_Event->get_event_id() );
+			}
+			$args = $wpdb->get_row( $sql, ARRAY_A );
 			$loaded_event = true;
 		}
 		if ( $args ) {

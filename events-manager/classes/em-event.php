@@ -545,16 +545,16 @@ class EM_Event extends EM_Object{
 				$this->event_timezone = EM_DateTimeZone::create()->getName(); //set a default timezone if none exists
 			}
 		}
-		// handle empty post_id case, load up content from the parent such as post content etc.
+		// handle empty post_id case, fill only blank fields from the parent such as post content etc.
 		if( empty($this->post_id) && !empty($this->event_parent) ){
 			$parent_event = em_get_event($this->event_parent);
 			if( $parent_event instanceof EM_Event ){
-				$this->post_content = $parent_event->post_content;
-				$this->event_attributes = $parent_event->event_attributes;
-				$this->event_slug = $parent_event->event_slug;
-				$this->event_owner = $parent_event->event_owner;
-				$this->event_name = $parent_event->event_name;
-				$this->post_excerpt = $parent_event->post_excerpt;
+				if( empty($this->post_content) ) $this->post_content = $parent_event->post_content;
+				if( empty($this->event_attributes) ) $this->event_attributes = $parent_event->event_attributes;
+				if( empty($this->event_slug) ) $this->event_slug = $parent_event->event_slug;
+				if( empty($this->event_owner) ) $this->event_owner = $parent_event->event_owner;
+				if( empty($this->event_name) ) $this->event_name = $parent_event->event_name;
+				if( empty($this->post_excerpt) ) $this->post_excerpt = $parent_event->post_excerpt;
 			}
 		}
 		// set some type casts
@@ -592,32 +592,31 @@ class EM_Event extends EM_Object{
 	}
 
 	/**
-	 * Sets the timeslot ID for this event
-	 * @param $timeslot_id
+	 * Turns this event into one of its own timeslots, in place, taking on that slot's dates, times and status.
+	 *
+	 * @param int $timeslot_id
+	 * @throws Exception If the id names no timeslot of this event.
 	 *
 	 * @return void
 	 */
 	public function set_timeslot_id( $timeslot_id ){
-		global $wpdb;
 		if ( !$this->timeslot_id ) {
-			$this->timeslot_id = absint( $timeslot_id );
-			// change the date, times and overriding features of the event so it's specific to the timeslot
-			$timeslot_data = $wpdb->get_row('SELECT * FROM '. EM_EVENT_TIMESLOTS_TABLE .' WHERE timeslot_id'. $this->timeslot_id .' event_id='. absint($this->event_id), ARRAY_A );
-			$this->set_timeslot_data( $timeslot_data );
+			// Delegated rather than queried here: the loader in EM\Event\Timeslot binds the row to this event, which the id on its own does not, and a second copy of that query is how this one came to read columns the table has never had.
+			$this->convert_to_timeslot( absint( $timeslot_id ), true );
 		}
 	}
 
 	public function set_timeslot_data( $timeslot_data ) {
 		//reset start and end objects so they are recreated with the new dates/times if and when needed
-		$start = explode(' ', $timeslot_data['event_timeslot_start'] );
-		$end = explode(' ', $timeslot_data['event_timeslot_end'] );
+		$start = explode(' ', $timeslot_data['timeslot_start'] );
+		$end = explode(' ', $timeslot_data['timeslot_end'] );
 		$this->event_start_date = $start[0];
 		$this->event_start_time = $start[1];
 		$this->event_end_date = $end[0];
 		$this->event_end_time = $end[1];
 		$this->start = $this->end = $this->event_start = $this->event_end = null;
 		// event status
-		$this->event_active_status = $timeslot_data['event_timeslot_status'];
+		$this->event_active_status = $timeslot_data['timeslot_status'];
 		// reset objects specific to the timeslot
 		$this->bookings = null;
 	}
@@ -784,6 +783,16 @@ class EM_Event extends EM_Object{
 		if( is_object($this->event_location) ){
 			$this->event_location = clone $this->event_location;
 			$this->event_location->event = $this;
+		}
+	}
+	
+	/**
+	 * Drops object-cached events by id, so anything derived from their bookings is queried again.
+	 * @param int|string|array $event_ids One or more event ids, with or without a timeslot id.
+	 */
+	public static function flush_cache( $event_ids ){
+		foreach( array_unique( (array) $event_ids ) as $event_id ){
+			if( $event_id ) wp_cache_delete( $event_id, 'em_events' );
 		}
 	}
 	
@@ -1317,7 +1326,9 @@ class EM_Event extends EM_Object{
 			$this->add_error( __( 'Missing fields: ', 'events-manager') . implode ( ", ", $missing_fields ) . ". " );
 		}
 		if ( $this->is_recurring( true ) ){
-		    if( $this->event_end_date == "" || $this->event_end_date == $this->event_start_date){
+			// An 'on' recurrence lists its dates explicitly instead of spanning a range, so a set holding one date legitimately has start == end. Recurrence_Set::validate() still rejects a genuinely inverted range.
+			$Primary_Set = $this->get_recurrence_set();
+		    if( ( !$Primary_Set || $Primary_Set->recurrence_freq !== 'on' ) && ( $this->event_end_date == "" || $this->event_end_date == $this->event_start_date ) ){
 		        $this->add_error( __( 'Since the event is recurring, you must specify an event end date greater than the start date.', 'events-manager'));
 		    }
 			if ( !$this->get_recurrence_sets()->validate() ) {
@@ -1345,6 +1356,13 @@ class EM_Event extends EM_Object{
 			}
 			//start saving process
 			do_action('em_event_save_pre', $this);
+			// programmatic saves (imports, REST, add-ons) never run get_post(), which is where these are otherwise decided, and a NULL of either excludes the event from every listing query
+			if( empty($this->event_archetype) ){
+				$this->event_archetype = Archetypes::get_from_cpt( $this->post_type ) ?: EM_POST_TYPE_EVENT;
+			}
+			if( empty($this->event_type) ){
+				$this->event_type = $this->is_repeating() ? 'repeating' : 'single';
+			}
 			$post_array = array();
 			//Deal with updates to an event
 			if( !empty($this->post_id) ){
@@ -1421,13 +1439,29 @@ class EM_Event extends EM_Object{
 		$EM_SAVING_EVENT = false;
 		//reload post data and add this event to the cache, after any other hooks have done their thing
 		//cache refresh when saving via admin area is handled in EM_Event_Post_Admin::save_post/refresh_cache
-		if( $result && $this->is_published() ){ 
+		if( $result && $this->is_published() ){
 			//we won't depend on hooks, if we saved the event and it's still published in its saved state, refresh the cache regardless
 			$this->load_postdata($this);
-			wp_cache_set( $this->get_event_uid(), $this, 'em_events');
-			wp_cache_set( $this->post_id, $this->get_event_uid(), 'em_events_ids');
+			//postless events are never object-cached (matches the load path guard) and a NULL post_id must not become a cache key
+			if( $this->post_id ){
+				// a clone, because saving a new event empties its bookings child and a persistent cache would store that emptied array instead of rebuilding it on load
+				wp_cache_set( $this->get_event_uid(), clone $this, 'em_events');
+				wp_cache_set( $this->post_id, $this->get_event_uid(), 'em_events_ids');
+			}
 		}
 		return $return;
+	}
+	
+	// only a legacy utf8/utf8mb3 column needs wp_encode_emoji(), a real utf8mb4 column stores emoji natively and encoding it would double-escape on redisplay. MySQL 8 reports the legacy charset as utf8mb3, which wp_insert_post()'s own check misses
+	private function encode_emoji_fields( $event_array ) {
+		global $wpdb;
+		foreach ( array('event_name', 'post_content') as $field ) {
+			$charset = $wpdb->get_col_charset(EM_EVENTS_TABLE, $field);
+			if ( isset($event_array[$field]) && is_string($event_array[$field]) && ($charset === 'utf8' || $charset === 'utf8mb3') ) {
+				$event_array[$field] = wp_encode_emoji($event_array[$field]);
+			}
+		}
+		return $event_array;
 	}
 	
 	function save_meta(){
@@ -1487,7 +1521,7 @@ class EM_Event extends EM_Object{
 			if( $this->get_option('dbem_attributes_enabled') ){
 				//attributes get saved as individual keys
 				$atts = em_get_attributes(); //get available attributes that EM manages
-				$this->event_attributes = maybe_unserialize($this->event_attributes);
+				$this->event_attributes = EM_Object::maybe_unserialize($this->event_attributes);
 				foreach( $atts['names'] as $event_attribute_key ){
 					if( array_key_exists($event_attribute_key, $this->event_attributes) && $this->event_attributes[$event_attribute_key] != '' ){
 						update_post_meta($this->post_id, $event_attribute_key, $this->event_attributes[$event_attribute_key]);
@@ -1546,6 +1580,7 @@ class EM_Event extends EM_Object{
 			if( empty($this->event_id) || !$event_truly_exists ){
 				$this->previous_status = 0; //for sure this was previously status 0
 				$this->event_date_created = $event_array['event_date_created'] = current_time('mysql');
+				$event_array = $this->encode_emoji_fields( $event_array );
 				if ( !$wpdb->insert(EM_EVENTS_TABLE, $event_array) ){
 					$this->log_db_error( __('event','events-manager'), EM_EVENTS_TABLE );
 				}else{
@@ -1561,6 +1596,7 @@ class EM_Event extends EM_Object{
 			    $event_array['post_content'] = $this->post_content; //in case the content was removed, which is acceptable
 			    $this->get_previous_status();
 				$this->event_date_modified = $event_array['event_date_modified'] = current_time('mysql');
+				$event_array = $this->encode_emoji_fields( $event_array );
 				if ( $wpdb->update(EM_EVENTS_TABLE, $event_array, array('event_id'=>$this->event_id) ) === false ){
 					$this->log_db_error( __('event','events-manager'), EM_EVENTS_TABLE );
 				}else{
@@ -1711,20 +1747,22 @@ class EM_Event extends EM_Object{
 				$event_meta = $this->get_event_meta($this->blog_id);
 				$new_event_meta = $EM_Event->get_event_meta($EM_Event->blog_id);
 				$event_meta_inserts = array();
+				$event_meta_values = array();
 			 	//Get custom fields and post meta - adapted from $this->load_post_meta()
 			 	foreach($event_meta as $event_meta_key => $event_meta_vals){
 			 		if( $event_meta_key == '_wpas_' ) continue; //allow JetPack Publicize to detect this as a new post when published
 			 		if( is_array($event_meta_vals) ){
 			 		    if( !array_key_exists($event_meta_key, $new_event_meta) &&  !in_array($event_meta_key, array('_event_attributes', '_edit_last', '_edit_lock', '_event_owner_name','_event_owner_anonymous','_event_owner_email')) ){
 				 			foreach($event_meta_vals as $event_meta_val){
-				 			    $event_meta_inserts[] = "({$EM_Event->post_id}, '{$event_meta_key}', '{$event_meta_val}')";
+				 			    $event_meta_inserts[] = '(%d, %s, %s)';
+				 			    array_push($event_meta_values, $EM_Event->post_id, $event_meta_key, $event_meta_val);
 				 			}
 			 			}
 			 		}
 			 	}
-			 	//save in one SQL statement
+			 	//save in one SQL statement — meta keys/values come from stored post meta and must be parameterised (second-order SQLi otherwise)
 			 	if( !empty($event_meta_inserts) ){
-			 		$wpdb->query('INSERT INTO '.$wpdb->postmeta." (post_id, meta_key, meta_value) VALUES ".implode(', ', $event_meta_inserts));
+			 		$wpdb->query( $wpdb->prepare('INSERT INTO '.$wpdb->postmeta." (post_id, meta_key, meta_value) VALUES ".implode(', ', $event_meta_inserts), $event_meta_values) );
 			 	}
 				if( array_key_exists('_event_approvals_count', $event_meta) ) update_post_meta($EM_Event->post_id, '_event_approvals_count', 0);
 				//copy anything from the em_meta table too
@@ -2048,6 +2086,24 @@ class EM_Event extends EM_Object{
 			$published = ($this->post_status == 'publish' || $this->post_status == 'private');
 		}
 		return apply_filters('em_event_is_published', $published, $this);
+	}
+	
+	/**
+	 * Whether this event's post is password-protected and the current visitor hasn't unlocked it. Anyone who can manage the event sees it regardless, matching how location map balloons already behave.
+	 * @return boolean
+	 */
+	public function password_required(){
+		$required = false;
+		if ( !empty($this->post_id) ) {
+			// post_password lives in wp_posts, so in MS Global mode the lookup has to happen on the blog that owns the event.
+			if ( EM_MS_GLOBAL && !empty($this->blog_id) && get_current_blog_id() != $this->blog_id ) {
+				switch_to_blog($this->blog_id);
+				$switch_back = true;
+			}
+			$required = post_password_required( $this->post_id ) && !$this->can_manage('edit_events','edit_others_events');
+			if ( !empty($switch_back) ) restore_current_blog();
+		}
+		return apply_filters('em_event_password_required', $required, $this);
 	}
 	
 	/**
@@ -3702,12 +3758,20 @@ class EM_Event extends EM_Object{
 		if( $this->is_repeated() && $this->can_manage('edit_recurring_events','edit_others_recurring_events') ){
 			//remove recurrence id from post meta and index table
 			$url = $this->get_attach_url();
-			$wpdb->update(EM_EVENTS_TABLE, array('recurrence_id' => null, 'recurrence_set' => null, 'event_type' => 'single' ), array('event_id' => $this->event_id));
+			$updated = $wpdb->update(EM_EVENTS_TABLE, array('recurrence_id' => null, 'recurrence_set_id' => null, 'event_type' => 'single' ), array('event_id' => $this->event_id));
+			if( $updated === false ){
+				//a failed UPDATE must not leave the events table and postmeta diverged
+				$this->add_error(__('Event could not be detached.','events-manager'));
+				return apply_filters('em_event_detach', false, $this);
+			}
 			delete_post_meta($this->post_id, '_recurrence_id'); // legacy
 			delete_post_meta($this->post_id, '_recurrence_set_id');
 			update_post_meta($this->post_id, '_event_type', 'single' );
 			$this->feedback_message = __('Event detached.','events-manager') . ' <a href="'.$url.'">'.__('Undo','events-manager').'</a>';
-			$this->recurrence_set_id = 0;
+			$this->recurrence_id = null;
+			$this->recurrence_set_id = null;
+			$this->recurrence_set = null;
+			$this->event_type = 'single';
 			$this->get_tickets()->detach();
 			return apply_filters('em_event_detach', true, $this);
 		}
@@ -3976,6 +4040,8 @@ class EM_Event extends EM_Object{
 				'end_date' => $this->event_end_date,
 				'end_time' => $this->event_end_time,
 				'timezone' => $this->event_timezone,
+				// Timeslot sub-shape: index 0 is the primary range, extra entries are additional timeslots / slot generators. Always present (a plain event has one). Mirrors the front-end timeranges editor and is what the REST write contract inverts.
+				'timeranges' => $this->get_timeranges()->to_api()['timeranges'],
 			),
 			'location' => false,
 			'categories' => $this->to_api_terms( EM_TAXONOMY_CATEGORY ),

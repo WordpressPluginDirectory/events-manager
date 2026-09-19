@@ -35,7 +35,7 @@
 			<?php foreach( EM\Archetypes::get_cpts( [], ['event', 'types']) as $cpt ): ?>
 				<?php
 				$archetype = EM\Archetypes::get( $cpt );
-				if ( in_array( EM_TAXONOMY_CATEGORY, $archetype['taxonomies'] ) ) {
+				if ( !empty( $archetype['taxonomies'] ) && in_array( EM_TAXONOMY_CATEGORY, (array) $archetype['taxonomies'] ) ) {
 					?>
 					<section class="em-taxonomy-events">
 						<a name="upcoming-events"></a>

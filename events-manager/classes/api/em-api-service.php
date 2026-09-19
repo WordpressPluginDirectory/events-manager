@@ -18,6 +18,8 @@ class Service {
 		$total = (int) \EM_Events::$num_rows_found;
 		$items = array();
 		foreach ( $events as $EM_Event ) {
+			// The query layer only knows about event_status/event_private, so a password-protected event still matches here and would be serialized with its raw content.
+			if ( $EM_Event->password_required() ) continue;
 			$items[] = static::prepare_event( $EM_Event, $params['context'] ?? 'view' );
 		}
 		return array(
@@ -301,6 +303,8 @@ class Service {
 		$base = $id ? $EM_Event->to_request_data() : array();
 		// Translate API-friendly flat times to the nested event_timeranges[0] shape EM expects.
 		$data = static::translate_event_input( $data );
+		// Translate the recurrence/timeslot shape (recurrences.sets[] + when.timeranges[]) into the internal form-array.
+		$data = static::translate_recurrence_input( $data );
 		// to_request_data() re-emits the event's time as a timerange with no timerange_id.
 		// On update, timeranges::get_post() can't match it to the existing row, so it appends
 		// a duplicate and the save fails with "Timeranges cannot overlap". Only re-post the
@@ -418,7 +422,12 @@ class Service {
 		if ( !$EM_Ticket->can_manage() ) {
 			return Utils::object_error( 'em_api_ticket_forbidden', $EM_Ticket, __( 'You do not have permission to update this ticket.', 'events-manager' ), 403 );
 		}
-		$EM_Ticket->get_post( Utils::normalize_input( $data ) );
+		$data = Utils::normalize_input( $data );
+		// An update keeps the identifiers of the record we actually authorised. EM_Ticket::get_post() reads ticket_id and event_id straight off this array, so a body carrying someone else's ticket_id re-points the UPDATE at their row, and save()'s own can_manage() re-resolves through the body's event_id, which an event the caller owns satisfies. The creation handler above strips these for the same reason.
+		unset( $data['id'] );
+		$data['ticket_id'] = $EM_Ticket->ticket_id;
+		$data['event_id'] = $EM_Ticket->event_id;
+		$EM_Ticket->get_post( $data );
 		if ( !$EM_Ticket->save() ) {
 			return Utils::object_error( 'em_api_ticket_save_failed', $EM_Ticket, __( 'Ticket could not be saved.', 'events-manager' ), 400 );
 		}
@@ -454,6 +463,7 @@ class Service {
 		$locations = \EM_Locations::get( $args );
 		$items = array();
 		foreach ( $locations as $EM_Location ) {
+			if ( $EM_Location->password_required() ) continue;
 			$items[] = static::prepare_location( $EM_Location, $params['context'] ?? 'view' );
 		}
 		return array(
@@ -680,6 +690,10 @@ class Service {
 		$args = Utils::collection_args( $params, Utils::pick_search_args( $params, $accepted ) );
 		if ( !current_user_can( 'manage_others_bookings' ) && !current_user_can( 'manage_bookings' ) ) {
 			$args['person'] = get_current_user_id();
+			$args['owner'] = get_current_user_id();
+		} else {
+			// EM_Bookings::get_default_search() scopes to the current user's own events unless owner is passed explicitly, so a manager with no owner override would otherwise only see their own bookings.
+			$args['owner'] = false;
 		}
 		if ( !empty( $params['event_id'] ) && empty( $args['event'] ) ) {
 			$args['event'] = $params['event_id'];
@@ -998,6 +1012,10 @@ class Service {
 		if ( $context === 'edit' ) {
 			return $EM_Event->can_manage( 'edit_events', 'edit_others_events' );
 		}
+		// A password-protected post stays published, so the checks below would otherwise wave it through and to_api() would hand back the raw post_content the password exists to withhold.
+		if ( $EM_Event->password_required() ) {
+			return false;
+		}
 		if ( $EM_Event->is_published() && empty( $EM_Event->event_private ) ) {
 			return true;
 		}
@@ -1010,6 +1028,9 @@ class Service {
 	protected static function can_read_location( $EM_Location, $context = 'view' ) {
 		if ( $context === 'edit' ) {
 			return $EM_Location->can_manage( 'edit_locations', 'edit_others_locations' );
+		}
+		if ( $EM_Location->password_required() ) {
+			return false;
 		}
 		if ( $EM_Location->is_published() && empty( $EM_Location->location_private ) ) {
 			return true;
@@ -1191,6 +1212,106 @@ class Service {
 	}
 
 	/**
+	 * Translate the API recurrence/timeslot shape (the inverse of EM_Event::to_api) into the internal $_REQUEST form-array that EM_Event::get_post() / Recurrence_Sets::get_post() / Timeranges::get_post() consume. Keeps EM's existing to_api field names (`freq`, `interval`, `byday` CSV, `byweekno`, `days`, `type`, `set_id`) and maps them to the internal `recurrence_*` names here.
+	 *
+	 * Safety is an app-level concern, not an API one (see docs/proposals/recurrence-rest-api.md): the app shows the "this will cancel occurrences" confirmation, so the API just applies the change. We honour that by (a) being non-destructive by omission — callers omit what they don't change — (b) treating removal as explicit only (`delete:true`), (c) defaulting any destructive reschedule to `cancel`, and (d) minting the nonces EM core still checks server-side for the authenticated, edit_events-capable user, so the app never has to handle them.
+	 */
+	protected static function translate_recurrence_input( $data ) {
+		// when.timeranges[] -> event_timeranges[] (single-event / occurrence timeslot model). Explicit timeslots win over the flat times translate_event_input() already expanded into index 0.
+		if ( isset( $data['when']['timeranges'] ) && is_array( $data['when']['timeranges'] ) ) {
+			$data['event_timeranges'] = static::map_timeranges_input( $data['when']['timeranges'] );
+			unset( $data['when']['timeranges'] );
+		}
+		if ( !isset( $data['recurrences']['sets'] ) || !is_array( $data['recurrences']['sets'] ) ) {
+			return $data;
+		}
+		$uid = get_current_user_id();
+		$out = array();
+		$i = 0;
+		$has_new_exclude = false;
+		foreach ( $data['recurrences']['sets'] as $set ) {
+			if ( !is_array( $set ) ) continue;
+			$type   = ( !empty( $set['type'] ) && $set['type'] === 'exclude' ) ? 'exclude' : 'include';
+			$set_id = !empty( $set['set_id'] ) ? absint( $set['set_id'] ) : 0;
+			$action = ( isset( $set['action'] ) && $set['action'] === 'delete' ) ? 'delete' : 'cancel';
+			$row = array( 'recurrence_type' => $type );
+			if ( $set_id ) $row['recurrence_set_id'] = $set_id;
+			// Explicit delete: mint the delete nonce core expects (no client nonce).
+			if ( !empty( $set['delete'] ) && $set_id ) {
+				$row['delete'] = wp_create_nonce( 'delete_recurrence_' . $set_id . '_' . $uid );
+				$row['reschedule'] = array( 'action' => $action );
+				$out[ $type ][ $i++ ] = $row;
+				continue;
+			}
+			if ( isset( $set['freq'] ) )     $row['recurrence_freq']     = $set['freq'];
+			if ( isset( $set['interval'] ) ) $row['recurrence_interval'] = $set['interval'];
+			$freq = $set['freq'] ?? '';
+			if ( $freq === 'weekly' && isset( $set['byday'] ) ) {
+				// byday CSV (to_api shape) -> recurrence_bydays[] (weekly write shape)
+				$row['recurrence_bydays'] = array_values( array_filter( array_map( 'trim', explode( ',', (string) $set['byday'] ) ), function ( $v ) { return $v !== ''; } ) );
+			} elseif ( $freq === 'monthly' ) {
+				if ( isset( $set['byday'] ) )    $row['recurrence_byday']    = $set['byday'];
+				if ( isset( $set['byweekno'] ) ) $row['recurrence_byweekno'] = $set['byweekno'];
+			}
+			if ( $freq === 'on' && isset( $set['dates'] ) ) {
+				$row['recurrence_dates'] = is_array( $set['dates'] ) ? implode( ',', $set['dates'] ) : (string) $set['dates'];
+			}
+			if ( isset( $set['days'] ) )       $row['recurrence_duration']   = $set['days'];
+			if ( isset( $set['start_date'] ) ) $row['recurrence_start_date'] = $set['start_date'];
+			if ( isset( $set['end_date'] ) )   $row['recurrence_end_date']   = $set['end_date'];
+			// Timezone applies to every set including excludes — it interprets the set's dates, so an exclude's skipped days depend on it.
+			if ( isset( $set['timezone'] ) ) $row['recurrence_timezone'] = $set['timezone'];
+			// Status is include-only (an exclude has no active status).
+			if ( $type !== 'exclude' && isset( $set['status'] ) ) {
+				$row['recurrence_status'] = $set['status'];
+			}
+			// Times round-trip for BOTH includes and excludes. For an include they are the per-occurrence timeslots; for an exclude a timed window skips just that part of the matched dates rather than the whole day (EM stores recurrence_start/end_time and its collision check is time-aware — only the admin form's editor is disabled for excludes, not the data path).
+			if ( isset( $set['timeranges'] ) && is_array( $set['timeranges'] ) && $set['timeranges'] ) {
+				$row['timeranges']    = static::map_timeranges_input( $set['timeranges'] );
+				$row['override_time'] = 1; // apply these times to this set (the primary applies its own regardless)
+			}
+			// Existing set: mint the reschedule nonces core checks so any pattern/date/time change is applied without the app handling nonces.
+			if ( $set_id ) {
+				$row['reschedule'] = array(
+					'pattern' => wp_create_nonce( 'reschedule-pattern-' . $set_id ),
+					'dates'   => wp_create_nonce( 'reschedule-dates-' . $set_id ),
+					'times'   => wp_create_nonce( 'reschedule-times-' . $set_id ),
+					'action'  => $action,
+				);
+			} elseif ( $type === 'exclude' ) {
+				$has_new_exclude = true;
+			}
+			$out[ $type ][ $i++ ] = $row;
+		}
+		// A new exclude on a live event needs the event-wide exclude nonce; mint it server-side.
+		if ( $has_new_exclude ) {
+			$out['exclude_reschedule'] = array( 'nonce' => wp_create_nonce( 'reschedule_exclude_' . $uid ), 'action' => 'cancel' );
+		}
+		$data['recurrences'] = $out;
+		return $data;
+	}
+
+	/** Map the API timerange/timeslot sub-shape to EM's internal timeranges form-array (start/end/all_day/timeslots + duration/buffer/frequency generator, with timerange_id for in-place edits). */
+	protected static function map_timeranges_input( $timeranges ) {
+		$out = array();
+		$i = 0;
+		foreach ( (array) $timeranges as $tr ) {
+			if ( !is_array( $tr ) ) continue;
+			$row = array();
+			if ( !empty( $tr['id'] ) )       $row['timerange_id'] = absint( $tr['id'] );
+			if ( isset( $tr['start'] ) )      $row['start']    = $tr['start'];
+			if ( isset( $tr['end'] ) )        $row['end']      = $tr['end'];
+			if ( !empty( $tr['all_day'] ) )   $row['all_day']  = 1;
+			if ( !empty( $tr['timeslots'] ) ) $row['timeslots'] = 1;
+			foreach ( array( 'duration', 'buffer', 'frequency' ) as $g ) {
+				if ( isset( $tr[ $g ] ) ) $row[ $g ] = $tr[ $g ]; // {qty,unit}, form-native
+			}
+			$out[ $i++ ] = $row;
+		}
+		return $out;
+	}
+
+	/**
 	 * EM_Tickets::get_post() skips $_POST['em_tickets'][0] because the EM admin form
 	 * reserves row 0 for the JS template. API consumers shouldn't need to know that —
 	 * if the payload uses 0-indexed sequential keys, shift everything up by 1.
@@ -1305,8 +1426,17 @@ class Service {
 		if ( !current_user_can( 'upload_files' ) ) {
 			return Utils::error( 'em_api_media_forbidden', __( 'You do not have permission to upload media.', 'events-manager' ), 403 );
 		}
+		// `post_id` lands on the attachment as post_parent, here and inside the sideload/upload helpers resolve_attachment_id() calls, so the caller has to be able to edit whatever they are attaching to.
+		if ( !empty( $data['post_id'] ) && !current_user_can( 'edit_post', absint( $data['post_id'] ) ) ) {
+			return Utils::error( 'em_api_media_parent_forbidden', __( 'You do not have permission to attach media to that post.', 'events-manager' ), 403 );
+		}
+		$supplied_attachment = !empty( $data['id'] ) || !empty( $data['attachment_id'] );
 		$attachment_id = static::resolve_attachment_id( $data );
 		if ( is_wp_error( $attachment_id ) ) return $attachment_id;
+		// `upload_files` authorises adding a file, not editing one somebody else added. An attachment we created below is owned by the caller and needs no further check, but one they passed in by ID does.
+		if ( $supplied_attachment && !current_user_can( 'edit_post', $attachment_id ) ) {
+			return Utils::error( 'em_api_media_edit_forbidden', __( 'You do not have permission to edit this attachment.', 'events-manager' ), 403 );
+		}
 		// Optional post-upload metadata.
 		$post_update = array( 'ID' => $attachment_id );
 		if ( !empty( $data['title'] ) ) $post_update['post_title'] = sanitize_text_field( $data['title'] );
@@ -1403,7 +1533,8 @@ class Service {
 		// URL sideload.
 		if ( !empty( $data['source_url'] ) ) {
 			$source_url = esc_url_raw( $data['source_url'] );
-			if ( !$source_url || !wp_http_validate_url( $source_url ) ) {
+			// wp_http_validate_url still permits private/reserved hosts (incl. the 169.254 cloud-metadata range), so also require every resolved address to be publicly routable before fetching.
+			if ( !$source_url || !wp_http_validate_url( $source_url ) || !static::is_public_url( $source_url ) ) {
 				return Utils::error( 'em_api_media_invalid_url', __( 'Invalid source URL.', 'events-manager' ), 400 );
 			}
 			$post_id = !empty( $data['post_id'] ) ? absint( $data['post_id'] ) : 0;
@@ -1438,6 +1569,27 @@ class Service {
 			return absint( $attachment_id );
 		}
 		return Utils::error( 'em_api_media_missing_source', __( 'Provide one of `id`, `source_url`, `content_base64`, or a multipart `file` upload.', 'events-manager' ), 400 );
+	}
+
+	/**
+	 * Confirms every address the host resolves to is publicly routable, guarding source_url sideloads against SSRF to loopback, private, reserved or link-local ranges (notably the 169.254.0.0/16 cloud-metadata range that wp_http_validate_url permits).
+	 */
+	protected static function is_public_url( $url ) {
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+		if ( empty( $host ) ) {
+			return false;
+		}
+		$host = trim( $host, '[]' );
+		$ips  = filter_var( $host, FILTER_VALIDATE_IP ) ? array( $host ) : gethostbynamel( $host );
+		if ( empty( $ips ) ) {
+			return false;
+		}
+		foreach ( $ips as $ip ) {
+			if ( ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

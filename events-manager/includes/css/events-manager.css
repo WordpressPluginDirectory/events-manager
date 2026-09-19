@@ -778,6 +778,8 @@
 .em.pixelbones.input input[type=radio]:not([data-nostyle]) {
   margin-bottom: 0 !important;
   display: inline-block !important;
+}
+.em.pixelbones .input input[type=checkbox]:not([data-nostyle]), .em.pixelbones.input input[type=checkbox]:not([data-nostyle]) {
   background-color: var(--background-color-checkboxes) !important;
   text-align: start !important;
   background-color: var(--background-color-checkboxes) !important;

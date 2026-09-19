@@ -125,7 +125,9 @@ function em_options_save(){
 	}
 	//Uninstall
 	if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'uninstall' && current_user_can('activate_plugins') && !empty($_REQUEST['confirmed']) && check_admin_referer('em_uninstall_'.get_current_user_id().'_wpnonce') && em_wp_is_super_admin() ){
-		if( check_admin_referer('em_uninstall_'.get_current_user_id().'_confirmed','_wpnonce2') ){
+		if( EM_MS_GLOBAL && !is_main_site() ){
+			$EM_Notices->add_error( sprintf( esc_html__('Events Manager was not uninstalled. This network shares one set of event and booking tables, so uninstalling from this site would permanently delete the events and bookings of every site on the network. Uninstall from the %s instead.','events-manager'), '<a href="'. esc_url( network_admin_url('admin.php?page=events-manager-options') ) .'">'. esc_html__('network settings page','events-manager') .'</a>' ) );
+		}elseif( check_admin_referer('em_uninstall_'.get_current_user_id().'_confirmed','_wpnonce2') ){
 			//We have a go to uninstall
 			global $wpdb;
 			//delete EM posts
@@ -219,26 +221,6 @@ function em_options_save(){
 		}
 		//go back to plugin options page
 		$EM_Notices->add_confirm(sprintf(__('Found %d orphaned events, deleted %d successfully','events-manager'), count($results), $deleted_events), true);
-		wp_safe_redirect(em_wp_get_referer());
-		exit();
-	}
-	//Force Update Recheck - Workaround for now
-	if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'recheck_updates' && check_admin_referer('em_recheck_updates_'.get_current_user_id().'_wpnonce') && em_wp_is_super_admin() ){
-		//force recheck of plugin updates, to refresh dl links
-		remove_all_actions('pre_set_site_transient_update_plugins');
-		delete_transient('update_plugins');
-		delete_site_transient('update_plugins');
-		$EM_Notices->add_confirm(__('If there are any new updates, you should now see them in your Plugins or Updates admin pages.','events-manager'), true);
-		wp_safe_redirect(em_wp_get_referer());
-		exit();
-	}
-	//Flag version checking to look at trunk, not tag
-	if( !empty($_REQUEST['action']) && $_REQUEST['action'] == 'check_devs' && check_admin_referer('em_check_devs_wpnonce') && em_wp_is_super_admin() ){
-		//delete transients, and add a flag to recheck dev version next time round
-		delete_transient('update_plugins');
-		delete_site_transient('update_plugins');
-		update_option('em_check_dev_version', true);
-		$EM_Notices->add_confirm(__('Checking for dev versions.','events-manager').' '. __('If there are any new updates, you should now see them in your Plugins or Updates admin pages.','events-manager'), true);
 		wp_safe_redirect(em_wp_get_referer());
 		exit();
 	}
@@ -400,6 +382,10 @@ function em_options_save(){
 	$blog_updates = is_multisite() ? array_merge(EM_Options::get('updates'), EM_Options::site_get('updates')) : EM_Options::get('updates');
 	if( is_array($blog_updates) ) {
 		foreach ( $blog_updates as $update => $update_data ) {
+			// update keys are script filenames; reject any value that could traverse out of the updates directory
+			if ( !is_string($update) || !preg_match('/^[A-Za-z0-9._-]+$/', $update) || strpos($update, '..') !== false ) {
+				continue;
+			}
 			$filename = EM_DIR . '/admin/settings/updates/' . $update . '.php';
 			if ( file_exists( $filename ) ) {
 				include_once( $filename );
@@ -429,7 +415,7 @@ function em_options_save_kses_deep( $string ) {
 }
 
 function em_admin_email_test_ajax(){
-    if( wp_verify_nonce($_REQUEST['_check_email_nonce'],'check_email') && current_user_can('activate_plugins') ){
+    if( wp_verify_nonce($_REQUEST['_check_email_nonce'] ?? '','check_email') && current_user_can('manage_options') ){
         $subject = __("Events Manager Test Email",'events-manager');
         $content = __('Congratulations! Your email settings work.','events-manager');
         $current_user = get_user_by('id', get_current_user_id());
@@ -469,6 +455,11 @@ function em_admin_email_test_ajax(){
             );
         }
         echo EM_Object::json_encode($result);
+    }else{
+        echo EM_Object::json_encode( array(
+            'result' => false,
+            'message' => esc_html__('You do not have permission to send a test email, or this page has expired. Please reload the settings page and try again.','events-manager'),
+        ) );
     }
     exit();
 }
@@ -501,15 +492,33 @@ function em_admin_options_reset_page(){
 }
 function em_admin_options_uninstall_page(){
 	if( check_admin_referer('em_uninstall_'.get_current_user_id().'_wpnonce') && em_wp_is_super_admin() ){
+		$network_wide = EM_MS_GLOBAL;
+		$refused = $network_wide && !is_main_site();
 		?>
 		<div class="wrap">		
 			<div id='icon-options-general' class='icon32'><br /></div>
 			<h2><?php _e('Uninstall Events Manager','events-manager'); ?></h2>
-			<p style="color:red; font-weight:bold;"><?php _e('Are you sure you want to uninstall Events Manager?','events-manager')?></p>
-			<p style="font-weight:bold;"><?php _e('All your settings and events will be permanently deleted. This cannot be undone.','events-manager')?></p>
+			<p style="color:red; font-weight:bold;"><?php
+				if( $refused ){
+					esc_html_e('Events Manager cannot be uninstalled from this site.','events-manager');
+				}else{
+					_e('Are you sure you want to uninstall Events Manager?','events-manager');
+				}
+			?></p>
+			<p style="font-weight:bold;"><?php
+				if( $refused ){
+					echo sprintf( esc_html__('This network shares one set of event and booking tables, so uninstalling from this site would permanently delete the events and bookings of every site on the network. Uninstall from the %s instead.','events-manager'), '<a href="'. esc_url( network_admin_url('admin.php?page=events-manager-options') ) .'">'. esc_html__('network settings page','events-manager') .'</a>' );
+				}elseif( $network_wide ){
+					esc_html_e('All settings, events and bookings for every site on this network will be permanently deleted. This cannot be undone.','events-manager');
+				}else{
+					_e('All your settings and events will be permanently deleted. This cannot be undone.','events-manager');
+				}
+			?></p>
 			<p><?php echo sprintf(__('If you just want to deactivate the plugin, <a href="%s">go to your plugins page</a>.','events-manager'), wp_nonce_url(admin_url('plugins.php'))); ?></p>
 			<p>
+				<?php if( !$refused ) : ?>
 				<a href="<?php echo esc_url(add_query_arg(array('_wpnonce2' => wp_create_nonce('em_uninstall_'.get_current_user_id().'_confirmed'), 'confirmed'=>1))); ?>" class="button-primary"><?php _e('Uninstall and Deactivate','events-manager'); ?></a>
+				<?php endif; ?>
 				<a href="<?php echo esc_url(em_wp_get_referer()); ?>" class="button-secondary"><?php _e('Cancel','events-manager'); ?></a>
 			</p>
 		</div>		
@@ -1010,10 +1019,11 @@ function em_admin_option_box_uninstall(){
         			<h4><?php _e ( 'Development Versions &amp; Updates', 'events-manager'); ?></h4>
         			<p><?php _e('We\'re always making improvements, adding features and fixing bugs between releases. We incrementally make these changes in between updates and make it available as a development version. You can download these manually, but we\'ve made it easy for you. <strong>Warning:</strong> Development versions are not always fully tested before release, use wisely!','events-manager'); ?></p>
     			</td></tr>
+				<?php em_options_radio_binary ( __( 'Always check the latest stable version?', 'events-manager'), 'dbem_check_stable_version', sprintf( __('If enabled, Events Manager checks WordPress.org directly for the latest stable release rather than waiting for the staggered update rollout, which can take up to 24 hours. Releases found this way are shown for a manual update only and are never auto-installed, unless you define the %1$s constant. %2$s', 'events-manager'), '<code>EM_AUTO_UPDATES</code>', '<a href="https://wp-events-plugin.com/blog/2026/07/04/plugin-updating-recommendations/" target="_blank">'. esc_html__('Read more on our blog', 'events-manager') .'</a> &middot; <a href="https://wp-events-plugin.com/documentation/installation/latest-stable/" target="_blank">'. esc_html__('Documentation', 'events-manager') .'</a>' ) ); ?>
 				<?php em_options_radio_binary ( __( 'Enable Dev Updates?', 'events-manager'), 'dbem_pro_dev_updates', __('If enabled, the latest dev version will always be checked instead of the latest stable version of the plugin.', 'events-manager') ); ?>
 				<tr>
     			    <th style="text-align:right;"><a href="<?php echo $recheck_updates_url; ?>" class="button-secondary"><?php _e('Re-Check Updates','events-manager'); ?></a></th>
-    			    <td><?php _e('If you would like to check and see if there is a new stable update.','events-manager'); ?></td>
+    			    <td><?php _e('Checks WordPress.org directly for the latest stable release, skipping the staggered rollout delay (which can take up to 24 hours). Any newer stable version will appear on your Plugins or Updates page for a manual update.','events-manager'); ?></td>
     			</tr>
     			<tr>
     			    <th style="text-align:right;"><a href="<?php echo $check_devs; ?>" class="button-secondary"><?php _e('Check Dev Versions','events-manager'); ?></a></th>

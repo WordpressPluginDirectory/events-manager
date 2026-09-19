@@ -230,12 +230,37 @@ class API {
 		// Get the file_id parameter from the request if this is for a temp file
 		$temp_id = $request->get_param('temp_id');
 		if( $temp_id ) {
+			// Reject any temp_id that could escape the temp directory before it is used to build a path.
+			if ( strpbrk( $temp_id, '/\\' ) !== false || strpos( $temp_id, '..' ) !== false ) {
+				return new WP_REST_Response( [ 'success' => false, 'error' => 'File not found.' ], 404 );
+			}
+			$temp_id = basename( $temp_id );
+
+			// Require the nonce issued at upload time, bound to this temp file. FilePond's restore (limbo) request carries it inside the X-Filenames payload rather than the query string, so accept it from either source.
+			$nonce = $request->get_param('nonce');
+			if ( empty( $nonce ) ) {
+				$filenames = json_decode( $request->get_header('X-Filenames'), true );
+				if ( !empty( $filenames[ $temp_id ]['nonce'] ) ) {
+					$nonce = $filenames[ $temp_id ]['nonce'];
+				}
+			}
+			if ( !wp_verify_nonce( $nonce, 'em_uploads_api_file_' . $temp_id ) ) {
+				return new WP_REST_Response( [ 'success' => false, 'error' => 'Invalid nonce.' ], 403 );
+			}
+
 			// Determine the temporary upload directory.
 			$tempUploadDir = ini_get('upload_tmp_dir') ?: sys_get_temp_dir();
-			
+
 			// Build the full file path.
 			$file_path = trailingslashit( $tempUploadDir ) . $temp_id . '-em-uploader';
-			
+
+			// Ensure the resolved path stays inside the temp directory before reading it.
+			$real_path = realpath( $file_path );
+			$real_dir  = realpath( $tempUploadDir );
+			if ( $real_path === false || $real_dir === false || strpos( $real_path, trailingslashit( $real_dir ) ) !== 0 ) {
+				return new WP_REST_Response( [ 'success' => false, 'error' => 'File not found.' ], 404 );
+			}
+
 			// Check if the file exists and is readable.
 			if ( file_exists( $file_path ) && is_readable( $file_path ) ) {
 				// Get the file contents and MIME type.

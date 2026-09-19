@@ -1,7 +1,14 @@
 function em_setup_timepicker( container ){
 	wrap = jQuery(container);
 	var timepicker_options = {
-		step:15
+		step:15,
+		// Append the dropdown list to the input's OWN document so it renders inside the
+		// Gutenberg editor-canvas iframe rather than the parent body. In the classic editor
+		// ownerDocument === document, so this matches the plugin's default "body" target.
+		appendTo: function( input ){
+			var el = input instanceof jQuery ? input[0] : input;
+			return jQuery( ( el && el.ownerDocument && el.ownerDocument.body ) || document.body );
+		}
 	}
 	timepicker_options.timeFormat = EM.show24hours == 1 ? 'G:i':'g:i A';
 	jQuery(document).triggerHandler('em_timepicker_options', timepicker_options);
@@ -61,24 +68,7 @@ function em_setup_timepicker( container ){
 		if ( e.target.matches('input.em-time-end') ) {
 			let end = jQuery(e.target);
 			e.target.dataset.seconds = end.val() ? end.em_timepicker('getSecondsFromMidnight') : '';
-			let start = end.prevAll('.em-time-start');
-			let wrapper = e.target.closest('.event-form-when, .em-time-range');
-			let start_date_element = wrapper.querySelector('.em-date-end');
-			let end_date_element = wrapper.querySelector('.em-date-start');
-			let start_date = start_date_element ? start_date_element.value : '';
-			let end_date = end_date_element ? end_date_element.value : '';
-			if ( start.val() ) {
-				let hasError = start.em_timepicker('getTime') > end.em_timepicker('getTime') && (!end_date || start_date === end_date);
-				e.target.classList.toggle('error', hasError);
-			}
-			if (end_date_element) {
-				wrapper.querySelectorAll('.em-time-all-day').forEach(function (checkbox) {
-					checkbox.checked = false;
-					checkbox.indeterminate = false;
-				});
-			}
-		} else if ( e.target.matches('.em-date-end') ) {
-			jQuery(e.target.closest('.event-form-when')).find('.em-time-end').trigger('change');
+			em_validate_end_time( e.target );
 		} else if ( e.target.matches('input.em-time-all-day') ) {
 			e.currentTarget.querySelectorAll('.em-time-input').forEach(function (input) {
 				input.readOnly = e.target.checked;
@@ -90,8 +80,43 @@ function em_setup_timepicker( container ){
 			}
 		}
 	}) );
+	// Re-validate on either date changing, so that a multi-day event no longer flags an end time earlier than its start time.
+	wrap.find('input[name="event_start_date"], input[name="event_end_date"]').off('change.em_timepicker').on('change.em_timepicker', function () {
+		jQuery(this).closest('.event-form-when').find('.em-time-range input.em-time-end').each( function () {
+			em_validate_end_time( this );
+		});
+	});
 	// listen to and dispatch the event
 	wrap.find(".em-time-range input.em-time-end").on('change', retargetEvent );
+}
+
+/**
+ * Flags an end time that falls before its start time, which is only an error when the event starts and ends on the same day.
+ * Global because the timeranges editor clears the error class off a whole editor and has to put this one back.
+ *
+ * @param {HTMLInputElement} el
+ */
+function em_validate_end_time( el ) {
+	let range = el.closest('.em-time-range');
+	let start = jQuery( range ? range.querySelector('input.em-time-start') : null );
+	let end = jQuery(el);
+	if ( !start.val() ) {
+		return;
+	}
+	if ( !end.val() ) {
+		el.classList.remove('error');
+		return;
+	}
+	// Ticket availability dates its own range, everything else is dated by the event.
+	let range_dates = range ? range.querySelectorAll('input[type="date"]') : [];
+	let dates_wrapper = el.closest('.event-form-when');
+	let start_date_element = range_dates.length === 2 ? range_dates[0] : ( dates_wrapper ? dates_wrapper.querySelector('input[name="event_start_date"]') : null );
+	let end_date_element = range_dates.length === 2 ? range_dates[1] : ( dates_wrapper ? dates_wrapper.querySelector('input[name="event_end_date"]') : null );
+	let start_date = start_date_element ? start_date_element.value : '';
+	let end_date = end_date_element ? end_date_element.value : '';
+	// A recurrence set crosses midnight on its duration in days rather than a date range, and reconciles its own times.
+	let hasError = !el.closest('.em-recurrence-set') && start.em_timepicker('getTime') > end.em_timepicker('getTime') && ( !end_date || start_date === end_date );
+	el.classList.toggle('error', hasError);
 }
 
 function em_unsetup_timepicker( container ) {

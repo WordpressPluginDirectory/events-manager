@@ -295,7 +295,7 @@ class EM_Tickets_Bookings extends EM_Object implements Iterator, Countable, Arra
 		if( !$this->tickets_bookings_loaded && !empty($this->booking_id) ){
 			// we could get tickets individually via EM_Ticket_Bookings, but this is one db call vs multiple
 			global $wpdb;
-			$sql = "SELECT * FROM ". EM_TICKETS_BOOKINGS_TABLE ." WHERE booking_id ='{$this->booking_id}' ORDER BY ticket_booking_id ASC";
+			$sql = $wpdb->prepare("SELECT * FROM ". EM_TICKETS_BOOKINGS_TABLE ." WHERE booking_id = %d ORDER BY ticket_booking_id ASC", $this->booking_id);
 			$results = $wpdb->get_results($sql, ARRAY_A);
 			//Get tickets belonging to this tickets booking.
 			$tickets_bookings = array();
@@ -426,8 +426,8 @@ class EM_Tickets_Bookings extends EM_Object implements Iterator, Countable, Arra
 		global $wpdb;
 		$result = false;
 		if( $this->get_booking()->can_manage() ){
-			$result_meta = $wpdb->query("DELETE FROM ".EM_TICKETS_BOOKINGS_META_TABLE." WHERE ticket_booking_id IN (SELECT ticket_booking_id FROM ".EM_TICKETS_BOOKINGS_TABLE." WHERE booking_id='{$this->booking_id}')");
-			$result = $wpdb->query("DELETE FROM ".EM_TICKETS_BOOKINGS_TABLE." WHERE booking_id='{$this->booking_id}'");
+			$result_meta = $wpdb->query($wpdb->prepare("DELETE FROM ".EM_TICKETS_BOOKINGS_META_TABLE." WHERE ticket_booking_id IN (SELECT ticket_booking_id FROM ".EM_TICKETS_BOOKINGS_TABLE." WHERE booking_id = %d)", $this->booking_id));
+			$result = $wpdb->query($wpdb->prepare("DELETE FROM ".EM_TICKETS_BOOKINGS_TABLE." WHERE booking_id = %d", $this->booking_id));
 		}
 		return apply_filters(static::$n . '_delete', ($result !== false && $result_meta !== false), $this);
 	}

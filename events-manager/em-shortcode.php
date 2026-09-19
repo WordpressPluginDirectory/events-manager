@@ -35,7 +35,7 @@ function em_clean_shortcode_args( $args, $format = '' ) {
 			}
 		}
 	}
-	foreach ( ['format_headar', 'format_footer', 'header_format'] as $arg ) {
+	foreach ( ['format_header', 'format_footer', 'header_format'] as $arg ) {
 		if ( !empty( $args[$arg] ) ) {
 			global $allowedposttags;
 			if( get_option('dbem_shortcodes_decode_params') ) {

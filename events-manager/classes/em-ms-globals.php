@@ -32,7 +32,7 @@ class EM_MS_Globals {
 			//mail
 			'dbem_rsvp_mail_port', 'dbem_mail_sender_address', 'dbem_smtp_password', 'dbem_smtp_username','dbem_smtp_host', 'dbem_mail_sender_name','dbem_smtp_html','dbem_smtp_html_br','dbem_smtp_host','dbem_rsvp_mail_send_method','dbem_rsvp_mail_SMTPAuth',
 			//images
-			'dbem_image_max_width','dbem_image_max_height','dbem_image_max_size'.'dbem_image_min_width', 'dbem_image_min_height',
+			'dbem_image_max_width','dbem_image_max_height','dbem_image_max_size','dbem_image_min_width', 'dbem_image_min_height',
 			// uploads
 			'dbem_uploads_ui', 'dbem_uploads_max_file_size', 'dbem_uploads_max_files', 'dbem_uploads_allow_multiple', 'dbem_uploads_type', 'dbem_uploads_extensions',
 		);

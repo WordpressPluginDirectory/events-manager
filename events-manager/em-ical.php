@@ -8,11 +8,28 @@
 			header('Content-Type: text/calendar; charset=utf-8');
 			header('Content-Disposition: inline; filename="events.ics"');
 			//send headers
+			em_ical_protect_passworded_events();
 			em_locate_template('templates/ical.php', true);
 			die();
 		}
 	}
 	add_action ( 'init', 'em_ical' );
+	
+	/**
+	 * Keeps password-protected events out of an iCalendar feed. The feed publishes the event name, description, permalink, image, location and coordinates, none of which a visitor should get without the password, and the query layer can't tell: event_status and event_private say nothing about wp_posts.post_password.
+	 *
+	 * Filtering EM_Events::get() rather than the template means a theme carrying its own copy of ical.php is covered too.
+	 */
+	function em_ical_protect_passworded_events(){
+		add_filter('em_events_get', function( $events ){
+			foreach ( $events as $key => $EM_Event ) {
+				if ( is_object($EM_Event) && method_exists($EM_Event, 'password_required') && $EM_Event->password_required() ) {
+					unset($events[$key]);
+				}
+			}
+			return $events;
+		});
+	}
 	
 	/**
 	 * Generates an ics file for a single event, or a specific archetype
@@ -41,7 +58,7 @@
 						}
 					} else {
 						// try to get event by slug directly from EM tables
-						$event = $wpdb->get_row("SELECT event_id, event_slug FROM " . EM_EVENTS_TABLE . " WHERE event_slug='{$path}' AND event_status=1 AND event_archetype='{$archetype}' LIMIT 1");
+						$event = $wpdb->get_row($wpdb->prepare("SELECT event_id, event_slug FROM " . EM_EVENTS_TABLE . " WHERE event_slug=%s AND event_status=1 AND event_archetype=%s LIMIT 1", $path, $archetype));
 						if ( $event ) {
 							$event_id = $event->event_id;
 							$event_slug = $event->event_slug;
@@ -56,7 +73,7 @@
 				}
 			//single location
 			} elseif( $wp_query->get(EM_POST_TYPE_LOCATION) ) {
-				$location_id = $wpdb->get_var('SELECT location_id FROM '.EM_LOCATIONS_TABLE." WHERE location_slug='".$wp_query->get(EM_POST_TYPE_LOCATION)."' AND location_status=1 LIMIT 1");
+				$location_id = $wpdb->get_var($wpdb->prepare('SELECT location_id FROM '.EM_LOCATIONS_TABLE." WHERE location_slug=%s AND location_status=1 LIMIT 1", $wp_query->get(EM_POST_TYPE_LOCATION)));
 				if( !empty($location_id) ){
 					$filename = $wp_query->get(EM_POST_TYPE_LOCATION);
 					$args['location'] = $location_id;
@@ -77,6 +94,7 @@
 				//send headers and output ical
 				header('Content-type: text/calendar; charset=utf-8');
 				header('Content-Disposition: inline; filename="'.$filename.'.ics"');
+				em_ical_protect_passworded_events();
 				em_locate_template('templates/ical.php', true, array('args'=>$args));
 				exit();
 			}else{

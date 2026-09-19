@@ -125,6 +125,27 @@ $user     = $v['user'];
 			border-color: var(--wpoap-accent);
 		}
 		.wpoap-hint { font-size: 12px; color: var(--wpoap-muted); margin-top: 5px; }
+		.wpoap-dest {
+			text-align: center;
+			font-size: 13px;
+			color: var(--wpoap-muted);
+			margin: -12px 0 18px;
+			overflow-wrap: anywhere;
+		}
+		.wpoap-dest strong { color: var(--wpoap-text); font-weight: 600; }
+		.wpoap-unverified {
+			display: flex;
+			gap: 8px;
+			align-items: flex-start;
+			background: #fcf3e6;
+			border: 1px solid #dba617;
+			border-radius: 9px;
+			padding: 11px 13px;
+			font-size: 13px;
+			line-height: 1.45;
+			margin: 0 0 18px;
+		}
+		.wpoap-unverified svg { flex: 0 0 18px; margin-top: 1px; color: #8a6116; }
 		.wpoap-perms {
 			background: #f6f7f7;
 			border: 1px solid var(--wpoap-line);
@@ -200,6 +221,20 @@ $user     = $v['user'];
 				/* translators: %s: site name */
 				printf( esc_html__( 'Grant this application access to %s on your behalf.', 'wp-oauth-app-passwords' ), esc_html( $branding['site_name'] ) );
 			?></p>
+
+			<?php if ( ! empty( $v['destination'] ) ) : ?>
+				<p class="wpoap-dest"><?php
+					/* translators: %s: host the credential will be sent to, e.g. claude.ai */
+					printf( esc_html__( 'Your credential will be sent to %s', 'wp-oauth-app-passwords' ), '<strong>' . esc_html( $v['destination'] ) . '</strong>' );
+				?></p>
+			<?php endif; ?>
+
+			<?php if ( ! empty( $v['self_registered'] ) ) : ?>
+				<div class="wpoap-unverified">
+					<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2.5a1 1 0 0 1 .87.5l7 12A1 1 0 0 1 17 16.5H3a1 1 0 0 1-.87-1.5l7-12a1 1 0 0 1 .87-.5Zm0 4a.9.9 0 0 0-.9.98l.3 3.2a.6.6 0 0 0 1.2 0l.3-3.2A.9.9 0 0 0 10 6.5Zm0 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" fill="currentColor"/></svg>
+					<div><?php esc_html_e( 'This application registered itself with your site and has not been reviewed by anyone. Only approve it if you started this connection yourself and recognise the destination above.', 'wp-oauth-app-passwords' ); ?></div>
+				</div>
+			<?php endif; ?>
 
 			<form method="post" action="<?php echo esc_url( $v['form_action'] ); ?>">
 				<?php wp_nonce_field( 'pixelite_oauth_consent', '_pixelite_oauth_nonce' ); ?>

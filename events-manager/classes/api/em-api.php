@@ -26,9 +26,8 @@ class API {
 		\EM\API\Abilities::init();
 		\EM\API\MCP_Server::init();
 
-		// Describe our scope on the OAuth library's consent screen. Deferred to plugins_loaded:20 — after Events Manager Pro and the gateway / I/O add-ons have loaded at plugins_loaded:10 (via the events_manager_plugin_loaded action) and had a chance to hook em_api_scope_description to extend the scope description. If we registered earlier (e.g. on pixelite_oauth_app_passwords_ready at plugins_loaded:4), Pro's filter wouldn't be in place yet and the extended description would silently drop. The did_action() fallback runs immediately when init() is called after plugins_loaded has already finished (e.g. from late-fired AJAX or REST request handling, well past plugin load).
-		add_action( 'plugins_loaded', array( __CLASS__, 'register_scope' ), 20 );
-		if ( did_action( 'plugins_loaded' ) ) {
+		add_action( 'init', array( __CLASS__, 'register_scope' ), 1 );
+		if ( did_action( 'init' ) ) {
 			static::register_scope();
 		}
 

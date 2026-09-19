@@ -635,9 +635,14 @@ $frontend: true !default;
 				content: '';
 			}
 
+			// table-layout is fixed, so column width comes from the header cell, not the one below. EM renders both as td, not th, so neither may be qualified by element. 96px is what the checkbox, the row-actions trigger and the edit icon need side by side at 400px.
+			thead .check-column {
+				width: 96px;
+			}
+
 			tbody {
-				th.check-column {
-					width: 77px;
+				.check-column {
+					width: 96px;
 				}
 				td:not(.check-column) {
 					display: block !important;

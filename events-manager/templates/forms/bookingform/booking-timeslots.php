@@ -48,11 +48,13 @@ $scope = $EM_Event->start()->getDate();
 						$option_label = $Timeslot_Event->output_dates( $timeslot_options['date_format'] ?: false ) . ' @ ' . $option_label;
 					}
 					if ( $timeslot_options['show_spaces'] || $is_fully_booked ) {
-						$spaces_label = $is_fully_booked ? __('Fully Booked', 'events-manager') : sprintf( _n('%d space', '%d spaces', $available_spaces, 'events-manager'), $available_spaces );
+						$spaces_label = $is_fully_booked ? apply_filters( 'em_booking_timeslot_fully_booked_label', __('Fully Booked', 'events-manager'), $Timeslot_Event ) : sprintf( _n('%d space', '%d spaces', $available_spaces, 'events-manager'), $available_spaces );
 						$option_label .= ' (' . $spaces_label . ')';
 					}
+					// a full occurrence may still be selectable, e.g. to join a waitlist, which can only be reached by loading its booking form
+					$timeslot_can_book = apply_filters( 'em_booking_timeslot_can_book', $Timeslot_Event->get_bookings()->is_open(), $Timeslot_Event, $is_fully_booked );
 					?>
-					<option value="<?php echo esc_attr( $id . ':' . absint( $Timeslot->timeslot_id ) ); ?>" <?php disabled( !$Timeslot_Event->get_bookings()->is_open() ); ?>><?php echo esc_html( $option_label ); ?></option>
+					<option value="<?php echo esc_attr( $id . ':' . absint( $Timeslot->timeslot_id ) ); ?>" <?php disabled( !$timeslot_can_book ); ?>><?php echo esc_html( $option_label ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		</div>

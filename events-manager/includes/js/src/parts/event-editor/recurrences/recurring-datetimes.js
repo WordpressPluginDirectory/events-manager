@@ -10,7 +10,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		// TODO add TimeZone-aware libary to calculate real start/end dates and provide an accurate recurrence summary for all recurrences grouped together.
 		
 		recurrenceSets.addEventListener('setDateTimes', function() {
-			let eventDateTimes = recurrenceSets.closest('form').querySelector('.event-form-when');
+			let eventDateTimes = emRecurrenceFormRoot( recurrenceSets ).querySelector('.event-form-when');
 			if ( eventDateTimes ) {
 				// COLLECT ALL DATES FROM RECURRENCE SETS, update earliest/latest date as we go
 				/** @type {luxon.DateTime} */

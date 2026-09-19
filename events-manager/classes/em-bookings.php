@@ -464,17 +464,18 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	 */
 	function delete(){
 		global $wpdb;
-		$booking_ids = $event_ids = array();
+		$booking_ids = $event_ids = $event_uids = array();
 		if( !empty($this->bookings) ){
 			//get the booking ids tied to this event or preloaded into this object
 			foreach( $this->bookings as $EM_Booking ){
 				$booking_ids[] = $EM_Booking->booking_id;
+				$event_uids[] = $EM_Booking->get_event_uid();
 			}
 			$result_tickets = true;
 			$result = true;
 			if( count($booking_ids) > 0 ){
 				// before deleting, get all the event ids associated with these bookings, in case we need to do any checks on those events via filters
-				$event_ids = $wpdb->get_col("SEELCT event_id FROM ". EM_BOOKINGS_TABLE ." WHERE booking_id IN (".implode(',',$booking_ids).");");
+				$event_ids = $wpdb->get_col("SELECT event_id FROM ". EM_BOOKINGS_TABLE ." WHERE booking_id IN (".implode(',',$booking_ids).");");
 				//Delete bookings and ticket bookings
 				$result_tickets = $wpdb->query("DELETE FROM ". EM_TICKETS_BOOKINGS_TABLE ." WHERE booking_id IN (".implode(',',$booking_ids).");");
 				$result = $wpdb->query("DELETE FROM ".EM_BOOKINGS_TABLE." WHERE booking_id IN (".implode(',',$booking_ids).")");
@@ -484,6 +485,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			$event_id = absint($this->event_id);
 			$event_ids = array($event_id);
 			$timeslot = !empty($this->timeslot_id) ? ' AND timeslot_id = ' . absint($this->timeslot_id) : '';
+			if( !empty($this->timeslot_id) ) $event_uids[] = $event_id . ':' . absint($this->timeslot_id);
 			$booking_ids = $wpdb->get_col("SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id' $timeslot");
 			$result_tickets = $wpdb->query("DELETE FROM ". EM_TICKETS_BOOKINGS_TABLE ." WHERE booking_id IN (SELECT booking_id FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id' $timeslot)");
 			$result = $wpdb->query("DELETE FROM ".EM_BOOKINGS_TABLE." WHERE event_id = '$event_id' $timeslot");
@@ -494,6 +496,8 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 			//we have not bookings loaded to delete, nor an event to delete bookings from, so bookings are considered 'deleted' since there's nothing ot delete
 			$result = $result_tickets = true;
 		}
+		// this path never runs EM_Booking::delete(), so the events it just emptied are dropped from the cache here
+		EM_Event::flush_cache( array_merge($event_ids, $event_uids) );
 		do_action('em_bookings_deleted', $result, $booking_ids, $event_ids);
 		return apply_filters('em_bookings_delete', $result !== false && $result_tickets !== false, $booking_ids, $this, $event_ids);
 	}
@@ -642,7 +646,7 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 	function get_pending_spaces( $force_refresh = false ){
 		if( em_get_option('dbem_bookings_approval') ) {
 			if ( $this->pending_spaces === null || $force_refresh ) {
-				$pending_spaces = $this->get_status_count( 0 );
+				$pending_spaces = $this->get_status_count( 0, $force_refresh );
 				$this->pending_spaces = $pending_spaces > 0 ? $pending_spaces : 0;
 				$this->pending_spaces = apply_filters('em_bookings_get_pending_spaces', $this->pending_spaces, $this, $force_refresh);
 			}
@@ -663,8 +667,8 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		if ( preg_match('/^[0-9,]+$/', $status) ) {
 			if ( !isset( $this->status_counts[ $status ] ) || $force_refresh ) {
 				if ( $this->get_event()->is_recurring( true ) ) {
-					$subquery = "SELECT event_id FROM " . EM_EVENTS_TABLE . " WHERE booking_status IN ( $status ) AND recurrence_set_id IN ( SELECT recurrence_set_id FROM " . EM_EVENT_RECURRENCES_TABLE . " WHERE event_id = '{$this->event_id}' )";
-					$sql = "SELECT SUM(booking_spaces) FROM " . EM_BOOKINGS_TABLE . " WHERE event_id IN ( $subquery ) ORDER BY booking_date";
+					$subquery = "SELECT event_id FROM " . EM_EVENTS_TABLE . " WHERE recurrence_set_id IN ( SELECT recurrence_set_id FROM " . EM_EVENT_RECURRENCES_TABLE . " WHERE event_id = '{$this->event_id}' )";
+					$sql = "SELECT SUM(booking_spaces) FROM " . EM_BOOKINGS_TABLE . " WHERE booking_status IN ( $status ) AND event_id IN ( $subquery )";
 				} else {
 					$timeslot = !empty($this->timeslot_id) ? ' AND timeslot_id = ' . absint( $this->timeslot_id ) : '';
 					$sql = 'SELECT SUM(booking_spaces) FROM ' . EM_BOOKINGS_TABLE . " WHERE booking_status IN ( $status ) AND event_id=" . absint( $this->event_id ) . $timeslot;
@@ -925,10 +929,11 @@ class EM_Bookings extends EM_Object implements Iterator, ArrayAccess {
 		// special join... if we are ordering by user meta, because we need to account for guest bookings stored in bookings meta vs real users in user meta
 		$bookings_table = EM_BOOKINGS_TABLE;
 		if( !empty($args['orderby']) ) {
-			$array_meta_intersect = array_intersect( $args['orderby'], array_keys($accepted_fields['orderby_user_meta']) );
-			$array_data_intersect = array_intersect( $args['orderby'], array_keys($accepted_fields['orderby_user_data']) );
-			$array_booking_meta_intersect = array_intersect( $args['orderby'], array_keys($accepted_fields['orderby_booking_meta']) );
-			if ( in_array( 'user_name', $args['orderby'] ) ) {
+			$orderby = is_array( $args['orderby'] ) ? $args['orderby'] : array_map( 'trim', explode( ',', (string) $args['orderby'] ) );
+				$array_meta_intersect = array_intersect( $orderby, array_keys($accepted_fields['orderby_user_meta']) );
+			$array_data_intersect = array_intersect( $orderby, array_keys($accepted_fields['orderby_user_data']) );
+			$array_booking_meta_intersect = array_intersect( $orderby, array_keys($accepted_fields['orderby_booking_meta']) );
+			if ( in_array( 'user_name', $orderby ) ) {
 				// a nuts order to join by name
 				// here we add a special join where we concat first and last names, because we'll always have a combo of those two even if user_name is saved, but not necessarily the other way around
 				// however, we also need to account for some bookings which may have just used the full 'user_name' when saving, so we add that to the end of the union

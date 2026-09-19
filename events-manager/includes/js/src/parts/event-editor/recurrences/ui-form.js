@@ -38,15 +38,17 @@ document.querySelectorAll('form.em-event-admin-recurring').forEach(form => {
 	});
 });
 
-//Buttons for recurrence warnings within event editor forms
-document.querySelectorAll('.em-reschedule-trigger, .em-reschedule-cancel').forEach(trigger => {
-	trigger.addEventListener('click', e => {
-		e.preventDefault();
-		const el = e.currentTarget;
-		const show = el.matches('.em-reschedule-trigger');
-		el.closest('.em-recurrence-reschedule')?.querySelector(el.dataset.target)?.classList.toggle('reschedule-hidden', !show);
-		el.parentElement.querySelectorAll('[data-nonce]').forEach( el => { el.disabled = !show } );
-		el.parentElement.querySelectorAll('button').forEach( link => link.classList.remove('reschedule-hidden') );
-		el.classList.add('reschedule-hidden');
-	});
+//Buttons for recurrence warnings within event editor forms. Delegated on document rather
+//than bound per-element at load, so it also catches buttons injected after this script ran —
+//e.g. the Bookings tab cloned into the Gutenberg canvas iframe, where the old one-time
+//querySelectorAll left the "Modify Recurring Event Tickets" button with no handler.
+document.addEventListener('click', function (e) {
+	const el = e.target.closest('.em-reschedule-trigger, .em-reschedule-cancel');
+	if ( ! el ) return;
+	e.preventDefault();
+	const show = el.matches('.em-reschedule-trigger');
+	el.closest('.em-recurrence-reschedule')?.querySelector(el.dataset.target)?.classList.toggle('reschedule-hidden', !show);
+	el.parentElement.querySelectorAll('[data-nonce]').forEach( node => { node.disabled = !show } );
+	el.parentElement.querySelectorAll('button').forEach( link => link.classList.remove('reschedule-hidden') );
+	el.classList.add('reschedule-hidden');
 });

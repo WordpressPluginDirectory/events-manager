@@ -60,6 +60,13 @@ function dbg( ...args ) {
  * data store may not be populated by domReady().
  */
 function isEMPostType() {
+	// EM's editor controller prints window.EM_EDITOR_TABS only on EM editor screens
+	// (events incl. archetypes/recurring, and locations — resolved server-side by
+	// registry, so it's robust to renamed CPTs). Prefer that signal; fall back to the
+	// static CPT list if the config isn't present.
+	if ( typeof window !== 'undefined' && window.EM_EDITOR_TABS ) {
+		return true;
+	}
 	const editorRO = select( 'core/editor' );
 	if ( ! editorRO || typeof editorRO.getCurrentPostType !== 'function' ) {
 		return false;
@@ -206,6 +213,32 @@ function serialiseClassicForm() {
 }
 
 /**
+ * The post status core's Publish/Update button would have applied.
+ *
+ * Our capture-phase preventDefault cancels core's own editPost({ status }), so
+ * whenever we go on to save we have to reapply it. Mirrors the publishStatus
+ * ladder in @wordpress/editor's PostPublishButton.
+ */
+function intendedPublishStatus( editorRO ) {
+	const edits = typeof editorRO.getPostEdits === 'function' ? editorRO.getPostEdits() : null;
+	if ( edits && edits.status ) {
+		return edits.status;
+	}
+
+	const currentPost = typeof editorRO.getCurrentPost === 'function' ? editorRO.getCurrentPost() : null;
+	if ( ! currentPost?._links?.[ 'wp:action-publish' ] ) {
+		return 'pending';
+	}
+	if ( typeof editorRO.getEditedPostVisibility === 'function' && editorRO.getEditedPostVisibility() === 'private' ) {
+		return 'private';
+	}
+	if ( typeof editorRO.isEditedPostBeingScheduled === 'function' && editorRO.isEditedPostBeingScheduled() ) {
+		return 'future';
+	}
+	return 'publish';
+}
+
+/**
  * The main click interceptor. Runs in capture phase on document so it fires
  * before any React-attached bubble-phase listener.
  */
@@ -294,15 +327,7 @@ function onPublishClick( e ) {
 			if ( response && response.valid ) {
 				notices.removeNotice( NOTICE_ID );
 
-				// If we were publishing from a draft via the sidebar, also flip
-				// the status so the dispatched savePost() actually publishes.
-				if (
-					isSidebarOpen() &&
-					! editorRO.isCurrentPostPublished() &&
-					editorRO.getEditedPostAttribute( 'status' ) === 'draft'
-				) {
-					editor.editPost( { status: 'publish' } );
-				}
+				editor.editPost( { status: intendedPublishStatus( editorRO ) }, { undoIgnore: true } );
 
 				// Mirror canvas-block inputs to hidden metaboxes before the
 				// meta-box-loader POST serialises them.
@@ -346,6 +371,7 @@ function onPublishClick( e ) {
 				),
 				{ id: NOTICE_ID, isDismissible: true }
 			);
+			editor.editPost( { status: intendedPublishStatus( editorRO ) }, { undoIgnore: true } );
 			syncAllCanvasToMetabox();
 			editor.unlockPostSaving( LOCK_KEY );
 			editor.savePost();
@@ -401,6 +427,36 @@ function syncAllCanvasToMetabox() {
 		return;
 	}
 
+	// Every metabox the canvas block mirrors, taken from the registry so add-on
+	// tabs are covered too. Falls back to the core trio if the config is absent.
+	const METABOX_IDS = ( window.EM_EDITOR_TABS?.tabs || [] )
+		.flatMap( ( t ) => ( t.metaboxes || [] ).map( ( mb ) => mb.id ) );
+	if ( ! METABOX_IDS.length ) {
+		METABOX_IDS.push( 'em-event-when', 'em-event-recurring', 'em-event-bookings' );
+	}
+
+	// Append one hidden input PER value. Multi-value array fields — a weekly
+	// recurrence's recurrence_bydays[] select, a select[multiple], grouped
+	// checkboxes — must POST as a real PHP array (repeated name[]), not a single
+	// comma-joined string. Joining "1,3,5" makes EM parse one bogus day value, so
+	// a new/disabled weekly set's weekdays silently drop and validation fails.
+	const appendHiddenValues = ( anchor, mode, fieldName, value ) => {
+		const values = Array.isArray( value ) ? value : [ value ?? '' ];
+		let after = anchor;
+		for ( const v of values ) {
+			const hidden = document.createElement( 'input' );
+			hidden.type  = 'hidden';
+			hidden.name  = fieldName;
+			hidden.value = v ?? '';
+			if ( mode === 'after' ) {
+				after.insertAdjacentElement( 'afterend', hidden );
+				after = hidden; // keep source order for the next value
+			} else {
+				anchor.appendChild( hidden );
+			}
+		}
+	};
+
 	canvas.querySelectorAll( 'input[name], select[name], textarea[name]' ).forEach( ( input ) => {
 		const name = input.name;
 		if ( ! name ) {
@@ -410,15 +466,22 @@ function syncAllCanvasToMetabox() {
 		if ( input.type === 'submit' || input.type === 'button' || input.type === 'reset' || input.type === 'file' ) {
 			return;
 		}
-		// Unchecked checkboxes/radios don't submit — skip them.
-		if ( ( input.type === 'checkbox' || input.type === 'radio' ) && ! input.checked ) {
-			return;
-		}
 
 		const escaped = CSS.escape( name );
-		const existing = document.querySelector(
-			`#em-event-when [name="${ escaped }"], #em-event-recurring [name="${ escaped }"]`
-		);
+		const sourceBox = input.closest( '[data-em-metabox]' )?.getAttribute( 'data-em-metabox' );
+
+		// Radios share a name across multiple elements — match by value so we
+		// update the counterpart of THIS radio, not just the first by name.
+		const valueSuffix = input.type === 'radio' ? `[value="${ CSS.escape( input.value ) }"]` : '';
+		const lookup = ( boxId ) => document.querySelector( `#${ boxId } [name="${ escaped }"]${ valueSuffix }` );
+
+		let existing = sourceBox ? lookup( sourceBox ) : null;
+		if ( ! existing ) {
+			for ( const boxId of METABOX_IDS ) {
+				existing = lookup( boxId );
+				if ( existing ) break;
+			}
+		}
 
 		const getValue = ( el ) => {
 			if ( el.type === 'checkbox' || el.type === 'radio' ) {
@@ -434,6 +497,9 @@ function syncAllCanvasToMetabox() {
 
 		if ( existing ) {
 			if ( existing.type === 'checkbox' || existing.type === 'radio' ) {
+				// Mirror unchecked state too — an unchecked canvas box must uncheck the
+				// metabox copy or the stale checked value gets POSTed (e.g. turning off
+				// "Enable registration" would silently not save).
 				existing.checked = input.checked;
 			} else if ( Array.isArray( val ) ) {
 				Array.from( existing.options || [] ).forEach( ( opt ) => {
@@ -443,26 +509,25 @@ function syncAllCanvasToMetabox() {
 				existing.value = val ?? '';
 			}
 			// If canvas field is enabled but metabox field is disabled, the
-			// serialiser skips it. Shadow it with an enabled hidden input.
-			if ( ! input.disabled && existing.disabled ) {
-				const shadow = document.createElement( 'input' );
-				shadow.type  = 'hidden';
-				shadow.name  = name;
-				shadow.value = Array.isArray( val ) ? val.join( ',' ) : ( val ?? '' );
-				existing.insertAdjacentElement( 'afterend', shadow );
+			// serialiser skips it. Shadow it with an enabled hidden input — except for
+			// unchecked checkables, which must not submit a value at all.
+			const isUncheckedCheckable = ( input.type === 'checkbox' || input.type === 'radio' ) && ! input.checked;
+			if ( ! input.disabled && existing.disabled && ! isUncheckedCheckable ) {
+				appendHiddenValues( existing, 'after', name, val );
 			}
 		} else {
-			// New input not present in the hidden metabox (e.g. dynamically
-			// added recurrence set). Append a hidden copy so it gets POSTed.
-			const targetInside = /^recurrences/.test( name )
-				? document.querySelector( '#em-event-recurring .inside' )
-				: document.querySelector( '#em-event-when .inside' );
+			// Unchecked checkboxes/radios don't submit, so there's nothing to append.
+			if ( ( input.type === 'checkbox' || input.type === 'radio' ) && ! input.checked ) {
+				return;
+			}
+			// New input not present in the hidden metabox (e.g. dynamically added
+			// recurrence set or ticket row). Append a hidden copy so it gets POSTed —
+			// routed to its source metabox when known, else by name-prefix heuristic.
+			const fallbackBox = /^recurrences/.test( name ) ? 'em-event-recurring' : 'em-event-when';
+			const targetInside = document.querySelector( `#${ sourceBox || fallbackBox } .inside` )
+			                     || document.querySelector( `#${ fallbackBox } .inside` );
 			if ( targetInside ) {
-				const hidden = document.createElement( 'input' );
-				hidden.type  = 'hidden';
-				hidden.name  = name;
-				hidden.value = Array.isArray( val ) ? val.join( ',' ) : ( val ?? '' );
-				targetInside.appendChild( hidden );
+				appendHiddenValues( targetInside, 'append', name, val );
 			}
 		}
 	} );
@@ -476,10 +541,11 @@ function syncAllCanvasToMetabox() {
  * Called once on domReady.
  */
 function ensureWhenBlock() {
-	if ( ! isEMPostType() ) {
+	// Canvas layout only — the tabs/metaboxes layouts present the real metaboxes,
+	// so don't auto-insert the canvas block there.
+	if ( ( window.EM_EDITOR_TABS?.layout || 'canvas' ) !== 'canvas' ) {
 		return;
 	}
-
 	const MAX_ATTEMPTS = 25;
 	let attempts = 0;
 
@@ -487,29 +553,45 @@ function ensureWhenBlock() {
 		attempts++;
 
 		const blockEditorSelect = select( 'core/block-editor' );
-		if ( ! blockEditorSelect || typeof blockEditorSelect.getBlocks !== 'function' ) {
+		const editorSelect = select( 'core/editor' );
+		// Wait for the editor to actually have the post loaded — inserting before the
+		// initial content load completes gets wiped by the editor's own resetBlocks.
+		// The post-type check ALSO has to wait: at domReady getCurrentPostType() is
+		// often still null, so checking it once up-front silently disabled the
+		// auto-insert on slower page loads.
+		const editorReady = blockEditorSelect && typeof blockEditorSelect.getBlocks === 'function'
+		                    && editorSelect && editorSelect.getCurrentPostId();
+		if ( ! editorReady ) {
 			if ( attempts < MAX_ATTEMPTS ) {
 				setTimeout( tryInsert, 200 );
 			}
 			return;
 		}
 
+		if ( ! isEMPostType() ) {
+			return; // post type now known and it's not ours — abort for good
+		}
+
 		const existing = blockEditorSelect.getBlocks().find( ( b ) => b.name === 'em/event-when' );
-		if ( existing ) {
-			return; // already present
+		if ( ! existing ) {
+			const createBlock = window.wp?.blocks?.createBlock;
+			if ( ! createBlock ) {
+				return;
+			}
+			const block = createBlock( 'em/event-when' );
+			// Lock: prevent the user from accidentally removing or moving the block.
+			block.attributes = { ...block.attributes, lock: { move: true, remove: true } };
+
+			dispatch( 'core/block-editor' ).insertBlocks( block, 0, undefined, false );
+			dbg( 'em/event-when block injected at position 0 (attempt ' + attempts + ')' );
 		}
 
-		const createBlock = window.wp?.blocks?.createBlock;
-		if ( ! createBlock ) {
-			return;
+		// Keep re-checking through editor boot: the initial content load can
+		// resetBlocks AFTER an early insert, silently removing the block. The loop
+		// re-inserts until the block survives or attempts run out.
+		if ( attempts < MAX_ATTEMPTS ) {
+			setTimeout( tryInsert, 400 );
 		}
-
-		const block = createBlock( 'em/event-when' );
-		// Lock: prevent the user from accidentally removing or moving the block.
-		block.attributes = { ...block.attributes, lock: { move: true, remove: true } };
-
-		dispatch( 'core/block-editor' ).insertBlocks( block, 0 );
-		dbg( 'em/event-when block injected at position 0' );
 	};
 
 	setTimeout( tryInsert, 300 );

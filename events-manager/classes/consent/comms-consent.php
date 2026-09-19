@@ -143,29 +143,32 @@ class Comms extends Consent {
 		$already_consented = $EM_Person->{ static::$options['meta_key'] };
 		$already_revoked = $EM_Person->{ static::$options['meta_key'] . '_revoked' };
 		// if user can modify others bookings, do it for all bookings, we do it direct to DB to avoid processing
-		$sql_select = 'SELECT booking_id FROM '. EM_BOOKINGS_TABLE . " WHERE person_id = 0 AND booking_id IN ( SELECT booking_id FROM ". EM_BOOKINGS_META_TABLE ." WHERE meta_key='_registration|user_email' AND meta_value='{$EM_Person->user_email}' )";
+		$sql_select = $wpdb->prepare( 'SELECT booking_id FROM '. EM_BOOKINGS_TABLE . " WHERE person_id = 0 AND booking_id IN ( SELECT booking_id FROM ". EM_BOOKINGS_META_TABLE ." WHERE meta_key='_registration|user_email' AND meta_value=%s )", $EM_Person->user_email );
 		if ( $event_owner_id ) {
 			// limit bookings to only events belonging to this user
 			$sql_select .= $wpdb->prepare( " AND event_id IN ( SELECT event_id FROM ". EM_EVENTS_TABLE . " WHERE event_owner=%d )", $event_owner_id );
 		}
-		$booking_ids = $wpdb->get_col( $sql_select );
+		$booking_ids = array_map( 'intval', $wpdb->get_col( $sql_select ) );
 		if ( count($booking_ids) > 0 ) {
 			$booking_ids_imploded = implode( ',', $booking_ids );
 			$meta_key = static::$options['meta_key'];
 			// delete then add, we don't know if some were added before or never
-			$wpdb->query( 'DELETE FROM ' . EM_BOOKINGS_META_TABLE . " WHERE meta_key IN ('_registration|$meta_key', '_registration|{$meta_key}_revoked') AND booking_id IN ($booking_ids_imploded)" );
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . EM_BOOKINGS_META_TABLE . " WHERE meta_key IN (%s, %s) AND booking_id IN ($booking_ids_imploded)", '_registration|' . $meta_key, '_registration|' . $meta_key . '_revoked' ) );
 			// insert records
 			$inserts = array();
+			$values = array();
 			foreach ( $booking_ids as $booking_id ) {
 				if( $already_consented ) {
-					$inserts[] = "($booking_id, '_registration|$meta_key', '$already_consented')";
+					$inserts[] = '(%d, %s, %s)';
+					array_push( $values, $booking_id, '_registration|' . $meta_key, $already_consented );
 				}
 				if ( $already_revoked ) {
-					$inserts[] = "($booking_id, '_registration|{$meta_key}_revoked', '$already_revoked')";
+					$inserts[] = '(%d, %s, %s)';
+					array_push( $values, $booking_id, '_registration|' . $meta_key . '_revoked', $already_revoked );
 				}
 			}
 			if( count($inserts) > 0 ) {
-				return $wpdb->query( 'INSERT INTO ' . EM_BOOKINGS_META_TABLE . ' (booking_id, meta_key, meta_value) VALUES ' . implode( ',', $inserts ) );
+				return $wpdb->query( $wpdb->prepare( 'INSERT INTO ' . EM_BOOKINGS_META_TABLE . ' (booking_id, meta_key, meta_value) VALUES ' . implode( ',', $inserts ), $values ) );
 			}
 		}
 		return 0; // nothing to update

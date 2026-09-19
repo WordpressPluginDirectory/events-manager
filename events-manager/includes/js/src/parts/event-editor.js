@@ -1,3 +1,10 @@
+/**
+ * Resolve the element that scopes a recurrence editor's event-level "When" fields. In the classic editor the recurrences metabox lives inside the post <form>, so closest('form') finds it. In the Gutenberg canvas block the same metabox HTML is injected into a .em-event-when-block <div> with no surrounding <form>, so closest('form') returns null and any closest('form').querySelector(...) call throws a TypeError. Fall back to the canvas block container, then document, so these lookups resolve in both contexts. Declared at the file's top level (the recurrence handlers below live outside the first IIFE) so every call site can see it.
+ */
+function emRecurrenceFormRoot( el ) {
+	return el.closest('form') || el.closest('.em-event-when-block') || document;
+}
+
 document.addEventListener('em_event_editor_ready', function() {
 
 	// load event recurrence data
@@ -18,9 +25,36 @@ document.addEventListener('em_event_editor_ready', function() {
 	// disable recurrence meta box selection since we must always show it
 	document.getElementById('em-event-recurring-hide')?.setAttribute('disabled', '');
 
-	// Handle the recurring/repeating event selection and initialize showing/hiding relevant recurring sections
-	document.querySelectorAll( '.event_type' ).forEach( eventType => {
-		const form = eventType.closest( 'form' );
+	// Handle the recurring/repeating event selection (extracted to setupEventTypeToggles
+	// so it can run per-container; see the em_setup_ui_elements listener below).
+	setupEventTypeToggles( document );
+
+	document.dispatchEvent( new CustomEvent('em_event_editor_loaded') );
+});
+
+// Re-run the event-type setup whenever EM (re)initialises UI inside a container. EM binds
+// .event_type once on em_event_editor_ready against document, which only reaches the hidden
+// classic metabox — the Gutenberg canvas block's checkbox lives in the editor-canvas iframe.
+// The block calls em_setup_ui_elements( container ) after injecting its metabox HTML, so this
+// wires the canvas copy too.
+document.addEventListener('em_setup_ui_elements', function( e ) {
+	if ( e.detail && e.detail.container ) {
+		setupEventTypeToggles( e.detail.container );
+	}
+});
+
+/**
+ * Wire the recurring/repeating event-type control(s) within a root element. Idempotent via
+ * data-em-type-bound. handleRecurring toggles em-is-recurring / em-type-* on the resolved
+ * form root so EM's existing visibility CSS does the showing/hiding — no per-context CSS.
+ */
+function setupEventTypeToggles( root ) {
+	( root || document ).querySelectorAll( '.event_type' ).forEach( eventType => {
+		if ( eventType.dataset.emTypeBound ) {
+			return;
+		}
+		eventType.dataset.emTypeBound = '1';
+		const form = emRecurrenceFormRoot( eventType );
 		eventType.addEventListener( 'change', function () {
 			// When set to recurring or repeating, sync the main event data to primary recurrence set
 			if ( handleRecurring() ) {
@@ -128,6 +162,4 @@ document.addEventListener('em_event_editor_ready', function() {
 		}
 		handleRecurring();
 	});
-
-	document.dispatchEvent( new CustomEvent('em_event_editor_loaded') );
-});
+}

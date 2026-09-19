@@ -42,10 +42,10 @@ class EM_Admin_Notices {
 		if( !$EM_Admin_Notice->name ) return false;
 		//get options data
 		$data = $network ? get_site_option('dbem_data') : em_get_option('dbem_data');
-		$data = empty($data) ? array() : maybe_unserialize($data);
+		$data = empty($data) ? array() : EM_Object::maybe_unserialize($data);
 		if( !is_array($data)) $data = array();
 		$notices_data = $network ? get_site_option('dbem_admin_notices') : em_get_option('dbem_admin_notices');
-		$notices_data = empty($notices_data) ? array() : maybe_unserialize($notices_data);
+		$notices_data = empty($notices_data) ? array() : EM_Object::maybe_unserialize($notices_data);
 		if( !is_array($notices_data)) $notices_data = array(); //we store the data regarldess of whether a message will require a hook, since it contains location and caps considtions
 		//start building data
 		$notices = !empty($data['admin_notices']) ? $data['admin_notices'] : array();

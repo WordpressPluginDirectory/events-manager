@@ -19,6 +19,16 @@
 
 			// Initialize preview if there are existing timeranges
 			wrapper.querySelectorAll('.em-timeranges-editor').forEach( editor => {
+				// Guard against double-binding. These listeners attach to the editor
+				// element directly, and in the Gutenberg canvas em_setup_ui_elements can
+				// re-run bindEvents over the same editor (e.g. after editing a recurrence
+				// date/timeslot), which would stack a duplicate handler and make "Add Time
+				// Slot" insert two timeranges per click.
+				if ( editor.dataset.emTimerangesBound ) {
+					return;
+				}
+				editor.dataset.emTimerangesBound = '1';
+
 				// Add timerange button
 				editor.addEventListener('click', function(e) {
 					if (e.target.matches('.em-timerange-add') || e.target.closest('.em-timerange-add')) {
@@ -265,10 +275,13 @@
 			let allTimeranges = container.querySelectorAll('.em-timerange');
 			let hasErrors = false;
 
-			// Clear existing errors
+			// Clear existing errors, then put back the end-before-start flags this pass does not own.
 			allTimeranges.forEach(timerange => {
 				timerange.querySelectorAll('.em-time-start, .em-time-end').forEach(input => {
 					input.classList.remove('error');
+				});
+				timerange.querySelectorAll('.em-time-end').forEach(input => {
+					em_validate_end_time(input);
 				});
 			});
 
@@ -550,6 +563,13 @@
 
 })();
 
+/**
+ * Resolve the element that scopes a recurrence editor's event-level "When" fields. In the classic editor the recurrences metabox lives inside the post <form>, so closest('form') finds it. In the Gutenberg canvas block the same metabox HTML is injected into a .em-event-when-block <div> with no surrounding <form>, so closest('form') returns null and any closest('form').querySelector(...) call throws a TypeError. Fall back to the canvas block container, then document, so these lookups resolve in both contexts. Declared at the file's top level (the recurrence handlers below live outside the first IIFE) so every call site can see it.
+ */
+function emRecurrenceFormRoot( el ) {
+	return el.closest('form') || el.closest('.em-event-when-block') || document;
+}
+
 document.addEventListener('em_event_editor_ready', function() {
 
 	// load event recurrence data
@@ -570,9 +590,36 @@ document.addEventListener('em_event_editor_ready', function() {
 	// disable recurrence meta box selection since we must always show it
 	document.getElementById('em-event-recurring-hide')?.setAttribute('disabled', '');
 
-	// Handle the recurring/repeating event selection and initialize showing/hiding relevant recurring sections
-	document.querySelectorAll( '.event_type' ).forEach( eventType => {
-		const form = eventType.closest( 'form' );
+	// Handle the recurring/repeating event selection (extracted to setupEventTypeToggles
+	// so it can run per-container; see the em_setup_ui_elements listener below).
+	setupEventTypeToggles( document );
+
+	document.dispatchEvent( new CustomEvent('em_event_editor_loaded') );
+});
+
+// Re-run the event-type setup whenever EM (re)initialises UI inside a container. EM binds
+// .event_type once on em_event_editor_ready against document, which only reaches the hidden
+// classic metabox — the Gutenberg canvas block's checkbox lives in the editor-canvas iframe.
+// The block calls em_setup_ui_elements( container ) after injecting its metabox HTML, so this
+// wires the canvas copy too.
+document.addEventListener('em_setup_ui_elements', function( e ) {
+	if ( e.detail && e.detail.container ) {
+		setupEventTypeToggles( e.detail.container );
+	}
+});
+
+/**
+ * Wire the recurring/repeating event-type control(s) within a root element. Idempotent via
+ * data-em-type-bound. handleRecurring toggles em-is-recurring / em-type-* on the resolved
+ * form root so EM's existing visibility CSS does the showing/hiding — no per-context CSS.
+ */
+function setupEventTypeToggles( root ) {
+	( root || document ).querySelectorAll( '.event_type' ).forEach( eventType => {
+		if ( eventType.dataset.emTypeBound ) {
+			return;
+		}
+		eventType.dataset.emTypeBound = '1';
+		const form = emRecurrenceFormRoot( eventType );
 		eventType.addEventListener( 'change', function () {
 			// When set to recurring or repeating, sync the main event data to primary recurrence set
 			if ( handleRecurring() ) {
@@ -680,9 +727,7 @@ document.addEventListener('em_event_editor_ready', function() {
 		}
 		handleRecurring();
 	});
-
-	document.dispatchEvent( new CustomEvent('em_event_editor_loaded') );
-});
+}
 
 document.addEventListener('em_event_editor_recurrences', function( e ) {
 	let recurrenceSets = e.detail.recurrenceSets;
@@ -705,19 +750,19 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		let index = recurrenceTypeSets.querySelectorAll('.em-recurrence-set').length + 1;
 
 		// Copy template HTML
-		let templateHtml = recurrenceSets.querySelector('.em-recurrence-set-template')?.innerHTML;
+		let template = recurrenceSets.querySelector('.em-recurrence-set-template');
+		if ( !template ) return null;
 		let recurrenceSet;
-		if ( templateHtml === null ) {
-			// legacy template which didn't use the template element to enclose the recurrence set type
-			let recurrenceSet = recurrenceSets.querySelector('.em-recurrence-set-template').cloneNode(true);
-			recurrenceSet.classList.remove('em-recurrence-set-template', 'hidden');
-			recurrenceSet.innerHTML = recurrenceSet.innerHTML.replace(/T%/g, `${recurrenceType}`).replace(/N%/g, `${index}`);
-		} else {
+		if ( template instanceof HTMLTemplateElement ) {
 			// create a blank div which we'll add classes etc. to
 			recurrenceSet = document.createElement('div');
-			// Replace all occurrences of "[N%]" with the new index.
-			recurrenceSet.innerHTML = templateHtml.replace(/T%/g, `${recurrenceType}`).replace(/N%/g, `${index}`);
+		} else {
+			// legacy template override which didn't use a template element to enclose the recurrence set type
+			recurrenceSet = template.cloneNode(true);
+			recurrenceSet.classList.remove('em-recurrence-set-template', 'hidden');
 		}
+		// Replace all occurrences of "[N%]" with the new index.
+		recurrenceSet.innerHTML = template.innerHTML.replace(/T%/g, `${recurrenceType}`).replace(/N%/g, `${index}`);
 
 		// Remove the 'hidden' class and template-specific class; add the active class.
 		recurrenceSet.classList.add('em-recurrence-set', 'new-recurrence-set');
@@ -756,7 +801,13 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		addButton.addEventListener( 'click', () => addRecurrence('include') );
 	});
 	// set up listner to add recurrences, exclude and include, the exclude trigger is in reschedule.js
-	recurrenceSets.addEventListener( 'addRecurrence', ( e ) => addRecurrence( e.detail.type ) );
+	// CustomEvent.detail defaults to null, so fall back to the dispatching section's own type rather than throwing on a dispatch that omits it.
+	recurrenceSets.addEventListener( 'addRecurrence', function ( e ) {
+		let recurrenceType = e.detail?.type ?? e.target.closest?.('.em-recurrence-type')?.dataset.type;
+		if ( !recurrenceType ) return;
+		let recurrenceSet = addRecurrence( recurrenceType );
+		if ( e.detail ) e.detail.recurrenceSet = recurrenceSet;
+	});
 
 	// REMOVE A RECURRENCE RULE
 	recurrenceSets.addEventListener('click', function ( e ) {
@@ -889,8 +940,10 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 
 	// exclude references used throughout here for rescheduling logic
 	let recurrenceExcludeSets = recurrenceSets.querySelector('.em-recurrence-type-exclude');
-	let recurrenceExcludeModal = recurrenceExcludeSets.querySelector('& > .em-recurrence-set-reshedule-modal');
-	let rescheduleExcludeAction = recurrenceExcludeModal.querySelector('.recurrence-reschedule-action');
+	let recurrenceExcludeModal = recurrenceExcludeSets?.querySelector(':scope > .em-recurrence-set-reshedule-modal');
+	let rescheduleExcludeAction = recurrenceExcludeModal?.querySelector('.recurrence-reschedule-action');
+	// an out-of-date theme override of recurrences.php would otherwise unbind every exclude control below
+	if ( !recurrenceExcludeSets || !recurrenceExcludeModal || !rescheduleExcludeAction ) return;
 
 	/* ------------------------------------------------------------
 	 UNDO FUNCTIONALITY
@@ -944,12 +997,18 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 			// undo the timepicker, by replacing the stored template
 			let timeRangeEditor = recurrenceSet.querySelector('.em-recurrence-timeranges');
 			if ( timeRangeEditor ) {
-				timeRangeEditor.querySelector('.recurrence-timeranges-editor').innerHTML = timeRangeEditor.querySelector('.recurrence-timeranges-undo').innerHTML;
+				// a newly added set has no stored undo template to restore from
+				let timeRangeTarget = timeRangeEditor.querySelector('.recurrence-timeranges-editor');
+				let timeRangeUndo = timeRangeEditor.querySelector('.recurrence-timeranges-undo');
+				if ( timeRangeTarget && timeRangeUndo ) {
+					timeRangeTarget.innerHTML = timeRangeUndo.innerHTML;
+				}
 			}
 			// disable other rechedulable items
 			recurrenceSet.querySelectorAll('.reschedulable [name]:not(.selectized), .reschedulable button').forEach( input => { input.disabled = true; } );
-			// disable the nonces to reschedule this button type
-			recurrenceSet.querySelector( 'input[type="hidden"][data-nonce]' ).disabled = true;
+			// disable the nonces to reschedule this button type, a newly added set has no stored nonce to disable
+			let setNonce = recurrenceSet.querySelector( 'input[type="hidden"][data-nonce]' );
+			if ( setNonce ) setNonce.disabled = true;
 			// re-enable the reschedule buttons and set flag to false
 			recurrenceSet.querySelectorAll('.reschedule-trigger').forEach( button => { button.disabled = false } );
 			delete recurrenceSet.dataset.rescheduled;
@@ -1066,10 +1125,10 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 			unlockReschedule( recurrenceExcludeModal.rescheduleButton  )
 			recurrenceSet = recurrenceExcludeModal.rescheduleButton.closest('.em-recurrence-set');
 		} else {
-			// pass a detail so it is populated by reference
+			let detail = { type : 'exclude' };
 			let recurrenceTypeSets = recurrenceSets.querySelector('.em-recurrence-type-exclude');
-			recurrenceTypeSets?.dispatchEvent( new CustomEvent('addRecurrence', { bubbles: true }) );
-			recurrenceSet = recurrenceTypeSets?.querySelector('.em-recurrence-set:last-child');
+			recurrenceTypeSets?.dispatchEvent( new CustomEvent('addRecurrence', { bubbles: true, detail: detail }) );
+			recurrenceSet = detail.recurrenceSet ?? recurrenceTypeSets?.querySelector('.em-recurrence-set:last-child');
 		}
 		// mark rescheduled, even if it's new because it essentially can reschedule previously created recurrences by negating them
 		if ( recurrenceSet ) {
@@ -1102,7 +1161,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 		// TODO add TimeZone-aware libary to calculate real start/end dates and provide an accurate recurrence summary for all recurrences grouped together.
 		
 		recurrenceSets.addEventListener('setDateTimes', function() {
-			let eventDateTimes = recurrenceSets.closest('form').querySelector('.event-form-when');
+			let eventDateTimes = emRecurrenceFormRoot( recurrenceSets ).querySelector('.event-form-when');
 			if ( eventDateTimes ) {
 				// COLLECT ALL DATES FROM RECURRENCE SETS, update earliest/latest date as we go
 				/** @type {luxon.DateTime} */
@@ -1600,17 +1659,19 @@ document.querySelectorAll('form.em-event-admin-recurring').forEach(form => {
 	});
 });
 
-//Buttons for recurrence warnings within event editor forms
-document.querySelectorAll('.em-reschedule-trigger, .em-reschedule-cancel').forEach(trigger => {
-	trigger.addEventListener('click', e => {
-		e.preventDefault();
-		const el = e.currentTarget;
-		const show = el.matches('.em-reschedule-trigger');
-		el.closest('.em-recurrence-reschedule')?.querySelector(el.dataset.target)?.classList.toggle('reschedule-hidden', !show);
-		el.parentElement.querySelectorAll('[data-nonce]').forEach( el => { el.disabled = !show } );
-		el.parentElement.querySelectorAll('button').forEach( link => link.classList.remove('reschedule-hidden') );
-		el.classList.add('reschedule-hidden');
-	});
+//Buttons for recurrence warnings within event editor forms. Delegated on document rather
+//than bound per-element at load, so it also catches buttons injected after this script ran —
+//e.g. the Bookings tab cloned into the Gutenberg canvas iframe, where the old one-time
+//querySelectorAll left the "Modify Recurring Event Tickets" button with no handler.
+document.addEventListener('click', function (e) {
+	const el = e.target.closest('.em-reschedule-trigger, .em-reschedule-cancel');
+	if ( ! el ) return;
+	e.preventDefault();
+	const show = el.matches('.em-reschedule-trigger');
+	el.closest('.em-recurrence-reschedule')?.querySelector(el.dataset.target)?.classList.toggle('reschedule-hidden', !show);
+	el.parentElement.querySelectorAll('[data-nonce]').forEach( node => { node.disabled = !show } );
+	el.parentElement.querySelectorAll('button').forEach( link => link.classList.remove('reschedule-hidden') );
+	el.classList.add('reschedule-hidden');
 });
 
 document.addEventListener('em_event_editor_recurrences', function( e ) {
@@ -1939,7 +2000,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 
 		recurrenceSets.dispatchEvent( new CustomEvent('setAdvancedDefaults') );
 
-		let eventType = recurrenceSets.closest('form').querySelector('input[name="event_type"]')?.value;
+		let eventType = emRecurrenceFormRoot( recurrenceSets ).querySelector('input[name="event_type"]')?.value;
 
 		// Add change handlers for selectize dropdowns in first recurrence set
 		// track selectize changes assuming recurrences are enabled
@@ -1958,7 +2019,7 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 				let recurrenceField = firstRecurrenceSet.querySelector(recurrenceSelector);
 
 				// Find the corresponding event field
-				let eventFormWhen = recurrenceSets.closest('form').querySelector('.event-form-when');
+				let eventFormWhen = emRecurrenceFormRoot( recurrenceSets ).querySelector('.event-form-when');
 				let eventField = eventFormWhen?.querySelector(eventSelector);
 
 				if ( recurrenceField && eventField ) {

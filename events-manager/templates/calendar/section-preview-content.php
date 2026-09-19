@@ -18,10 +18,13 @@
 			<?php include($modal_template_file); ?>
 		<?php endforeach; ?>
 	<?php endif; ?>
-	<?php $modal_dates_file = em_locate_template('calendar/preview-date-modal.php', false); ?>
-	<?php foreach($calendar['cells'] as $date => $cell_data ): $EM_DateTime = new EM_DateTime($date); ?>
-		<?php if( !empty($cell_data['events']) && count($cell_data['events']) > 0 ): ?>
-			<?php include($modal_dates_file); ?>
-		<?php endif; ?>
-	<?php endforeach; ?>
+	<?php /* must match the condition adding the responsive-dateclick-modal class in EM_Calendar::output(), which is what binds the JS that opens these */ ?>
+	<?php if( $args['calendar_preview_mode_date'] !== 'none' && $args['calendar_preview_mode'] !== 'booking' ): ?>
+		<?php $modal_dates_file = em_locate_template('calendar/preview-date-modal.php', false); ?>
+		<?php foreach($calendar['cells'] as $date => $cell_data ): $EM_DateTime = new EM_DateTime($date); ?>
+			<?php if( !empty($cell_data['events']) && count($cell_data['events']) > 0 ): ?>
+				<?php include($modal_dates_file); ?>
+			<?php endif; ?>
+		<?php endforeach; ?>
+	<?php endif; ?>
 </section>

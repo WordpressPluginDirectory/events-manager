@@ -47,6 +47,12 @@ class EM_DateTime extends DateTime {
 			@parent::__construct( (string) $time, $timezone);
 			if( substr($time,0,1) == '@' || $time == 'now' ) $this->setTimezone($timezone);
 			$this->valid = true; //if we get this far, supplied time is valid
+			if( (int) parent::format('Y') < 1000 ){
+				// zero dates such as 0000-00-00 00:00:00 do not throw, they parse to year -0001, so treat an impossible year as a failed date
+				$this->setDate(1970,1,1);
+				$this->setTime(0,0,0);
+				$this->valid = false; // setDate() and setTime() mark themselves valid, so this stays last
+			}
 		}catch( Exception $e ){
 			//get current date/time in relevant timezone and set valid flag to false
 			try {

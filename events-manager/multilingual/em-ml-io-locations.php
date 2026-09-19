@@ -41,8 +41,8 @@ class EM_ML_IO_Locations {
 	
 	public static function location_merge_original_attributes($EM_Location, $location){
 		//merge attributes
-		$location->location_attributes = maybe_unserialize($location->location_attributes);
-		$EM_Location->location_attributes = maybe_unserialize($EM_Location->location_attributes);
+		$location->location_attributes = EM_Object::maybe_unserialize($location->location_attributes);
+		$EM_Location->location_attributes = EM_Object::maybe_unserialize($EM_Location->location_attributes);
 		foreach($location->location_attributes as $attribute_key => $attribute){
 			if( !empty($attribute) && empty($EM_Location->location_attributes[$attribute_key]) ){
 				$EM_Location->location_attributes[$attribute_key] = $attribute;

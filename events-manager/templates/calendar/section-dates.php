@@ -118,11 +118,11 @@ This template is the main meat of the calendar, most of the heavy lifting is don
 							if( $col_count == 1 ) {
 								// fill up the slots which will be empty on first column
 								$days_key = $days_left_in_event - 1;
-								while( !empty($multiday_slots_content[$days_key]) ){
-									$days_key += 0.00001; // adding a large decimal to prevent large scale calendars
+								while( !empty($multiday_slots_content[(string) $days_key]) ){
+									$days_key += 0.00001; // PHP truncates float keys to int; the (string) cast above is what makes this nudge land on a new slot
 								}
-								$multiday_slots_content[$days_key] = $event_content;
-								$multiday_slots[$days_key] = $EM_Event->event_id;
+								$multiday_slots_content[(string) $days_key] = $event_content;
+								$multiday_slots[(string) $days_key] = $EM_Event->event_id;
 							}else{
 								// check if reserved
 								if( in_array( $EM_Event->event_id, $multiday_slots ) ){

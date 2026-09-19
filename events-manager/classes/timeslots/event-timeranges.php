@@ -278,6 +278,9 @@ class Timeranges extends \EM\Timeranges {
 					}
 				}
 				return apply_filters( 'em_event_timeslots_save', !$this->errors, $this );
+			} elseif ( $has_timeslots ) {
+				// Timeslots are wanted but did not validate, so the stored rows are still the truth; dropping them here would discard the event's whole timeslot grid on a validation failure.
+				return apply_filters( 'em_event_timeslots_save', false, $this );
 			} else {
 				// remove all timerange entries from the DB, we only need the one in the event table which can generate a simple timerange without advanced rules dynamically
 				$wpdb->query( "DELETE FROM " . EM_TIMERANGES_TABLE . " WHERE timerange_group_id='event_" . $this->event->event_id . "'" );

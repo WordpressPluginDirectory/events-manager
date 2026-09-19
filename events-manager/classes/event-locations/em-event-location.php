@@ -95,12 +95,12 @@ class Event_Location {
 			if( $event_meta_key == $base_key ){
 				// in case we have something like _event_location_url which is the actual URL of a Event_Location_URL object/type.
 				$this->data[static::$type] = ( is_array($event_meta_val) ) ? $event_meta_val[0]:$event_meta_val;
-				$this->data[static::$type] = maybe_unserialize($this->data[static::$type]);
+				$this->data[static::$type] = \EM_Object::maybe_unserialize($this->data[static::$type]);
 			}elseif( substr($event_meta_key, 0, strlen($base_key) ) == $base_key ){
 				// event location data is placed directly into the event_location_data array and referenced via get_event_location()
 				$key = str_replace('_event_location_'.static::$type.'_', '', $event_meta_key);
 				$this->data[$key] = ( is_array($event_meta_val) ) ? $event_meta_val[0]:$event_meta_val;
-				$this->data[$key] = maybe_unserialize($this->data[$key]);
+				$this->data[$key] = \EM_Object::maybe_unserialize($this->data[$key]);
 			}
 		}
 		do_action('em_event_location_load_postdata', $this);

@@ -36,6 +36,16 @@ namespace EM {
 		public $context;
 		public $context_views = array();
 		/**
+		 * Status filter value, set directly by admin pages before display() on tables that support it (e.g. bookings).
+		 * @var string
+		 */
+		public $status;
+		/**
+		 * Scope filter value, set directly by admin pages before display() on tables that support it.
+		 * @var string
+		 */
+		public $scope;
+		/**
 		 * Link/Data for available actions on each row for this table. Populated by self::get_action_data() method.
 		 * @var array
 		 */

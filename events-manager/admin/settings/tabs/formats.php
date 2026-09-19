@@ -879,7 +879,7 @@
 	<div  class="postbox " id="em-opt-maps-formats" >
 	<div class="handlediv" title="<?php __('Click to toggle', 'events-manager'); ?>"><br /></div><h3><span><?php _e ( 'Maps', 'events-manager'); ?> </span></h3>
 	<div class="inside">
-		<p class="em-boxheader"><?php echo sprintf(__('You can use Google Maps to show where your events are located. For more information on using maps, <a href="%s">see our documentation</a>.','events-manager'),'http://wp-events-plugin.com/documentation/google-maps/'); ?>
+		<p class="em-boxheader"><?php echo sprintf(__('You can use Google Maps to show where your events are located. For more information on using maps, <a href="%s">see our documentation</a>.','events-manager'),'https://wp-events-plugin.com/documentation/google-maps/'); ?>
 		<table class='form-table'>
 			<tr valign="top">
 				<?php em_options_input_text(__('Default map width','events-manager'), 'dbem_map_default_width', sprintf(__('Can be in form of pixels or a percentage such as %s or %s.', 'events-manager'), '<code>100%</code>', '<code>100px</code>')); ?>
@@ -893,14 +893,14 @@
 			<tbody class="am-af am-af-maps">
 				<tr class="em-header"><td colspan="2">
 					<h4><?php _e('Global Map Format','events-manager'); ?></h4>
-					<p><?php echo sprintf(__('If you use the %s <a href="%s">shortcode</a>, you can display a map of all your locations and events, the settings below will be used.','events-manager'), '<code>[locations_map]</code>','http://wp-events-plugin.com/documentation/shortcodes/'); ?></p>
+					<p><?php echo sprintf(__('If you use the %s <a href="%s">shortcode</a>, you can display a map of all your locations and events, the settings below will be used.','events-manager'), '<code>[locations_map]</code>','https://wp-events-plugin.com/documentation/shortcodes/'); ?></p>
 				</td></tr>
 				<?php
 				em_options_textarea ( __( 'Location balloon format', 'events-manager'), 'dbem_map_text_format', __( 'The format of the text appearing in the balloon describing the location.', 'events-manager').' '.__( 'Event.', 'events-manager').$locations_placeholder_tip, true );
 				?>
 				<tr class="em-header"><td colspan="2">
 					<h4><?php _e('Single Location/Event Map Format','events-manager'); ?></h4>
-					<p><?php echo sprintf(_e('If you use the <code>#_LOCATIONMAP</code> <a href="%s">placeholder</a> when displaying individual event and location information, the settings below will be used.','events-manager'), '<code>[locations_map]</code>','http://wp-events-plugin.com/documentation/placeholders/'); ?></p>
+					<p><?php echo sprintf(_e('If you use the <code>#_LOCATIONMAP</code> <a href="%s">placeholder</a> when displaying individual event and location information, the settings below will be used.','events-manager'), '<code>[locations_map]</code>','https://wp-events-plugin.com/documentation/placeholders/'); ?></p>
 				</td></tr>
 				<?php
 				em_options_textarea ( __( 'Location balloon format', 'events-manager'), 'dbem_location_baloon_format', __( 'The format of the text appearing in the balloon describing the location.', 'events-manager').$events_placeholder_tip, true );

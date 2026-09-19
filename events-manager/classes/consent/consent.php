@@ -16,13 +16,11 @@ class Consent {
 	public static function init() {
 		// Consent validation is only ever meant to fire for public-facing
 		// submission contexts (frontend HTML POST, frontend AJAX). It must NOT
-		// fire during admin saves, and equally not during REST API requests —
-		// REST is used by the block editor's pre-save validation endpoint and
-		// by admin-authenticated third-party clients, neither of which need
-		// the submitter-consent gate. is_admin() returns false for REST, so
-		// we have to exclude it explicitly.
-		$is_rest_request   = defined('REST_REQUEST') && REST_REQUEST;
-		$is_frontend       = !is_admin() && !$is_rest_request;
+		// fire during admin saves, REST API requests, wp-cron or WP-CLI, none
+		// of which carry a public submitter's consent checkbox. is_admin()
+		// returns false for all of those, so is_excluded_request() covers
+		// what is_admin() alone misses.
+		$is_frontend       = !is_admin() && !static::is_excluded_request();
 		$is_relevant_ajax  = defined('DOING_AJAX') && DOING_AJAX && !empty($_REQUEST['action']) && $_REQUEST['action'] != 'booking_add_one';
 		if( $is_frontend || $is_relevant_ajax ){
 			add_action('init', [ static::class, 'hooks' ]);
@@ -218,12 +216,17 @@ class Consent {
 	}
 	
 	/**
-	 * Save consent to event or location object
-	 * @param bool $result
-	 * @param EM_Event|EM_Location $EM_Object
+	 * Whether this request should never register or run the consent hooks: REST, wp-cron and WP-CLI requests never carry a public submitter's consent checkbox.
+	 *
+	 * WordPress defines REST_REQUEST in rest_api_loaded(), hooked to parse_request, which runs long after this class is included and after the init action that registers the hooks below. The check in init() therefore cannot see REST_REQUEST yet and registers the consent hooks for every REST request, including the block editor's save. Re-checking here still works because every callback below runs during the save itself, by which point the constant is set. DOING_CRON and WP_CLI are both set before init fires, so those two are actually excluded at the init() call too.
 	 * @return bool
 	 */
+	protected static function is_excluded_request() {
+		return ( defined('REST_REQUEST') && REST_REQUEST ) || wp_doing_cron() || ( defined('WP_CLI') && WP_CLI );
+	}
+
 	public static function cpt_get_post($result, $EM_Object ){
+		if( static::is_excluded_request() ) return $result;
 		if( !empty($_REQUEST[ static::$options['param'] ]) ){
 			if( get_class($EM_Object) == 'EM_Event' ){
 				$EM_Object->event_attributes['_' . static::$options['meta_key']] = 1;
@@ -242,6 +245,7 @@ class Consent {
 	 * @return bool
 	 */
 	public static function cpt_validate( $result, $EM_Object ){
+		if( static::is_excluded_request() ) return $result;
 		if( !empty($EM_Object->post_id) ) return $result;
 		if( is_user_logged_in() ){
 			//check if consent was previously given and ignore if settings dictate so
@@ -263,6 +267,7 @@ class Consent {
 	 * @return bool
 	 */
 	public static function cpt_save( $result, $EM_Object ){
+		if( static::is_excluded_request() ) return $result;
 		$attributes = get_class($EM_Object) == 'EM_Event' ? 'event_attributes':'location_attributes';
 		if( $result && !empty($EM_Object->{$attributes}['_' . static::$prefix])){
 			if( !em_get_option('dbem_events_anonymous_submissions') || $EM_Object->post_author != em_get_option('dbem_events_anonymous_user') ){

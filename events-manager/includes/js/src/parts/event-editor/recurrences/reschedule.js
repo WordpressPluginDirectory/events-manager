@@ -3,8 +3,10 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 
 	// exclude references used throughout here for rescheduling logic
 	let recurrenceExcludeSets = recurrenceSets.querySelector('.em-recurrence-type-exclude');
-	let recurrenceExcludeModal = recurrenceExcludeSets.querySelector('& > .em-recurrence-set-reshedule-modal');
-	let rescheduleExcludeAction = recurrenceExcludeModal.querySelector('.recurrence-reschedule-action');
+	let recurrenceExcludeModal = recurrenceExcludeSets?.querySelector(':scope > .em-recurrence-set-reshedule-modal');
+	let rescheduleExcludeAction = recurrenceExcludeModal?.querySelector('.recurrence-reschedule-action');
+	// an out-of-date theme override of recurrences.php would otherwise unbind every exclude control below
+	if ( !recurrenceExcludeSets || !recurrenceExcludeModal || !rescheduleExcludeAction ) return;
 
 	/* ------------------------------------------------------------
 	 UNDO FUNCTIONALITY
@@ -58,12 +60,18 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 			// undo the timepicker, by replacing the stored template
 			let timeRangeEditor = recurrenceSet.querySelector('.em-recurrence-timeranges');
 			if ( timeRangeEditor ) {
-				timeRangeEditor.querySelector('.recurrence-timeranges-editor').innerHTML = timeRangeEditor.querySelector('.recurrence-timeranges-undo').innerHTML;
+				// a newly added set has no stored undo template to restore from
+				let timeRangeTarget = timeRangeEditor.querySelector('.recurrence-timeranges-editor');
+				let timeRangeUndo = timeRangeEditor.querySelector('.recurrence-timeranges-undo');
+				if ( timeRangeTarget && timeRangeUndo ) {
+					timeRangeTarget.innerHTML = timeRangeUndo.innerHTML;
+				}
 			}
 			// disable other rechedulable items
 			recurrenceSet.querySelectorAll('.reschedulable [name]:not(.selectized), .reschedulable button').forEach( input => { input.disabled = true; } );
-			// disable the nonces to reschedule this button type
-			recurrenceSet.querySelector( 'input[type="hidden"][data-nonce]' ).disabled = true;
+			// disable the nonces to reschedule this button type, a newly added set has no stored nonce to disable
+			let setNonce = recurrenceSet.querySelector( 'input[type="hidden"][data-nonce]' );
+			if ( setNonce ) setNonce.disabled = true;
 			// re-enable the reschedule buttons and set flag to false
 			recurrenceSet.querySelectorAll('.reschedule-trigger').forEach( button => { button.disabled = false } );
 			delete recurrenceSet.dataset.rescheduled;
@@ -180,10 +188,10 @@ document.addEventListener('em_event_editor_recurrences', function( e ) {
 			unlockReschedule( recurrenceExcludeModal.rescheduleButton  )
 			recurrenceSet = recurrenceExcludeModal.rescheduleButton.closest('.em-recurrence-set');
 		} else {
-			// pass a detail so it is populated by reference
+			let detail = { type : 'exclude' };
 			let recurrenceTypeSets = recurrenceSets.querySelector('.em-recurrence-type-exclude');
-			recurrenceTypeSets?.dispatchEvent( new CustomEvent('addRecurrence', { bubbles: true }) );
-			recurrenceSet = recurrenceTypeSets?.querySelector('.em-recurrence-set:last-child');
+			recurrenceTypeSets?.dispatchEvent( new CustomEvent('addRecurrence', { bubbles: true, detail: detail }) );
+			recurrenceSet = detail.recurrenceSet ?? recurrenceTypeSets?.querySelector('.em-recurrence-set:last-child');
 		}
 		// mark rescheduled, even if it's new because it essentially can reschedule previously created recurrences by negating them
 		if ( recurrenceSet ) {

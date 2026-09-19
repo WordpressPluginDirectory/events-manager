@@ -504,7 +504,17 @@ $limit $offset
 		if( is_admin() && !defined('DOING_AJAX') ){
 			$defaults['owner'] = !current_user_can('read_others_locations') ? get_current_user_id():false;
 		}
-		return apply_filters('em_locations_get_default_search', parent::get_default_search($defaults, $array), $array, $defaults);
+		$args = parent::get_default_search($defaults, $array);
+		// Prevent disclosure of non-published locations via the public/AJAX search: a request `status` can otherwise expose draft/pending/trashed locations to anyone. Users without read_others_locations may only see non-published locations they own; guests are clamped to published only.
+		if ( !current_user_can('read_others_locations') && !in_array($args['status'], array(1, '1', true), true) ) {
+			if ( is_user_logged_in() ) {
+				// Forced, not defaulted, for the same reason as EM_Events::get_default_search(): a supplied owner must not be able to widen the scope past the caller's own unpublished locations.
+				$args['owner'] = get_current_user_id();
+			} else {
+				$args['status'] = 1;
+			}
+		}
+		return apply_filters('em_locations_get_default_search', $args, $array, $defaults);
 	}
 }
 ?>

@@ -2,7 +2,11 @@
 const setupListTable = function( listTable ) {
 	// handle checks of multiple items using shift
 	const checkboxes = listTable.querySelectorAll( 'tbody .check-column input[type="checkbox"]' );
-	const listTableForm = listTable.querySelector('form.em-list-table-form');
+	// The export and settings modals carry the same form class, so match the main form only.
+	const listTableForm = listTable.querySelector('form.em-list-table-form:not(.em-list-table-export-form):not(.em-list-table-settings-form)');
+	if ( !listTableForm ) {
+		return;
+	}
 	let lastChecked;
 
 	//Pagination link clicks
@@ -352,7 +356,7 @@ const setupListTable = function( listTable ) {
 
 	/* ----------------- Row/Bulk Action Handlers ----------------- */
 
-	const actionMessages = JSON.parse( listTableForm.dataset.actionMessages );
+	const actionMessages = listTableForm.dataset.actionMessages ? JSON.parse( listTableForm.dataset.actionMessages ) : {};
 	let isBulkAction = false;
 
 	listTable.addEventListener('click', function( e ) {
@@ -553,8 +557,14 @@ document.addEventListener('DOMContentLoaded', function() {
 	document.querySelectorAll('.em_obj div.tablenav').forEach( function( tablenav ){
 		let em_obj = tablenav.closest('.em_obj');
 		em_obj.classList.add('em-list-table','legacy', 'frontend');
-		em_obj.querySelector('& > form').classList.add('em-list-table-form');
+		em_obj.querySelector('& > form')?.classList.add('em-list-table-form');
 	});
-	// find tables
-	document.querySelectorAll('.em-list-table').forEach( listTable => setupListTable(listTable) );
+	// find tables, one table failing to set up should not leave the rest of the page unwired
+	document.querySelectorAll('.em-list-table').forEach( function( listTable ) {
+		try {
+			setupListTable( listTable );
+		} catch ( error ) {
+			console.error( error );
+		}
+	});
 });
