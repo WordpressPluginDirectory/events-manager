@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Events Manager
-Version: 7.4.5
+Version: 7.4.6
 Plugin URI: https://wp-events-plugin.com
 Description: Event registration and booking management for WordPress. Recurring events, locations, webinars, google maps, rss, ical, booking registration and more!
 Author: Pixelite
@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // Setting constants
 use EM\Archetypes;
 
-define('EM_VERSION', '7.4.5'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
+define('EM_VERSION', '7.4.6'); //self expanatory, although version currently may not correspond directly with published version number. until 6.0 we're stuck updating 5.999.x
 define('EM_PRO_MIN_VERSION', '3.9'); //self expanatory
 define('EM_PRO_MIN_VERSION_CRITICAL', '3.6.0.2'); //self expanatory
 define('EM_FILE', __FILE__); //an absolute path to this directory
@@ -242,8 +242,8 @@ if( EM_MS_GLOBAL ){
 }
 	define('EM_EVENTS_TABLE',$prefix.'em_events'); //TABLE NAME
 	define('EM_EVENT_RECURRENCES_TABLE',$prefix.'em_event_recurrences'); //TABLE NAME
-	define('EM_TIMERANGES_TABLE', $wpdb->prefix . 'em_timeranges');
-	define('EM_EVENT_TIMESLOTS_TABLE', $wpdb->prefix . 'em_event_timeslots');
+	define('EM_TIMERANGES_TABLE', $prefix . 'em_timeranges');
+	define('EM_EVENT_TIMESLOTS_TABLE', $prefix . 'em_event_timeslots');
 	define('EM_TICKETS_TABLE', $prefix.'em_tickets'); //TABLE NAME
 	define('EM_TICKETS_BOOKINGS_TABLE', $prefix.'em_tickets_bookings'); //TABLE NAME
 	define('EM_META_TABLE',$prefix.'em_meta'); //TABLE NAME
@@ -940,7 +940,7 @@ function em_delete_blog( $blog_id ){
 	$wpdb->query('DROP TABLE '.$prefix.'em_tickets');
 	$wpdb->query('DROP TABLE '.$prefix.'em_tickets_bookings');
 	$wpdb->query('DROP TABLE '.$prefix.'em_meta');
-	//em_timeranges/em_event_timeslots are always per-site (even under MS Global), so drop them in every mode
+	//per-site in plain multisite; under MS Global these are shared and any per-site copy is a leftover from before 7.4.6, so dropping by this site's prefix is right in both modes
 	$wpdb->query('DROP TABLE IF EXISTS '.$prefix.'em_timeranges');
 	$wpdb->query('DROP TABLE IF EXISTS '.$prefix.'em_event_timeslots');
 	//these are per-site only in plain multisite; under MS Global they are base-prefix/shared and must never be dropped per-blog

@@ -212,7 +212,7 @@ class Archetypes {
 					$current = Archetypes::is_repeating( $post_type ) ? Archetypes::get_repeating_archetype( $post_type ) : $post_type;
 				}
 			}
-		} elseif ( is_singular() ) {
+		} elseif ( did_action( 'wp' ) && is_singular() ) {
 			$post_type = get_post_type( get_the_ID() );
 			if ( $post_type && self::is_event($post_type) ) {
 				$current = Archetypes::is_repeating( $post_type ) ? Archetypes::get_repeating_archetype( $post_type ) : $post_type;
@@ -734,7 +734,7 @@ class Archetypes {
 	 */
 	public static function is_location( $cpt ) {
 		$cpt = static::get_post_type( $cpt );
-		return $cpt && ( static::$location['cpt'] ?? null === $cpt );
+		return $cpt && ( static::$location['cpt'] ?? null ) === $cpt;
 	}
 
 	/**

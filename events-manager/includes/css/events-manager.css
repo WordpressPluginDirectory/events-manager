@@ -4490,7 +4490,7 @@
   pointer-events: none;
   cursor: not-allowed;
 }
-.em .em-list-table div.table-wrap tr.loading td:not(.check-column) {
+.em .em-list-table div.table-wrap tr.loading :is(td, th):not(.check-column) {
   opacity: 0.5;
 }
 .em .em-list-table div.table-wrap tr.loading .check-column input {
@@ -4505,11 +4505,11 @@
 .em .em-list-table div.table-wrap tr.faded-out {
   opacity: 0;
 }
-.em .em-list-table div.table-wrap td.column-primary .em-list-table-row-responsive-meta {
+.em .em-list-table div.table-wrap :is(td, th).column-primary .em-list-table-row-responsive-meta {
   display: none;
   visibility: hidden;
 }
-.em .em-list-table div.table-wrap td.column-primary .primary-column-content {
+.em .em-list-table div.table-wrap :is(td, th).column-primary .primary-column-content {
   display: inline-block;
 }
 .em .em-list-table div.table-wrap thead td.manage-column, .em .em-list-table div.table-wrap tfoot td.manage-column {
@@ -4579,10 +4579,10 @@
 .em .em-list-table div.table-wrap th.sortable.sorted.asc .sorting-indicator.desc, .em .em-list-table div.table-wrap th.sortable.sorted.desc .sorting-indicator.asc, .em .em-list-table div.table-wrap th.sorted.sorted.asc .sorting-indicator.desc, .em .em-list-table div.table-wrap th.sorted.sorted.desc .sorting-indicator.asc {
   opacity: 0.2;
 }
-.em .em-list-table div.table-wrap td {
+.em .em-list-table div.table-wrap td, .em .em-list-table div.table-wrap tbody th.column-primary {
   padding: 11px 12px !important;
 }
-.em .em-list-table div.table-wrap td.column-primary {
+.em .em-list-table div.table-wrap td.column-primary, .em .em-list-table div.table-wrap tbody th.column-primary {
   text-wrap: nowrap;
 }
 .em .em-list-table div.table-wrap .em-icon {
@@ -4762,7 +4762,9 @@
   border: 0;
   vertical-align: middle;
 }
-.em .em-list-table.size-small .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column), .em .em-list-table.size-xsmall .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column) {
+.em .em-list-table.size-small .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column),
+.em .em-list-table.size-small .wp-list-table tbody tr:not(.inline-edit-row):not(.no-items) th.column-primary, .em .em-list-table.size-xsmall .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column),
+.em .em-list-table.size-xsmall .wp-list-table tbody tr:not(.inline-edit-row):not(.no-items) th.column-primary {
   position: relative;
   clear: both;
   width: auto !important;
@@ -4770,37 +4772,44 @@
 .em .em-list-table.size-small .wp-list-table thead th.column-primary, .em .em-list-table.size-xsmall .wp-list-table thead th.column-primary {
   content: "";
 }
-.em .em-list-table.size-small .wp-list-table tbody th.check-column, .em .em-list-table.size-xsmall .wp-list-table tbody th.check-column {
-  width: 77px;
+.em .em-list-table.size-small .wp-list-table thead .check-column, .em .em-list-table.size-xsmall .wp-list-table thead .check-column {
+  width: 96px;
 }
-.em .em-list-table.size-small .wp-list-table tbody td:not(.check-column), .em .em-list-table.size-xsmall .wp-list-table tbody td:not(.check-column) {
+.em .em-list-table.size-small .wp-list-table tr:not(.hidden), .em .em-list-table.size-xsmall .wp-list-table tr:not(.hidden) {
+  display: table-row;
+}
+.em .em-list-table.size-small .wp-list-table tbody .check-column, .em .em-list-table.size-xsmall .wp-list-table tbody .check-column {
+  display: table-cell !important;
+  width: 96px;
+}
+.em .em-list-table.size-small .wp-list-table tbody :is(td, th):not(.check-column), .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th):not(.check-column) {
   display: block !important;
   overflow: hidden;
 }
-.em .em-list-table.size-small .wp-list-table tbody td:not(.check-column):not(.column-primary), .em .em-list-table.size-xsmall .wp-list-table tbody td:not(.check-column):not(.column-primary) {
+.em .em-list-table.size-small .wp-list-table tbody :is(td, th):not(.check-column):not(.column-primary), .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th):not(.check-column):not(.column-primary) {
   display: none !important;
 }
-.em .em-list-table.size-small .wp-list-table tbody td:not(.check-column):not(.column-primary, :last-child), .em .em-list-table.size-xsmall .wp-list-table tbody td:not(.check-column):not(.column-primary, :last-child) {
+.em .em-list-table.size-small .wp-list-table tbody :is(td, th):not(.check-column):not(.column-primary, :last-child), .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th):not(.check-column):not(.column-primary, :last-child) {
   border: 0 !important;
   padding-top: 5px !important;
   padding-bottom: 5px !important;
 }
-.em .em-list-table.size-small .wp-list-table tbody td:not(.check-column):last-child, .em .em-list-table.size-xsmall .wp-list-table tbody td:not(.check-column):last-child {
+.em .em-list-table.size-small .wp-list-table tbody :is(td, th):not(.check-column):last-child, .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th):not(.check-column):last-child {
   padding-top: 5px !important;
   padding-bottom: 10px !important;
 }
 .em .em-list-table.size-small .wp-list-table tbody td, .em .em-list-table.size-small .wp-list-table tbody th, .em .em-list-table.size-xsmall .wp-list-table tbody td, .em .em-list-table.size-xsmall .wp-list-table tbody th {
   vertical-align: top;
 }
-.em .em-list-table.size-small .wp-list-table tbody tr.expanded td.column-primary:not(:has(.em-list-table-row-responsive-meta)), .em .em-list-table.size-xsmall .wp-list-table tbody tr.expanded td.column-primary:not(:has(.em-list-table-row-responsive-meta)) {
+.em .em-list-table.size-small .wp-list-table tbody tr.expanded :is(td, th).column-primary:not(:has(.em-list-table-row-responsive-meta)), .em .em-list-table.size-xsmall .wp-list-table tbody tr.expanded :is(td, th).column-primary:not(:has(.em-list-table-row-responsive-meta)) {
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
   border-bottom: 0 !important;
 }
-.em .em-list-table.size-small .wp-list-table tbody td.column-primary:not(:has(.em-list-table-row-responsive-meta)) .primary-column-content, .em .em-list-table.size-xsmall .wp-list-table tbody td.column-primary:not(:has(.em-list-table-row-responsive-meta)) .primary-column-content {
+.em .em-list-table.size-small .wp-list-table tbody :is(td, th).column-primary:not(:has(.em-list-table-row-responsive-meta)) .primary-column-content, .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th).column-primary:not(:has(.em-list-table-row-responsive-meta)) .primary-column-content {
   border-bottom: 0;
 }
-.em .em-list-table.size-small .wp-list-table tbody td.column-primary button.toggle-row, .em .em-list-table.size-xsmall .wp-list-table tbody td.column-primary button.toggle-row {
+.em .em-list-table.size-small .wp-list-table tbody :is(td, th).column-primary button.toggle-row, .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th).column-primary button.toggle-row {
   display: inline-block !important;
   visibility: visible !important;
   float: right;
@@ -4816,25 +4825,25 @@
   border: 0 !important;
   background-image: var(--icon-chevron-down);
 }
-.em .em-list-table.size-small .wp-list-table tbody td.column-primary button.toggle-row.expanded, .em .em-list-table.size-xsmall .wp-list-table tbody td.column-primary button.toggle-row.expanded {
+.em .em-list-table.size-small .wp-list-table tbody :is(td, th).column-primary button.toggle-row.expanded, .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th).column-primary button.toggle-row.expanded {
   background-image: var(--icon-chevron-up);
 }
-.em .em-list-table.size-small .wp-list-table tbody td.column-primary button.toggle-row:active, .em .em-list-table.size-small .wp-list-table tbody td.column-primary button.toggle-row:focus, .em .em-list-table.size-xsmall .wp-list-table tbody td.column-primary button.toggle-row:active, .em .em-list-table.size-xsmall .wp-list-table tbody td.column-primary button.toggle-row:focus {
+.em .em-list-table.size-small .wp-list-table tbody :is(td, th).column-primary button.toggle-row:active, .em .em-list-table.size-small .wp-list-table tbody :is(td, th).column-primary button.toggle-row:focus, .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th).column-primary button.toggle-row:active, .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th).column-primary button.toggle-row:focus {
   border: none !important;
   box-shadow: none !important;
   outline: none !important;
 }
-.em .em-list-table.size-small .wp-list-table tbody td.column-primary button.toggle-row :focus:before, .em .em-list-table.size-xsmall .wp-list-table tbody td.column-primary button.toggle-row :focus:before {
+.em .em-list-table.size-small .wp-list-table tbody :is(td, th).column-primary button.toggle-row :focus:before, .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th).column-primary button.toggle-row :focus:before {
   box-shadow: none;
   outline: none;
 }
-.em .em-list-table.size-small .wp-list-table tbody td.column-primary .em-list-table-row-responsive-meta, .em .em-list-table.size-xsmall .wp-list-table tbody td.column-primary .em-list-table-row-responsive-meta {
+.em .em-list-table.size-small .wp-list-table tbody :is(td, th).column-primary .em-list-table-row-responsive-meta, .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th).column-primary .em-list-table-row-responsive-meta {
   float: left;
   clear: left;
   display: block;
   visibility: visible;
 }
-.em .em-list-table.size-small .wp-list-table tbody td.column-primary .primary-column-content, .em .em-list-table.size-xsmall .wp-list-table tbody td.column-primary .primary-column-content {
+.em .em-list-table.size-small .wp-list-table tbody :is(td, th).column-primary .primary-column-content, .em .em-list-table.size-xsmall .wp-list-table tbody :is(td, th).column-primary .primary-column-content {
   float: left;
   clear: left;
   margin-bottom: 8px;
@@ -4844,7 +4853,7 @@
 .em .em-list-table.size-small .wp-list-table tbody tr.expanded td:not(:first-child, .column-primary), .em .em-list-table.size-xsmall .wp-list-table tbody tr.expanded td:not(:first-child, .column-primary) {
   display: block !important;
 }
-.em .em-list-table.size-small .wp-list-table tbody tr.expanded td.column-primary, .em .em-list-table.size-xsmall .wp-list-table tbody tr.expanded td.column-primary {
+.em .em-list-table.size-small .wp-list-table tbody tr.expanded :is(td, th).column-primary, .em .em-list-table.size-xsmall .wp-list-table tbody tr.expanded :is(td, th).column-primary {
   margin: 0 13px 10px 11px !important;
   padding-left: 0 !important;
   padding-right: 0 !important;

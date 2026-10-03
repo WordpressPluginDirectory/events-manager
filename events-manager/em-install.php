@@ -33,6 +33,7 @@ function em_install() {
 			    add_action('em_ml_init', 'EM_ML::toggle_languages_index');
 		 	}else{
 		 		update_option('em_ms_global_install',1); //in case for some reason the user changes global settings in the future
+				em_migrate_ms_global_timeranges();
 		 	}
 			do_action('em_install_create_tables');
 			//New install, or Migrate?
@@ -1195,7 +1196,8 @@ function em_upgrade_current_installation(){
 		update_site_option('dbem_data', $data);
 	}
 	// temp promo
-	if( time() < 1786352400 && ( version_compare($current_version, '7.4.1', '<') || !empty($data['admin-modals']['review-nudge']) ) ) {
+	//the timestamp is EM_Admin_Modals::FLASH_SALE_ENDS, that class is only loaded in admin requests
+	if( !defined('EMP_VERSION') && time() < 1791183600 && ( version_compare($current_version, '7.4.6', '<') || !empty($data['admin-modals']['review-nudge']) ) ) {
 		if( empty($data['admin-modals']) ) $data['admin-modals'] = array();
 		$data['admin-modals']['promo-popup'] = true;
 		update_site_option('dbem_data', $data);
@@ -2001,6 +2003,72 @@ function em_upgrade_current_installation(){
 			add_action('plugins_loaded', $pro_update);
 		}
 	}
+}
+
+/**
+ * Copies this site's own em_timeranges and em_event_timeslots rows into the shared tables under MS Global, remapping their ids and the bookings that point at them.
+ * Until 7.4.6 these two tables were looked up per site but only ever created on the main site, so a subsite only has rows if its tables were created by hand. Rows already in the shared tables win, and the old tables are left in place.
+ *
+ * @return bool Whether any rows were copied.
+ */
+function em_migrate_ms_global_timeranges(){
+	global $wpdb;
+	if( !EM_MS_GLOBAL || $wpdb->prefix === $wpdb->base_prefix || get_option('em_ms_global_timeranges_migrated') ) return false;
+	//read rather than SHOW TABLES, which does not list temporary tables
+	$table_exists = function( $table ) use ( $wpdb ){
+		$suppress = $wpdb->suppress_errors();
+		$wpdb->get_results( "SELECT 1 FROM `$table` LIMIT 1" );
+		$exists = $wpdb->last_error === '';
+		$wpdb->suppress_errors( $suppress );
+		return $exists;
+	};
+	$timerange_ids = $timeslot_ids = $timeslot_events = array();
+	$old_timeranges = $wpdb->prefix . 'em_timeranges';
+	if( $table_exists( $old_timeranges ) ){
+		$shared_groups = array();
+		foreach( $wpdb->get_results( "SELECT * FROM `$old_timeranges` ORDER BY timerange_id", ARRAY_A ) as $row ){
+			$group_id = $row['timerange_group_id'];
+			if( !isset( $shared_groups[ $group_id ] ) ){
+				$shared_groups[ $group_id ] = (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT timerange_id FROM ' . EM_TIMERANGES_TABLE . ' WHERE timerange_group_id=%s LIMIT 1', $group_id ) );
+			}
+			if( $shared_groups[ $group_id ] ) continue;
+			$old_id = $row['timerange_id'];
+			unset( $row['timerange_id'] );
+			if( $wpdb->insert( EM_TIMERANGES_TABLE, $row ) ){
+				$timerange_ids[ $old_id ] = $wpdb->insert_id;
+			}
+		}
+	}
+	$old_timeslots = $wpdb->prefix . 'em_event_timeslots';
+	if( $table_exists( $old_timeslots ) ){
+		$shared_events = array();
+		foreach( $wpdb->get_results( "SELECT * FROM `$old_timeslots` ORDER BY timeslot_id", ARRAY_A ) as $row ){
+			$event_id = absint( $row['event_id'] );
+			if( !isset( $shared_events[ $event_id ] ) ){
+				$shared_events[ $event_id ] = (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT timeslot_id FROM ' . EM_EVENT_TIMESLOTS_TABLE . ' WHERE event_id=%d LIMIT 1', $event_id ) );
+			}
+			if( $shared_events[ $event_id ] ) continue;
+			$old_id = $row['timeslot_id'];
+			unset( $row['timeslot_id'] );
+			//a timerange that was not copied leaves the slot unlinked rather than pointing at whichever shared timerange happens to have that id
+			$row['timerange_id'] = isset( $timerange_ids[ $row['timerange_id'] ] ) ? $timerange_ids[ $row['timerange_id'] ] : 0;
+			if( $wpdb->insert( EM_EVENT_TIMESLOTS_TABLE, $row ) ){
+				$timeslot_ids[ $old_id ] = $wpdb->insert_id;
+				$timeslot_events[ $event_id ] = $event_id;
+			}
+		}
+	}
+	if( !empty( $timeslot_ids ) ){
+		//only events whose slots were just copied can be holding ids from the old table, read first so a new id is never mapped a second time
+		$bookings = $wpdb->get_results( 'SELECT booking_id, timeslot_id FROM ' . EM_BOOKINGS_TABLE . ' WHERE timeslot_id > 0 AND event_id IN (' . implode( ',', $timeslot_events ) . ')' );
+		foreach( $bookings as $booking ){
+			if( isset( $timeslot_ids[ $booking->timeslot_id ] ) ){
+				$wpdb->update( EM_BOOKINGS_TABLE, array( 'timeslot_id' => $timeslot_ids[ $booking->timeslot_id ] ), array( 'booking_id' => $booking->booking_id ), array( '%d' ), array( '%d' ) );
+			}
+		}
+	}
+	update_option( 'em_ms_global_timeranges_migrated', 1 );
+	return !empty( $timerange_ids ) || !empty( $timeslot_ids );
 }
 
 /**

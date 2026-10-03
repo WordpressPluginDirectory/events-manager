@@ -6468,7 +6468,7 @@
   pointer-events: none;
   cursor: not-allowed;
 }
-.wp-admin .em .em-list-table div.table-wrap tr.loading td:not(.check-column) {
+.wp-admin .em .em-list-table div.table-wrap tr.loading :is(td, th):not(.check-column) {
   opacity: 0.5;
 }
 .wp-admin .em .em-list-table div.table-wrap tr.loading .check-column input {
@@ -6483,12 +6483,16 @@
 .wp-admin .em .em-list-table div.table-wrap tr.faded-out {
   opacity: 0;
 }
-.wp-admin .em .em-list-table div.table-wrap td.column-primary .em-list-table-row-responsive-meta {
+.wp-admin .em .em-list-table div.table-wrap :is(td, th).column-primary .em-list-table-row-responsive-meta {
   display: none;
   visibility: hidden;
 }
-.wp-admin .em .em-list-table div.table-wrap td.column-primary .primary-column-content {
+.wp-admin .em .em-list-table div.table-wrap :is(td, th).column-primary .primary-column-content {
   display: inline-block;
+}
+.wp-admin .em .em-list-table div.table-wrap tbody th.column-primary {
+  font-size: 13px;
+  line-height: 1.5em;
 }
 .wp-admin .em .em-list-table div.table-wrap .em-icon {
   width: 18px;
@@ -6671,7 +6675,8 @@
     border: 0;
     vertical-align: middle;
   }
-  .wp-admin .em .em-list-table .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column) {
+  .wp-admin .em .em-list-table .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column),
+  .wp-admin .em .em-list-table .wp-list-table tbody tr:not(.inline-edit-row):not(.no-items) th.column-primary {
     position: relative;
     clear: both;
     width: auto !important;
@@ -6682,37 +6687,41 @@
   .wp-admin .em .em-list-table .wp-list-table thead .check-column {
     width: 96px;
   }
+  .wp-admin .em .em-list-table .wp-list-table tr:not(.hidden) {
+    display: table-row;
+  }
   .wp-admin .em .em-list-table .wp-list-table tbody .check-column {
+    display: table-cell !important;
     width: 96px;
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody td:not(.check-column) {
+  .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th):not(.check-column) {
     display: block !important;
     overflow: hidden;
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody td:not(.check-column):not(.column-primary) {
+  .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th):not(.check-column):not(.column-primary) {
     display: none !important;
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody td:not(.check-column):not(.column-primary, :last-child) {
+  .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th):not(.check-column):not(.column-primary, :last-child) {
     border: 0 !important;
     padding-top: 5px !important;
     padding-bottom: 5px !important;
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody td:not(.check-column):last-child {
+  .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th):not(.check-column):last-child {
     padding-top: 5px !important;
     padding-bottom: 10px !important;
   }
   .wp-admin .em .em-list-table .wp-list-table tbody td, .wp-admin .em .em-list-table .wp-list-table tbody th {
     vertical-align: top;
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody tr.expanded td.column-primary:not(:has(.em-list-table-row-responsive-meta)) {
+  .wp-admin .em .em-list-table .wp-list-table tbody tr.expanded :is(td, th).column-primary:not(:has(.em-list-table-row-responsive-meta)) {
     margin-bottom: 0 !important;
     padding-bottom: 0 !important;
     border-bottom: 0 !important;
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody td.column-primary:not(:has(.em-list-table-row-responsive-meta)) .primary-column-content {
+  .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th).column-primary:not(:has(.em-list-table-row-responsive-meta)) .primary-column-content {
     border-bottom: 0;
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody td.column-primary button.toggle-row {
+  .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th).column-primary button.toggle-row {
     display: inline-block !important;
     visibility: visible !important;
     float: right;
@@ -6728,25 +6737,25 @@
     border: 0 !important;
     background-image: var(--icon-chevron-down);
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody td.column-primary button.toggle-row.expanded {
+  .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th).column-primary button.toggle-row.expanded {
     background-image: var(--icon-chevron-up);
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody td.column-primary button.toggle-row:active, .wp-admin .em .em-list-table .wp-list-table tbody td.column-primary button.toggle-row:focus {
+  .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th).column-primary button.toggle-row:active, .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th).column-primary button.toggle-row:focus {
     border: none !important;
     box-shadow: none !important;
     outline: none !important;
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody td.column-primary button.toggle-row :focus:before {
+  .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th).column-primary button.toggle-row :focus:before {
     box-shadow: none;
     outline: none;
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody td.column-primary .em-list-table-row-responsive-meta {
+  .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th).column-primary .em-list-table-row-responsive-meta {
     float: left;
     clear: left;
     display: block;
     visibility: visible;
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody td.column-primary .primary-column-content {
+  .wp-admin .em .em-list-table .wp-list-table tbody :is(td, th).column-primary .primary-column-content {
     float: left;
     clear: left;
     margin-bottom: 8px;
@@ -6756,7 +6765,7 @@
   .wp-admin .em .em-list-table .wp-list-table tbody tr.expanded td:not(:first-child, .column-primary) {
     display: block !important;
   }
-  .wp-admin .em .em-list-table .wp-list-table tbody tr.expanded td.column-primary {
+  .wp-admin .em .em-list-table .wp-list-table tbody tr.expanded :is(td, th).column-primary {
     margin: 0 13px 10px 11px !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
